@@ -1,0 +1,31 @@
+{
+  "name": "sdk-application-bundle",
+  "version": "0.0.0",
+  "description": "ubio sdk application bundle (prototype)",
+  "scripts": {
+    "build": "npm run build:copy-static-files && npm run build:rollup && npm run build:build-js && npm run build:clean-up",
+    "build:copy-static-files": "cp index.html public",
+    "build:rollup": "rollup index.js --format umd --name \"ubio-app-sdk\" --file public/bundle.js",
+    "build:build-js": "browserify public/bundle.js -o public/build.js -t babelify",
+    "build:clean-up": "rm public/bundle.js"
+  },
+  "keywords": [
+    "ubio",
+    "sdk"
+  ],
+  "author": "ubio",
+  "license": "ISC",
+  "dependencies": {
+    "camelcase-keys": "^5.2.0",
+    "form-serialize": "^0.7.2",
+    "lit-html": "^1.0.0",
+    "node-fetch": "^2.3.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.4.3",
+    "babelify": "^10.0.0",
+    "browserify": "^16.2.3",
+    "eslint-config-ub": "^3.0.0",
+    "rollup": "^1.10.1"
+  }
+}
