@@ -1976,7 +1976,7 @@ module.exports = (input, options) => {
 };
 
 
-},{"camelcase":4,"map-obj":7,"quick-lru":9}],4:[function(require,module,exports){
+},{"camelcase":4,"map-obj":8,"quick-lru":10}],4:[function(require,module,exports){
 'use strict';
 
 const preserveCamelCase = string => {
@@ -2403,6 +2403,445 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 }
 
 },{}],7:[function(require,module,exports){
+(function (global){
+/**
+ * lodash (Custom Build) <https://lodash.com/>
+ * Build: `lodash modularize exports="npm" -o ./`
+ * Copyright jQuery Foundation and other contributors <https://jquery.org/>
+ * Released under MIT license <https://lodash.com/license>
+ * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
+ * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+ */
+
+/** Used as references for various `Number` constants. */
+var INFINITY = 1 / 0;
+
+/** `Object#toString` result references. */
+var symbolTag = '[object Symbol]';
+
+/** Used to match words composed of alphanumeric characters. */
+var reAsciiWord = /[^\x00-\x2f\x3a-\x40\x5b-\x60\x7b-\x7f]+/g;
+
+/** Used to match Latin Unicode letters (excluding mathematical operators). */
+var reLatin = /[\xc0-\xd6\xd8-\xf6\xf8-\xff\u0100-\u017f]/g;
+
+/** Used to compose unicode character classes. */
+var rsAstralRange = '\\ud800-\\udfff',
+    rsComboMarksRange = '\\u0300-\\u036f\\ufe20-\\ufe23',
+    rsComboSymbolsRange = '\\u20d0-\\u20f0',
+    rsDingbatRange = '\\u2700-\\u27bf',
+    rsLowerRange = 'a-z\\xdf-\\xf6\\xf8-\\xff',
+    rsMathOpRange = '\\xac\\xb1\\xd7\\xf7',
+    rsNonCharRange = '\\x00-\\x2f\\x3a-\\x40\\x5b-\\x60\\x7b-\\xbf',
+    rsPunctuationRange = '\\u2000-\\u206f',
+    rsSpaceRange = ' \\t\\x0b\\f\\xa0\\ufeff\\n\\r\\u2028\\u2029\\u1680\\u180e\\u2000\\u2001\\u2002\\u2003\\u2004\\u2005\\u2006\\u2007\\u2008\\u2009\\u200a\\u202f\\u205f\\u3000',
+    rsUpperRange = 'A-Z\\xc0-\\xd6\\xd8-\\xde',
+    rsVarRange = '\\ufe0e\\ufe0f',
+    rsBreakRange = rsMathOpRange + rsNonCharRange + rsPunctuationRange + rsSpaceRange;
+
+/** Used to compose unicode capture groups. */
+var rsApos = "['\u2019]",
+    rsBreak = '[' + rsBreakRange + ']',
+    rsCombo = '[' + rsComboMarksRange + rsComboSymbolsRange + ']',
+    rsDigits = '\\d+',
+    rsDingbat = '[' + rsDingbatRange + ']',
+    rsLower = '[' + rsLowerRange + ']',
+    rsMisc = '[^' + rsAstralRange + rsBreakRange + rsDigits + rsDingbatRange + rsLowerRange + rsUpperRange + ']',
+    rsFitz = '\\ud83c[\\udffb-\\udfff]',
+    rsModifier = '(?:' + rsCombo + '|' + rsFitz + ')',
+    rsNonAstral = '[^' + rsAstralRange + ']',
+    rsRegional = '(?:\\ud83c[\\udde6-\\uddff]){2}',
+    rsSurrPair = '[\\ud800-\\udbff][\\udc00-\\udfff]',
+    rsUpper = '[' + rsUpperRange + ']',
+    rsZWJ = '\\u200d';
+
+/** Used to compose unicode regexes. */
+var rsLowerMisc = '(?:' + rsLower + '|' + rsMisc + ')',
+    rsUpperMisc = '(?:' + rsUpper + '|' + rsMisc + ')',
+    rsOptLowerContr = '(?:' + rsApos + '(?:d|ll|m|re|s|t|ve))?',
+    rsOptUpperContr = '(?:' + rsApos + '(?:D|LL|M|RE|S|T|VE))?',
+    reOptMod = rsModifier + '?',
+    rsOptVar = '[' + rsVarRange + ']?',
+    rsOptJoin = '(?:' + rsZWJ + '(?:' + [rsNonAstral, rsRegional, rsSurrPair].join('|') + ')' + rsOptVar + reOptMod + ')*',
+    rsSeq = rsOptVar + reOptMod + rsOptJoin,
+    rsEmoji = '(?:' + [rsDingbat, rsRegional, rsSurrPair].join('|') + ')' + rsSeq;
+
+/** Used to match apostrophes. */
+var reApos = RegExp(rsApos, 'g');
+
+/**
+ * Used to match [combining diacritical marks](https://en.wikipedia.org/wiki/Combining_Diacritical_Marks) and
+ * [combining diacritical marks for symbols](https://en.wikipedia.org/wiki/Combining_Diacritical_Marks_for_Symbols).
+ */
+var reComboMark = RegExp(rsCombo, 'g');
+
+/** Used to match complex or compound words. */
+var reUnicodeWord = RegExp([
+  rsUpper + '?' + rsLower + '+' + rsOptLowerContr + '(?=' + [rsBreak, rsUpper, '$'].join('|') + ')',
+  rsUpperMisc + '+' + rsOptUpperContr + '(?=' + [rsBreak, rsUpper + rsLowerMisc, '$'].join('|') + ')',
+  rsUpper + '?' + rsLowerMisc + '+' + rsOptLowerContr,
+  rsUpper + '+' + rsOptUpperContr,
+  rsDigits,
+  rsEmoji
+].join('|'), 'g');
+
+/** Used to detect strings that need a more robust regexp to match words. */
+var reHasUnicodeWord = /[a-z][A-Z]|[A-Z]{2,}[a-z]|[0-9][a-zA-Z]|[a-zA-Z][0-9]|[^a-zA-Z0-9 ]/;
+
+/** Used to map Latin Unicode letters to basic Latin letters. */
+var deburredLetters = {
+  // Latin-1 Supplement block.
+  '\xc0': 'A',  '\xc1': 'A', '\xc2': 'A', '\xc3': 'A', '\xc4': 'A', '\xc5': 'A',
+  '\xe0': 'a',  '\xe1': 'a', '\xe2': 'a', '\xe3': 'a', '\xe4': 'a', '\xe5': 'a',
+  '\xc7': 'C',  '\xe7': 'c',
+  '\xd0': 'D',  '\xf0': 'd',
+  '\xc8': 'E',  '\xc9': 'E', '\xca': 'E', '\xcb': 'E',
+  '\xe8': 'e',  '\xe9': 'e', '\xea': 'e', '\xeb': 'e',
+  '\xcc': 'I',  '\xcd': 'I', '\xce': 'I', '\xcf': 'I',
+  '\xec': 'i',  '\xed': 'i', '\xee': 'i', '\xef': 'i',
+  '\xd1': 'N',  '\xf1': 'n',
+  '\xd2': 'O',  '\xd3': 'O', '\xd4': 'O', '\xd5': 'O', '\xd6': 'O', '\xd8': 'O',
+  '\xf2': 'o',  '\xf3': 'o', '\xf4': 'o', '\xf5': 'o', '\xf6': 'o', '\xf8': 'o',
+  '\xd9': 'U',  '\xda': 'U', '\xdb': 'U', '\xdc': 'U',
+  '\xf9': 'u',  '\xfa': 'u', '\xfb': 'u', '\xfc': 'u',
+  '\xdd': 'Y',  '\xfd': 'y', '\xff': 'y',
+  '\xc6': 'Ae', '\xe6': 'ae',
+  '\xde': 'Th', '\xfe': 'th',
+  '\xdf': 'ss',
+  // Latin Extended-A block.
+  '\u0100': 'A',  '\u0102': 'A', '\u0104': 'A',
+  '\u0101': 'a',  '\u0103': 'a', '\u0105': 'a',
+  '\u0106': 'C',  '\u0108': 'C', '\u010a': 'C', '\u010c': 'C',
+  '\u0107': 'c',  '\u0109': 'c', '\u010b': 'c', '\u010d': 'c',
+  '\u010e': 'D',  '\u0110': 'D', '\u010f': 'd', '\u0111': 'd',
+  '\u0112': 'E',  '\u0114': 'E', '\u0116': 'E', '\u0118': 'E', '\u011a': 'E',
+  '\u0113': 'e',  '\u0115': 'e', '\u0117': 'e', '\u0119': 'e', '\u011b': 'e',
+  '\u011c': 'G',  '\u011e': 'G', '\u0120': 'G', '\u0122': 'G',
+  '\u011d': 'g',  '\u011f': 'g', '\u0121': 'g', '\u0123': 'g',
+  '\u0124': 'H',  '\u0126': 'H', '\u0125': 'h', '\u0127': 'h',
+  '\u0128': 'I',  '\u012a': 'I', '\u012c': 'I', '\u012e': 'I', '\u0130': 'I',
+  '\u0129': 'i',  '\u012b': 'i', '\u012d': 'i', '\u012f': 'i', '\u0131': 'i',
+  '\u0134': 'J',  '\u0135': 'j',
+  '\u0136': 'K',  '\u0137': 'k', '\u0138': 'k',
+  '\u0139': 'L',  '\u013b': 'L', '\u013d': 'L', '\u013f': 'L', '\u0141': 'L',
+  '\u013a': 'l',  '\u013c': 'l', '\u013e': 'l', '\u0140': 'l', '\u0142': 'l',
+  '\u0143': 'N',  '\u0145': 'N', '\u0147': 'N', '\u014a': 'N',
+  '\u0144': 'n',  '\u0146': 'n', '\u0148': 'n', '\u014b': 'n',
+  '\u014c': 'O',  '\u014e': 'O', '\u0150': 'O',
+  '\u014d': 'o',  '\u014f': 'o', '\u0151': 'o',
+  '\u0154': 'R',  '\u0156': 'R', '\u0158': 'R',
+  '\u0155': 'r',  '\u0157': 'r', '\u0159': 'r',
+  '\u015a': 'S',  '\u015c': 'S', '\u015e': 'S', '\u0160': 'S',
+  '\u015b': 's',  '\u015d': 's', '\u015f': 's', '\u0161': 's',
+  '\u0162': 'T',  '\u0164': 'T', '\u0166': 'T',
+  '\u0163': 't',  '\u0165': 't', '\u0167': 't',
+  '\u0168': 'U',  '\u016a': 'U', '\u016c': 'U', '\u016e': 'U', '\u0170': 'U', '\u0172': 'U',
+  '\u0169': 'u',  '\u016b': 'u', '\u016d': 'u', '\u016f': 'u', '\u0171': 'u', '\u0173': 'u',
+  '\u0174': 'W',  '\u0175': 'w',
+  '\u0176': 'Y',  '\u0177': 'y', '\u0178': 'Y',
+  '\u0179': 'Z',  '\u017b': 'Z', '\u017d': 'Z',
+  '\u017a': 'z',  '\u017c': 'z', '\u017e': 'z',
+  '\u0132': 'IJ', '\u0133': 'ij',
+  '\u0152': 'Oe', '\u0153': 'oe',
+  '\u0149': "'n", '\u017f': 'ss'
+};
+
+/** Detect free variable `global` from Node.js. */
+var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
+
+/** Detect free variable `self`. */
+var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
+
+/** Used as a reference to the global object. */
+var root = freeGlobal || freeSelf || Function('return this')();
+
+/**
+ * A specialized version of `_.reduce` for arrays without support for
+ * iteratee shorthands.
+ *
+ * @private
+ * @param {Array} [array] The array to iterate over.
+ * @param {Function} iteratee The function invoked per iteration.
+ * @param {*} [accumulator] The initial value.
+ * @param {boolean} [initAccum] Specify using the first element of `array` as
+ *  the initial value.
+ * @returns {*} Returns the accumulated value.
+ */
+function arrayReduce(array, iteratee, accumulator, initAccum) {
+  var index = -1,
+      length = array ? array.length : 0;
+
+  if (initAccum && length) {
+    accumulator = array[++index];
+  }
+  while (++index < length) {
+    accumulator = iteratee(accumulator, array[index], index, array);
+  }
+  return accumulator;
+}
+
+/**
+ * Splits an ASCII `string` into an array of its words.
+ *
+ * @private
+ * @param {string} The string to inspect.
+ * @returns {Array} Returns the words of `string`.
+ */
+function asciiWords(string) {
+  return string.match(reAsciiWord) || [];
+}
+
+/**
+ * The base implementation of `_.propertyOf` without support for deep paths.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @returns {Function} Returns the new accessor function.
+ */
+function basePropertyOf(object) {
+  return function(key) {
+    return object == null ? undefined : object[key];
+  };
+}
+
+/**
+ * Used by `_.deburr` to convert Latin-1 Supplement and Latin Extended-A
+ * letters to basic Latin letters.
+ *
+ * @private
+ * @param {string} letter The matched letter to deburr.
+ * @returns {string} Returns the deburred letter.
+ */
+var deburrLetter = basePropertyOf(deburredLetters);
+
+/**
+ * Checks if `string` contains a word composed of Unicode symbols.
+ *
+ * @private
+ * @param {string} string The string to inspect.
+ * @returns {boolean} Returns `true` if a word is found, else `false`.
+ */
+function hasUnicodeWord(string) {
+  return reHasUnicodeWord.test(string);
+}
+
+/**
+ * Splits a Unicode `string` into an array of its words.
+ *
+ * @private
+ * @param {string} The string to inspect.
+ * @returns {Array} Returns the words of `string`.
+ */
+function unicodeWords(string) {
+  return string.match(reUnicodeWord) || [];
+}
+
+/** Used for built-in method references. */
+var objectProto = Object.prototype;
+
+/**
+ * Used to resolve the
+ * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
+ * of values.
+ */
+var objectToString = objectProto.toString;
+
+/** Built-in value references. */
+var Symbol = root.Symbol;
+
+/** Used to convert symbols to primitives and strings. */
+var symbolProto = Symbol ? Symbol.prototype : undefined,
+    symbolToString = symbolProto ? symbolProto.toString : undefined;
+
+/**
+ * The base implementation of `_.toString` which doesn't convert nullish
+ * values to empty strings.
+ *
+ * @private
+ * @param {*} value The value to process.
+ * @returns {string} Returns the string.
+ */
+function baseToString(value) {
+  // Exit early for strings to avoid a performance hit in some environments.
+  if (typeof value == 'string') {
+    return value;
+  }
+  if (isSymbol(value)) {
+    return symbolToString ? symbolToString.call(value) : '';
+  }
+  var result = (value + '');
+  return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
+}
+
+/**
+ * Creates a function like `_.camelCase`.
+ *
+ * @private
+ * @param {Function} callback The function to combine each word.
+ * @returns {Function} Returns the new compounder function.
+ */
+function createCompounder(callback) {
+  return function(string) {
+    return arrayReduce(words(deburr(string).replace(reApos, '')), callback, '');
+  };
+}
+
+/**
+ * Checks if `value` is object-like. A value is object-like if it's not `null`
+ * and has a `typeof` result of "object".
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
+ * @example
+ *
+ * _.isObjectLike({});
+ * // => true
+ *
+ * _.isObjectLike([1, 2, 3]);
+ * // => true
+ *
+ * _.isObjectLike(_.noop);
+ * // => false
+ *
+ * _.isObjectLike(null);
+ * // => false
+ */
+function isObjectLike(value) {
+  return !!value && typeof value == 'object';
+}
+
+/**
+ * Checks if `value` is classified as a `Symbol` primitive or object.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a symbol, else `false`.
+ * @example
+ *
+ * _.isSymbol(Symbol.iterator);
+ * // => true
+ *
+ * _.isSymbol('abc');
+ * // => false
+ */
+function isSymbol(value) {
+  return typeof value == 'symbol' ||
+    (isObjectLike(value) && objectToString.call(value) == symbolTag);
+}
+
+/**
+ * Converts `value` to a string. An empty string is returned for `null`
+ * and `undefined` values. The sign of `-0` is preserved.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to process.
+ * @returns {string} Returns the string.
+ * @example
+ *
+ * _.toString(null);
+ * // => ''
+ *
+ * _.toString(-0);
+ * // => '-0'
+ *
+ * _.toString([1, 2, 3]);
+ * // => '1,2,3'
+ */
+function toString(value) {
+  return value == null ? '' : baseToString(value);
+}
+
+/**
+ * Deburrs `string` by converting
+ * [Latin-1 Supplement](https://en.wikipedia.org/wiki/Latin-1_Supplement_(Unicode_block)#Character_table)
+ * and [Latin Extended-A](https://en.wikipedia.org/wiki/Latin_Extended-A)
+ * letters to basic Latin letters and removing
+ * [combining diacritical marks](https://en.wikipedia.org/wiki/Combining_Diacritical_Marks).
+ *
+ * @static
+ * @memberOf _
+ * @since 3.0.0
+ * @category String
+ * @param {string} [string=''] The string to deburr.
+ * @returns {string} Returns the deburred string.
+ * @example
+ *
+ * _.deburr('déjà vu');
+ * // => 'deja vu'
+ */
+function deburr(string) {
+  string = toString(string);
+  return string && string.replace(reLatin, deburrLetter).replace(reComboMark, '');
+}
+
+/**
+ * Converts `string` to
+ * [kebab case](https://en.wikipedia.org/wiki/Letter_case#Special_case_styles).
+ *
+ * @static
+ * @memberOf _
+ * @since 3.0.0
+ * @category String
+ * @param {string} [string=''] The string to convert.
+ * @returns {string} Returns the kebab cased string.
+ * @example
+ *
+ * _.kebabCase('Foo Bar');
+ * // => 'foo-bar'
+ *
+ * _.kebabCase('fooBar');
+ * // => 'foo-bar'
+ *
+ * _.kebabCase('__FOO_BAR__');
+ * // => 'foo-bar'
+ */
+var kebabCase = createCompounder(function(result, word, index) {
+  return result + (index ? '-' : '') + word.toLowerCase();
+});
+
+/**
+ * Splits `string` into an array of its words.
+ *
+ * @static
+ * @memberOf _
+ * @since 3.0.0
+ * @category String
+ * @param {string} [string=''] The string to inspect.
+ * @param {RegExp|string} [pattern] The pattern to match words.
+ * @param- {Object} [guard] Enables use as an iteratee for methods like `_.map`.
+ * @returns {Array} Returns the words of `string`.
+ * @example
+ *
+ * _.words('fred, barney, & pebbles');
+ * // => ['fred', 'barney', 'pebbles']
+ *
+ * _.words('fred, barney, & pebbles', /[^, ]+/g);
+ * // => ['fred', 'barney', '&', 'pebbles']
+ */
+function words(string, pattern, guard) {
+  string = toString(string);
+  pattern = guard ? undefined : pattern;
+
+  if (pattern === undefined) {
+    return hasUnicodeWord(string) ? unicodeWords(string) : asciiWords(string);
+  }
+  return string.match(pattern) || [];
+}
+
+module.exports = kebabCase;
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],8:[function(require,module,exports){
 'use strict';
 
 // Customized for this use-case
@@ -2452,7 +2891,7 @@ const mapObject = (object, fn, options, isSeen = new WeakMap()) => {
 
 module.exports = mapObject;
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 (function (global){
 "use strict";
 
@@ -2478,7 +2917,7 @@ exports.Headers = global.Headers;
 exports.Request = global.Request;
 exports.Response = global.Response;
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 'use strict';
 
 class QuickLRU {
@@ -2594,12 +3033,14 @@ class QuickLRU {
 
 module.exports = QuickLRU;
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 (function (Buffer){
-(function (factory) {
-  typeof define === 'function' && define.amd ? define(factory) : factory();
-})(function () {
+(function (global, factory) {
+  typeof exports === 'object' && typeof module !== 'undefined' ? factory(require('lodash.kebabcase')) : typeof define === 'function' && define.amd ? define(['lodash.kebabcase'], factory) : (global = global || self, factory(global.kebabCase));
+})(this, function (kebabCase) {
   'use strict';
+
+  kebabCase = kebabCase && kebabCase.hasOwnProperty('default') ? kebabCase['default'] : kebabCase;
   /**
    * @license
    * Copyright (c) 2017 The Polymer Project Authors. All rights reserved.
@@ -3895,7 +4336,6 @@ module.exports = QuickLRU;
     }
 
     var key = keys.shift();
-    console.log('key', key);
 
     if (key.includes('-$number')) {
       key = key.replace('-$number', '');
@@ -3961,7 +4401,8 @@ module.exports = QuickLRU;
     }
 
     return result;
-  }
+  } // 8056890d25682d507a1315fbac4cc7fe1ae6419ce5ad4f39
+
 
   var defaultApiUrl = 'https://api.automationcloud.net';
   var defaultFetch = typeof self !== 'undefined' && self.fetch && self.fetch.bind(self);
@@ -4105,7 +4546,7 @@ module.exports = QuickLRU;
         });
       },
       getJobOutputs: function (jobId, key, stage) {
-        var path = 'jobs/' + jobId;
+        var path = 'jobs/' + jobId + '/outputs';
 
         if (key) {
           path += '/' + key;
@@ -4154,9 +4595,8 @@ module.exports = QuickLRU;
       var stopped = false;
 
       function run() {
+        console.log('polling...');
         return delay(dt).then(function () {
-          console.log('waiting...');
-
           if (!stopped) {
             return api.getJobEvents(jobId, offset);
           }
@@ -4223,7 +4663,7 @@ module.exports = QuickLRU;
   };
 
   async function createJob({
-    input,
+    input = {},
     category = 'test'
   }) {
     const url = 'https://pet.morethan.com/h5/pet/step-1?path=%2FquoteAndBuy.do%3Fe%3De1s1%26curPage%3DcaptureDetails';
@@ -4250,36 +4690,111 @@ module.exports = QuickLRU;
     localStorage.setItem('jobId', job.id);
   }
 
-  async function waitForJobOutput(key, callback) {
-    return await clientSdk.trackJob(jobId, event => {
-      if (event.name !== 'createOutput') {
-        return;
-      }
+  function waitForJobOutput(outputKey, callback) {
+    /*
+        1. Get Job and fnd given outputKey from job.outputs
+         -> get output
+        2. If not available, trackJob until it does CreateOutputEvent
+        3. repeat 1-2 until the key exist.
+    */
+    repeat().then(() => clientSdk.getJobOutputs(jobId, outputKey)).then(output => callback(null, output)).catch(err => {
+      console.error(err);
+      return callback(err, null);
+    });
 
-      clientSdk.getJob(jobId).then(job => {
-        const output = job.outputs.find(jo => jo.key === key);
+    function repeat() {
+      let exist = false;
+      return new Promise(resolve => {
+        loop();
 
-        if (!output) {
-          throw new Error('OutputNotAvailable');
-        } // RecordNotFoundError
-        //return getJobOutput(key);
+        function loop() {
+          console.log('repeating...');
+          jobOutputExists(outputKey).then(res => exist = res).then(() => {
+            if (!exist) {
+              return awaitCreateOutputEvent();
+            }
+          }).then(res => {
+            if (!exist) {
+              return loop();
+            }
 
+            return resolve();
+          });
+        }
+      });
+    }
 
-        return;
-      }).then(output => {
-        //callback([output]);
-        callback(['small', 'medium']); //test
-      }).catch(e => console.log(e));
+    async function jobOutputExists(outputKey) {
+      const job = await clientSdk.getJob(jobId);
+      const output = job.outputs.find(jo => jo.key === outputKey);
+      console.log('getJob.output', output);
+      return Boolean(output);
+    }
+  }
+
+  function awaitCreateOutputEvent() {
+    return new Promise(resolve => {
+      const stopTracking = clientSdk.trackJob(jobId, event => {
+        console.log(`event ${event.name}!`);
+
+        if (event.name === 'createOutput') {
+          stopTracking();
+          resolve();
+        }
+      });
     });
   }
+  /*
+      async function jobOutputExists(outputKey) {
+          const job = await clientSdk.getJob(jobId);
+          const output =job.outputs.find(jo => jo.key === outputKey);
+           return Boolean(output);
+      }
+       async function awaitCreateOutputEvent() {
+          return new Promise(resolve => {
+              const stopTracking = clientSdk.trackJob(jobId, (event) => {
+                  console.log(`event ${event.name}!`);
+                  if (event.name === 'createOutput') {
+                      afterOutputCreate();
+                  }
+              });
+               function afterOutputCreate() {
+                  stopTracking();
+                  resolve();
+              }
+          });
+      }
+       function run() {
+          return jobOutputExists()
+              .then(exist => {
+                  if (!exist) {
+                      return awaitCreateOutputEvent();
+                  }
+              })
+              .then(() => {
+                  run();
+              });
+      }
+   }
+   */
+
 
   async function createJobInput(input) {
     const [key] = Object.keys(input);
     const data = input[key];
-    return await clientSdk.createJobInput(jobId, key, data);
+    return await clientSdk.createJobInput(jobId, data, key);
   }
 
-  var pets = html`
+  var fallback = err => html`
+<div class="fallback">
+    <h2 id="fallback-message">
+        Oh no, Something went wrong!
+    </h2>
+    <pre>${err}</pre>
+</div>
+`;
+
+  var pets = () => html`
 <div class="job-input">
     <form id="pets">Pets
         <div class="pet" name="pets[0]">
@@ -4338,20 +4853,19 @@ module.exports = QuickLRU;
 </div>
 `;
 
-  const addInput = breedType => html`<input type="radio" name="selected-breed-type" value="${breedType}">`;
-
   var selectedBreedType = breedTypes => html`
 <div class="job-input">
     <form id="selected-breed-type">
         <h3>What is your pet's breed?</h3>
-        <label for="is-kept-at-your-address">Is your pet kept at your address?</label>
-        ${breedTypes.map(addInput)}
+        <label for="selected-breed-type"></label>
+        ${breedTypes.map(b => html`<input type="radio" name="selected-breed-type" value="${b}"/> ${b}`)}
     </form>
     <button type="button" id="create-input-selected-breed-type">Create Input</button>
 </div>
 `;
 
   var templates = {
+    fallback,
     pets,
     selectedBreedType
   };
@@ -4399,7 +4913,7 @@ module.exports = QuickLRU;
   });
 
   function init() {
-    api.createJob().then(() => {});
+    api.createJob({}).then(() => {});
     flowManager.init();
     renderNext();
   }
@@ -4423,29 +4937,40 @@ module.exports = QuickLRU;
     const template = templates[key];
 
     if (!template) {
-      console.error(`template for ${key} not found`); //TODO: draw fallback page
-
-      return;
+      console.error(`template for ${key} not found`);
+      return render(templates.fallback(), app);
     }
 
-    if (meta.inputMethod === 'selectOne' && meta.sourceOutputKey != null) {
+    console.log('meta', meta);
+
+    if (meta.inputMethod === 'SelectOne' && meta.sourceOutputKey != null) {
       //check job state and see if it's awaitingInput && key = selectedBreedType
-      api.waitForJobOutput(meta.sourceOutputKey, output => {
+      console.log(`waiting for job output ${meta.sourceOutputKey}`); //TODO: we should show something while waiting.
+
+      api.waitForJobOutput(meta.sourceOutputKey, (err, output) => {
+        if (err) {
+          //draw Aw Snaps!
+          render(templates.fallback(err), app);
+          return;
+        }
+
         render(template(output.data), app);
         addSubmitter(key);
       });
     } else {
-      render(template, app);
+      render(template(), app);
       addSubmitter(key);
     }
   }
 
   function addSubmitter(key) {
     /* this bits need to be automated, per input keys */
-    const form = document.querySelector('#' + key);
-    const submit = document.querySelector('#create-input-' + key);
+    const kebabKey = kebabCase(key);
+    const form = document.querySelector('#' + kebabKey);
+    const submit = document.querySelector('#create-input-' + kebabKey);
 
     if (!form || !submit) {
+      console.error('form or submit button not found. check your name convention for the forms');
       return;
     }
 
@@ -4457,7 +4982,7 @@ module.exports = QuickLRU;
 
       const input = serialize(form); // send input or create job via sdk
 
-      api.createInput(input).then(r => {
+      api.createJobInput(input).then(r => {
         setTimeout(next, 1000);
       }).catch(e => alert(e));
     });
@@ -4481,4 +5006,4 @@ module.exports = QuickLRU;
 });
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":2,"camelcase-keys":3,"form-serialize":5,"node-fetch":8}]},{},[10]);
+},{"buffer":2,"camelcase-keys":3,"form-serialize":5,"lodash.kebabcase":7,"node-fetch":9}]},{},[11]);

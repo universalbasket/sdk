@@ -13,7 +13,7 @@ export default {
     waitForJobOutput
 }
 
-async function createJob({ input, category = 'test' }) {
+async function createJob({ input = {}, category = 'test' }) {
     const url = 'https://pet.morethan.com/h5/pet/step-1?path=%2FquoteAndBuy.do%3Fe%3De1s1%26curPage%3DcaptureDetails';
     input = { url, ...input };
 
@@ -32,51 +32,72 @@ async function createJob({ input, category = 'test' }) {
     localStorage.setItem('jobId', job.id);
 }
 
-async function waitForJobOutput(key, callback) {
-    return await clientSdk.trackJob(jobId, (event) => {
-        if (event.name !== 'createOutput') {
-            return;
-        }
+function waitForJobOutput(outputKey, callback) {
+    /*
+        1. Get Job and fnd given outputKey from job.outputs
+         -> get output
+        2. If not available, trackJob until it does CreateOutputEvent
+        3. repeat 1-2 until the key exist.
+    */
 
-        clientSdk.getJob(jobId)
-            .then(job => {
-                const output = job.outputs.find(jo => jo.key === key);
-                if (!output) {
-                    throw new Error('OutputNotAvailable');
-                }
+    awaitingJobOutput()
+        .then(() => clientSdk.getJobOutputs(jobId, outputKey))
+        .then(output => callback(null, output))
+        .catch(err => {
+            console.error(err);
+            return callback(err, null);
+        });
 
-                // RecordNotFoundError
-                //return getJobOutput(key);
-                return;
-            })
-            .then(output => {
-                //callback([output]);
-                callback(['small', 'medium']); //test
-            })
-            .catch(e => console.log(e));
 
-    });
+
+    function awaitingJobOutput() {
+        let exist = false;
+
+        return new Promise(resolve => {
+            function repeat() {
+                jobOutputExists(outputKey)
+                    .then(res => exist = res)
+                    .then(() => {
+                        if (!exist) {
+                            return awaitingCreateOutputEvent();
+                        }
+                    })
+                    .then(res => {
+                        if (!exist) {
+                            return repeat();
+                        }
+                        return resolve();
+                    });
+            }
+
+            repeat();
+        })
+
+    }
+
+    async function jobOutputExists(outputKey) {
+        const job = await clientSdk.getJob(jobId);
+        const output =job.outputs.find(jo => jo.key === outputKey);
+
+        return Boolean(output);
+    }
 }
 
+function awaitingCreateOutputEvent() {
+    return new Promise(resolve => {
+        const stopTracking = clientSdk.trackJob(jobId, (event) => {
+            console.log(`event ${event.name}!`);
+            if (event.name === 'createOutput') {
+                stopTracking();
+                resolve();
+            }
+        });
+    });
+}
 
 async function createJobInput(input) {
     const [key] = Object.keys(input);
     const data = input[key];
 
-    return await clientSdk.createJobInput(jobId, key, data);
-}
-
-async function getJobOutput(key) {
-    const outputs = await clientSdk.getJobOutputs(jobId, key);
-    let latest = outputs.shift();
-
-    return latest || null;
-}
-
-async function getPreviousJobOutput(jobId, input) {
-    // TODO: need to store inputs history and use it for preciousJotOutput
-    const outputs = await clientSdk.getPreviousJobOutputs(jobId, [input]); //only one input for now
-    let latest = outputs.shift();
-
-    return latest || null;
+    return await clientSdk.createJobInput(jobId, data, key);
 }

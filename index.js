@@ -1,8 +1,9 @@
 'use strict';
 
+import kebabCase from 'lodash.kebabcase';
 import { render } from './node_modules/lit-html/lit-html.js';
 import FlowManager from './src/flow-manager';
-import serialize from './src/serializer';
+import serializeForm from './src/serialize-form';
 import api from './src/core';
 
 /* templates */
@@ -28,7 +29,7 @@ document.querySelector('#init').addEventListener('click', () => {
 });
 
 function init() {
-    api.createJob().then(() => {});
+    api.createJob({}).then(() => {});
 
     flowManager.init();
     renderNext();
@@ -44,49 +45,59 @@ function renderNext() {
     const meta = flowManager.getMeta(key);
 
     if (!meta) {
-        console.error('please check your meta');
+        console.error('please check your metadata');
         return;
     }
 
     /* waiting for output, if not - query to previous output */
     const template = templates[key];
     if (!template) {
-        console.error(`template for ${key} not found`);
-        //TODO: draw fallback page
-        return;
+        return render(templates.fallback(`template for ${key} not found`), app);
     }
 
-    if (meta.inputMethod === 'selectOne' && meta.sourceOutputKey != null) {
+    if ((meta.inputMethod === 'SelectOne' || meta.inputMethod === 'Consent' ) && meta.sourceOutputKey != null) {
         //check job state and see if it's awaitingInput && key = selectedBreedType
-        api.waitForJobOutput(meta.sourceOutputKey, (output) => {
+        console.log(`waiting for job output ${meta.sourceOutputKey}`);
+
+        //TODO: we should show something while waiting.
+        api.waitForJobOutput(meta.sourceOutputKey, (err, output) => {
+            if (err) {
+                render(templates.fallback(err), app);
+                return;
+            }
+
             render(template(output.data), app);
-            addSubmitter(key);
         });
     } else {
-        render(template, app);
-        addSubmitter(key);
+        render(template(), app);
     }
+
+    addSubmitter(key);
 }
 
 function addSubmitter(key) {
     /* this bits need to be automated, per input keys */
-    const form = document.querySelector('#' + key);
-    const submit = document.querySelector('#create-input-' + key);
+    const formId = kebabCase(key);
+    const form = document.querySelector('#' + formId);
+    const submit = document.querySelector('#create-input-' + formId);
 
     if (!form || !submit) {
+        console.error('form or submit button not found. check your name convention for the forms');
         return;
     }
 
-    submit.addEventListener('click', function () {
+    submit.addEventListener('click', function ($event) {
         // TODO: validate the input (using protocol?)
+        $event.preventDefault();
         if(!form.reportValidity()) {
             return;
         }
 
-        const input = serialize(form);
+        const input = serializeForm(form);
         // send input or create job via sdk
-        api.createInput(input)
+        api.createJobInput(input)
             .then(r => {
+                submit.setAttribute('disabled', 'true');
                 setTimeout(next, 1000);
             })
             .catch(e => alert(e));

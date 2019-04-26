@@ -19,6 +19,7 @@
     "camelcase-keys": "^5.2.0",
     "form-serialize": "^0.7.2",
     "lit-html": "^1.0.0",
+    "lodash.kebabcase": "^4.1.1",
     "node-fetch": "^2.3.0"
   },
   "devDependencies": {

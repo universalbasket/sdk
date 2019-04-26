@@ -1,20 +1,25 @@
-const formSerializer = require('form-serialize');
-const camelCaseKeys = require('camelcase-keys');
+import formSerialize from 'form-serialize';
+import camelCaseKeys from 'camelcase-keys';
 
 /**
- *
  * @param {HTMLFormElement} form
  * @return {Object}
  */
-export default function serialize(form) {
-    const obj = formSerializer(form, { empty: true, serializer });
-    return camelCaseKeys(obj, { deep: true });
+export default function serializeForm(form) {
+    const serialized = formSerialize(form, { empty: true, serializer: hash_serializer });
+
+    return camelCaseKeys(serialized, { deep: true });
 }
 
-// Matches bracket notation.
+/**
+ *
+ * Below is copied over from form-serialize(https://github.com/defunctzombie/form-serialize) with customization:
+ * Added `-$number`, `-$boolean` convention in the name, parse these value with specified data type, and remove the identifier
+ */
+
 var brackets = /(\[[^\[\]]*\])/g;
 
-const serializer = function customSerializer(result, key, value) {
+function hash_serializer(result, key, value) {
     var matches = key.match(brackets);
 
     // Has brackets? Use the recursive assignment function to walk the keys,
@@ -73,7 +78,6 @@ function hash_assign(result, keys, value) {
     }
 
     var key = keys.shift();
-    console.log('key', key);
     if (key.includes('-$number')) {
         key = key.replace('-$number', '');
         const num = Number.parseInt(value);
