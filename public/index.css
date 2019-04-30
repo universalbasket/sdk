@@ -1,0 +1,94 @@
+* {
+    font-family: 'Libre Franklin', sans-serif;
+    margin: 0;
+}
+
+
+header {
+    background-color: #1C2936;
+    color: white;
+    padding: 10px;
+    position: -webkit-sticky;
+    position: sticky;
+    top: 0;
+}
+
+label {
+    display: block;
+}
+
+.summary {
+    background-color: #D3E0ED;
+    padding: 15px 10px;
+    position: -webkit-sticky;
+    position: sticky;
+    top: 39px;
+}
+
+.flow-header {
+    margin-top: 5px;
+    padding: 10px;
+    background-color: #445A70;
+    color: white;
+}
+
+.dimmed {
+    color: #919191;
+}
+
+.field {
+    margin: 5px;
+}
+
+.field-label {
+    display: inline-block;
+    border: solid 1px #445A70;
+}
+.field-label>input[type="radio"] {
+    display: none;
+}
+
+input[type="radio"]:checked+label {
+    font-weight: bold;
+    background: #445A70;
+}
+
+.group {
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
+}
+
+.group--merged {
+    flex-wrap: nowrap;
+    align-items: stretch;
+    white-space: nowrap;
+    border-radius: 5px;
+}
+
+.button {
+    border-radius: 4px;
+    padding: 2px 5px;
+    border-color: #445A70;
+    border: 2px solid #445A70;
+}
+
+input[type="radio"]:checked + label{
+    color: red;
+}
+
+.button:hover {
+    cursor: pointer;
+}
+
+
+.group--merged > *:not(:last-child) {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.group--merged > * + * {
+    margin-left: -1px;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}

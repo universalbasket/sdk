@@ -24,9 +24,10 @@ const FLOW = [
 const flowManager = new FlowManager(FLOW);
 const app = document.querySelector('#app');
 
-document.querySelector('#init').addEventListener('click', () => {
+init();
+/* document.querySelector('#init').addEventListener('click', () => {
     init();
-});
+}); */
 
 function init() {
     api.createJob({}).then(() => {});
@@ -59,6 +60,7 @@ function renderNext() {
         //check job state and see if it's awaitingInput && key = selectedBreedType
         console.log(`waiting for job output ${meta.sourceOutputKey}`);
 
+        render(templates.loading(), app);
         //TODO: we should show something while waiting.
         api.waitForJobOutput(meta.sourceOutputKey, (err, output) => {
             if (err) {
@@ -67,12 +69,12 @@ function renderNext() {
             }
 
             render(template(output.data), app);
+            addSubmitter(key);
         });
     } else {
         render(template(), app);
+        addSubmitter(key);
     }
-
-    addSubmitter(key);
 }
 
 function addSubmitter(key) {
@@ -94,6 +96,7 @@ function addSubmitter(key) {
         }
 
         const input = serializeForm(form);
+        console.log('input:', input);
         // send input or create job via sdk
         api.createJobInput(input)
             .then(r => {

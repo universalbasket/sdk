@@ -3036,11 +3036,13 @@ module.exports = QuickLRU;
 },{}],11:[function(require,module,exports){
 (function (Buffer){
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? factory(require('lodash.kebabcase')) : typeof define === 'function' && define.amd ? define(['lodash.kebabcase'], factory) : (global = global || self, factory(global.kebabCase));
-})(this, function (kebabCase) {
+  typeof exports === 'object' && typeof module !== 'undefined' ? factory(require('lodash.kebabcase'), require('form-serialize'), require('camelcase-keys')) : typeof define === 'function' && define.amd ? define(['lodash.kebabcase', 'form-serialize', 'camelcase-keys'], factory) : (global = global || self, factory(global.kebabCase, global.formSerialize, global.camelCaseKeys));
+})(this, function (kebabCase, formSerialize, camelCaseKeys) {
   'use strict';
 
   kebabCase = kebabCase && kebabCase.hasOwnProperty('default') ? kebabCase['default'] : kebabCase;
+  formSerialize = formSerialize && formSerialize.hasOwnProperty('default') ? formSerialize['default'] : formSerialize;
+  camelCaseKeys = camelCaseKeys && camelCaseKeys.hasOwnProperty('default') ? camelCaseKeys['default'] : camelCaseKeys;
   /**
    * @license
    * Copyright (c) 2017 The Polymer Project Authors. All rights reserved.
@@ -4257,31 +4259,31 @@ module.exports = QuickLRU;
     }
 
   }
-
-  const formSerializer = require('form-serialize');
-
-  const camelCaseKeys = require('camelcase-keys');
   /**
-   *
    * @param {HTMLFormElement} form
    * @return {Object}
    */
 
 
-  function serialize(form) {
-    const obj = formSerializer(form, {
+  function serializeForm(form) {
+    const serialized = formSerialize(form, {
       empty: true,
-      serializer
+      serializer: hash_serializer
     });
-    return camelCaseKeys(obj, {
+    return camelCaseKeys(serialized, {
       deep: true
     });
-  } // Matches bracket notation.
+  }
+  /**
+   *
+   * Below is copied over from form-serialize(https://github.com/defunctzombie/form-serialize) with customization:
+   * Added `-$number`, `-$boolean` convention in the name, parse these value with specified data type, and remove the identifier
+   */
 
 
   var brackets = /(\[[^\[\]]*\])/g;
 
-  const serializer = function customSerializer(result, key, value) {
+  function hash_serializer(result, key, value) {
     var matches = key.match(brackets); // Has brackets? Use the recursive assignment function to walk the keys,
     // construct any missing objects in the result tree and make the assignment
     // at the end of the chain.
@@ -4310,7 +4312,7 @@ module.exports = QuickLRU;
     }
 
     return result;
-  };
+  }
 
   function parse_keys(string) {
     var keys = [];
@@ -4697,42 +4699,40 @@ module.exports = QuickLRU;
         2. If not available, trackJob until it does CreateOutputEvent
         3. repeat 1-2 until the key exist.
     */
-    repeat().then(() => clientSdk.getJobOutputs(jobId, outputKey)).then(output => callback(null, output)).catch(err => {
+    awaitingJobOutput().then(() => clientSdk.getJobOutputs(jobId, outputKey)).then(output => callback(null, output)).catch(err => {
       console.error(err);
       return callback(err, null);
     });
 
-    function repeat() {
+    function awaitingJobOutput() {
       let exist = false;
       return new Promise(resolve => {
-        loop();
-
-        function loop() {
-          console.log('repeating...');
+        function repeat() {
           jobOutputExists(outputKey).then(res => exist = res).then(() => {
             if (!exist) {
-              return awaitCreateOutputEvent();
+              return awaitingCreateOutputEvent();
             }
           }).then(res => {
             if (!exist) {
-              return loop();
+              return repeat();
             }
 
             return resolve();
           });
         }
+
+        repeat();
       });
     }
 
     async function jobOutputExists(outputKey) {
       const job = await clientSdk.getJob(jobId);
       const output = job.outputs.find(jo => jo.key === outputKey);
-      console.log('getJob.output', output);
       return Boolean(output);
     }
   }
 
-  function awaitCreateOutputEvent() {
+  function awaitingCreateOutputEvent() {
     return new Promise(resolve => {
       const stopTracking = clientSdk.trackJob(jobId, event => {
         console.log(`event ${event.name}!`);
@@ -4744,40 +4744,6 @@ module.exports = QuickLRU;
       });
     });
   }
-  /*
-      async function jobOutputExists(outputKey) {
-          const job = await clientSdk.getJob(jobId);
-          const output =job.outputs.find(jo => jo.key === outputKey);
-           return Boolean(output);
-      }
-       async function awaitCreateOutputEvent() {
-          return new Promise(resolve => {
-              const stopTracking = clientSdk.trackJob(jobId, (event) => {
-                  console.log(`event ${event.name}!`);
-                  if (event.name === 'createOutput') {
-                      afterOutputCreate();
-                  }
-              });
-               function afterOutputCreate() {
-                  stopTracking();
-                  resolve();
-              }
-          });
-      }
-       function run() {
-          return jobOutputExists()
-              .then(exist => {
-                  if (!exist) {
-                      return awaitCreateOutputEvent();
-                  }
-              })
-              .then(() => {
-                  run();
-              });
-      }
-   }
-   */
-
 
   async function createJobInput(input) {
     const [key] = Object.keys(input);
@@ -4794,56 +4760,105 @@ module.exports = QuickLRU;
 </div>
 `;
 
+  var loading = msg => html`
+<div class="loading">
+    <h2 id="loading-message">
+        We are processing your request...
+    </h2>
+    <pre>${msg}</pre>
+</div>
+`;
+
+  const headerString = 'About your pet';
+
   var pets = () => html`
 <div class="job-input">
-    <form id="pets">Pets
+    <div class="flow-header">
+        <span>${headerString}</span>
+    </div>
+    <form id="pets">
         <div class="pet" name="pets[0]">
-            <label for="pets[0][pet-name]">Name</label>
-            <input type="string" name="pets[0][pet-name]" placeholder="Rex" value="Rex" required/>
+            <div class="field">
+                <label for="pets[0][pet-name]">Name</label>
+                <input type="string" name="pets[0][pet-name]" placeholder="Rex" value="Rex" required/>
+            </div>
 
-            <label for="pets[0][pet-type]">Type
-                <input type="radio" name="pets[0][pet-type]" value="dog" checked>Dog
-                <input type="radio" name="pets[0][pet-type]" value="cat">Cat
-            </label>
+            <div class="field">
+                <label class="field-name">Pet type</label>
+                <div class="group group--merged">
+                    <label for="pets-dog" class="field-label button">
+                        <input
+                            type="radio"
+                            name="pets[0][pet-type]"
+                            id="pets-dog"
+                            value="dog" />Dog
+                    </label>
+                    <label for="pets[0][pet-type]" class="field-label button">
+                        <input
+                            type="radio"
+                            name="pets[0][pet-type]"
+                            id="pets[0][pet-type]-cat"
+                            value="cat" />Cat
+                    </label>
+                </div>
+            </div>
 
+            <div class="field">
+                <label for="pets[0][pet-gender]-female">Gender</label>
+                <input type="radio" name="pets[0][pet-gender]" value="male" required checked id="pets[0][pet-gender]-male">Male
+                <input type="radio" name="pets[0][pet-gender]" id="pets[0][pet-gender]-female" value="female">Female
 
-            <label for="pets[0][pet-gender]">Gender</label>
-            <input type="radio" name="pets[0][pet-gender]" value="male" required checked>Male
-            <input type="radio" name="pets[0][pet-gender]" value="female">Female
+            <div class="field">
+                <label for="pets[0][breed-name]">Breed Name</label>
+                <input type="string" name="pets[0][breed-name]" value="Maltese" required>
+            </div>
 
-            <label for="pets[0][breed-name]">Breed Name</label>
-            <input type="string" name="pets[0][breed-name]" value="Maltese" required>
+            <div class="field">
+                <label for="pets[0][pet-date-of-birth]">Date Of Birth</label>
+                <input type="date" name="pets[0][date-of-birth]" value="2019-04-02" required>
+            </div>
 
-            <label for="pets[0][pet-date-of-birth]">Date Of Birth</label>
-            <input type="date" name="pets[0][date-of-birth]" value="2019-04-02" required>
-
-            <label for="pets[0][pet-price]">How much did you pay or donate</label>
-            <input type="number" name="pets[0][pet-price]" value="0">
+            <div class="field">
+                <label for="pets[0][pet-price]">How much did you pay or donate</label>
+                <input type="number" name="pets[0][pet-price]" value="0">
+            </div>
 
             <div class="pet-related-questions">
-                <label for="pets[0][related-questions][is-spayed-or-neutered]">Is your pet spayed or neutered?</label>
-                <input type="radio" name="pets[0][related-questions][is-spayed-or-neutered-$boolean]" value="true" required checked> Yes
-                <input type="radio" name="pets[0][related-questions][is-spayed-or-neutered-$boolean]" value="false"> No
+                <div class="field">
+                    <label for="pets[0][related-questions][is-spayed-or-neutered]">Is your pet spayed or neutered?</label>
+                    <input type="radio" name="pets[0][related-questions][is-spayed-or-neutered-$boolean]" value="true" required checked> Yes
+                    <input type="radio" name="pets[0][related-questions][is-spayed-or-neutered-$boolean]" value="false"> No
+                </div>
 
-                <label for="pets[0][related-questions][has-chip-or-tag]">Does your pet have chip or tag?</label>
-                <input type="radio" name="pets[0][related-questions][has-chip-or-tag-$boolean]" value="true" required checked> Yes
-                <input type="radio" name="pets[0][related-questions][has-chip-or-tag-$boolean]" value="false"> No
+                <div class="field">
+                    <label for="pets[0][related-questions][has-chip-or-tag]">Does your pet have chip or tag?</label>
+                    <input type="radio" name="pets[0][related-questions][has-chip-or-tag-$boolean]" value="true" required checked> Yes
+                    <input type="radio" name="pets[0][related-questions][has-chip-or-tag-$boolean]" value="false"> No
+                </div>
 
-                <label for="pets[0][related-questions][is-kept-at-your-address]">Is your pet kept at your address?</label>
-                <input type="radio" name="pets[0][related-questions][is-kept-at-your-address-$boolean]" value="true" required checked> Yes
-                <input type="radio" name="pets[0][related-questions][is-kept-at-your-address-$boolean]" value="false"> No
+                <div class="field">
+                    <label for="pets[0][related-questions][is-kept-at-your-address]">Is your pet kept at your address?</label>
+                    <input type="radio" name="pets[0][related-questions][is-kept-at-your-address-$boolean]" value="true" required checked> Yes
+                    <input type="radio" name="pets[0][related-questions][is-kept-at-your-address-$boolean]" value="false"> No
+                </div>
 
-                <label for="pets[0][related-questions][any-behaviour-complains]">Has your pet had any behaviour complains?</label>
-                <input type="radio" name="pets[0][related-questions][any-behaviour-complains-$boolean]" value="true" required checked> Yes
-                <input type="radio" name="pets[0][related-questions][any-behaviour-complains-$boolean]" value="false"> No
+                <div class="field">
+                    <label for="pets[0][related-questions][any-behaviour-complains]">Has your pet had any behaviour complains?</label>
+                    <input type="radio" name="pets[0][related-questions][any-behaviour-complains-$boolean]" value="true" required checked> Yes
+                    <input type="radio" name="pets[0][related-questions][any-behaviour-complains-$boolean]" value="false"> No
+                </div>
 
-                <label for="pets[0][related-questions][indoor-pet]">Is your pet kept indoor?</label>
-                <input type="radio" name="pets[0][related-questions][indoor-pet-$boolean]" value="true" required checked> Yes
-                <input type="radio" name="pets[0][related-questions][indoor-pet-$boolean]" value="false"> No
+                <div class="field">
+                    <label for="pets[0][related-questions][indoor-pet]">Is your pet kept indoor?</label>
+                    <input type="radio" name="pets[0][related-questions][indoor-pet-$boolean]" value="true" required checked> Yes
+                    <input type="radio" name="pets[0][related-questions][indoor-pet-$boolean]" value="false"> No
+                </div>
 
-                <label for="pets[0][related-questions][is-your-pet-healthy]">Is your pet healthy? </label>
-                <input type="radio" name="pets[0][related-questions][is-your-pet-healthy-$boolean]" value="true" required checked> Yes
-                <input type="radio" name="pets[0][related-questions][is-your-pet-healthy-$boolean]" value="false"> No
+                <div class="field">
+                    <label for="pets[0][related-questions][is-your-pet-healthy]">Is your pet healthy? </label>
+                    <input type="radio" name="pets[0][related-questions][is-your-pet-healthy-$boolean]" value="true" required checked> Yes
+                    <input type="radio" name="pets[0][related-questions][is-your-pet-healthy-$boolean]" value="false"> No
+                </div>
             </div>
         </div>
     </form>
@@ -4863,9 +4878,12 @@ module.exports = QuickLRU;
     <button type="button" id="create-input-selected-breed-type">Create Input</button>
 </div>
 `;
+  /** Global */
+
 
   var templates = {
     fallback,
+    loading,
     pets,
     selectedBreedType
   };
@@ -4908,9 +4926,10 @@ module.exports = QuickLRU;
   }];
   const flowManager = new FlowManager(FLOW);
   const app = document.querySelector('#app');
-  document.querySelector('#init').addEventListener('click', () => {
-    init();
-  });
+  init();
+  /* document.querySelector('#init').addEventListener('click', () => {
+      init();
+  }); */
 
   function init() {
     api.createJob({}).then(() => {});
@@ -4928,7 +4947,7 @@ module.exports = QuickLRU;
     const meta = flowManager.getMeta(key);
 
     if (!meta) {
-      console.error('please check your meta');
+      console.error('please check your metadata');
       return;
     }
     /* waiting for output, if not - query to previous output */
@@ -4937,19 +4956,16 @@ module.exports = QuickLRU;
     const template = templates[key];
 
     if (!template) {
-      console.error(`template for ${key} not found`);
-      return render(templates.fallback(), app);
+      return render(templates.fallback(`template for ${key} not found`), app);
     }
 
-    console.log('meta', meta);
-
-    if (meta.inputMethod === 'SelectOne' && meta.sourceOutputKey != null) {
+    if ((meta.inputMethod === 'SelectOne' || meta.inputMethod === 'Consent') && meta.sourceOutputKey != null) {
       //check job state and see if it's awaitingInput && key = selectedBreedType
-      console.log(`waiting for job output ${meta.sourceOutputKey}`); //TODO: we should show something while waiting.
+      console.log(`waiting for job output ${meta.sourceOutputKey}`);
+      render(templates.loading(), app); //TODO: we should show something while waiting.
 
       api.waitForJobOutput(meta.sourceOutputKey, (err, output) => {
         if (err) {
-          //draw Aw Snaps!
           render(templates.fallback(err), app);
           return;
         }
@@ -4965,24 +4981,28 @@ module.exports = QuickLRU;
 
   function addSubmitter(key) {
     /* this bits need to be automated, per input keys */
-    const kebabKey = kebabCase(key);
-    const form = document.querySelector('#' + kebabKey);
-    const submit = document.querySelector('#create-input-' + kebabKey);
+    const formId = kebabCase(key);
+    const form = document.querySelector('#' + formId);
+    const submit = document.querySelector('#create-input-' + formId);
 
     if (!form || !submit) {
       console.error('form or submit button not found. check your name convention for the forms');
       return;
     }
 
-    submit.addEventListener('click', function () {
+    submit.addEventListener('click', function ($event) {
       // TODO: validate the input (using protocol?)
+      $event.preventDefault();
+
       if (!form.reportValidity()) {
         return;
       }
 
-      const input = serialize(form); // send input or create job via sdk
+      const input = serializeForm(form);
+      console.log('input:', input); // send input or create job via sdk
 
       api.createJobInput(input).then(r => {
+        submit.setAttribute('disabled', 'true');
         setTimeout(next, 1000);
       }).catch(e => alert(e));
     });
