@@ -95,6 +95,8 @@ function addSubmitter(key) {
             return;
         }
 
+        // Partner can send input data to their server for logging if they prefer,
+        // in prototyping we are sending the input directly to api using sdk.
         const input = serializeForm(form);
         console.log('input:', input);
         // send input or create job via sdk

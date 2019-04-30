@@ -4784,23 +4784,21 @@ module.exports = QuickLRU;
             </div>
 
             <div class="field">
-                <label class="field-name">Pet type</label>
-                <div class="group group--merged">
-                    <label for="pets-dog" class="field-label button">
-                        <input
-                            type="radio"
-                            name="pets[0][pet-type]"
-                            id="pets-dog"
-                            value="dog" />Dog
-                    </label>
-                    <label for="pets[0][pet-type]" class="field-label button">
-                        <input
-                            type="radio"
-                            name="pets[0][pet-type]"
-                            id="pets[0][pet-type]-cat"
-                            value="cat" />Cat
-                    </label>
-                </div>
+                <p class="field-name">Pet type</p>
+                <label for="pets[0][pet-type]-dog" class="field-label">
+                    <input
+                        type="radio"
+                        name="pets[0][pet-type]"
+                        id="pets[0][pet-type]-dog"
+                        value="dog" checked/>Dog
+                </label>
+                <label for="pets[0][pet-type]-cat" class="field-label">
+                    <input
+                        type="radio"
+                        name="pets[0][pet-type]"
+                        id="pets[0][pet-type]-cat"
+                        value="cat" />Cat
+                </label>
             </div>
 
             <div class="field">
@@ -4873,9 +4871,23 @@ module.exports = QuickLRU;
     <form id="selected-breed-type">
         <h3>What is your pet's breed?</h3>
         <label for="selected-breed-type"></label>
-        ${breedTypes.map(b => html`<input type="radio" name="selected-breed-type" value="${b}"/> ${b}`)}
+        ${breedTypes.map(b => html`<label for="selected-breed-type"><input type="radio" name="selected-breed-type" value="${b}"/> ${b}</label>`)}
     </form>
     <button type="button" id="create-input-selected-breed-type">Create Input</button>
+</div>
+`;
+
+  var owner = () => html`
+<div class="job-input">
+    <div class="section-header">
+        <span>About you</span>
+    </div>
+    <form id="pets">
+        <p>Forms for owner appears here.</p>
+    </form>
+
+    <!-- <button type="button" id="">Add pet</button> -->
+    <button type="button" id="create-input-owner">Create Input</button>
 </div>
 `;
   /** Global */
@@ -4885,7 +4897,8 @@ module.exports = QuickLRU;
     fallback,
     loading,
     pets,
-    selectedBreedType
+    selectedBreedType,
+    owner
   };
   /* flow of the forms, key = input key (for now) */
 

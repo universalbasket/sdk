@@ -14,23 +14,21 @@ export default () => html`
             </div>
 
             <div class="field">
-                <label class="field-name">Pet type</label>
-                <div class="group group--merged">
-                    <label for="pets[0][pet-type]-dog" class="field-label button">
-                        <input
-                            type="radio"
-                            name="pets[0][pet-type]"
-                            id="pets[0][pet-type]-dog"
-                            value="dog" />Dog
-                    </label>
-                    <label for="pets[0][pet-type]" class="field-label button">
-                        <input
-                            type="radio"
-                            name="pets[0][pet-type]"
-                            id="pets[0][pet-type]-cat"
-                            value="cat" />Cat
-                    </label>
-                </div>
+                <p class="field-name">Pet type</p>
+                <label for="pets[0][pet-type]-dog" class="field-label">
+                    <input
+                        type="radio"
+                        name="pets[0][pet-type]"
+                        id="pets[0][pet-type]-dog"
+                        value="dog" checked/>Dog
+                </label>
+                <label for="pets[0][pet-type]-cat" class="field-label">
+                    <input
+                        type="radio"
+                        name="pets[0][pet-type]"
+                        id="pets[0][pet-type]-cat"
+                        value="cat" />Cat
+                </label>
             </div>
 
             <div class="field">
