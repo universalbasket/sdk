@@ -10,18 +10,43 @@ import api from './src/core';
 import templates from './templates/index';
 
 /* flow of the forms, key = input key (for now) */
-const FLOW = [
-    { key: 'pets', type: 'default' },
-    { key: 'selectedBreedType', inputMethod: "SelectOne", sourceOutputKey: 'availableBreedTypes' },/* in-flow, availableBreedTypes */
-    { key: 'owner', type: 'default' },
-    { key: 'account', type: 'default' },
-    { key: 'selectedMaritalStatusOption', inputMethod: "SelectOne",  sourceOutputKey: 'availableMaritalStatusOptions' },/* in-flow, availableMaritalStatusOptions */
-    { key: 'selectedAddress', inputMethod: "SelectOne",  sourceOutputKey: 'availableAddresses' }, /* in-flow, availableAddresses */
-    { key: 'finalPriceConsent', inputMethod: "Consent", sourceOutputKey: "finalPrice" } /* consent */
-    //...
+/* const FLOW = [
+    { key: 'pets', inputMethod: null, sourceOutputKey: null },
+    { key: 'selectedBreedType', inputMethod: "SelectOne", sourceOutputKey: 'availableBreedTypes' },
+    { key: 'owner', inputMethod: null, sourceOutputKey: null, section: 'About you' },
+    { key: 'account', inputMethod: null, sourceOutputKey: null, section: 'About you' },
+    { key: 'selectedMaritalStatusOption', inputMethod: "SelectOne",  sourceOutputKey: 'availableMaritalStatusOptions' },
+    { key: 'selectedAddress', inputMethod: "SelectOne",  sourceOutputKey: 'availableAddresses' },
+    { key: 'finalPriceConsent', inputMethod: "Consent", sourceOutputKey: "finalPrice" }
+];
+*/
+
+const SECTIONS = [
+    {
+        name: 'aboutYourPet',
+        inputs: [
+            { key: 'pets', inputMethod: null, sourceOutputKey: null },
+            { key: 'selectedBreedType', inputMethod: "SelectOne", sourceOutputKey: 'availableBreedTypes' }
+        ]
+    },
+    {
+        name: 'aboutYou',
+        inputs: [
+            { key: 'owner', inputMethod: null, sourceOutputKey: null },
+            { key: 'selectedMaritalStatusOption', inputMethod: "SelectOne",  sourceOutputKey: 'availableMaritalStatusOptions' },/* in-flow, availableMaritalStatusOptions */
+            { key: 'selectedAddress', inputMethod: "SelectOne",  sourceOutputKey: 'availableAddresses' }, /* in-flow, availableAddresses */
+        ]
+    },
+    {
+        name: 'payment',
+        inputs: [
+            { key: 'payment', inputMethod: null, sourceOutputKey: null },
+            { key: 'finalPriceConsent', inputMethod: "Consent", sourceOutputKey: "finalPrice" }
+        ]
+    }
 ];
 
-const flowManager = new FlowManager(FLOW);
+const flowManager = new FlowManager(SECTIONS);
 const app = document.querySelector('#app');
 
 init();
@@ -30,18 +55,28 @@ init();
 }); */
 
 function init() {
-    api.createJob({}).then(() => {});
+    //api.createJob({}).then(() => {});
 
     flowManager.init();
-    renderNext();
+    renderSection();
 }
 
 function next() {
     flowManager.next();
-    renderNext();
+    renderSection();
 }
 
-function renderNext() {
+function renderSection() {
+    const section = flowManager.getCurrentSection();
+    const template = templates[section];
+    if (!template) {
+        return render(templates.fallback(`template for ${section} not found`), app);
+    }
+    render(template(), app);
+    addSubmitter(section);
+}
+
+function renderNextInput() {
     const key = flowManager.getCurrentKey();
     const meta = flowManager.getMeta(key);
 
@@ -77,11 +112,12 @@ function renderNext() {
     }
 }
 
-function addSubmitter(key) {
+function addSubmitter(section) {
     /* this bits need to be automated, per input keys */
-    const formId = kebabCase(key);
+    const formId = kebabCase(section);
+
     const form = document.querySelector('#' + formId);
-    const submit = document.querySelector('#create-input-' + formId);
+    const submit = document.querySelector('#submit-' + formId);
 
     if (!form || !submit) {
         console.error('form or submit button not found. check your name convention for the forms');
@@ -97,10 +133,11 @@ function addSubmitter(key) {
 
         // Partner can send input data to their server for logging if they prefer,
         // in prototyping we are sending the input directly to api using sdk.
+        //TODO: update it to accept several inputs and send each of them separately
         const input = serializeForm(form);
-        console.log('input:', input);
+        console.log('inputs:', input);
         // send input or create job via sdk
-        api.createJobInput(input)
+        api.createJobInputs(input)
             .then(r => {
                 submit.setAttribute('disabled', 'true');
                 setTimeout(next, 1000);

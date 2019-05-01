@@ -9,7 +9,7 @@ let jobId = localStorage.getItem('jobId') || null;
 
 export default {
     createJob,
-    createJobInput,
+    createJobInputs,
     waitForJobOutput
 }
 
@@ -95,9 +95,10 @@ function awaitingCreateOutputEvent() {
     });
 }
 
-async function createJobInput(input) {
-    const [key] = Object.keys(input);
-    const data = input[key];
-
-    return await clientSdk.createJobInput(jobId, data, key);
+async function createJobInputs(inputs) {
+    const keys = Object.keys(inputs);
+    keys.forEach(key => {
+        const data = inputs[key];
+        clientSdk.createJobInput(jobId, data, key).then(() => {}).catch(err => console.error(err));
+    });
 }

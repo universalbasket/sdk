@@ -2,14 +2,14 @@
 
 export default class FlowManager {
     constructor(meta) {
-        this.steps = meta.map(f => f.key);
+        this.sections = meta.map(f => f.name);
         this.meta = meta;
-        this.currentKey = null;
+        this.currentSection = null;
         this.history = [];
     }
 
     init() {
-        if (!Array.isArray(this.steps)) {
+        if (!Array.isArray(this.sections)) {
             console.error('Invalid Flow is given');
             throw new Error('Invalid Flow is given');
         }
@@ -18,13 +18,13 @@ export default class FlowManager {
     }
 
     next() {
-        const next = this.steps.shift();
+        const next = this.sections.shift();
 
         if (!next) {
             return null;
         }
 
-        this.currentKey = next;
+        this.currentSection = next;
         this.history.push(next);
     }
 
@@ -33,20 +33,19 @@ export default class FlowManager {
             return null;
         }
 
-        const currentKeyIdx = this.history.indexOf(this.currentKey);
-        const previous = this.history[currentKeyIdx];
+        const currentSectionIdx = this.history.indexOf(this.currentSection);
+        const previous = this.history[currentSectionIdx];
 
-        this.steps.unshift([this.currentKey]);
-        this.currentKey = previous;
-        this.history.splice(currentKeyIdx);
+        this.sections.unshift([this.currentSection]);
+        this.currentSection = previous;
+        this.history.splice(currentSectionIdx);
     }
 
-    getCurrentKey() {
-        return this.currentKey;
+    getCurrentSection() {
+        return this.currentSection;
     }
 
-    getMeta(key) {
-        return this.meta.find(m => m.key === key) || null;
+    getMeta(name) {
+        return this.meta.find(m => m.name === name) || null;
     }
-
 }
