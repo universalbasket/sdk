@@ -1,4 +1,4 @@
-import { html } from '../node_modules/lit-html/lit-html.js';
+import { html } from '../../src/lit-html';
 
 export default () => html`
 <div class="job-input">

@@ -1,14 +1,13 @@
-import { html } from '../../node_modules/lit-html/lit-html.js';
+import { html } from '../../src/lit-html';
 
 const renderBreedType = (breedTypes) => html`
-<div class="job-input">
-    <p>What is your pet's breed?</p>
-    <label for="selected-breed-type"></label>
-    ${ breedTypes.map(b => html`
-        <label for="selected-breed-type">
-            <input type="radio" name="selected-breed-type" value="${b}"/> ${b}
-        </label>`
-    )}
+<div class="field">
+    <span class="field__name">What is your pet's breed?</span>
+    <select for="selected-breed-type" name="selected-breed-type">
+        ${ breedTypes.map(b => html`
+            <option for="selected-breed-type" value="${b}"/> ${b}</option>`
+        )}
+    </select>
 </div>
 `;
 

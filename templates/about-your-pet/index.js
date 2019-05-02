@@ -1,9 +1,10 @@
-import { html, render } from '../../node_modules/lit-html/lit-html.js';
+import { html, render } from '../../src/lit-html';
 
 /* templates */
 import pets from './pets';
 import selectedBreedType from './selected-breed-type';
 
+// this will be
 const MORE_THAN_BREED_TYPES = {
     cat: [
         "Pedigree",
@@ -19,15 +20,15 @@ const MORE_THAN_BREED_TYPES = {
 }
 
 export default () => html`
-<div>
-    <h3>About your pet</h3>
-    <form id="about-your-pet">
+<div class="section">
+    <h3 class="section__header">About your pet</h3>
+    <form class="section__body"id="about-your-pet">
         ${pets(onPetTypeChange)}
         <!-- TODO<PROTOCOL>: breedType should be part of pets input!-->
         <div id="breedType"></div>
     </form>
 
-    <button type="button" id="submit-about-your-pet">Next</button>
+    <button type="button" class="button button--right button--primary" id="submit-about-your-pet">Continue</button>
 </div>
 `
 const onPetTypeChange = {

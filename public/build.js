@@ -4212,14 +4212,14 @@ module.exports = QuickLRU;
 
   class FlowManager {
     constructor(meta) {
-      this.steps = meta.map(f => f.key);
+      this.sections = meta.map(f => f.name);
       this.meta = meta;
-      this.currentKey = null;
+      this.currentSection = null;
       this.history = [];
     }
 
     init() {
-      if (!Array.isArray(this.steps)) {
+      if (!Array.isArray(this.sections)) {
         console.error('Invalid Flow is given');
         throw new Error('Invalid Flow is given');
       }
@@ -4228,13 +4228,13 @@ module.exports = QuickLRU;
     }
 
     next() {
-      const next = this.steps.shift();
+      const next = this.sections.shift();
 
       if (!next) {
         return null;
       }
 
-      this.currentKey = next;
+      this.currentSection = next;
       this.history.push(next);
     }
 
@@ -4243,19 +4243,19 @@ module.exports = QuickLRU;
         return null;
       }
 
-      const currentKeyIdx = this.history.indexOf(this.currentKey);
-      const previous = this.history[currentKeyIdx];
-      this.steps.unshift([this.currentKey]);
-      this.currentKey = previous;
-      this.history.splice(currentKeyIdx);
+      const currentSectionIdx = this.history.indexOf(this.currentSection);
+      const previous = this.history[currentSectionIdx];
+      this.sections.unshift([this.currentSection]);
+      this.currentSection = previous;
+      this.history.splice(currentSectionIdx);
     }
 
-    getCurrentKey() {
-      return this.currentKey;
+    getCurrentSection() {
+      return this.currentSection;
     }
 
-    getMeta(key) {
-      return this.meta.find(m => m.key === key) || null;
+    getMeta(name) {
+      return this.meta.find(m => m.name === name) || null;
     }
 
   }
@@ -4660,7 +4660,7 @@ module.exports = QuickLRU;
   let jobId = localStorage.getItem('jobId') || null;
   var api = {
     createJob,
-    createJobInput,
+    createJobInputs,
     waitForJobOutput
   };
 
@@ -4745,10 +4745,12 @@ module.exports = QuickLRU;
     });
   }
 
-  async function createJobInput(input) {
-    const [key] = Object.keys(input);
-    const data = input[key];
-    return await clientSdk.createJobInput(jobId, data, key);
+  async function createJobInputs(inputs) {
+    const keys = Object.keys(inputs);
+    keys.forEach(key => {
+      const data = inputs[key];
+      clientSdk.createJobInput(jobId, data, key).then(() => {}).catch(err => console.error(err));
+    });
   }
 
   var fallback = err => html`
@@ -4769,113 +4771,247 @@ module.exports = QuickLRU;
 </div>
 `;
 
-  const headerString = 'About your pet';
-
-  var pets = () => html`
+  var pets = onPetTypeChange => html`
 <div class="job-input">
-    <div class="flow-header">
-        <span>${headerString}</span>
-    </div>
-    <form id="pets">
-        <div class="pet" name="pets[0]">
-            <div class="field">
-                <label for="pets[0][pet-name]">Name</label>
-                <input type="string" name="pets[0][pet-name]" placeholder="Rex" value="Rex" required/>
-            </div>
+    <div class="pet" name="pets[0]">
+        <div class="field">
+            <label  class="field__name" for="pets[0][pet-name]">Pet Name</label>
+            <input type="string" name="pets[0][pet-name]" placeholder="Rex" value="Rex" required />
+        </div>
 
+        <div class="field">
+            <span class="field__name">Pet type</span>
+            <div class="field__inputs group group--merged">
+                <input type="radio" name="pets[0][pet-type]" id="pets[0][pet-type]-dog" value="dog" @change=${onPetTypeChange}/>
+                <label for="pets[0][pet-type]-dog" class="button">Dog</label>
+
+                <input type="radio" name="pets[0][pet-type]" id="pets[0][pet-type]-cat" value="cat" @change=${onPetTypeChange}/>
+                <label for="pets[0][pet-type]-cat" class="button"> Cat </label>
+            </div>
+        </div>
+
+        <div class="field">
+            <span class="field__name">Gender</span>
+            <div class="field__inputs group group--merged">
+                <input type="radio" name="pets[0][pet-gender]" value="male" id="pets[0][pet-gender]-male" required checked >
+                <label for="pets[0][pet-gender]-female-male" class="button">Male</label>
+
+                <input type="radio" name="pets[0][pet-gender]" id="pets[0][pet-gender]-female" value="female">
+                <label for="pets[0][pet-gender]-female" class="button">Female</label>
+            </div>
+        </div>
+
+        <div class="field">
+            <label  class="field__name" for="pets[0][breed-name]">Breed Name</label>
+            <input type="string" name="pets[0][breed-name]" value="Maltese" required>
+        </div>
+
+        <div class="field">
+            <label class="field__name" for="pets[0][pet-date-of-birth]">Date Of Birth</label>
+            <input type="date" name="pets[0][date-of-birth]" value="2019-04-02" minDate="${Date.now}" required>
+        </div>
+
+        <div class="field">
+            <label class="field__name" for="pets[0][pet-price]">How much did you pay or donate</label>
+            <input type="number" name="pets[0][pet-price]" value="0" min="0">
+        </div>
+
+        <div class="pet-related-questions">
             <div class="field">
-                <p class="field-name">Pet type</p>
-                <label for="pets[0][pet-type]-dog" class="field-label">
+                <span class="field__name">Is your pet spayed or neutered?</span>
+                <div class="field__inputs group group--merged">
                     <input
                         type="radio"
-                        name="pets[0][pet-type]"
-                        id="pets[0][pet-type]-dog"
-                        value="dog" checked/>Dog
-                </label>
-                <label for="pets[0][pet-type]-cat" class="field-label">
+                        name="pets[0][related-questions][is-spayed-or-neutered-$boolean]"
+                        id="pets[0]-neutered-yes"
+                        value="true" required checked>
+                    <label
+                        for="pets[0]-neutered-yes"
+                        class="button">Yes</label>
+
                     <input
                         type="radio"
-                        name="pets[0][pet-type]"
-                        id="pets[0][pet-type]-cat"
-                        value="cat" />Cat
-                </label>
+                        class="button"
+                        name="pets[0][related-questions][is-spayed-or-neutered-$boolean]"
+                        id="pets[0]-neutered-no"
+                        value="false">
+                    <label
+                        for="pets[0]-neutered-no"
+                        class="button">No</label>
+
+                    <input
+                        type="radio"
+                        class="button"
+                        name="pets[0][related-questions][is-spayed-or-neutered-$boolean]"
+                        id="pets[0]-neutered-no"
+                        value="false">
+                    <label
+                        for="pets[0]-neutered-no"
+                        class="button">Unknown</label>
+                </div>
             </div>
 
             <div class="field">
-                <label for="pets[0][pet-gender]-female">Gender</label>
-                <input type="radio" name="pets[0][pet-gender]" value="male" required checked id="pets[0][pet-gender]-male">Male
-                <input type="radio" name="pets[0][pet-gender]" id="pets[0][pet-gender]-female" value="female">Female
+                <span class="field__name">Has your pet had any behaviour complains?</span>
+                <div class="field__inputs group group--merged">
+                    <input
+                        type="radio"
+                        name="pets[0][related-questions][any-behaviour-complains-$boolean]"
+                        id="pets[0]-behaviour-complains-yes"
+                        value="true"
+                        required checked>
+                    <label for="pets[0]-behaviour-complains-yes" class="button">Yes</label>
 
-            <div class="field">
-                <label for="pets[0][breed-name]">Breed Name</label>
-                <input type="string" name="pets[0][breed-name]" value="Maltese" required>
+                    <input
+                        type="radio"
+                        name="pets[0][related-questions][any-behaviour-complains-$boolean]"
+                        id="pets[0]-behaviour-complains-no"
+                        value="true"
+                        required>
+                    <label for="pets[0]-behaviour-complains-no" class="button">No</label>
+                </div>
             </div>
 
             <div class="field">
-                <label for="pets[0][pet-date-of-birth]">Date Of Birth</label>
-                <input type="date" name="pets[0][date-of-birth]" value="2019-04-02" required>
+                <span class="field__name">Does your pet have chip or tag?</span>
+                <div class="field__inputs group group--merged">
+                    <input
+                        type="radio"
+                        name="pets[0][related-questions][has-chip-or-tag-$boolean]"
+                        id="pets[0]-has-chip-yes"
+                        value="true"
+                        required checked>
+                    <label for="pets[0]-has-chip-yes" class="button">Yes</label>
+
+                    <input
+                        type="radio"
+                        name="pets[0][related-questions][has-chip-or-tag-$boolean]"
+                        id="pets[0]-has-chip-no"
+                        value="true"
+                        required>
+                    <label for="pets[0]-has-chip-no" class="button">No</label>
+
+                    <input
+                        type="radio"
+                        name="pets[0][related-questions][has-chip-or-tag-$boolean]"
+                        id="pets[0]-has-chip-no"
+                        value="true"
+                        required>
+                    <label for="pets[0]-has-chip-no" class="button">Unknown</label>
+                </div>
             </div>
 
             <div class="field">
-                <label for="pets[0][pet-price]">How much did you pay or donate</label>
-                <input type="number" name="pets[0][pet-price]" value="0">
+                <span class="field__name">Is your pet kept at your address?</span>
+                <div class="field__inputs group group--merged">
+                    <input
+                        type="radio"
+                        name="pets[0][related-questions][is-kept-at-your-address-$boolean]"
+                        id="pets[0]-kept-at-yours-yes"
+                        value="true"
+                        required checked>
+                    <label for="pets[0]-kept-at-yours-yes" class="button">Yes</label>
+
+                    <input
+                        type="radio"
+                        name="pets[0][related-questions][is-kept-at-your-address-$boolean]"
+                        id="pets[0]-kept-at-yours-no"
+                        value="true"
+                        required>
+                    <label for="pets[0]-kept-at-yours-no" class="button">No</label>
+                </div>
             </div>
 
-            <div class="pet-related-questions">
-                <div class="field">
-                    <label for="pets[0][related-questions][is-spayed-or-neutered]">Is your pet spayed or neutered?</label>
-                    <input type="radio" name="pets[0][related-questions][is-spayed-or-neutered-$boolean]" value="true" required checked> Yes
-                    <input type="radio" name="pets[0][related-questions][is-spayed-or-neutered-$boolean]" value="false"> No
-                </div>
+            <div class="field">
+                <span class="field__name">Is your pet kept indoor?</span>
+                <div class="field__inputs group group--merged">
+                    <input
+                        type="radio"
+                        name="pets[0][related-questions][indoor-pet-$boolean]"
+                        id="pets[0]-indoor-yes"
+                        value="true"
+                        required checked>
+                    <label for="pets[0]-indoor-yes" class="button">Yes</label>
 
-                <div class="field">
-                    <label for="pets[0][related-questions][has-chip-or-tag]">Does your pet have chip or tag?</label>
-                    <input type="radio" name="pets[0][related-questions][has-chip-or-tag-$boolean]" value="true" required checked> Yes
-                    <input type="radio" name="pets[0][related-questions][has-chip-or-tag-$boolean]" value="false"> No
+                    <input
+                        type="radio"
+                        name="pets[0][related-questions][indoor-pet-$boolean]"
+                        id="pets[0]-indoor-no"
+                        value="true"
+                        required>
+                    <label for="pets[0]-indoor-no" class="button">No</label>
                 </div>
+            </div>
 
-                <div class="field">
-                    <label for="pets[0][related-questions][is-kept-at-your-address]">Is your pet kept at your address?</label>
-                    <input type="radio" name="pets[0][related-questions][is-kept-at-your-address-$boolean]" value="true" required checked> Yes
-                    <input type="radio" name="pets[0][related-questions][is-kept-at-your-address-$boolean]" value="false"> No
-                </div>
+            <div class="field">
+                <span class="field__name">Is your pet in good health, and not showing any sign of illness, injury or other medical conditions?</span>
+                <div class="field__inputs group group--merged">
+                    <input
+                        type="radio"
+                        name="pets[0][related-questions][is-your-pet-healthy-$boolean]"
+                        id="pets[0]-healthy-yes"
+                        value="true"
+                        required checked>
+                    <label for="pets[0]-healthy-yes" class="button">Yes</label>
 
-                <div class="field">
-                    <label for="pets[0][related-questions][any-behaviour-complains]">Has your pet had any behaviour complains?</label>
-                    <input type="radio" name="pets[0][related-questions][any-behaviour-complains-$boolean]" value="true" required checked> Yes
-                    <input type="radio" name="pets[0][related-questions][any-behaviour-complains-$boolean]" value="false"> No
-                </div>
-
-                <div class="field">
-                    <label for="pets[0][related-questions][indoor-pet]">Is your pet kept indoor?</label>
-                    <input type="radio" name="pets[0][related-questions][indoor-pet-$boolean]" value="true" required checked> Yes
-                    <input type="radio" name="pets[0][related-questions][indoor-pet-$boolean]" value="false"> No
-                </div>
-
-                <div class="field">
-                    <label for="pets[0][related-questions][is-your-pet-healthy]">Is your pet healthy? </label>
-                    <input type="radio" name="pets[0][related-questions][is-your-pet-healthy-$boolean]" value="true" required checked> Yes
-                    <input type="radio" name="pets[0][related-questions][is-your-pet-healthy-$boolean]" value="false"> No
+                    <input
+                        type="radio"
+                        name="pets[0][related-questions][is-your-pet-healthy-$boolean]"
+                        id="pets[0]-healthy-no"
+                        value="true"
+                        required>
+                    <label for="pets[0]-healthy-no" class="button">No</label>
                 </div>
             </div>
         </div>
-    </form>
+    </div>
+</div>
+`;
 
-    <!-- <button type="button" id="">Add pet</button> -->
-    <button type="button" id="create-input-pets">Create Input</button>
+  const renderBreedType = breedTypes => html`
+<div class="field">
+    <span class="field__name">What is your pet's breed?</span>
+    <select for="selected-breed-type" name="selected-breed-type">
+        ${breedTypes.map(b => html`
+            <option for="selected-breed-type" value="${b}"/> ${b}</option>`)}
+    </select>
 </div>
 `;
 
   var selectedBreedType = breedTypes => html`
-<div class="job-input">
-    <form id="selected-breed-type">
-        <h3>What is your pet's breed?</h3>
-        <label for="selected-breed-type"></label>
-        ${breedTypes.map(b => html`<label for="selected-breed-type"><input type="radio" name="selected-breed-type" value="${b}"/> ${b}</label>`)}
+    ${breedTypes && Array.isArray(breedTypes) ? renderBreedType(breedTypes) : ''}
+`; // this will be
+
+
+  const MORE_THAN_BREED_TYPES = {
+    cat: ["Pedigree", "Non Pedigree"],
+    dog: ["Cross Breed", "Pedigree", "Small mixed breed (up to 10kg)", "Medium mixed breed (10 - 20kg)", "Large mixed breed (above 20kg)"]
+  };
+
+  var aboutYourPet = () => html`
+<div class="section">
+    <h3 class="section__header">About your pet</h3>
+    <form class="section__body"id="about-your-pet">
+        ${pets(onPetTypeChange)}
+        <!-- TODO<PROTOCOL>: breedType should be part of pets input!-->
+        <div id="breedType"></div>
     </form>
-    <button type="button" id="create-input-selected-breed-type">Create Input</button>
+
+    <button type="button" class="button button--secondary" id="submit-about-your-pet">Next</button>
 </div>
 `;
+
+  const onPetTypeChange = {
+    handleEvent(e) {
+      updateBreedTypes(e.target.value);
+    }
+
+  };
+
+  function updateBreedTypes(petType) {
+    const breedTypes = MORE_THAN_BREED_TYPES[petType];
+    render(selectedBreedType(breedTypes), document.querySelector('#breedType'));
+  }
 
   var owner = () => html`
 <div class="job-input">
@@ -4890,54 +5026,80 @@ module.exports = QuickLRU;
     <button type="button" id="create-input-owner">Create Input</button>
 </div>
 `;
+
+  var aboutYou = () => html`
+<div>
+    <h3>About you</h3>
+    <form id="about-you">
+        ${owner()}
+    </form>
+
+    <button type="button" id="submit-about-you">Next</button>
+</div>
+`;
   /** Global */
 
 
   var templates = {
     fallback,
     loading,
-    pets,
-    selectedBreedType,
-    owner
+    aboutYourPet,
+    aboutYou
   };
   /* flow of the forms, key = input key (for now) */
 
-  const FLOW = [{
-    key: 'pets',
-    type: 'default'
-  }, {
-    key: 'selectedBreedType',
-    inputMethod: "SelectOne",
-    sourceOutputKey: 'availableBreedTypes'
-  },
-  /* in-flow, availableBreedTypes */
-  {
-    key: 'owner',
-    type: 'default'
-  }, {
-    key: 'account',
-    type: 'default'
-  }, {
-    key: 'selectedMaritalStatusOption',
-    inputMethod: "SelectOne",
-    sourceOutputKey: 'availableMaritalStatusOptions'
-  },
-  /* in-flow, availableMaritalStatusOptions */
-  {
-    key: 'selectedAddress',
-    inputMethod: "SelectOne",
-    sourceOutputKey: 'availableAddresses'
-  },
-  /* in-flow, availableAddresses */
-  {
-    key: 'finalPriceConsent',
-    inputMethod: "Consent",
-    sourceOutputKey: "finalPrice"
-    /* consent */
-    //...
+  /* const FLOW = [
+      { key: 'pets', inputMethod: null, sourceOutputKey: null },
+      { key: 'selectedBreedType', inputMethod: "SelectOne", sourceOutputKey: 'availableBreedTypes' },
+      { key: 'owner', inputMethod: null, sourceOutputKey: null, section: 'About you' },
+      { key: 'account', inputMethod: null, sourceOutputKey: null, section: 'About you' },
+      { key: 'selectedMaritalStatusOption', inputMethod: "SelectOne",  sourceOutputKey: 'availableMaritalStatusOptions' },
+      { key: 'selectedAddress', inputMethod: "SelectOne",  sourceOutputKey: 'availableAddresses' },
+      { key: 'finalPriceConsent', inputMethod: "Consent", sourceOutputKey: "finalPrice" }
+  ];
+  */
 
+  const SECTIONS = [{
+    name: 'aboutYourPet',
+    inputs: [{
+      key: 'pets',
+      inputMethod: null,
+      sourceOutputKey: null
+    }, {
+      key: 'selectedBreedType',
+      inputMethod: "SelectOne",
+      sourceOutputKey: 'availableBreedTypes'
+    }]
+  }, {
+    name: 'aboutYou',
+    inputs: [{
+      key: 'owner',
+      inputMethod: null,
+      sourceOutputKey: null
+    }, {
+      key: 'selectedMaritalStatusOption',
+      inputMethod: "SelectOne",
+      sourceOutputKey: 'availableMaritalStatusOptions'
+    },
+    /* in-flow, availableMaritalStatusOptions */
+    {
+      key: 'selectedAddress',
+      inputMethod: "SelectOne",
+      sourceOutputKey: 'availableAddresses'
+    }]
+  }, {
+    name: 'payment',
+    inputs: [{
+      key: 'payment',
+      inputMethod: null,
+      sourceOutputKey: null
+    }, {
+      key: 'finalPriceConsent',
+      inputMethod: "Consent",
+      sourceOutputKey: "finalPrice"
+    }]
   }];
-  const flowManager = new FlowManager(FLOW);
+  const flowManager = new FlowManager(SECTIONS);
   const app = document.querySelector('#app');
   init();
   /* document.querySelector('#init').addEventListener('click', () => {
@@ -4945,58 +5107,33 @@ module.exports = QuickLRU;
   }); */
 
   function init() {
-    api.createJob({}).then(() => {});
+    //api.createJob({}).then(() => {});
     flowManager.init();
-    renderNext();
+    renderSection();
   }
 
   function next() {
     flowManager.next();
-    renderNext();
+    renderSection();
   }
 
-  function renderNext() {
-    const key = flowManager.getCurrentKey();
-    const meta = flowManager.getMeta(key);
-
-    if (!meta) {
-      console.error('please check your metadata');
-      return;
-    }
-    /* waiting for output, if not - query to previous output */
-
-
-    const template = templates[key];
+  function renderSection() {
+    const section = flowManager.getCurrentSection();
+    const template = templates[section];
 
     if (!template) {
-      return render(templates.fallback(`template for ${key} not found`), app);
+      return render(templates.fallback(`template for ${section} not found`), app);
     }
 
-    if ((meta.inputMethod === 'SelectOne' || meta.inputMethod === 'Consent') && meta.sourceOutputKey != null) {
-      //check job state and see if it's awaitingInput && key = selectedBreedType
-      console.log(`waiting for job output ${meta.sourceOutputKey}`);
-      render(templates.loading(), app); //TODO: we should show something while waiting.
-
-      api.waitForJobOutput(meta.sourceOutputKey, (err, output) => {
-        if (err) {
-          render(templates.fallback(err), app);
-          return;
-        }
-
-        render(template(output.data), app);
-        addSubmitter(key);
-      });
-    } else {
-      render(template(), app);
-      addSubmitter(key);
-    }
+    render(template(), app);
+    addSubmitter(section);
   }
 
-  function addSubmitter(key) {
+  function addSubmitter(section) {
     /* this bits need to be automated, per input keys */
-    const formId = kebabCase(key);
+    const formId = kebabCase(section);
     const form = document.querySelector('#' + formId);
-    const submit = document.querySelector('#create-input-' + formId);
+    const submit = document.querySelector('#submit-' + formId);
 
     if (!form || !submit) {
       console.error('form or submit button not found. check your name convention for the forms');
@@ -5009,12 +5146,15 @@ module.exports = QuickLRU;
 
       if (!form.reportValidity()) {
         return;
-      }
+      } // Partner can send input data to their server for logging if they prefer,
+      // in prototyping we are sending the input directly to api using sdk.
+      //TODO: update it to accept several inputs and send each of them separately
+
 
       const input = serializeForm(form);
-      console.log('input:', input); // send input or create job via sdk
+      console.log('inputs:', input); // send input or create job via sdk
 
-      api.createJobInput(input).then(r => {
+      api.createJobInputs(input).then(r => {
         submit.setAttribute('disabled', 'true');
         setTimeout(next, 1000);
       }).catch(e => alert(e));
