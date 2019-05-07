@@ -2,9 +2,9 @@
 
 export default class FlowManager {
     constructor(meta) {
-        this.sections = meta.map(f => f.name);
         this.meta = meta;
         this.currentSection = null;
+        this.sections = meta.map(f => f.name);
         this.history = [];
     }
 
@@ -45,7 +45,7 @@ export default class FlowManager {
         return this.currentSection;
     }
 
-    getMeta(name) {
-        return this.meta.find(m => m.name === name) || null;
+    getCurrentMeta(section) {
+        return this.meta.find(m => m.name === section) || null;
     }
 }

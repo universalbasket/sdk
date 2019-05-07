@@ -22,7 +22,7 @@ const MORE_THAN_BREED_TYPES = {
 export default () => html`
 <div class="section">
     <h3 class="section__header">About your pet</h3>
-    <form class="section__body"id="about-your-pet">
+    <form class="section__body" id="about-your-pet">
         ${pets(onPetTypeChange)}
         <!-- TODO<PROTOCOL>: breedType should be part of pets input!-->
         <div id="breedType"></div>

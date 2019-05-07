@@ -32,12 +32,12 @@ export default (onPetTypeChange) => html`
 
         <div class="field field-set">
             <label  class="field__name" for="pets[0][breed-name]">Breed Name</label>
-            <input type="text" name="pets[0][breed-name]" value="Maltese Terrier" required>
+            <input type="text" name="pets[0][breed-name]" value="Maltese" required>
         </div>
 
         <div class="field field-set">
             <label class="field__name" for="pets[0][pet-date-of-birth]">Date Of Birth</label>
-            <input type="date" name="pets[0][date-of-birth]" value="2019-01-02" minDate="${new Date()}" required>
+            <input type="date" name="pets[0][date-of-birth]" value="2019-04-02" minDate="${Date.now}" required>
         </div>
 
         <div class="field field-set">
@@ -95,7 +95,7 @@ export default (onPetTypeChange) => html`
                         type="radio"
                         name="pets[0][related-questions][any-behaviour-complains-$boolean]"
                         id="pets[0]-behaviour-complains-no"
-                        value="false"
+                        value="true"
                         required>
                     <label for="pets[0]-behaviour-complains-no" class="button">No</label>
                 </div>
@@ -116,7 +116,7 @@ export default (onPetTypeChange) => html`
                         type="radio"
                         name="pets[0][related-questions][has-chip-or-tag-$boolean]"
                         id="pets[0]-has-chip-no"
-                        value="false"
+                        value="true"
                         required>
                     <label for="pets[0]-has-chip-no" class="button">No</label>
 
@@ -124,7 +124,7 @@ export default (onPetTypeChange) => html`
                         type="radio"
                         name="pets[0][related-questions][has-chip-or-tag-$boolean]"
                         id="pets[0]-has-chip-no"
-                        value=""
+                        value="true"
                         required>
                     <label for="pets[0]-has-chip-no" class="button">Unknown</label>
                 </div>
@@ -145,7 +145,7 @@ export default (onPetTypeChange) => html`
                         type="radio"
                         name="pets[0][related-questions][is-kept-at-your-address-$boolean]"
                         id="pets[0]-kept-at-yours-no"
-                        value="false"
+                        value="true"
                         required>
                     <label for="pets[0]-kept-at-yours-no" class="button">No</label>
                 </div>
@@ -166,7 +166,7 @@ export default (onPetTypeChange) => html`
                         type="radio"
                         name="pets[0][related-questions][indoor-pet-$boolean]"
                         id="pets[0]-indoor-no"
-                        value="false"
+                        value="true"
                         required>
                     <label for="pets[0]-indoor-no" class="button">No</label>
                 </div>
@@ -187,30 +187,9 @@ export default (onPetTypeChange) => html`
                         type="radio"
                         name="pets[0][related-questions][is-your-pet-healthy-$boolean]"
                         id="pets[0]-healthy-no"
-                        value="false"
+                        value="true"
                         required>
                     <label for="pets[0]-healthy-no" class="button">No</label>
-                </div>
-            </div>
-
-            <div class="field field-set">
-                <span class="field__name">Has there been legal action resulting from an incident involving your pet?</span>
-                <div class="field__inputs group group--merged">
-                    <input
-                        type="radio"
-                        name="pets[0][related-questions][any-legal-action-$boolean]"
-                        id="pets[0]-legal-yes"
-                        value="true"
-                        required checked>
-                    <label for="pets[0]-legal-yes" class="button">Yes</label>
-
-                    <input
-                        type="radio"
-                        name="pets[0][related-questions][any-legal-action-$boolean]"
-                        id="pets[0]-legal-no"
-                        value="false"
-                        required>
-                    <label for="pets[0]-legal-no" class="button">No</label>
                 </div>
             </div>
         </div>

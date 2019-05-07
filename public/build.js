@@ -1,4 +1,452 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+(function (Buffer){
+(function (global, factory) {
+    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
+    typeof define === 'function' && define.amd ? define(['exports'], factory) :
+    (global = global || self, factory(global.ubioSdk = {}));
+}(this, function (exports) { 'use strict';
+
+    var defaultApiUrl = 'https://api.automationcloud.net';
+    var defaultVaultUrl = 'https://vault.automationcloud.net';
+    var defaultFetch = typeof self !== 'undefined' && self.fetch && self.fetch.bind(self);
+    var base64Encode;
+
+    if (typeof btoa === 'function') {
+        base64Encode = function(string) {
+            return btoa(string);
+        };
+    } else if (typeof Buffer === 'function') {
+        base64Encode = function(string) {
+            return Buffer.from(string).toString('base64');
+        };
+    } else {
+        throw new Error('No way to convert to base64.');
+    }
+
+    function assertStringArguments(obj) {
+        Object.keys(obj || {}).forEach(function(key) {
+            if (typeof obj[key] !== 'string') {
+                throw new TypeError('"' + key + '" must be a string.');
+            }
+        });
+    }
+
+    function createSearch(parameters) {
+        if (!parameters) {
+            return '';
+        }
+
+        var query = [];
+
+        Object.keys(parameters).forEach(function(key) {
+            if (parameters[key] !== void 0) {
+                query.push(encodeURIComponent(key) + '=' + encodeURIComponent(parameters[key]));
+            }
+        });
+
+        var search = query.join('&');
+
+        return search.length ? '?' + search : '';
+    }
+
+
+    function fetchWrapper(url, fetch, token, opts) {
+        var options = opts || {};
+        var method = options.method || 'GET';
+        var query = options.query;
+
+        if (!token) {
+            throw new Error('No token.');
+        }
+
+        var headers = {};
+
+        Object.keys(options.headers || {}).forEach(function(key) {
+            headers[key] = options.headers[key];
+        });
+
+        headers['Authorization'] = 'Basic ' + base64Encode(token + ':');
+
+        var body = options.body === void 0 ? void 0 : JSON.stringify(options.body);
+        var search = createSearch(query);
+
+        if (typeof body === 'string') {
+            headers['Content-Type'] = 'application/json';
+        }
+
+        var fetchOptions = {
+            method: method,
+            headers: headers,
+            body: body,
+            mode: 'cors',
+            credentials: 'omit',
+            cache: 'no-store',
+            redirect: 'follow',
+            referrer: 'client',
+            referrerPolicy: 'origin',
+            keepalive: false
+        };
+
+        return fetch(url + search, fetchOptions)
+            .then(function(response) {
+                if (!response.ok) {
+                    return response.json()
+                        .then(function(body) {
+                            // TODO: Better errors from error bodies.
+                            const error = new Error(body.message || 'Unexpected response');
+                            error.status = response.status;
+                            throw error;
+                        });
+                }
+
+                if (options.parse !== false) {
+                    return response.json();
+                }
+
+                return response;
+            });
+    }
+
+    function makeApiClient(baseUrl, fetch, token) {
+        var canonicalizedBaseiUrl = baseUrl.slice(-1) === '/' ? baseUrl : (baseUrl + '/');
+
+        function apiFetch(path, options) {
+            return fetchWrapper(canonicalizedBaseiUrl + path, fetch, token, options);
+        }
+
+        var api = {
+            raw: function(path, options) {
+                assertStringArguments({ path: path });
+                return apiFetch(path, options);
+            },
+            getServices: function() {
+                return apiFetch('services');
+            },
+            getService: function(serviceId) {
+                assertStringArguments({ serviceId: serviceId });
+                return apiFetch('services/' + serviceId);
+            },
+            getPreviousJobOutputs: function(serviceId, inputs) {
+                assertStringArguments({ serviceId: serviceId });
+                const body = { inputs: inputs || [] };
+
+                return apiFetch('services/' + serviceId + '/previous-job-outputs', { method: 'POST', body: body });
+            },
+            getJobs: function(query) {
+                return apiFetch('jobs', { query: query });
+            },
+            createJob: function(fields) {
+                return apiFetch('jobs', { method: 'POST', body: fields });
+            },
+            getJob: function(jobId) {
+                assertStringArguments({ jobId: jobId });
+                return apiFetch('jobs/' + jobId);
+            },
+            cancelJob: function(jobId) {
+                assertStringArguments({ jobId: jobId });
+                return apiFetch('jobs/' + jobId + '/cancel', { method: 'POST' });
+            },
+            resetJob: function(jobId) {
+                assertStringArguments({ jobId: jobId });
+                return apiFetch('jobs/' + jobId + '/reset', { method: 'POST' });
+            },
+            createJobInput: function(jobId, key, data, stage) {
+                assertStringArguments({ jobId: jobId, key: key });
+                return apiFetch('jobs/' + jobId + '/inputs', { method: 'POST', body: { key, stage, data } });
+            },
+            getJobOutputs: function(jobId) {
+                assertStringArguments({ jobId: jobId });
+                return apiFetch('jobs/' + jobId + '/outputs');
+            },
+            getJobOutput: function(jobId, key, stage) {
+                assertStringArguments({ jobId: jobId, key: key });
+
+                var path = 'jobs/' + jobId + '/outputs/' + key;
+
+                if (stage) {
+                    path += '/' + stage;
+                }
+
+                return apiFetch(path);
+            },
+            getJobScreenshots: function(jobId) {
+                assertStringArguments({ jobId: jobId });
+                return apiFetch('jobs/' + jobId + '/screenshots');
+            },
+            getJobScreenshot: function(jobIdOrPath, id, ext) {
+                function toBlob(res) {
+                    return res.blob();
+                }
+
+                if (jobIdOrPath && jobIdOrPath[0] === '/') {
+                    return apiFetch(jobIdOrPath, { parse: false })
+                        .then(toBlob);
+                }
+
+                assertStringArguments({ jobId: jobIdOrPath, id: id, ext: ext });
+
+                return apiFetch('jobs/' + jobIdOrPath + '/screenshots/' + id + '.png', { parse: false })
+                    .then(toBlob);
+            },
+            getJobMimoLogs: function(jobId) {
+                assertStringArguments({ jobId: jobId });
+                return apiFetch('jobs/' + jobId + '/mimo-logs');
+            },
+            getJobEndUser: function(jobId) {
+                assertStringArguments({ jobId: jobId });
+                return apiFetch('jobs/' + jobId + '/end-user');
+            },
+            getJobEvents: function(jobId, offset) {
+                assertStringArguments({ jobId: jobId });
+
+                if (offset >>> 0 !== offset) {
+                    throw new RangeError('offset must be a positive integer.');
+                }
+
+                return apiFetch('jobs/' + jobId + '/events', { query: { offset: offset || 0 } });
+            },
+            trackJob: function(jobId, callback) {
+                assertStringArguments({ jobId: jobId });
+
+                return poll(jobId, callback, 1000);
+            }
+        };
+
+        function delay(t) {
+            return new Promise(function(resolve) {
+                setTimeout(resolve, t);
+            });
+        }
+
+        function poll(jobId, callback, dt) {
+            var offset = 0;
+            var backoff = 0;
+            var stopped = false;
+
+            function stop() {
+                if (!stopped) {
+                    stopped = true;
+                    callback('close');
+                }
+            }
+
+            function run() {
+                return delay(dt)
+                    .then(function() {
+                        if (!stopped) {
+                            return api.getJobEvents(jobId, offset)
+                                .then(function(body) {
+                                    backoff = 0;
+                                    return body;
+                                })
+                                .catch(function(error) {
+                                    const message = error.stack || error.message;
+
+                                    // 4xy errors don't lead to a retry, since the
+                                    // client must change something before the
+                                    // request can work.
+                                    if (error.status < 500) {
+                                        callback('error', error);
+                                        stop();
+                                        return;
+                                    }
+
+                                    // 5xy errors lead to retries with backoff.
+                                    callback('error', error);
+
+                                    backoff += 1;
+
+                                    const backoffTime = ((dt + backoff * dt) / 1000).toFixed(1);
+
+                                    console.warn('Error contacting API. Retrying in ' + backoffTime + ' s. ', message);
+
+                                    return delay(backoff * dt)
+                                        .then(function() {
+                                            return { data: [] };
+                                        });
+                                });
+                        }
+                    })
+                    .then(function(body) {
+                        if (stopped) {
+                            return;
+                        }
+
+                        var events = body.data.slice();
+
+                        offset += events.length;
+
+                        events.sort(function(a, b) {
+                            return a.createdAt - b.createdAt;
+                        });
+
+                        events.forEach(function(event) {
+                            callback(event);
+
+                            if (event === 'success' || event === 'fail') {
+                                stop();
+                            }
+                        });
+                    })
+                    .then(function() {
+                        if (!stopped) {
+                            return run();
+                        }
+                    });
+            }
+
+            run();
+
+            return stop;
+        }
+
+        return api;
+    }
+
+    function makeVaultClient(baseUrl, fetch, token) {
+        var canonicalizedBaseiUrl = baseUrl.slice(-1) === '/' ? baseUrl : (baseUrl + '/');
+
+        function vaultFetch(path, options) {
+            return fetchWrapper(canonicalizedBaseiUrl + path, fetch, token, options);
+        }
+
+        return {
+            vaultPan: function(pan) {
+                return vaultFetch('otp', { method: 'POST' })
+                    .then(function(otp) {
+                        return vaultFetch('pan', {
+                            method: 'POST',
+                            body: {
+                                otp: otp.id,
+                                pan: pan
+                            }
+                        });
+                    })
+                    .then(function(pan) {
+                        return vaultFetch('pan/temporary', {
+                            method: 'POST',
+                            body: {
+                                panId: pan.id,
+                                key: pan.key
+                            }
+                        });
+                    })
+                    .then(function(temp) {
+                        return temp.panToken;
+                    });
+            }
+        };
+    }
+
+    /**
+     * @param {Object} options
+     * @param {string} options.token
+     * @param {string} options.apiUrl
+     * @param {function} options.fetch
+     */
+    function createClientSdk(options) {
+        if (!options || !options.token) {
+            throw new Error('Token required.');
+        }
+
+        var apiUrl = options.apiUrl || defaultApiUrl;
+        var fetch = options.fetch || defaultFetch;
+        var token = options.token;
+
+        return makeApiClient(apiUrl, fetch, token);
+    }
+
+    /**
+     * @param {Object} options
+     * @param {string} options.token
+     * @param {string} options.jobId
+     * @param {string} options.serviceId
+     * @param {string} options.apiUrl
+     * @param {string} options.vaultUrl
+     * @param {function} options.fetch
+     */
+    function createEndUserSdk(options) {
+        if (!options || !options.token) {
+            throw new Error('A token required.');
+        }
+
+        if (!options.jobId) {
+            throw new Error('A jobId is required.');
+        }
+
+        if (!options.serviceId) {
+            throw new Error('A serviceId is required.');
+        }
+
+        var jobId = options.jobId;
+        var serviceId = options.serviceId;
+        var apiUrl = options.apiUrl || defaultApiUrl;
+        var vaultUrl = options.vaultUrl || defaultVaultUrl;
+        var fetch = options.fetch || defaultFetch;
+        var token = options.token;
+
+        var apiClient = makeApiClient(apiUrl, fetch, token);
+        var vaultClient = makeVaultClient(vaultUrl, fetch, token);
+
+        return {
+            getService: function() {
+                return apiClient.getService(serviceId);
+            },
+            getPreviousJobOuputs: function(inputs) {
+                return apiClient.getPreviousJobOutputs(serviceId, inputs);
+            },
+            getJob: function() {
+                return apiClient.getJob(jobId);
+            },
+            cancelJob: function() {
+                return apiClient.cancelJob(jobId);
+            },
+            resetJob: function(jobId) {
+                return apiClient.resetJob(jobId);
+            },
+            createJobInput: function(key, data, stage) {
+                return apiClient.createJobInput(jobId, key, data, stage);
+            },
+            getJobOutputs: function() {
+                return apiClient.getJobOutputs(jobId);
+            },
+            getJobOutput: function(key, stage) {
+                return apiClient.getJobOutputs(jobId, key, stage);
+            },
+            getJobScreenshots: function() {
+                return apiClient.getJobScreenshots(jobId);
+            },
+            getJobScreenshot: function(idOrPath) {
+                if (idOrPath && idOrPath[0] === '/') {
+                    return apiClient.getJobScreenshot(idOrPath);
+                }
+
+                return apiClient.getJobScreenshot(jobId, idOrPath);
+            },
+            getJobMimoLogs: function() {
+                return apiClient.getJobMimoLogs(jobId);
+            },
+            getJobEvents: function(offset) {
+                return apiClient.getJobEvents(jobId, offset);
+            },
+            trackJob: function(callback) {
+                return apiClient.trackJob(jobId, callback);
+            },
+            vaultPan: function(pan) {
+                return vaultClient.vaultPan(pan);
+            }
+        };
+    }
+
+    exports.createClientSdk = createClientSdk;
+    exports.createEndUserSdk = createEndUserSdk;
+
+    Object.defineProperty(exports, '__esModule', { value: true });
+
+}));
+
+}).call(this,require("buffer").Buffer)
+},{"buffer":3}],2:[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -151,7 +599,7 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],2:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 (function (Buffer){
 /*!
  * The buffer module from node.js, for the browser.
@@ -1932,7 +2380,7 @@ function numberIsNaN (obj) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"base64-js":1,"buffer":2,"ieee754":6}],3:[function(require,module,exports){
+},{"base64-js":2,"buffer":3,"ieee754":7}],4:[function(require,module,exports){
 'use strict';
 const mapObj = require('map-obj');
 const camelCase = require('camelcase');
@@ -1976,7 +2424,7 @@ module.exports = (input, options) => {
 };
 
 
-},{"camelcase":4,"map-obj":8,"quick-lru":10}],4:[function(require,module,exports){
+},{"camelcase":5,"map-obj":9,"quick-lru":11}],5:[function(require,module,exports){
 'use strict';
 
 const preserveCamelCase = string => {
@@ -2054,7 +2502,7 @@ module.exports = camelCase;
 // TODO: Remove this for the next major release
 module.exports.default = camelCase;
 
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 // get successful control from form and assemble into object
 // http://www.w3.org/TR/html401/interact/forms.html#h-17.13.2
 
@@ -2316,7 +2764,7 @@ function str_serialize(result, key, value) {
 
 module.exports = serialize;
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = (nBytes * 8) - mLen - 1
@@ -2402,7 +2850,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 (function (global){
 /**
  * lodash (Custom Build) <https://lodash.com/>
@@ -2841,7 +3289,7 @@ function words(string, pattern, guard) {
 module.exports = kebabCase;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 'use strict';
 
 // Customized for this use-case
@@ -2891,7 +3339,7 @@ const mapObject = (object, fn, options, isSeen = new WeakMap()) => {
 
 module.exports = mapObject;
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 (function (global){
 "use strict";
 
@@ -2917,7 +3365,7 @@ exports.Headers = global.Headers;
 exports.Request = global.Request;
 exports.Response = global.Response;
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 'use strict';
 
 class QuickLRU {
@@ -3033,11 +3481,10 @@ class QuickLRU {
 
 module.exports = QuickLRU;
 
-},{}],11:[function(require,module,exports){
-(function (Buffer){
+},{}],12:[function(require,module,exports){
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? factory(require('lodash.kebabcase'), require('form-serialize'), require('camelcase-keys')) : typeof define === 'function' && define.amd ? define(['lodash.kebabcase', 'form-serialize', 'camelcase-keys'], factory) : (global = global || self, factory(global.kebabCase, global.formSerialize, global.camelCaseKeys));
-})(this, function (kebabCase, formSerialize, camelCaseKeys) {
+  typeof exports === 'object' && typeof module !== 'undefined' ? factory(require('lodash.kebabcase'), require('form-serialize'), require('camelcase-keys'), require('@ubio/sdk')) : typeof define === 'function' && define.amd ? define(['lodash.kebabcase', 'form-serialize', 'camelcase-keys', '@ubio/sdk'], factory) : (global = global || self, factory(global.kebabCase, global.formSerialize, global.camelCaseKeys, global.sdk$1));
+})(this, function (kebabCase, formSerialize, camelCaseKeys, sdk$1) {
   'use strict';
 
   kebabCase = kebabCase && kebabCase.hasOwnProperty('default') ? kebabCase['default'] : kebabCase;
@@ -4212,9 +4659,9 @@ module.exports = QuickLRU;
 
   class FlowManager {
     constructor(meta) {
-      this.sections = meta.map(f => f.name);
       this.meta = meta;
       this.currentSection = null;
+      this.sections = meta.map(f => f.name);
       this.history = [];
     }
 
@@ -4254,8 +4701,8 @@ module.exports = QuickLRU;
       return this.currentSection;
     }
 
-    getMeta(name) {
-      return this.meta.find(m => m.name === name) || null;
+    getCurrentMeta(section) {
+      return this.meta.find(m => m.name === section) || null;
     }
 
   }
@@ -4403,266 +4850,69 @@ module.exports = QuickLRU;
     }
 
     return result;
-  } // 8056890d25682d507a1315fbac4cc7fe1ae6419ce5ad4f39
-
-
-  var defaultApiUrl = 'https://api.automationcloud.net';
-  var defaultFetch = typeof self !== 'undefined' && self.fetch && self.fetch.bind(self);
-  var base64Encode;
-
-  if (typeof btoa === 'function') {
-    base64Encode = function (string) {
-      return btoa(string);
-    };
-  } else if (typeof Buffer === 'function') {
-    base64Encode = function (string) {
-      return Buffer.from(string).toString('base64');
-    };
-  } else {
-    throw new Error('No way to convert to base64.');
-  } // TODO: Does service-api handle array parameters?
-
-
-  function createSearch(parameters) {
-    if (!parameters) {
-      return '';
-    }
-
-    var query = [];
-    Object.keys(parameters).forEach(function (key) {
-      if (parameters[key] !== void 0) {
-        query.push(encodeURIComponent(key) + '=' + encodeURIComponent(parameters[key]));
-      }
-    });
-    var search = query.join('&');
-    return search.length ? '?' + search : '';
-  }
-
-  function fetchWrapper(url, fetch, token, opts) {
-    var options = opts || {};
-    var method = options.method || 'GET';
-    var query = options.query;
-
-    if (!token) {
-      throw new Error('No token.');
-    }
-
-    var headers = {};
-    Object.keys(options.headers || {}).forEach(function (key) {
-      headers[key] = options.headers[key];
-    });
-    headers['Authorization'] = 'Basic ' + base64Encode(token + ':');
-    var body = options.body === void 0 ? void 0 : JSON.stringify(options.body);
-    var search = createSearch(query);
-
-    if (typeof body === 'string') {
-      headers['Content-Type'] = 'application/json';
-    }
-
-    var fetchOptions = {
-      method: method,
-      headers: headers,
-      body: body,
-      mode: 'cors',
-      credentials: 'omit',
-      cache: 'no-store',
-      redirect: 'follow',
-      referrer: 'client',
-      referrerPolicy: 'origin',
-      keepalive: false
-    };
-    return fetch(url + search, fetchOptions).then(function (response) {
-      if (!response.ok) {
-        return response.json().then(function (body) {
-          // TODO: Better errors from error bodies.
-          throw new Error(body.message || 'Unexpected response');
-        });
-      }
-
-      if (options.parse !== false) {
-        return response.json();
-      }
-
-      return response;
-    });
-  }
-
-  function makeApiClient(baseUrl, fetch, token) {
-    var canonicalizedBaseiUrl = baseUrl.slice(-1) === '/' ? baseUrl : baseUrl + '/';
-
-    function apiFetch(path, options) {
-      return fetchWrapper(canonicalizedBaseiUrl + path, fetch, token, options);
-    }
-
-    var api = {
-      raw: function (path, options) {
-        return apiFetch(path, options);
-      },
-      getServices: function () {
-        return apiFetch('services');
-      },
-      getService: function (serviceId) {
-        return apiFetch('services/' + serviceId);
-      },
-      getPreviousJobOutputs: function (serviceId, inputs) {
-        const body = {
-          inputs: inputs || []
-        };
-        return apiFetch('services/' + serviceId + '/previous-job-outputs', {
-          method: 'POST',
-          body: body
-        });
-      },
-      getJobs: function (query) {
-        return apiFetch('jobs', {
-          query: query
-        });
-      },
-      createJob: function (fields) {
-        return apiFetch('jobs', {
-          method: 'POST',
-          body: fields
-        });
-      },
-      getJob: function (jobId) {
-        return apiFetch('jobs/' + jobId);
-      },
-      cancelJob: function (jobId) {
-        return apiFetch('jobs/' + jobId + '/cancel', {
-          method: 'POST'
-        });
-      },
-      resetJob: function (jobId) {
-        return apiFetch('jobs/' + jobId + '/reset', {
-          method: 'POST'
-        });
-      },
-      createJobInput: function (jobId, data, key, stage) {
-        return apiFetch('jobs/' + jobId + '/inputs', {
-          method: 'POST',
-          body: {
-            key,
-            stage,
-            data
-          }
-        });
-      },
-      getJobOutputs: function (jobId, key, stage) {
-        var path = 'jobs/' + jobId + '/outputs';
-
-        if (key) {
-          path += '/' + key;
-
-          if (stage) {
-            path += '/' + stage;
-          }
-        }
-
-        return apiFetch(path);
-      },
-      getJobScreenshots: function (jobId) {
-        return apiFetch('jobs/' + jobId + '/screenshots');
-      },
-      getJobScreenshot: function (jobId, id, ext) {
-        return apiFetch('jobs/' + jobId + '/screenshots/' + id + '.' + ext, {
-          parse: false
-        }).then(res => res.blob());
-      },
-      getJobMimoLogs: function (jobId) {
-        return apiFetch('jobs/' + jobId + '/mimo-logs');
-      },
-      getJobEndUser: function (jobId) {
-        return apiFetch('jobs/' + jobId + '/end-user');
-      },
-      getJobEvents: function (jobId, offset) {
-        return apiFetch('jobs/' + jobId + '/events', {
-          query: {
-            offset: offset || 0
-          }
-        });
-      },
-      trackJob: function (jobId, callback) {
-        return poll(jobId, callback, 1000);
-      }
-    };
-
-    function delay(t) {
-      return new Promise(function (resolve) {
-        setTimeout(resolve, t);
-      });
-    }
-
-    function poll(jobId, callback, dt) {
-      var offset = 0;
-      var stopped = false;
-
-      function run() {
-        console.log('polling...');
-        return delay(dt).then(function () {
-          if (!stopped) {
-            return api.getJobEvents(jobId, offset);
-          }
-        }).then(function (body) {
-          if (stopped) {
-            return;
-          }
-
-          var events = body.data.slice();
-          offset += events.length;
-          events.sort(function (a, b) {
-            return a.createdAt - b.createdAt;
-          });
-          events.forEach(function (event) {
-            callback(event);
-          });
-        }).then(function () {
-          if (!stopped) {
-            return run();
-          }
-        });
-      }
-
-      run();
-      return function stop() {
-        stopped = true;
-      };
-    }
-
-    return api;
-  }
-  /**
-   * @param {Object} options
-   * @param {string} options.token
-   * @param {string} options.apiUrl
-   * @param {function} options.fetch
-   */
-
-
-  function createClientSdk(options) {
-    if (!options || !options.token) {
-      throw new Error('Token required.');
-    }
-
-    var apiUrl = options.apiUrl || defaultApiUrl;
-    var fetch = options.fetch || defaultFetch;
-    var token = options.token;
-    return makeApiClient(apiUrl, fetch, token);
   }
 
   const fetch = require('node-fetch');
 
-  const token = '4d12fff53abf56507b8ff2c12b51db2cda3fb59875bc8211';
-  const serviceId = 'c381b16b-3599-4749-839a-269e76b3235c';
-  const clientSdk = createClientSdk({
-    fetch,
-    token
-  });
-  let jobId = localStorage.getItem('jobId') || null;
-  var api = {
-    createJob,
-    createJobInputs,
-    waitForJobOutput
-  };
+  let jobId = null;
+  let token = null;
+  let serviceId = null;
+
+  class EndUserSdk {
+    constructor() {
+      this.sdk = null;
+      this.initiated = false;
+    }
+
+    async create(fields = {}) {
+      this.sdk = await createJob(fields);
+      this.initiated = true;
+    }
+
+    async retrieve() {
+      this.sdk = sdk$1.createEndUserSdk({
+        token,
+        jobId,
+        serviceId
+      });
+      this.initiated = true;
+    }
+
+    createJobInputs(inputs) {
+      const keys = Object.keys(inputs);
+      keys.forEach(key => {
+        const data = inputs[key];
+        this.sdk.createJobInput(key, data).then(() => {
+          saveJobInput(key, data);
+        }).catch(err => console.error(err));
+      });
+    }
+
+    waitForJobOutput(outputKey, callback) {
+      /*
+          1. Get Job and fnd given outputKey from job.outputs
+           -> get output
+          2. If not available, trackJob until it does CreateOutputEvent
+          3. repeat 1-2 until the key exist.
+      */
+      const stopTracking = this.sdk.trackJob((event, error) => {
+        console.log(`event ${name}`);
+        console.log(event.name);
+
+        if (event.name === 'createOutput') {
+          this.sdk.getJobOutputs(jobId).then(outputs => {
+            return outputs.data.find(jo => jo.key === outputKey);
+          }).then(output => {
+            if (output) {
+              stopTracking();
+              callback(null, output);
+            }
+          });
+        }
+      });
+    }
+
+  }
 
   async function createJob({
     input = {},
@@ -4672,86 +4922,93 @@ module.exports = QuickLRU;
     input = {
       url,
       ...input
-    };
-    const job = await clientSdk.createJob({
-      serviceId,
-      input,
-      category
+    }; //const job = await endUserSdk.createJob({ serviceId, input, category });
+
+    const SERVER_URL = "https://ubio-application-bundle-dummy-server.glitch.me";
+    const res = await fetch(`${SERVER_URL}/create-job`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        input,
+        category
+      }),
+      mode: 'cors'
     });
+
+    if (!res.ok) {
+      throw new Error(`Unexpected status from server: ${res.status}`);
+    }
+
+    const {
+      token,
+      jobId: currentJobId,
+      serviceId
+    } = await res.json();
     /*
     if there was another job then cancel it
     or
     start from where it was!(?)
     */
 
-    if (jobId) {
-      clientSdk.cancelJob(jobId).then(res => console.log(res)).catch(e => console.error(e));
-    }
+    /*     if (jobId) {
+            endUserSdk.cancelJob(jobId).then(res => console.log(res)).catch(e => console.error(e));
+        } */
 
-    jobId = job.id;
-    localStorage.setItem('jobId', job.id);
+    jobId = currentJobId;
+    localStorage.setItem('jobId', jobId);
+    return sdk$1.createEndUserSdk({
+      token,
+      jobId,
+      serviceId
+    });
   }
-
+  /*
   function waitForJobOutput(outputKey, callback) {
-    /*
-        1. Get Job and fnd given outputKey from job.outputs
-         -> get output
-        2. If not available, trackJob until it does CreateOutputEvent
-        3. repeat 1-2 until the key exist.
+      /*
+          1. Get Job and fnd given outputKey from job.outputs
+           -> get output
+          2. If not available, trackJob until it does CreateOutputEvent
+          3. repeat 1-2 until the key exist.
+       const stopTracking = endUserSdk.trackJob(jobId, (event, error) => {
+          console.log(`event ${name}`);
+          console.log(event.name);
+           if (event.name === 'createOutput') {
+              jobOutputExists(outputKey)
+                  .then(output => {
+                      if (output) {
+                          stopTracking();
+                          callback(null, output);
+                      }
+                  });
+          }
+      });
+  }
+   async function jobOutputExists(outputKey) {
+      const outputs = await endUserSdk.getJobOutputs(jobId);
+      const output = outputs.data.find(jo => jo.key === outputKey);
+       return output;
+  }
+   async function createJobInputs(inputs) {
+      const keys = Object.keys(inputs);
+      keys.forEach(key => {
+          const data = inputs[key];
+          endUserSdk.createJobInput(jobId, key, data)
+              .then(() => {
+                  saveJobInput(key, data);
+              })
+              .catch(err => console.error(err));
+      });
+  }
     */
-    awaitingJobOutput().then(() => clientSdk.getJobOutputs(jobId, outputKey)).then(output => callback(null, output)).catch(err => {
-      console.error(err);
-      return callback(err, null);
-    });
 
-    function awaitingJobOutput() {
-      let exist = false;
-      return new Promise(resolve => {
-        function repeat() {
-          jobOutputExists(outputKey).then(res => exist = res).then(() => {
-            if (!exist) {
-              return awaitingCreateOutputEvent();
-            }
-          }).then(res => {
-            if (!exist) {
-              return repeat();
-            }
 
-            return resolve();
-          });
-        }
-
-        repeat();
-      });
-    }
-
-    async function jobOutputExists(outputKey) {
-      const job = await clientSdk.getJob(jobId);
-      const output = job.outputs.find(jo => jo.key === outputKey);
-      return Boolean(output);
-    }
+  function saveJobInput(key, data) {
+    localStorage.setItem(`input.${key}`, JSON.stringify(data));
   }
 
-  function awaitingCreateOutputEvent() {
-    return new Promise(resolve => {
-      const stopTracking = clientSdk.trackJob(jobId, event => {
-        console.log(`event ${event.name}!`);
-
-        if (event.name === 'createOutput') {
-          stopTracking();
-          resolve();
-        }
-      });
-    });
-  }
-
-  async function createJobInputs(inputs) {
-    const keys = Object.keys(inputs);
-    keys.forEach(key => {
-      const data = inputs[key];
-      clientSdk.createJobInput(jobId, data, key).then(() => {}).catch(err => console.error(err));
-    });
-  }
+  const sdk = new EndUserSdk();
 
   var fallback = err => html`
 <div class="fallback">
@@ -4774,23 +5031,23 @@ module.exports = QuickLRU;
   var pets = onPetTypeChange => html`
 <div class="job-input">
     <div class="pet" name="pets[0]">
-        <div class="field">
-            <label  class="field__name" for="pets[0][pet-name]">Pet Name</label>
-            <input type="string" name="pets[0][pet-name]" placeholder="Rex" value="Rex" required />
+        <div class="field field-set">
+            <label class="field__name" for="pets[0][pet-name]">Pet Name</label>
+            <input type="text" name="pets[0][pet-name]" placeholder="Rex" value="Rex" required />
         </div>
 
-        <div class="field">
+        <div class="field field-set">
             <span class="field__name">Pet type</span>
             <div class="field__inputs group group--merged">
                 <input type="radio" name="pets[0][pet-type]" id="pets[0][pet-type]-dog" value="dog" @change=${onPetTypeChange}/>
                 <label for="pets[0][pet-type]-dog" class="button">Dog</label>
 
                 <input type="radio" name="pets[0][pet-type]" id="pets[0][pet-type]-cat" value="cat" @change=${onPetTypeChange}/>
-                <label for="pets[0][pet-type]-cat" class="button"> Cat </label>
+                <label for="pets[0][pet-type]-cat" class="button">Cat</label>
             </div>
         </div>
 
-        <div class="field">
+        <div class="field field-set">
             <span class="field__name">Gender</span>
             <div class="field__inputs group group--merged">
                 <input type="radio" name="pets[0][pet-gender]" value="male" id="pets[0][pet-gender]-male" required checked >
@@ -4801,23 +5058,23 @@ module.exports = QuickLRU;
             </div>
         </div>
 
-        <div class="field">
+        <div class="field field-set">
             <label  class="field__name" for="pets[0][breed-name]">Breed Name</label>
-            <input type="string" name="pets[0][breed-name]" value="Maltese" required>
+            <input type="text" name="pets[0][breed-name]" value="Maltese Terrier" required>
         </div>
 
-        <div class="field">
+        <div class="field field-set">
             <label class="field__name" for="pets[0][pet-date-of-birth]">Date Of Birth</label>
-            <input type="date" name="pets[0][date-of-birth]" value="2019-04-02" minDate="${Date.now}" required>
+            <input type="date" name="pets[0][date-of-birth]" value="2019-01-02" minDate="${new Date()}" required>
         </div>
 
-        <div class="field">
+        <div class="field field-set">
             <label class="field__name" for="pets[0][pet-price]">How much did you pay or donate</label>
             <input type="number" name="pets[0][pet-price]" value="0" min="0">
         </div>
 
         <div class="pet-related-questions">
-            <div class="field">
+            <div class="field field-set">
                 <span class="field__name">Is your pet spayed or neutered?</span>
                 <div class="field__inputs group group--merged">
                     <input
@@ -4851,7 +5108,7 @@ module.exports = QuickLRU;
                 </div>
             </div>
 
-            <div class="field">
+            <div class="field field-set">
                 <span class="field__name">Has your pet had any behaviour complains?</span>
                 <div class="field__inputs group group--merged">
                     <input
@@ -4866,13 +5123,13 @@ module.exports = QuickLRU;
                         type="radio"
                         name="pets[0][related-questions][any-behaviour-complains-$boolean]"
                         id="pets[0]-behaviour-complains-no"
-                        value="true"
+                        value="false"
                         required>
                     <label for="pets[0]-behaviour-complains-no" class="button">No</label>
                 </div>
             </div>
 
-            <div class="field">
+            <div class="field field-set">
                 <span class="field__name">Does your pet have chip or tag?</span>
                 <div class="field__inputs group group--merged">
                     <input
@@ -4887,7 +5144,7 @@ module.exports = QuickLRU;
                         type="radio"
                         name="pets[0][related-questions][has-chip-or-tag-$boolean]"
                         id="pets[0]-has-chip-no"
-                        value="true"
+                        value="false"
                         required>
                     <label for="pets[0]-has-chip-no" class="button">No</label>
 
@@ -4895,13 +5152,13 @@ module.exports = QuickLRU;
                         type="radio"
                         name="pets[0][related-questions][has-chip-or-tag-$boolean]"
                         id="pets[0]-has-chip-no"
-                        value="true"
+                        value=""
                         required>
                     <label for="pets[0]-has-chip-no" class="button">Unknown</label>
                 </div>
             </div>
 
-            <div class="field">
+            <div class="field field-set">
                 <span class="field__name">Is your pet kept at your address?</span>
                 <div class="field__inputs group group--merged">
                     <input
@@ -4916,13 +5173,13 @@ module.exports = QuickLRU;
                         type="radio"
                         name="pets[0][related-questions][is-kept-at-your-address-$boolean]"
                         id="pets[0]-kept-at-yours-no"
-                        value="true"
+                        value="false"
                         required>
                     <label for="pets[0]-kept-at-yours-no" class="button">No</label>
                 </div>
             </div>
 
-            <div class="field">
+            <div class="field field-set">
                 <span class="field__name">Is your pet kept indoor?</span>
                 <div class="field__inputs group group--merged">
                     <input
@@ -4937,13 +5194,13 @@ module.exports = QuickLRU;
                         type="radio"
                         name="pets[0][related-questions][indoor-pet-$boolean]"
                         id="pets[0]-indoor-no"
-                        value="true"
+                        value="false"
                         required>
                     <label for="pets[0]-indoor-no" class="button">No</label>
                 </div>
             </div>
 
-            <div class="field">
+            <div class="field field-set">
                 <span class="field__name">Is your pet in good health, and not showing any sign of illness, injury or other medical conditions?</span>
                 <div class="field__inputs group group--merged">
                     <input
@@ -4958,9 +5215,30 @@ module.exports = QuickLRU;
                         type="radio"
                         name="pets[0][related-questions][is-your-pet-healthy-$boolean]"
                         id="pets[0]-healthy-no"
-                        value="true"
+                        value="false"
                         required>
                     <label for="pets[0]-healthy-no" class="button">No</label>
+                </div>
+            </div>
+
+            <div class="field field-set">
+                <span class="field__name">Has there been legal action resulting from an incident involving your pet?</span>
+                <div class="field__inputs group group--merged">
+                    <input
+                        type="radio"
+                        name="pets[0][related-questions][any-legal-action-$boolean]"
+                        id="pets[0]-legal-yes"
+                        value="true"
+                        required checked>
+                    <label for="pets[0]-legal-yes" class="button">Yes</label>
+
+                    <input
+                        type="radio"
+                        name="pets[0][related-questions][any-legal-action-$boolean]"
+                        id="pets[0]-legal-no"
+                        value="false"
+                        required>
+                    <label for="pets[0]-legal-no" class="button">No</label>
                 </div>
             </div>
         </div>
@@ -4971,9 +5249,9 @@ module.exports = QuickLRU;
   const renderBreedType = breedTypes => html`
 <div class="field">
     <span class="field__name">What is your pet's breed?</span>
-    <select for="selected-breed-type" name="selected-breed-type">
+    <select name="selected-breed-type">
         ${breedTypes.map(b => html`
-            <option for="selected-breed-type" value="${b}"/> ${b}</option>`)}
+            <option value="${b}"> ${b}</option>`)}
     </select>
 </div>
 `;
@@ -4991,13 +5269,13 @@ module.exports = QuickLRU;
   var aboutYourPet = () => html`
 <div class="section">
     <h3 class="section__header">About your pet</h3>
-    <form class="section__body"id="about-your-pet">
+    <form class="section__body" id="about-your-pet">
         ${pets(onPetTypeChange)}
         <!-- TODO<PROTOCOL>: breedType should be part of pets input!-->
         <div id="breedType"></div>
     </form>
 
-    <button type="button" class="button button--secondary" id="submit-about-your-pet">Next</button>
+    <button type="button" class="button button--right button--primary" id="submit-about-your-pet">Continue</button>
 </div>
 `;
 
@@ -5013,30 +5291,250 @@ module.exports = QuickLRU;
     render(selectedBreedType(breedTypes), document.querySelector('#breedType'));
   }
 
-  var owner = () => html`
-<div class="job-input">
-    <div class="section-header">
-        <span>About you</span>
+  const TITLES = ['mr', 'ms', 'mrs', 'miss'];
+
+  var owner = maritalStatusOptions => html`
+    <div name="owner">
+        <div name="owner[person]" class="filed-set">
+            <div class="field">
+                <label class="field__name">Title</label>
+                <select name="owner[person][title]">
+                    ${TITLES.map(t => html`
+                    <option value="${t}" /> ${t.toUpperCase()}</option>`)}
+                </select>
+            </div>
+
+            <div class="field">
+                <label class="field__name" for="owner[person][first-name]">First Name</label>
+                <input type="text" name="owner[person][first-name]" placeholder="Jane" required />
+            </div>
+
+            <div class="field">
+                <label class="field__name" for="owner[person][middle-name]">Middle Name</label>
+                <input type="text" name="owner[person][middle-name]" placeholder="" />
+            </div>
+
+            <div class="field">
+                <label class="field__name" for="owner[person][last-name]">Last Name</label>
+                <input type="text" name="owner[person][last-name]" placeholder="Doe" />
+            </div>
+
+            <div class="field">
+                <label class="field__name" for="owner[person][date-of-birth]">Date Of Birth</label>
+                <input type="date" name="owner[person][date-of-birth]" value="1990-04-02" required>
+            </div>
+
+            <div class="field">
+                <span class="field__name">Marital Status</span>
+                <select name="selected-marital-status-option">
+                    ${maritalStatusOptions.map(ms => html`
+                    <option value="${ms}"> ${ms} </option>`)}
+                </select>
+            </div>
+        </div>
+
+        <div name="account" class="filed-set">
+            <div class="field">
+                <label class="field__name" for="account[email]">Email</label>
+                <input type="email" name="account[email]" placeholder="example@example.com" value="example@example.com" required>
+            </div>
+
+            <div class="field">
+                <label class="field__name" for="account[phone]">Phone</label>
+                <input type="text" name="account[phone][country-code]" value="gb" required>
+                <input type="tel" name="account[phone][number]" placeholder="phone number" value="07912341234" required>
+            </div>
+
+            <div>
+                <input type="hidden" name="account[password]" value="">
+                <input type="hidden" name="account[is-existing-$boolean]" value="false">
+            </div>
+        </div>
+
+        <div name="owner[address]" class="filed-set">
+            <div class="field">
+                <label for="owner[address][line1]" class="field__name">Line 1</label>
+                <input type="text" name="owner[address][line1]" id="owner[address][line1]" value="587" required />
+            </div>
+
+            <div class="field">
+                <label for="owner[address][line2]" class="field__name">Line 2</label>
+                <input type="text" name="owner[address][line2]" id="owner[address][line2]" value="high road" required />
+            </div>
+
+            <div class="field">
+                <label for="owner[address][city]" class="field__name">City</label>
+                <input type="text" name="owner[address][city]" id="owner[address][city]" value="london" required />
+            </div>
+
+            <div class="field">
+                <label for="owner[address][country-subdivision]" class="field__name">County</label>
+                <input type="text" name="owner[address][country-subdivision]" id="owner[address][country-subdivision]" value="" />
+            </div>
+
+            <div class="field">
+            <!-- select -->
+                <label for="owner[address][country-code]" class="field__name">Country Code</label>
+                <input type="text" name="owner[address][country-code]" id="owner[address][country-code]" value="gb" required />
+            </div>
+
+            <div class="field">
+                <label for="owner[address][postcode]" class="field__name">post-code</label>
+                <input type="text" name="owner[address][postcode]" id="owner[address][postcode]" value="E11 4PB" required />
+            </div>
+        </div>
     </div>
-    <form id="pets">
-        <p>Forms for owner appears here.</p>
+`;
+
+  var aboutYou = () => {
+    return html`
+<div class="section">
+    <h3 class="section__header">About you</h3>
+    <form class="section__body"id="about-you">
+        ${owner(availableMaritalStatusOptions)}
     </form>
 
-    <!-- <button type="button" id="">Add pet</button> -->
-    <button type="button" id="create-input-owner">Create Input</button>
+    <button type="button" class="button button--right button--primary" id="submit-about-you">Continue</button>
+</div>
+`;
+  };
+  /* get it from previous output */
+
+
+  const availableMaritalStatusOptions = ["Civil Partner", "Cohabiting", "Divorced", "Married", "Separated", "Single", "Widowed"];
+
+  function getOutputs({
+    inputMethod,
+    sourceOutputKey
+  }, callback) {
+    if (inputMethod === 'SelectOne' || inputMethod === 'Consent') {
+      if (!sourceOutputKey) {
+        throw Error(`Unexpected meta: sourceOutputKey not found for ${inputMethod} inputMethod.`);
+      } //check job state and see if it's awaitingInput && key = selectedBreedType
+
+
+      console.log(`waiting for job output ${sourceOutputKey}`); //TODO: we should show something while waiting.
+
+      sdk.waitForJobOutput(sourceOutputKey, (err, output) => {
+        if (err) {
+          callback(new Error(`Unexpected meta: sourceOutputKey not found for ${inputMethod} inputMethod.`), null);
+        }
+
+        console.log('heres the output');
+        callback(null, output.data);
+      });
+    } else {
+      console.log(`default input.`);
+    }
+  }
+
+  const renderAddresses = addresses => html`
+<div class="field">
+    <span class="field__name">What is your address?</span>
+    <select name="selected-address">
+        ${addresses.map(b => html`
+            <option value="${b}"> ${b}</option>`)}
+    </select>
 </div>
 `;
 
-  var aboutYou = () => html`
-<div>
-    <h3>About you</h3>
-    <form id="about-you">
-        ${owner()}
+  var addresses = addresses => html`
+    ${addresses && Array.isArray(addresses) ? renderAddresses(addresses) : ''}
+`;
+
+  var selectedAddress = () => {
+    getAddresses();
+    return html`
+<div class="section">
+    <h3 class="section__header">selected Address</h3>
+    <form class="section__body"id="selected-address">
+        <div id="selected-address">
+            loading your address....
+        </div>
     </form>
 
-    <button type="button" id="submit-about-you">Next</button>
+    <button type="button" class="button button--right button--primary" id="submit-selected-address">Continue</button>
 </div>
 `;
+  };
+
+  function getAddresses() {
+    getOutputs({
+      inputMethod: "SelectOne",
+      sourceOutputKey: 'availableAddresses'
+    }, (err, output) => {
+      if (err) {
+        return;
+      }
+
+      render(addresses(output), document.querySelector('#selected-address'));
+    });
+  }
+
+  var policyOptions = () => html`
+<div name="policy-options" class="filed-set">
+    <div class="field">
+        <label class="field__name" for="policy-options[cover-start-date]">Cover start date</label>
+        <input type="date" name="policy-options[cover-start-date]" value="2019-06-01" minDate="${new Date()}" required>
+    </div>
+
+    <div class="field">
+        <label class="field__name" for="policy-options[number-of-pets-owned-$number]">How Many cats and dogs are in your household?</label>
+        <input type="tel" name="policy-options[number-of-pets-owned-$number]" value="1" required />
+    </div>
+
+    <div class="field">
+        <span class="field__name" for="policy-options[joint-policy-holder-$boolean]">Do you want to include a joint policy holder </span>
+        <div class="field__inputs group group--merged">
+            <input
+                type="radio"
+                name="policy-options[joint-policy-holder-$boolean]"
+                id="policy-options[joint-policy-holder]-yes"
+                value="true" required checked>
+            <label
+                for="policy-options[joint-policy-holder]-yes"
+                class="button">Yes</label>
+
+            <input
+                type="radio"
+                class="button"
+                name="policy-options[joint-policy-holder-$boolean]"
+                id="policy-options[joint-policy-holder]-no"
+                value="false">
+            <label
+                for="policy-options[joint-policy-holder]-no"
+                class="button">No</label>
+        </div>
+    </div>
+</div>`;
+
+  var aboutYourPolicy = () => {
+    return html`
+<div class="section">
+    <h3 class="section__header">About Your Policy</h3>
+    <form class="section__body" id="about-your-policy">
+        ${policyOptions()}
+    </form>
+
+    <button type="button" class="button button--right button--primary" id="submit-about-your-policy">Continue</button>
+</div>
+`;
+  };
+
+  var selectedCover = () => {
+    return html`
+<div class="section">
+    <h3 class="section__header">Selected Cover</h3>
+    <form class="section__body" id="selected-cover">
+        <div id="selected-input-wrapper">
+            please wait....
+        </div>
+    </form>
+
+    <button type="button" class="button button--right button--primary" id="submit-selected-cover">Continue</button>
+</div>
+`;
+  };
   /** Global */
 
 
@@ -5044,21 +5542,11 @@ module.exports = QuickLRU;
     fallback,
     loading,
     aboutYourPet,
-    aboutYou
+    aboutYou,
+    selectedAddress,
+    aboutYourPolicy,
+    selectedCover
   };
-  /* flow of the forms, key = input key (for now) */
-
-  /* const FLOW = [
-      { key: 'pets', inputMethod: null, sourceOutputKey: null },
-      { key: 'selectedBreedType', inputMethod: "SelectOne", sourceOutputKey: 'availableBreedTypes' },
-      { key: 'owner', inputMethod: null, sourceOutputKey: null, section: 'About you' },
-      { key: 'account', inputMethod: null, sourceOutputKey: null, section: 'About you' },
-      { key: 'selectedMaritalStatusOption', inputMethod: "SelectOne",  sourceOutputKey: 'availableMaritalStatusOptions' },
-      { key: 'selectedAddress', inputMethod: "SelectOne",  sourceOutputKey: 'availableAddresses' },
-      { key: 'finalPriceConsent', inputMethod: "Consent", sourceOutputKey: "finalPrice" }
-  ];
-  */
-
   const SECTIONS = [{
     name: 'aboutYourPet',
     inputs: [{
@@ -5080,12 +5568,27 @@ module.exports = QuickLRU;
       key: 'selectedMaritalStatusOption',
       inputMethod: "SelectOne",
       sourceOutputKey: 'availableMaritalStatusOptions'
-    },
-    /* in-flow, availableMaritalStatusOptions */
-    {
+    }]
+  }, {
+    name: 'selectedAddress',
+    inputs: [{
       key: 'selectedAddress',
       inputMethod: "SelectOne",
       sourceOutputKey: 'availableAddresses'
+    }]
+  }, {
+    name: 'aboutYourPolicy',
+    inputs: [{
+      key: 'policyOptions',
+      inputMethod: null,
+      sourceOutputKey: null
+    }]
+  }, {
+    name: 'selectedCover',
+    inputs: [{
+      key: 'selectedCover',
+      inputMethod: "SelectOne",
+      sourceOutputKey: 'availableCovers'
     }]
   }, {
     name: 'payment',
@@ -5107,7 +5610,7 @@ module.exports = QuickLRU;
   }); */
 
   function init() {
-    //api.createJob({}).then(() => {});
+    sdk.create().then(() => {});
     flowManager.init();
     renderSection();
   }
@@ -5140,24 +5643,22 @@ module.exports = QuickLRU;
       return;
     }
 
-    submit.addEventListener('click', function ($event) {
+    submit.addEventListener('click', function () {
       // TODO: validate the input (using protocol?)
-      $event.preventDefault();
-
       if (!form.reportValidity()) {
+        console.log('not valid form');
         return;
-      } // Partner can send input data to their server for logging if they prefer,
+      }
+
+      submit.setAttribute('disabled', 'true'); // Partner can send input data to their server for logging if they prefer,
       // in prototyping we are sending the input directly to api using sdk.
       //TODO: update it to accept several inputs and send each of them separately
 
+      const inputs = serializeForm(form);
+      console.log('inputs:', inputs); // send input or create job via sdk
 
-      const input = serializeForm(form);
-      console.log('inputs:', input); // send input or create job via sdk
-
-      api.createJobInputs(input).then(r => {
-        submit.setAttribute('disabled', 'true');
-        setTimeout(next, 1000);
-      }).catch(e => alert(e));
+      sdk.createJobInputs(inputs);
+      setTimeout(next, 1000);
     });
   }
   /*
@@ -5178,5 +5679,4 @@ module.exports = QuickLRU;
 
 });
 
-}).call(this,require("buffer").Buffer)
-},{"buffer":2,"camelcase-keys":3,"form-serialize":5,"lodash.kebabcase":7,"node-fetch":9}]},{},[11]);
+},{"@ubio/sdk":1,"camelcase-keys":4,"form-serialize":6,"lodash.kebabcase":8,"node-fetch":10}]},{},[12]);
