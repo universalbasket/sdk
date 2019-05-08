@@ -8,6 +8,9 @@ import aboutYou from './about-you/index';
 import selectedAddress from './selected-address/index';
 import aboutYourPolicy from './about-your-policy/index';
 import selectedCover from './covers/index';
+import selectedVetPaymentTerm from './covers/selected-vet-payment-term';
+import selectedPaymentTerm from './covers/selected-payment-term';
+import payment from './payment';
 
 export default {
     fallback,
@@ -16,5 +19,8 @@ export default {
     aboutYou,
     selectedAddress,
     aboutYourPolicy,
-    selectedCover
+    selectedCover,
+    selectedVetPaymentTerm,
+    selectedPaymentTerm,
+    payment
 };

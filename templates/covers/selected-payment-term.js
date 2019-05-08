@@ -10,13 +10,14 @@ export default () => html`
         ${selectedInput(meta)}
     </form>
 
-    <button type="button" class="button button--right button--primary" id="submit-selected-cover">Continue</button>
+    <button type="button" class="button button--right button--primary" id="submit">Continue</button>
 </div>
 `;
 
-const meta = {
-    inputKey: 'selectedCover',
-    inputMethod: "SelectOne",
-    sourceOutputKey: 'availableCovers',
-    title: 'Select your cover',
-};
+const meta =
+    {
+        inputKey: 'selectedPaymentTerm',
+        title: 'Select your payment term',
+        inputMethod: "SelectOne",
+        sourceOutputKey: 'availablePaymentTerms'
+    };

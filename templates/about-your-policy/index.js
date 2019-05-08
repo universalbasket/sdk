@@ -11,7 +11,7 @@ export default () => {
         ${policyOptions()}
     </form>
 
-    <button type="button" class="button button--right button--primary" id="submit-about-your-policy">Continue</button>
+    <button type="button" class="button button--right button--primary" id="submit">Continue</button>
 </div>
 `
 }

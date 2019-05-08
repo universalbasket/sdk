@@ -15,7 +15,7 @@ export default () => {
         </div>
     </form>
 
-    <button type="button" class="button button--right button--primary" id="submit-selected-address">Continue</button>
+    <button type="button" class="button button--right button--primary" id="submit">Continue</button>
 </div>
 `
 }

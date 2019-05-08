@@ -1,6 +1,8 @@
-import { html } from '../src/lit-html';
+import kebabCase from 'lodash.kebabcase';
+import { html, render } from '../src/lit-html';
+import getOutput from '../src/get-output';
 
-const render = (fieldName, inputKey, output) => html`
+const field = (fieldName, inputKey, output) => html`
 <div class="field">
     <span class="field__name">${fieldName}</span>
     <select name="${inputKey}">
@@ -11,9 +13,20 @@ const render = (fieldName, inputKey, output) => html`
 </div>
 `;
 
-export default (fieldName, inputKey, output) => html`
-    ${output && Array.isArray(output) ?
-        render(fieldName, inputKey, output) :
-        ''
-    }
-`;
+export default (meta) => {
+    init(meta);
+    return html`
+    <div id="${meta.inputKey}">
+        <p>please wait...</p>
+    </div>
+`};
+
+function init(meta) {
+    const { inputMethod, sourceOutputKey } = meta;
+    getOutput({inputMethod,  sourceOutputKey}, (err, output) => {
+        if (err) {
+            return;
+        }
+        render(field(meta.title, kebabCase(meta.inputKey), output), document.querySelector(`#${meta.inputKey}`));
+    })
+}

@@ -2424,7 +2424,7 @@ module.exports = (input, options) => {
 };
 
 
-},{"camelcase":5,"map-obj":9,"quick-lru":11}],5:[function(require,module,exports){
+},{"camelcase":5,"map-obj":9,"quick-lru":10}],5:[function(require,module,exports){
 'use strict';
 
 const preserveCamelCase = string => {
@@ -3340,32 +3340,6 @@ const mapObject = (object, fn, options, isSeen = new WeakMap()) => {
 module.exports = mapObject;
 
 },{}],10:[function(require,module,exports){
-(function (global){
-"use strict";
-
-// ref: https://github.com/tc39/proposal-global
-var getGlobal = function () {
-	// the only reliable means to get the global object is
-	// `Function('return this')()`
-	// However, this causes CSP violations in Chrome apps.
-	if (typeof self !== 'undefined') { return self; }
-	if (typeof window !== 'undefined') { return window; }
-	if (typeof global !== 'undefined') { return global; }
-	throw new Error('unable to locate global object');
-}
-
-var global = getGlobal();
-
-module.exports = exports = global.fetch;
-
-// Needed for TypeScript and Webpack.
-exports.default = global.fetch.bind(global);
-
-exports.Headers = global.Headers;
-exports.Request = global.Request;
-exports.Response = global.Response;
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],11:[function(require,module,exports){
 'use strict';
 
 class QuickLRU {
@@ -3481,7 +3455,7 @@ class QuickLRU {
 
 module.exports = QuickLRU;
 
-},{}],12:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(require('lodash.kebabcase'), require('form-serialize'), require('camelcase-keys'), require('@ubio/sdk')) : typeof define === 'function' && define.amd ? define(['lodash.kebabcase', 'form-serialize', 'camelcase-keys', '@ubio/sdk'], factory) : (global = global || self, factory(global.kebabCase, global.formSerialize, global.camelCaseKeys, global.sdk$1));
 })(this, function (kebabCase, formSerialize, camelCaseKeys, sdk$1) {
@@ -4852,8 +4826,6 @@ module.exports = QuickLRU;
     return result;
   }
 
-  const fetch = require('node-fetch');
-
   let jobId = null;
   let token = null;
   let serviceId = null;
@@ -4878,29 +4850,23 @@ module.exports = QuickLRU;
       this.initiated = true;
     }
 
-    createJobInputs(inputs) {
+    async createJobInputs(inputs) {
       const keys = Object.keys(inputs);
-      keys.forEach(key => {
+      const createInputs = keys.map(key => {
         const data = inputs[key];
-        this.sdk.createJobInput(key, data).then(() => {
-          saveJobInput(key, data);
-        }).catch(err => console.error(err));
+        saveJobInput(key, data);
+        return this.sdk.createJobInput(key, data);
       });
+      await Promise.all(createInputs);
     }
 
     waitForJobOutput(outputKey, callback) {
-      /*
-          1. Get Job and fnd given outputKey from job.outputs
-           -> get output
-          2. If not available, trackJob until it does CreateOutputEvent
-          3. repeat 1-2 until the key exist.
-      */
       const stopTracking = this.sdk.trackJob((event, error) => {
         console.log(`event ${name}`);
         console.log(event.name);
 
         if (event.name === 'createOutput') {
-          this.sdk.getJobOutputs(jobId).then(outputs => {
+          this.sdk.getJobOutputs().then(outputs => {
             return outputs.data.find(jo => jo.key === outputKey);
           }).then(output => {
             if (output) {
@@ -4909,6 +4875,13 @@ module.exports = QuickLRU;
             }
           });
         }
+      });
+    }
+
+    async submitPan(pan) {
+      const panToken = await this.sdk.vaultPan(pan);
+      await this.createJobInputs({
+        panToken
       });
     }
 
@@ -4946,63 +4919,16 @@ module.exports = QuickLRU;
       jobId: currentJobId,
       serviceId
     } = await res.json();
-    /*
-    if there was another job then cancel it
-    or
-    start from where it was!(?)
-    */
-
-    /*     if (jobId) {
-            endUserSdk.cancelJob(jobId).then(res => console.log(res)).catch(e => console.error(e));
-        } */
-
     jobId = currentJobId;
     localStorage.setItem('jobId', jobId);
+    localStorage.setItem('token', token);
+    localStorage.setItem('serviceId', serviceId);
     return sdk$1.createEndUserSdk({
       token,
       jobId,
       serviceId
     });
   }
-  /*
-  function waitForJobOutput(outputKey, callback) {
-      /*
-          1. Get Job and fnd given outputKey from job.outputs
-           -> get output
-          2. If not available, trackJob until it does CreateOutputEvent
-          3. repeat 1-2 until the key exist.
-       const stopTracking = endUserSdk.trackJob(jobId, (event, error) => {
-          console.log(`event ${name}`);
-          console.log(event.name);
-           if (event.name === 'createOutput') {
-              jobOutputExists(outputKey)
-                  .then(output => {
-                      if (output) {
-                          stopTracking();
-                          callback(null, output);
-                      }
-                  });
-          }
-      });
-  }
-   async function jobOutputExists(outputKey) {
-      const outputs = await endUserSdk.getJobOutputs(jobId);
-      const output = outputs.data.find(jo => jo.key === outputKey);
-       return output;
-  }
-   async function createJobInputs(inputs) {
-      const keys = Object.keys(inputs);
-      keys.forEach(key => {
-          const data = inputs[key];
-          endUserSdk.createJobInput(jobId, key, data)
-              .then(() => {
-                  saveJobInput(key, data);
-              })
-              .catch(err => console.error(err));
-      });
-  }
-    */
-
 
   function saveJobInput(key, data) {
     localStorage.setItem(`input.${key}`, JSON.stringify(data));
@@ -5258,24 +5184,32 @@ module.exports = QuickLRU;
 
   var selectedBreedType = breedTypes => html`
     ${breedTypes && Array.isArray(breedTypes) ? renderBreedType(breedTypes) : ''}
-`; // this will be
+`;
 
+  var payment = () => html`
+<div class="section">
+    <h3 class="section__header">Your Covers</h3>
+    <form class="section__body">
+        <div>
+            <input id="pan" name="pan" type="tel" value="4242424242424242"></input>
+        </div>
+    </form>
 
-  const MORE_THAN_BREED_TYPES = {
-    cat: ["Pedigree", "Non Pedigree"],
-    dog: ["Cross Breed", "Pedigree", "Small mixed breed (up to 10kg)", "Medium mixed breed (10 - 20kg)", "Large mixed breed (above 20kg)"]
-  };
+    <button type="button" class="button button--right button--primary" id="submit-payment">Continue</button>
+</div>
+`;
 
   var aboutYourPet = () => html`
 <div class="section">
     <h3 class="section__header">About your pet</h3>
     <form class="section__body" id="about-your-pet">
+        ${payment}
         ${pets(onPetTypeChange)}
         <!-- TODO<PROTOCOL>: breedType should be part of pets input!-->
         <div id="breedType"></div>
     </form>
 
-    <button type="button" class="button button--right button--primary" id="submit-about-your-pet">Continue</button>
+    <button type="button" class="button button--right button--primary" id="submit">Continue</button>
 </div>
 `;
 
@@ -5284,6 +5218,10 @@ module.exports = QuickLRU;
       updateBreedTypes(e.target.value);
     }
 
+  };
+  const MORE_THAN_BREED_TYPES = {
+    cat: ["Pedigree", "Non Pedigree"],
+    dog: ["Cross Breed", "Pedigree", "Small mixed breed (up to 10kg)", "Medium mixed breed (10 - 20kg)", "Large mixed breed (above 20kg)"]
   };
 
   function updateBreedTypes(petType) {
@@ -5333,24 +5271,6 @@ module.exports = QuickLRU;
             </div>
         </div>
 
-        <div name="account" class="filed-set">
-            <div class="field">
-                <label class="field__name" for="account[email]">Email</label>
-                <input type="email" name="account[email]" placeholder="example@example.com" value="example@example.com" required>
-            </div>
-
-            <div class="field">
-                <label class="field__name" for="account[phone]">Phone</label>
-                <input type="text" name="account[phone][country-code]" value="gb" required>
-                <input type="tel" name="account[phone][number]" placeholder="phone number" value="07912341234" required>
-            </div>
-
-            <div>
-                <input type="hidden" name="account[password]" value="">
-                <input type="hidden" name="account[is-existing-$boolean]" value="false">
-            </div>
-        </div>
-
         <div name="owner[address]" class="filed-set">
             <div class="field">
                 <label for="owner[address][line1]" class="field__name">Line 1</label>
@@ -5386,15 +5306,35 @@ module.exports = QuickLRU;
     </div>
 `;
 
+  var account = () => html`
+<div name="account" class="filed-set">
+    <div class="field">
+        <label class="field__name" for="account[email]">Email</label>
+        <input type="email" name="account[email]" placeholder="example@example.com" value="example@example.com" required>
+    </div>
+
+    <div class="field">
+        <label class="field__name" for="account[phone]">Phone</label>
+        <input type="text" name="account[phone][country-code]" value="gb" required>
+        <input type="tel" name="account[phone][number]" placeholder="phone number" value="07912341234" required>
+    </div>
+
+    <div>
+        <input type="hidden" name="account[password]" value="">
+        <input type="hidden" name="account[is-existing-$boolean]" value="false">
+    </div>
+</div>`;
+
   var aboutYou = () => {
     return html`
 <div class="section">
     <h3 class="section__header">About you</h3>
     <form class="section__body"id="about-you">
+        ${account()}
         ${owner(availableMaritalStatusOptions)}
     </form>
 
-    <button type="button" class="button button--right button--primary" id="submit-about-you">Continue</button>
+    <button type="button" class="button button--right button--primary" id="submit">Continue</button>
 </div>
 `;
   };
@@ -5453,7 +5393,7 @@ module.exports = QuickLRU;
         </div>
     </form>
 
-    <button type="button" class="button button--right button--primary" id="submit-selected-address">Continue</button>
+    <button type="button" class="button button--right button--primary" id="submit">Continue</button>
 </div>
 `;
   };
@@ -5516,27 +5456,101 @@ module.exports = QuickLRU;
         ${policyOptions()}
     </form>
 
-    <button type="button" class="button button--right button--primary" id="submit-about-your-policy">Continue</button>
+    <button type="button" class="button button--right button--primary" id="submit">Continue</button>
 </div>
 `;
   };
 
-  var selectedCover = () => {
+  const field = (fieldName, inputKey, output) => html`
+<div class="field">
+    <span class="field__name">${fieldName}</span>
+    <select name="${inputKey}">
+        ${output.map(output => html`
+            <option value="${output}"> ${output}</option>`)}
+    </select>
+</div>
+`;
+
+  var selectedInput = meta => {
+    init(meta);
     return html`
+    <div id="${meta.inputKey}">
+        <p>please wait...</p>
+    </div>
+`;
+  };
+
+  function init(meta) {
+    const {
+      inputMethod,
+      sourceOutputKey
+    } = meta;
+    getOutputs({
+      inputMethod,
+      sourceOutputKey
+    }, (err, output) => {
+      if (err) {
+        return;
+      }
+
+      render(field(meta.title, kebabCase(meta.inputKey), output), document.querySelector(`#${meta.inputKey}`));
+    });
+  }
+
+  var selectedCover = () => html`
 <div class="section">
-    <h3 class="section__header">Selected Cover</h3>
-    <form class="section__body" id="selected-cover">
-        <div id="selected-input-wrapper">
-            please wait....
-        </div>
+    <h3 class="section__header">Your Covers</h3>
+    <form class="section__body">
+        ${selectedInput(meta)}
     </form>
 
     <button type="button" class="button button--right button--primary" id="submit-selected-cover">Continue</button>
 </div>
 `;
+
+  const meta = {
+    inputKey: 'selectedCover',
+    inputMethod: "SelectOne",
+    sourceOutputKey: 'availableCovers',
+    title: 'Select your cover'
+  };
+
+  var selectedVetPaymentTerm = () => html`
+<div class="section">
+    <h3 class="section__header">Your Covers</h3>
+    <form class="section__body">
+        ${selectedInput(meta$1)}
+    </form>
+
+    <button type="button" class="button button--right button--primary" id="submit">Continue</button>
+</div>
+`;
+
+  const meta$1 = {
+    inputKey: 'selectedVetPaymentTerm',
+    title: 'Select your vet payment term',
+    inputMethod: "SelectOne",
+    sourceOutputKey: 'availableVetPaymentTerms'
+  };
+
+  var selectedPaymentTerm = () => html`
+<div class="section">
+    <h3 class="section__header">Your Covers</h3>
+    <form class="section__body">
+        ${selectedInput(meta$2)}
+    </form>
+
+    <button type="button" class="button button--right button--primary" id="submit">Continue</button>
+</div>
+`;
+
+  const meta$2 = {
+    inputKey: 'selectedPaymentTerm',
+    title: 'Select your payment term',
+    inputMethod: "SelectOne",
+    sourceOutputKey: 'availablePaymentTerms'
   };
   /** Global */
-
 
   var templates = {
     fallback,
@@ -5545,9 +5559,19 @@ module.exports = QuickLRU;
     aboutYou,
     selectedAddress,
     aboutYourPolicy,
-    selectedCover
+    selectedCover,
+    selectedVetPaymentTerm,
+    selectedPaymentTerm,
+    payment
   };
   const SECTIONS = [{
+    name: 'payment',
+    inputs: [{
+      key: 'payment',
+      inputMethod: null,
+      sourceOutputKey: null
+    }]
+  }, {
     name: 'aboutYourPet',
     inputs: [{
       key: 'pets',
@@ -5568,6 +5592,12 @@ module.exports = QuickLRU;
       key: 'selectedMaritalStatusOption',
       inputMethod: "SelectOne",
       sourceOutputKey: 'availableMaritalStatusOptions'
+    },
+    /* in-flow, availableMaritalStatusOptions */
+    {
+      key: 'selectedAddress',
+      inputMethod: "SelectOne",
+      sourceOutputKey: 'availableAddresses'
     }]
   }, {
     name: 'selectedAddress',
@@ -5591,6 +5621,20 @@ module.exports = QuickLRU;
       sourceOutputKey: 'availableCovers'
     }]
   }, {
+    name: 'selectedVetPaymentTerm',
+    inputs: [{
+      key: 'selectedVetPaymentTerm',
+      inputMethod: "SelectOne",
+      sourceOutputKey: 'availableCovers'
+    }]
+  }, {
+    name: 'selectedPaymentTerm',
+    inputs: [{
+      key: 'selectedPaymentTerm',
+      inputMethod: "SelectOne",
+      sourceOutputKey: 'availableCovers'
+    }]
+  }, {
     name: 'payment',
     inputs: [{
       key: 'payment',
@@ -5604,12 +5648,9 @@ module.exports = QuickLRU;
   }];
   const flowManager = new FlowManager(SECTIONS);
   const app = document.querySelector('#app');
-  init();
-  /* document.querySelector('#init').addEventListener('click', () => {
-      init();
-  }); */
+  init$1();
 
-  function init() {
+  function init$1() {
     sdk.create().then(() => {});
     flowManager.init();
     renderSection();
@@ -5635,41 +5676,62 @@ module.exports = QuickLRU;
   function addSubmitter(section) {
     /* this bits need to be automated, per input keys */
     const formId = kebabCase(section);
-    const form = document.querySelector('#' + formId);
-    const submit = document.querySelector('#submit-' + formId);
+    const form = document.querySelector('form');
+    const submit = document.querySelector(`#submit`);
+    const vaultSubmit = document.querySelector('#submit-payment');
 
-    if (!form || !submit) {
-      console.error('form or submit button not found. check your name convention for the forms');
-      return;
-    }
-
-    submit.addEventListener('click', function () {
-      // TODO: validate the input (using protocol?)
-      if (!form.reportValidity()) {
-        console.log('not valid form');
+    if (!form
+    /* || !submit */
+    ) {
+        console.error('form or submit button not found. check your name convention for the forms');
         return;
       }
 
-      submit.setAttribute('disabled', 'true'); // Partner can send input data to their server for logging if they prefer,
-      // in prototyping we are sending the input directly to api using sdk.
-      //TODO: update it to accept several inputs and send each of them separately
+    if (vaultSubmit) {
+      vaultSubmit.addEventListener('click', function () {
+        // TODO: validate the input (using protocol?)
+        if (!form.reportValidity()) {
+          console.log('not valid form');
+          return;
+        }
 
-      const inputs = serializeForm(form);
-      console.log('inputs:', inputs); // send input or create job via sdk
+        vaultSubmit.setAttribute('disabled', 'true'); // Partner can send input data to their server for logging if they prefer,
+        // in prototyping we are sending the input directly to api using sdk.
+        //TODO: update it to accept several inputs and send each of them separately
 
-      sdk.createJobInputs(inputs);
-      setTimeout(next, 1000);
-    });
+        const inputs = serializeForm(form);
+        console.log('inputs:', inputs); // send input or create job via sdk
+
+        sdk.submitPan(inputs.pan).then(res => {
+          setTimeout(next, 1000);
+          submit.removeAttribute('disabled');
+        });
+      });
+    }
+
+    if (submit) {
+      submit.addEventListener('click', function () {
+        // TODO: validate the input (using protocol?)
+        if (!form.reportValidity()) {
+          console.log('not valid form');
+          return;
+        }
+
+        submit.setAttribute('disabled', 'true'); // Partner can send input data to their server for logging if they prefer,
+        // in prototyping we are sending the input directly to api using sdk.
+        //TODO: update it to accept several inputs and send each of them separately
+
+        const inputs = serializeForm(form);
+        console.log('inputs:', inputs); // send input or create job via sdk
+
+        sdk.createJobInputs(inputs).then(res => {
+          setTimeout(next, 1000);
+          submit.removeAttribute('disabled');
+        });
+      });
+    }
   }
   /*
-   window.onbeforeunload = function() {
-      localStorage.setItem("name", $('#inputName').val());
-      localStorage.setItem("email", $('#inputEmail').val());
-      localStorage.setItem("phone", $('#inputPhone').val());
-      localStorage.setItem("subject", $('#inputSubject').val());
-      localStorage.setItem("detail", $('#inputDetail').val());
-      // ...
-  }
    window.onload = function() {
        const name = localStorage.getItem("name");
       if (name !== null) $('#inputName').val("name");
@@ -5679,4 +5741,4 @@ module.exports = QuickLRU;
 
 });
 
-},{"@ubio/sdk":1,"camelcase-keys":4,"form-serialize":6,"lodash.kebabcase":8,"node-fetch":10}]},{},[12]);
+},{"@ubio/sdk":1,"camelcase-keys":4,"form-serialize":6,"lodash.kebabcase":8}]},{},[11]);

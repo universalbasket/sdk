@@ -20,16 +20,15 @@ class EndUserSdk {
         this.initiated = true;
     }
 
-    createJobInputs(inputs) {
+    async createJobInputs(inputs) {
         const keys = Object.keys(inputs);
-        keys.forEach(key => {
+        const createInputs = keys.map(key => {
             const data = inputs[key];
-            this.sdk.createJobInput(key, data)
-                .then(() => {
-                    saveJobInput(key, data);
-                })
-                .catch(err => console.error(err));
+            saveJobInput(key, data);
+            return this.sdk.createJobInput(key, data);
         });
+
+        await Promise.all(createInputs);
     }
 
     waitForJobOutput(outputKey, callback) {
@@ -38,7 +37,7 @@ class EndUserSdk {
             console.log(event.name);
 
             if (event.name === 'createOutput') {
-                this.sdk.getJobOutputs(jobId)
+                this.sdk.getJobOutputs()
                     .then(outputs => { return outputs.data.find(jo => jo.key === outputKey) })
                     .then(output => {
                         if (output) {
@@ -48,6 +47,11 @@ class EndUserSdk {
                     });
             }
         });
+    }
+
+    async submitPan(pan) {
+        const panToken = await this.sdk.vaultPan(pan);
+        await this.createJobInputs({ panToken });
     }
 }
 

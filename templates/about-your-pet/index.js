@@ -4,7 +4,24 @@ import { html, render } from '../../src/lit-html';
 import pets from './pets';
 import selectedBreedType from './selected-breed-type';
 
-// this will be
+export default () => html`
+<div class="section">
+    <h3 class="section__header">About your pet</h3>
+    <form class="section__body" id="about-your-pet">
+        ${pets(onPetTypeChange)}
+        <!-- TODO<PROTOCOL>: breedType should be part of pets input!-->
+        <div id="breedType"></div>
+    </form>
+
+    <button type="button" class="button button--right button--primary" id="submit">Continue</button>
+</div>
+`
+const onPetTypeChange = {
+    handleEvent(e) {
+        updateBreedTypes(e.target.value);
+    }
+};
+
 const MORE_THAN_BREED_TYPES = {
     cat: [
         "Pedigree",
@@ -18,24 +35,6 @@ const MORE_THAN_BREED_TYPES = {
         "Large mixed breed (above 20kg)"
     ]
 }
-
-export default () => html`
-<div class="section">
-    <h3 class="section__header">About your pet</h3>
-    <form class="section__body" id="about-your-pet">
-        ${pets(onPetTypeChange)}
-        <!-- TODO<PROTOCOL>: breedType should be part of pets input!-->
-        <div id="breedType"></div>
-    </form>
-
-    <button type="button" class="button button--right button--primary" id="submit-about-your-pet">Continue</button>
-</div>
-`
-const onPetTypeChange = {
-    handleEvent(e) {
-        updateBreedTypes(e.target.value);
-    }
-};
 
 function updateBreedTypes(petType) {
     const breedTypes = MORE_THAN_BREED_TYPES[petType];
