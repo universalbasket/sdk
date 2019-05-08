@@ -1,7 +1,11 @@
 import pets from './pets';
 import selectedBreedType from './selected-breed-type';
+import account from './account';
+import owner from './owner';
 
-export {
+export default {
     pets,
-    selectedBreedType
+    selectedBreedType,
+    account,
+    owner
 };

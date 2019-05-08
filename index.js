@@ -1,165 +1,48 @@
-'use strict';
-
-import kebabCase from 'lodash.kebabcase';
-import { render } from './node_modules/lit-html/lit-html.js';
-import FlowManager from './src/flow-manager';
-import serializeForm from './src/serialize-form';
 import sdk from './src/core';
-
-/* templates */
+import { AboutYourPet, AboutYou } from './section';
 import templates from './templates/index';
 
-const SECTIONS = [
-    {
-        name: 'aboutYourPet',
-        inputs: [
-            { key: 'pets', inputMethod: null, sourceOutputKey: null },
-            { key: 'selectedBreedType', inputMethod: "SelectOne", sourceOutputKey: 'availableBreedTypes' }
-        ]
-    },
-    {
-        name: 'aboutYou',
-        inputs: [
-            { key: 'owner', inputMethod: null, sourceOutputKey: null },
-            { key: 'selectedMaritalStatusOption', inputMethod: "SelectOne",  sourceOutputKey: 'availableMaritalStatusOptions' },/* in-flow, availableMaritalStatusOptions */
-            { key: 'selectedAddress', inputMethod: "SelectOne",  sourceOutputKey: 'availableAddresses' }
-        ]
-    },
-    {
-        name: 'selectedAddress',
-        inputs: [
-            { key: 'selectedAddress', inputMethod: "SelectOne",  sourceOutputKey: 'availableAddresses' }, /* in-flow, availableAddresses */
-        ]
-    },
-    {
-        name: 'aboutYourPolicy',
-        inputs: [
-            { key: 'policyOptions', inputMethod: null,  sourceOutputKey: null }
-        ]
-    },
-    {
-        name: 'selectedCover',
-        inputs: [
-            { key: 'selectedCover', inputMethod: "SelectOne",  sourceOutputKey: 'availableCovers' }
-        ]
-    },
+const routes = {
+    '/'             : () => { sdk.create().then(() => { window.location.hash = '/about-your-pet'; })},
+    '/about-your-pet': AboutYourPet,
+    '/about-you': AboutYou
+};
 
-    {
-        name: 'selectedVetPaymentTerm',
-        inputs: [
-            { key: 'selectedVetPaymentTerm', inputMethod: "SelectOne",  sourceOutputKey: 'availableCovers' }
-        ]
-    },
-    {
-        name: 'selectedPaymentTerm',
-        inputs: [
-            { key: 'selectedPaymentTerm', inputMethod: "SelectOne",  sourceOutputKey: 'availableCovers' }
-        ]
-    },
-    {
-        name: 'payment',
-        inputs: [
-            { key: 'payment', inputMethod: null, sourceOutputKey: null },
-        ]
-    }
-];
+// The router code. Takes a URL, checks against the list of supported routes and then renders the corresponding content page.
+const router = async () => {
 
-const flowManager = new FlowManager(SECTIONS);
-const app = document.querySelector('#app');
+    // Get the parsed URl from the addressbar
+    let request = parseRequestURL()
 
-init();
+    // Parse the URL and if it has an id part, change it with the string ":id"
+    let parsedURL = (request.section ? '/' + request.section : '/') + (request.input ? '/' + request.input : '')
 
-function init() {
-    sdk.create().then(() => {});
+    // Get the page from our hash of supported routes.
+    // If the parsed URL is not in our list of supported routes, select the 404 page instead
+    let page = routes[parsedURL] ? routes[parsedURL] : templates.fallback()
 
-    flowManager.init();
-    renderSection();
+    page(() => {
+        console.log('first section finished!');
+        window.location.hash = '/about-you';
+    });
 }
 
-function next() {
-    flowManager.next();
-    renderSection();
-}
+// Listen on hash change:
+window.addEventListener('hashchange', router);
 
-function renderSection() {
-    const section = flowManager.getCurrentSection();
-    const template = templates[section];
-    if (!template) {
-        return render(templates.fallback(`template for ${section} not found`), app);
+// Listen on page load:
+window.addEventListener('load', router);
+
+function parseRequestURL() {
+
+    let url = location.hash.slice(1).toLowerCase() || '/';
+    let r = url.split("/")
+    let request = {
+        section    : null,
+        input      : null
     }
+    request.section    = r[1]
+    request.input      = r[2]
 
-    render(template(), app);
-    addSubmitter(section);
+    return request
 }
-
-function addSubmitter(section) {
-    /* this bits need to be automated, per input keys */
-    const formId = kebabCase(section);
-
-    const form = document.querySelector('form');
-    const submit = document.querySelector(`#submit`);
-    const vaultSubmit = document.querySelector('#submit-payment');
-
-    if (!form /* || !submit */) {
-        console.error('form or submit button not found. check your name convention for the forms');
-        return;
-    }
-
-    if (vaultSubmit) {
-        vaultSubmit.addEventListener('click', function () {
-            // TODO: validate the input (using protocol?)
-            if(!form.reportValidity()) {
-                console.log('not valid form');
-                return;
-            }
-
-            vaultSubmit.setAttribute('disabled', 'true');
-
-            // Partner can send input data to their server for logging if they prefer,
-            // in prototyping we are sending the input directly to api using sdk.
-            //TODO: update it to accept several inputs and send each of them separately
-            const inputs = serializeForm(form);
-            console.log('inputs:', inputs);
-            // send input or create job via sdk
-            sdk.submitPan(inputs.pan).then(res => {
-                setTimeout(next, 1000);
-                submit.removeAttribute('disabled');
-            })
-        });
-    }
-
-    if(submit) {
-        submit.addEventListener('click', function () {
-            // TODO: validate the input (using protocol?)
-            if(!form.reportValidity()) {
-                console.log('not valid form')
-                return;
-            }
-
-            submit.setAttribute('disabled', 'true');
-
-            // Partner can send input data to their server for logging if they prefer,
-            // in prototyping we are sending the input directly to api using sdk.
-            //TODO: update it to accept several inputs and send each of them separately
-            const inputs = serializeForm(form);
-            console.log('inputs:', inputs);
-            // send input or create job via sdk
-            sdk.createJobInputs(inputs).then(res => {
-                setTimeout(next, 1000);
-                submit.removeAttribute('disabled');
-            })
-        });
-    }
-}
-
-
-/*
-
-window.onload = function() {
-
-    const name = localStorage.getItem("name");
-    if (name !== null) $('#inputName').val("name");
-
-    // ...
-}
-*/

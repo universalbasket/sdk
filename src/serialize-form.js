@@ -2,10 +2,17 @@ import formSerialize from 'form-serialize';
 import camelCaseKeys from 'camelcase-keys';
 
 /**
- * @param {HTMLFormElement} form
+ * @param {String} formId
  * @return {Object}
  */
-export default function serializeForm(form) {
+export default function serializeForm(formId = '') {
+    const selector = formId ? `#${formId}` : 'form';
+    const form = document.querySelector(selector);
+
+    if (!form || !(form instanceof HTMLFormElement)) {
+        throw new Error('specified form not found');
+    }
+
     const serialized = formSerialize(form, { empty: true, serializer: hash_serializer });
 
     return camelCaseKeys(serialized, { deep: true });

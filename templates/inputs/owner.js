@@ -3,15 +3,14 @@ import { html } from '../../src/lit-html';
 const TITLES = ['mr', 'ms', 'mrs', 'miss'];
 
 export default () => html`
-<div class="job-input">
     <div name="owner">
-        <div name="owner[person]">
+        <div name="owner[person]" class="filed-set">
             <div class="field">
-                <label class="field__name" for="">What is your pet's breed?</label>
+                <label class="field__name">Title</label>
                 <select name="owner[person][title]">
                     ${ TITLES.map(t => html`
-                        <option value="${t}"/> ${t}</option>`
-                    )}
+                    <option value="${t}" /> ${ t.toUpperCase() }</option>`
+                    ) }
                 </select>
             </div>
 
@@ -27,7 +26,7 @@ export default () => html`
 
             <div class="field">
                 <label class="field__name" for="owner[person][last-name]">Last Name</label>
-                <input type="text" name="owner[person][last-name]" placeholder="" />
+                <input type="text" name="owner[person][last-name]" placeholder="Doe" />
             </div>
 
             <div class="field">
@@ -36,26 +35,37 @@ export default () => html`
             </div>
         </div>
 
-        <div name="owner[address]">
-            <label for="owner[address][line1]" class="field__name">Line 1</label>
-            <input type="text" name="owner[address][line1]" id="owner[address][line1]" required/>
+        <div name="owner[address]" class="filed-set">
+            <div class="field">
+                <label for="owner[address][line1]" class="field__name">Line 1</label>
+                <input type="text" name="owner[address][line1]" id="owner[address][line1]" value="587" required />
+            </div>
 
-            <label for="owner[address][line2]" class="field__name">Line 2</label>
-            <input type="text" name="owner[address][line2]" id="owner[address][line2]" required/>
+            <div class="field">
+                <label for="owner[address][line2]" class="field__name">Line 2</label>
+                <input type="text" name="owner[address][line2]" id="owner[address][line2]" value="high road" required />
+            </div>
 
-            <label for="owner[address][city]" class="field__name">City</label>
-            <input type="text" name="owner[address][city]" id="owner[address][city]" required/>
+            <div class="field">
+                <label for="owner[address][city]" class="field__name">City</label>
+                <input type="text" name="owner[address][city]" id="owner[address][city]" value="london" required />
+            </div>
 
-            <label for="owner[address][country-subdivision]" class="field__name">County</label>
-            <input type="text" name="owner[address][country-subdivision]" id="owner[address][country-subdivision]" required/>
+            <div class="field">
+                <label for="owner[address][country-subdivision]" class="field__name">County</label>
+                <input type="text" name="owner[address][country-subdivision]" id="owner[address][country-subdivision]" value="" />
+            </div>
 
+            <div class="field">
             <!-- select -->
-            <label for="owner[address][country-code]" class="field__name">Country Code</label>
-            <input type="text" name="owner[address][country-code]" id="owner[address][country-code]" required/>
+                <label for="owner[address][country-code]" class="field__name">Country Code</label>
+                <input type="text" name="owner[address][country-code]" id="owner[address][country-code]" value="gb" required />
+            </div>
 
-            <label for="owner[address][post-code]" class="field__name">post-code</label>
-            <input type="text" name="owner[address][post-code]" id="owner[address][post-code]" required/>
+            <div class="field">
+                <label for="owner[address][postcode]" class="field__name">post-code</label>
+                <input type="text" name="owner[address][postcode]" id="owner[address][postcode]" value="E11 4PB" required />
+            </div>
         </div>
     </div>
-</div>
 `;
