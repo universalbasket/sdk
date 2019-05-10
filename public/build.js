@@ -281,9 +281,9 @@
                         });
 
                         events.forEach(function(event) {
-                            callback(event);
+                            callback(event.name);
 
-                            if (event === 'success' || event === 'fail') {
+                            if (event.name === 'success' || event.name === 'fail') {
                                 stop();
                             }
                         });
@@ -3457,13 +3457,13 @@ module.exports = QuickLRU;
 
 },{}],11:[function(require,module,exports){
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? factory(require('lodash.kebabcase'), require('form-serialize'), require('camelcase-keys'), require('@ubio/sdk')) : typeof define === 'function' && define.amd ? define(['lodash.kebabcase', 'form-serialize', 'camelcase-keys', '@ubio/sdk'], factory) : (global = global || self, factory(global.kebabCase, global.formSerialize, global.camelCaseKeys, global.sdk$1));
-})(this, function (kebabCase, formSerialize, camelCaseKeys, sdk$1) {
+  typeof exports === 'object' && typeof module !== 'undefined' ? factory(require('@ubio/sdk'), require('form-serialize'), require('camelcase-keys'), require('lodash.kebabcase')) : typeof define === 'function' && define.amd ? define(['@ubio/sdk', 'form-serialize', 'camelcase-keys', 'lodash.kebabcase'], factory) : (global = global || self, factory(global.sdk$1, global.formSerialize, global.camelCaseKeys, global.kebabCase));
+})(this, function (sdk$1, formSerialize, camelCaseKeys, kebabCase) {
   'use strict';
 
-  kebabCase = kebabCase && kebabCase.hasOwnProperty('default') ? kebabCase['default'] : kebabCase;
   formSerialize = formSerialize && formSerialize.hasOwnProperty('default') ? formSerialize['default'] : formSerialize;
   camelCaseKeys = camelCaseKeys && camelCaseKeys.hasOwnProperty('default') ? camelCaseKeys['default'] : camelCaseKeys;
+  kebabCase = kebabCase && kebabCase.hasOwnProperty('default') ? kebabCase['default'] : kebabCase;
   /**
    * @license
    * Copyright (c) 2017 The Polymer Project Authors. All rights reserved.
@@ -4631,62 +4631,129 @@ module.exports = QuickLRU;
 
   const html = (strings, ...values) => new TemplateResult(strings, values, 'html', defaultTemplateProcessor);
 
-  class FlowManager {
-    constructor(meta) {
-      this.meta = meta;
-      this.currentSection = null;
-      this.sections = meta.map(f => f.name);
-      this.history = [];
+  const initialInputs = {
+    url: 'https://pet.morethan.com/h5/pet/step-1?path=%2FquoteAndBuy.do%3Fe%3De1s1%26curPage%3DcaptureDetails'
+  };
+  let jobId = localStorage.getItem('jobId') || null;
+  let token = localStorage.getItem('token') || null;
+  let serviceId = localStorage.getItem('serviceId') || null;
+
+  class EndUserSdk {
+    constructor() {
+      this.sdk = null;
+      this.initiated = false;
     }
 
-    init() {
-      if (!Array.isArray(this.sections)) {
-        console.error('Invalid Flow is given');
-        throw new Error('Invalid Flow is given');
-      }
-
-      this.next();
+    async create(fields = {}) {
+      const {
+        token,
+        jobId: currentJobId,
+        serviceId
+      } = await createJob(fields);
+      jobId = currentJobId;
+      localStorage.setItem('jobId', jobId);
+      localStorage.setItem('token', token);
+      localStorage.setItem('serviceId', serviceId);
+      this.sdk = sdk$1.createEndUserSdk({
+        token,
+        jobId,
+        serviceId
+      });
+      this.initiated = true;
     }
 
-    next() {
-      const next = this.sections.shift();
-
-      if (!next) {
-        return null;
-      }
-
-      this.currentSection = next;
-      this.history.push(next);
+    retrieve() {
+      this.sdk = sdk$1.createEndUserSdk({
+        token,
+        jobId,
+        serviceId
+      });
+      this.initiated = true;
     }
 
-    previous() {
-      if (this.history.length < 2) {
-        return null;
-      }
-
-      const currentSectionIdx = this.history.indexOf(this.currentSection);
-      const previous = this.history[currentSectionIdx];
-      this.sections.unshift([this.currentSection]);
-      this.currentSection = previous;
-      this.history.splice(currentSectionIdx);
+    async createJobInputs(inputs) {
+      const keys = Object.keys(inputs);
+      const createInputs = keys.map(key => {
+        const data = inputs[key];
+        saveJobInput(key, data);
+        return this.sdk.createJobInput(key, data);
+      });
+      await Promise.all(createInputs);
     }
 
-    getCurrentSection() {
-      return this.currentSection;
+    waitForJobOutput(outputKey, callback) {
+      const stopTracking = this.sdk.trackJob((event, error) => {
+        console.log(`event ${event}`);
+        console.log(event);
+
+        if (event === 'createOutput') {
+          this.sdk.getJobOutputs().then(outputs => {
+            return outputs.data.find(jo => jo.key === outputKey);
+          }).then(output => {
+            if (output) {
+              stopTracking();
+              callback(null, output);
+            }
+          });
+        }
+      });
     }
 
-    getCurrentMeta(section) {
-      return this.meta.find(m => m.name === section) || null;
+    async submitPan(pan) {
+      const panToken = await this.sdk.vaultPan(pan);
+      await this.createJobInputs({
+        panToken
+      });
     }
 
   }
+
+  async function createJob({
+    input = {},
+    category = 'test'
+  }) {
+    input = { ...initialInputs,
+      ...input
+    }; //const job = await endUserSdk.createJob({ serviceId, input, category });
+
+    const SERVER_URL = "https://ubio-application-bundle-dummy-server.glitch.me";
+    const res = await fetch(`${SERVER_URL}/create-job`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        input,
+        category
+      }),
+      mode: 'cors'
+    });
+
+    if (!res.ok) {
+      throw new Error(`Unexpected status from server: ${res.status}`);
+    }
+
+    return await res.json();
+  }
+
+  function saveJobInput(key, data) {
+    localStorage.setItem(`input.${key}`, JSON.stringify(data));
+  }
+
+  const sdk = new EndUserSdk();
   /**
-   * @param {HTMLFormElement} form
+   * @param {String} formId
    * @return {Object}
    */
 
+  function serializeForm(formId = '') {
+    const selector = formId ? `#${formId}` : 'form';
+    const form = document.querySelector(selector);
 
-  function serializeForm(form) {
+    if (!form || !(form instanceof HTMLFormElement)) {
+      throw new Error('specified form not found');
+    }
+
     const serialized = formSerialize(form, {
       empty: true,
       serializer: hash_serializer
@@ -4698,7 +4765,7 @@ module.exports = QuickLRU;
   /**
    *
    * Below is copied over from form-serialize(https://github.com/defunctzombie/form-serialize) with customization:
-   * Added `-$number`, `-$boolean` convention in the name, parse these value with specified data type, and remove the identifier
+   * Added `-$number`, `-$boolean` and `-$object` convention in the name, parse these value with specified data type, and remove the identifier
    */
 
 
@@ -4714,6 +4781,11 @@ module.exports = QuickLRU;
       hash_assign(result, keys, value);
     } else {
       // Non bracket notation can make assignments directly.
+      console.log('[pre]key,value', key, value);
+      const parsed = parse_type(key, value);
+      key = parsed.key;
+      value = parsed.value;
+      console.log('[post]key,value', key, value);
       var existing = result[key]; // If the value has been assigned already (for instance when a radio and
       // a checkbox have the same name attribute) convert the previous value
       // into an array before pushing into it.
@@ -4752,6 +4824,36 @@ module.exports = QuickLRU;
     return keys;
   }
 
+  function parse_type(key, value) {
+    if (key.includes('-$number')) {
+      key = key.replace('-$number', '');
+      const num = Number.parseInt(value);
+
+      if (isNaN(num)) {
+        console.error('number type is specified but non-number value is provided:', value);
+      } else {
+        value = num;
+      }
+    }
+
+    if (key.includes('-$boolean') || key.includes('-$object')) {
+      key = key.replace('-$boolean', '');
+      key = key.replace('-$object', '');
+
+      try {
+        value = JSON.parse(value);
+      } catch (err) {
+        // do nothing
+        console.error('boolean/object type is specified but could not parse the value:', value);
+      }
+    }
+
+    return {
+      key,
+      value
+    };
+  }
+
   function hash_assign(result, keys, value) {
     if (keys.length === 0) {
       result = value;
@@ -4771,14 +4873,15 @@ module.exports = QuickLRU;
       }
     }
 
-    if (key.includes('-$boolean')) {
+    if (key.includes('-$boolean') || key.includes('-$object')) {
       key = key.replace('-$boolean', '');
+      key = key.replace('-$object', '');
 
       try {
         value = JSON.parse(value);
       } catch (err) {
         // do nothing
-        console.error('boolen type is specified but non-boolean value is provided:', value);
+        console.error('boolean/object type is specified but could not parse the value:', value);
       }
     }
 
@@ -4826,124 +4929,17 @@ module.exports = QuickLRU;
     return result;
   }
 
-  let jobId = null;
-  let token = null;
-  let serviceId = null;
-
-  class EndUserSdk {
-    constructor() {
-      this.sdk = null;
-      this.initiated = false;
-    }
-
-    async create(fields = {}) {
-      this.sdk = await createJob(fields);
-      this.initiated = true;
-    }
-
-    async retrieve() {
-      this.sdk = sdk$1.createEndUserSdk({
-        token,
-        jobId,
-        serviceId
-      });
-      this.initiated = true;
-    }
-
-    async createJobInputs(inputs) {
-      const keys = Object.keys(inputs);
-      const createInputs = keys.map(key => {
-        const data = inputs[key];
-        saveJobInput(key, data);
-        return this.sdk.createJobInput(key, data);
-      });
-      await Promise.all(createInputs);
-    }
-
-    waitForJobOutput(outputKey, callback) {
-      const stopTracking = this.sdk.trackJob((event, error) => {
-        console.log(`event ${name}`);
-        console.log(event.name);
-
-        if (event.name === 'createOutput') {
-          this.sdk.getJobOutputs().then(outputs => {
-            return outputs.data.find(jo => jo.key === outputKey);
-          }).then(output => {
-            if (output) {
-              stopTracking();
-              callback(null, output);
-            }
-          });
-        }
-      });
-    }
-
-    async submitPan(pan) {
-      const panToken = await this.sdk.vaultPan(pan);
-      await this.createJobInputs({
-        panToken
-      });
-    }
-
-  }
-
-  async function createJob({
-    input = {},
-    category = 'test'
-  }) {
-    const url = 'https://pet.morethan.com/h5/pet/step-1?path=%2FquoteAndBuy.do%3Fe%3De1s1%26curPage%3DcaptureDetails';
-    input = {
-      url,
-      ...input
-    }; //const job = await endUserSdk.createJob({ serviceId, input, category });
-
-    const SERVER_URL = "https://ubio-application-bundle-dummy-server.glitch.me";
-    const res = await fetch(`${SERVER_URL}/create-job`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        input,
-        category
-      }),
-      mode: 'cors'
-    });
-
-    if (!res.ok) {
-      throw new Error(`Unexpected status from server: ${res.status}`);
-    }
-
-    const {
-      token,
-      jobId: currentJobId,
-      serviceId
-    } = await res.json();
-    jobId = currentJobId;
-    localStorage.setItem('jobId', jobId);
-    localStorage.setItem('token', token);
-    localStorage.setItem('serviceId', serviceId);
-    return sdk$1.createEndUserSdk({
-      token,
-      jobId,
-      serviceId
-    });
-  }
-
-  function saveJobInput(key, data) {
-    localStorage.setItem(`input.${key}`, JSON.stringify(data));
-  }
-
-  const sdk = new EndUserSdk();
-
-  var fallback = err => html`
-<div class="fallback">
-    <h2 id="fallback-message">
-        Oh no, Something went wrong!
-    </h2>
-    <pre>${err}</pre>
-</div>
-`;
+  var nonFount404 = () => {
+    return html`
+    <div >
+        <h1>Uh oh, We cannot find the page!</h1>
+        <p>404</p>
+        <button type="button" class="button button--right button--primary" id="submitBtn" @click="${() => {
+      window.location.hash = '/#';
+    }}">Continue</button>
+    </div>
+    `;
+  };
 
   var loading = msg => html`
 <div class="loading">
@@ -4954,7 +4950,95 @@ module.exports = QuickLRU;
 </div>
 `;
 
-  var pets = onPetTypeChange => html`
+  var section = title => html`
+    <div class="section">
+        <h3 class="section__header">${title}</h3>
+        <pre id="error"></pre>
+        <form class="section__body" id="target"></form>
+
+        <button type="button" class="button button--right button--primary" id="submitBtn">Continue</button>
+    </div>
+`;
+
+  function getOutput(outputKey, callback) {
+    //check job state and see if it's awaitingInput && key = selectedBreedType
+    console.log(`waiting for job output ${outputKey}`); //TODO: we should show something while waiting.
+
+    sdk.waitForJobOutput(outputKey, (err, output) => {
+      if (err) {
+        callback(err, null);
+      }
+
+      console.log('heres the output');
+      callback(null, output.data);
+    });
+  }
+
+  const field = (fieldName, inputKey, output) => html`
+<div class="field field-set">
+    <span class="field__name">${fieldName || inputKey}</span>
+    <select name="${inputKey}">
+        ${output.map(output => html`
+            <option value="${output}"> ${output}</option>`)}
+    </select>
+</div>
+`;
+
+  var selectOne = meta => {
+    init(meta);
+    return html`
+    <div id="${meta.key}">
+        <p>please wait...</p>
+    </div>
+`;
+  };
+
+  function init(meta) {
+    const {
+      sourceOutputKey
+    } = meta;
+    getOutput(sourceOutputKey, (err, output) => {
+      if (err) {
+        return;
+      }
+
+      render(field(meta.title, kebabCase(meta.key), output), document.querySelector(`#${meta.key}`));
+    });
+  }
+
+  const field$1 = (fieldName, inputKey, output) => html`
+<div class="field field-set">
+    <span class="field__name">${fieldName || inputKey}</span>
+    <select name="${inputKey}">
+        ${output.map(output => html`
+            <option value="${output}"> ${output}</option>`)}
+    </select>
+</div>
+`;
+
+  var selectMany = meta => {
+    init$1(meta);
+    return html`
+    <div id="${meta.key}">
+        <p>please wait...</p>
+    </div>
+`;
+  };
+
+  function init$1(meta) {
+    const {
+      sourceOutputKey
+    } = meta;
+    getOutput(sourceOutputKey, (err, output) => {
+      if (err) {
+        return;
+      }
+
+      render(field$1(meta.title, kebabCase(meta.key), output), document.querySelector(`#${meta.key}`));
+    });
+  }
+
+  var pets = () => html`
 <div class="job-input">
     <div class="pet" name="pets[0]">
         <div class="field field-set">
@@ -4965,10 +5049,10 @@ module.exports = QuickLRU;
         <div class="field field-set">
             <span class="field__name">Pet type</span>
             <div class="field__inputs group group--merged">
-                <input type="radio" name="pets[0][pet-type]" id="pets[0][pet-type]-dog" value="dog" @change=${onPetTypeChange}/>
+                <input type="radio" name="pets[0][pet-type]" id="pets[0][pet-type]-dog" value="dog"/>
                 <label for="pets[0][pet-type]-dog" class="button">Dog</label>
 
-                <input type="radio" name="pets[0][pet-type]" id="pets[0][pet-type]-cat" value="cat" @change=${onPetTypeChange}/>
+                <input type="radio" name="pets[0][pet-type]" id="pets[0][pet-type]-cat" value="cat"/>
                 <label for="pets[0][pet-type]-cat" class="button">Cat</label>
             </div>
         </div>
@@ -4977,7 +5061,7 @@ module.exports = QuickLRU;
             <span class="field__name">Gender</span>
             <div class="field__inputs group group--merged">
                 <input type="radio" name="pets[0][pet-gender]" value="male" id="pets[0][pet-gender]-male" required checked >
-                <label for="pets[0][pet-gender]-female-male" class="button">Male</label>
+                <label for="pets[0][pet-gender]-male" class="button">Male</label>
 
                 <input type="radio" name="pets[0][pet-gender]" id="pets[0][pet-gender]-female" value="female">
                 <label for="pets[0][pet-gender]-female" class="button">Female</label>
@@ -5172,66 +5256,28 @@ module.exports = QuickLRU;
 </div>
 `;
 
-  const renderBreedType = breedTypes => html`
-<div class="field">
-    <span class="field__name">What is your pet's breed?</span>
-    <select name="selected-breed-type">
-        ${breedTypes.map(b => html`
-            <option value="${b}"> ${b}</option>`)}
-    </select>
-</div>
-`;
+  var account = () => html`
+<div name="account" class="filed-set">
+    <div class="field">
+        <label class="field__name" for="account[email]">Email</label>
+        <input type="email" name="account[email]" placeholder="example@example.com" value="example@example.com" required>
+    </div>
 
-  var selectedBreedType = breedTypes => html`
-    ${breedTypes && Array.isArray(breedTypes) ? renderBreedType(breedTypes) : ''}
-`;
+    <div class="field">
+        <label class="field__name" for="account[phone]">Phone</label>
+        <input type="text" name="account[phone][country-code]" value="gb" required>
+        <input type="tel" name="account[phone][number]" placeholder="phone number" value="07912341234" required>
+    </div>
 
-  var payment = () => html`
-<div class="section">
-    <h3 class="section__header">Your Covers</h3>
-    <form class="section__body">
-        <div>
-            <input id="pan" name="pan" type="tel" value="4242424242424242"></input>
-        </div>
-    </form>
-
-    <button type="button" class="button button--right button--primary" id="submit-payment">Continue</button>
-</div>
-`;
-
-  var aboutYourPet = () => html`
-<div class="section">
-    <h3 class="section__header">About your pet</h3>
-    <form class="section__body" id="about-your-pet">
-        ${payment}
-        ${pets(onPetTypeChange)}
-        <!-- TODO<PROTOCOL>: breedType should be part of pets input!-->
-        <div id="breedType"></div>
-    </form>
-
-    <button type="button" class="button button--right button--primary" id="submit">Continue</button>
-</div>
-`;
-
-  const onPetTypeChange = {
-    handleEvent(e) {
-      updateBreedTypes(e.target.value);
-    }
-
-  };
-  const MORE_THAN_BREED_TYPES = {
-    cat: ["Pedigree", "Non Pedigree"],
-    dog: ["Cross Breed", "Pedigree", "Small mixed breed (up to 10kg)", "Medium mixed breed (10 - 20kg)", "Large mixed breed (above 20kg)"]
-  };
-
-  function updateBreedTypes(petType) {
-    const breedTypes = MORE_THAN_BREED_TYPES[petType];
-    render(selectedBreedType(breedTypes), document.querySelector('#breedType'));
-  }
+    <div>
+        <input type="hidden" name="account[password]" value="">
+        <input type="hidden" name="account[is-existing-$boolean]" value="false">
+    </div>
+</div>`;
 
   const TITLES = ['mr', 'ms', 'mrs', 'miss'];
 
-  var owner = maritalStatusOptions => html`
+  var owner = () => html`
     <div name="owner">
         <div name="owner[person]" class="filed-set">
             <div class="field">
@@ -5260,14 +5306,6 @@ module.exports = QuickLRU;
             <div class="field">
                 <label class="field__name" for="owner[person][date-of-birth]">Date Of Birth</label>
                 <input type="date" name="owner[person][date-of-birth]" value="1990-04-02" required>
-            </div>
-
-            <div class="field">
-                <span class="field__name">Marital Status</span>
-                <select name="selected-marital-status-option">
-                    ${maritalStatusOptions.map(ms => html`
-                    <option value="${ms}"> ${ms} </option>`)}
-                </select>
             </div>
         </div>
 
@@ -5306,111 +5344,6 @@ module.exports = QuickLRU;
     </div>
 `;
 
-  var account = () => html`
-<div name="account" class="filed-set">
-    <div class="field">
-        <label class="field__name" for="account[email]">Email</label>
-        <input type="email" name="account[email]" placeholder="example@example.com" value="example@example.com" required>
-    </div>
-
-    <div class="field">
-        <label class="field__name" for="account[phone]">Phone</label>
-        <input type="text" name="account[phone][country-code]" value="gb" required>
-        <input type="tel" name="account[phone][number]" placeholder="phone number" value="07912341234" required>
-    </div>
-
-    <div>
-        <input type="hidden" name="account[password]" value="">
-        <input type="hidden" name="account[is-existing-$boolean]" value="false">
-    </div>
-</div>`;
-
-  var aboutYou = () => {
-    return html`
-<div class="section">
-    <h3 class="section__header">About you</h3>
-    <form class="section__body"id="about-you">
-        ${account()}
-        ${owner(availableMaritalStatusOptions)}
-    </form>
-
-    <button type="button" class="button button--right button--primary" id="submit">Continue</button>
-</div>
-`;
-  };
-  /* get it from previous output */
-
-
-  const availableMaritalStatusOptions = ["Civil Partner", "Cohabiting", "Divorced", "Married", "Separated", "Single", "Widowed"];
-
-  function getOutputs({
-    inputMethod,
-    sourceOutputKey
-  }, callback) {
-    if (inputMethod === 'SelectOne' || inputMethod === 'Consent') {
-      if (!sourceOutputKey) {
-        throw Error(`Unexpected meta: sourceOutputKey not found for ${inputMethod} inputMethod.`);
-      } //check job state and see if it's awaitingInput && key = selectedBreedType
-
-
-      console.log(`waiting for job output ${sourceOutputKey}`); //TODO: we should show something while waiting.
-
-      sdk.waitForJobOutput(sourceOutputKey, (err, output) => {
-        if (err) {
-          callback(new Error(`Unexpected meta: sourceOutputKey not found for ${inputMethod} inputMethod.`), null);
-        }
-
-        console.log('heres the output');
-        callback(null, output.data);
-      });
-    } else {
-      console.log(`default input.`);
-    }
-  }
-
-  const renderAddresses = addresses => html`
-<div class="field">
-    <span class="field__name">What is your address?</span>
-    <select name="selected-address">
-        ${addresses.map(b => html`
-            <option value="${b}"> ${b}</option>`)}
-    </select>
-</div>
-`;
-
-  var addresses = addresses => html`
-    ${addresses && Array.isArray(addresses) ? renderAddresses(addresses) : ''}
-`;
-
-  var selectedAddress = () => {
-    getAddresses();
-    return html`
-<div class="section">
-    <h3 class="section__header">selected Address</h3>
-    <form class="section__body"id="selected-address">
-        <div id="selected-address">
-            loading your address....
-        </div>
-    </form>
-
-    <button type="button" class="button button--right button--primary" id="submit">Continue</button>
-</div>
-`;
-  };
-
-  function getAddresses() {
-    getOutputs({
-      inputMethod: "SelectOne",
-      sourceOutputKey: 'availableAddresses'
-    }, (err, output) => {
-      if (err) {
-        return;
-      }
-
-      render(addresses(output), document.querySelector('#selected-address'));
-    });
-  }
-
   var policyOptions = () => html`
 <div name="policy-options" class="filed-set">
     <div class="field">
@@ -5448,130 +5381,230 @@ module.exports = QuickLRU;
     </div>
 </div>`;
 
-  var aboutYourPolicy = () => {
-    return html`
-<div class="section">
-    <h3 class="section__header">About Your Policy</h3>
-    <form class="section__body" id="about-your-policy">
-        ${policyOptions()}
-    </form>
-
-    <button type="button" class="button button--right button--primary" id="submit">Continue</button>
-</div>
-`;
-  };
-
-  const field = (fieldName, inputKey, output) => html`
-<div class="field">
-    <span class="field__name">${fieldName}</span>
-    <select name="${inputKey}">
-        ${output.map(output => html`
-            <option value="${output}"> ${output}</option>`)}
-    </select>
+  const field$2 = (inputKey, options) => html`
+<div class="field field-set">
+    <div class="field__inputs group group--merged">
+    ${options.map(optionObj => html`
+        <input type="radio" id="${inputKey}" name="${inputKey}-$object" value="${JSON.stringify(optionObj)}">
+        <label for="${inputKey}" class="button">
+            <div><b>${optionObj.coverName}</b> <p>${optionObj.price.value * 0.01} ${optionObj.price.currencyCode}</p></div>
+        </label>`)}
+    </div>
 </div>
 `;
 
-  var selectedInput = meta => {
-    init(meta);
+  var selectedCoverType = meta => {
+    init$2(meta);
     return html`
-    <div id="${meta.inputKey}">
-        <p>please wait...</p>
+    <div class="field field-set">
+        <span class="field__name">${meta.title || meta.inputKey}</span>
+        <div id="${meta.key}">
+            <p>please wait...</p>
+        </div>
     </div>
 `;
   };
 
-  function init(meta) {
+  function init$2(meta) {
     const {
-      inputMethod,
       sourceOutputKey
     } = meta;
-    getOutputs({
-      inputMethod,
-      sourceOutputKey
-    }, (err, output) => {
+    getOutput(sourceOutputKey, (err, output) => {
       if (err) {
         return;
       }
 
-      render(field(meta.title, kebabCase(meta.inputKey), output), document.querySelector(`#${meta.inputKey}`));
+      render(field$2(kebabCase(meta.key), output), document.querySelector(`#${meta.key}`));
     });
   }
 
-  var selectedCover = () => html`
-<div class="section">
-    <h3 class="section__header">Your Covers</h3>
-    <form class="section__body">
-        ${selectedInput(meta)}
-    </form>
-
-    <button type="button" class="button button--right button--primary" id="submit-selected-cover">Continue</button>
+  const field$3 = (inputKey, options) => html`
+<div class="field field-set">
+    <div class="field__inputs group group--merged">
+    ${options.map(optionObj => html`
+        <input type="radio" id="${inputKey}" name="${inputKey}-$object" value="${JSON.stringify(optionObj)}">
+        <label for="${inputKey}" class="button">
+            <div><b>${optionObj.text}</b> <p>${optionObj.price.value * 0.01} ${optionObj.price.currencyCode}</p></div>
+        </label>`)}
+    </div>
 </div>
 `;
 
-  const meta = {
-    inputKey: 'selectedCover',
-    inputMethod: "SelectOne",
-    sourceOutputKey: 'availableCovers',
-    title: 'Select your cover'
+  var selectedVetFee = meta => {
+    init$3(meta);
+    return html`
+    <div class="field field-set">
+        <span class="field__name">${meta.title || meta.inputKey}</span>
+        <div id="${meta.key}">
+            <p>please wait...</p>
+        </div>
+    </div>
+`;
   };
 
-  var selectedVetPaymentTerm = () => html`
-<div class="section">
-    <h3 class="section__header">Your Covers</h3>
-    <form class="section__body">
-        ${selectedInput(meta$1)}
-    </form>
+  function init$3(meta) {
+    const {
+      sourceOutputKey
+    } = meta;
+    getOutput(sourceOutputKey, (err, output) => {
+      if (err) {
+        return;
+      }
 
-    <button type="button" class="button button--right button--primary" id="submit">Continue</button>
-</div>
-`;
+      render(field$3(kebabCase(meta.key), output), document.querySelector(`#${meta.key}`));
+    });
+  }
 
-  const meta$1 = {
-    inputKey: 'selectedVetPaymentTerm',
-    title: 'Select your vet payment term',
-    inputMethod: "SelectOne",
-    sourceOutputKey: 'availableVetPaymentTerms'
-  };
-
-  var selectedPaymentTerm = () => html`
-<div class="section">
-    <h3 class="section__header">Your Covers</h3>
-    <form class="section__body">
-        ${selectedInput(meta$2)}
-    </form>
-
-    <button type="button" class="button button--right button--primary" id="submit">Continue</button>
-</div>
-`;
-
-  const meta$2 = {
-    inputKey: 'selectedPaymentTerm',
-    title: 'Select your payment term',
-    inputMethod: "SelectOne",
-    sourceOutputKey: 'availablePaymentTerms'
+  var inputs = {
+    pets,
+    account,
+    owner,
+    policyOptions,
+    selectedCoverType,
+    selectedVetFee
   };
   /** Global */
 
+  /** PetInsurance */
+
+  /*
+  import aboutYourPet from './about-your-pet/index';
+  import aboutYou from './about-you/index';
+  import selectedAddress from './selected-address/index';
+  import aboutYourPolicy from './about-your-policy/index';
+  import selectedCover from './covers/index';
+  import selectedVetPaymentTerm from './covers/selected-vet-payment-term';
+  import selectedPaymentTerm from './covers/selected-payment-term';
+  import payment from './payment'; */
+  //TODO-test: run this function for all given inputMetas;
+
   var templates = {
-    fallback,
     loading,
-    aboutYourPet,
-    aboutYou,
-    selectedAddress,
-    aboutYourPolicy,
-    selectedCover,
-    selectedVetPaymentTerm,
-    selectedPaymentTerm,
-    payment
+    section,
+    getInput
   };
+
+  function getInput(meta) {
+    const {
+      key,
+      inputMethod
+    } = meta;
+    let templateFunc = inputs[key];
+
+    if (!templateFunc && inputMethod === 'SelectOne') {
+      templateFunc = selectOne;
+    }
+
+    if (!templateFunc && inputMethod === 'SelectMany') {
+      templateFunc = selectMany;
+    }
+    /*
+    if (!template && inputMethod === 'Consent') {
+        template = consent;
+    } */
+
+
+    if (templateFunc && typeof templateFunc === 'function') {
+      console.log('templateFunc found');
+      return templateFunc(meta);
+    }
+
+    return null;
+  }
+
+  class Section {
+    /**
+     * @param {String} name
+     * @param {String} title
+     * @param {Array} inputsMeta
+     * @param {String} nextSection
+     */
+    constructor(name, title, inputsMeta = [], nextSection = '/finish') {
+      this.name = name;
+      this.title = title || name;
+      this.inputsMeta = inputsMeta;
+      this.nextSection = nextSection;
+      this.keysToRender = this.inputsMeta.map(nd => nd.key);
+      this.keysRendered = [];
+      this.cachedTemplates = [];
+      Promise.resolve(this.init());
+    }
+
+    async init() {
+      if (!sdk.initiated) {
+        try {
+          await sdk.retrieve(); //TODO: if it's retrieved, check which input has provided. s
+          // add submitted input to keysRendered, and render the next one.
+        } catch (err) {
+          window.location.href = '/';
+          return;
+        }
+      }
+
+      this.renderWrapper();
+      this.renderNextContent();
+    }
+
+    renderWrapper() {
+      render(templates.section(this.title), document.querySelector('#app'));
+      this.addListener();
+    }
+
+    addListener() {
+      const submitBtn = document.querySelector(`#submitBtn`);
+      submitBtn.addEventListener('click', () => {
+        // TODO: validate the input (using protocol?)
+        const form = document.querySelector('form');
+
+        if (!form.reportValidity()) {
+          console.log('not valid form');
+          return;
+        }
+
+        submitBtn.setAttribute('disabled', 'true'); // Partner can send input data to their server for logging if they prefer,
+        // in prototyping we are sending the input directly to api using sdk.
+        //TODO: update it to accept several inputs and send each of them separately
+
+        const inputs = serializeForm(); // send input sdk
+
+        sdk.createJobInputs(inputs).then(res => {
+          if (this.keysToRender.length !== 0) {
+            render(html`Loading...`, document.querySelector('#target'));
+            this.renderNextContent();
+            submitBtn.removeAttribute('disabled');
+          } else {
+            render(html``, document.querySelector('#app'));
+            this.onFinish();
+          }
+        }).catch(err => {
+          render(html`${err}`, document.querySelector('#error'));
+          submitBtn.removeAttribute('disabled');
+        });
+      });
+    }
+
+    renderNextContent() {
+      const nextKey = this.keysToRender.shift();
+
+      if (!nextKey) {
+        return this.onFinish();
+      }
+
+      const inputMeta = this.inputsMeta.find(im => im.key === nextKey);
+      const template = templates.getInput(inputMeta);
+      render(html`${template}`, document.querySelector('#target'));
+      this.keysRendered.push(nextKey);
+    }
+
+    onFinish() {
+      setTimeout(() => {
+        window.location.hash = this.nextSection;
+      }, 1000);
+    }
+
+  }
+
   const SECTIONS = [{
-    name: 'payment',
-    inputs: [{
-      key: 'payment',
-      inputMethod: null,
-      sourceOutputKey: null
-    }]
-  }, {
     name: 'aboutYourPet',
     inputs: [{
       key: 'pets',
@@ -5580,11 +5613,16 @@ module.exports = QuickLRU;
     }, {
       key: 'selectedBreedType',
       inputMethod: "SelectOne",
-      sourceOutputKey: 'availableBreedTypes'
+      sourceOutputKey: 'availableBreedTypes',
+      title: 'select breed type'
     }]
   }, {
     name: 'aboutYou',
     inputs: [{
+      key: 'account',
+      inputMethod: null,
+      sourceOutputKey: null
+    }, {
       key: 'owner',
       inputMethod: null,
       sourceOutputKey: null
@@ -5600,39 +5638,35 @@ module.exports = QuickLRU;
       sourceOutputKey: 'availableAddresses'
     }]
   }, {
-    name: 'selectedAddress',
-    inputs: [{
-      key: 'selectedAddress',
-      inputMethod: "SelectOne",
-      sourceOutputKey: 'availableAddresses'
-    }]
-  }, {
     name: 'aboutYourPolicy',
     inputs: [{
       key: 'policyOptions',
       inputMethod: null,
       sourceOutputKey: null
-    }]
-  }, {
-    name: 'selectedCover',
-    inputs: [{
+    }, {
       key: 'selectedCover',
       inputMethod: "SelectOne",
       sourceOutputKey: 'availableCovers'
-    }]
-  }, {
-    name: 'selectedVetPaymentTerm',
-    inputs: [{
+    }, {
       key: 'selectedVetPaymentTerm',
       inputMethod: "SelectOne",
-      sourceOutputKey: 'availableCovers'
-    }]
-  }, {
-    name: 'selectedPaymentTerm',
-    inputs: [{
+      sourceOutputKey: 'availableVetPaymentTerms'
+    }, {
       key: 'selectedPaymentTerm',
       inputMethod: "SelectOne",
-      sourceOutputKey: 'availableCovers'
+      sourceOutputKey: 'availablePaymentTerms'
+    }, {
+      key: 'selectedCoverType',
+      inputMethod: "SelectOne",
+      sourceOutputKey: 'availableCoverTypes'
+    }, {
+      key: 'selectedCoverOptions',
+      inputMethod: "SelectOne",
+      sourceOutputKey: 'availableCoverOptions'
+    }, {
+      key: 'selectedVetFee',
+      inputMethod: "SelectOne",
+      sourceOutputKey: 'availableVetFees'
     }]
   }, {
     name: 'payment',
@@ -5640,105 +5674,74 @@ module.exports = QuickLRU;
       key: 'payment',
       inputMethod: null,
       sourceOutputKey: null
-    }, {
-      key: 'finalPriceConsent',
-      inputMethod: "Consent",
-      sourceOutputKey: "finalPrice"
     }]
   }];
-  const flowManager = new FlowManager(SECTIONS);
-  const app = document.querySelector('#app');
-  init$1();
 
-  function init$1() {
-    sdk.create().then(() => {});
-    flowManager.init();
-    renderSection();
+  const AboutYourPet = () => {
+    new Section('AboutYourPet', 'Tell me about your pet', SECTIONS[0].inputs, '/about-you');
+  };
+
+  const AboutYou = () => {
+    new Section('AboutYou', 'Tell me about you', SECTIONS[1].inputs, '/about-your-policy');
+  };
+
+  const aboutYourPolicy = () => {
+    new Section('aboutYourPolicy', 'Your Policy', SECTIONS[2].inputs, '');
+  };
+
+  const NotFound404 = () => {
+    render(nonFount404(), document.querySelector('#app'));
+  }; // The router code. Takes a URL, checks against the list of supported routes and then renders the corresponding content page.
+
+
+  var router = routes => {
+    // Get the parsed URl from the addressbar
+    let request = parseRequestURL(); // Parse the URL and if it has an id part, change it with the string ":id"
+
+    let parsedURL = (request.section ? '/' + request.section : '/') + (request.input ? '/' + request.input : ''); // Get the page from our hash of supported routes.
+    // If the parsed URL is not in our list of supported routes, select the 404 page instead
+
+    let page = routes[parsedURL] ? routes[parsedURL] : NotFound404;
+    page(() => {
+      console.log('first section finished!');
+      window.location.hash = '/about-you';
+    });
+  };
+
+  function parseRequestURL() {
+    let url = location.hash.slice(1).toLowerCase() || '/';
+    let r = url.split("/");
+    let request = {
+      section: null,
+      input: null
+    };
+    request.section = r[1];
+    request.input = r[2];
+    return request;
   }
 
-  function next() {
-    flowManager.next();
-    renderSection();
-  }
-
-  function renderSection() {
-    const section = flowManager.getCurrentSection();
-    const template = templates[section];
-
-    if (!template) {
-      return render(templates.fallback(`template for ${section} not found`), app);
-    }
-
-    render(template(), app);
-    addSubmitter(section);
-  }
-
-  function addSubmitter(section) {
-    /* this bits need to be automated, per input keys */
-    const formId = kebabCase(section);
-    const form = document.querySelector('form');
-    const submit = document.querySelector(`#submit`);
-    const vaultSubmit = document.querySelector('#submit-payment');
-
-    if (!form
-    /* || !submit */
-    ) {
-        console.error('form or submit button not found. check your name convention for the forms');
-        return;
-      }
-
-    if (vaultSubmit) {
-      vaultSubmit.addEventListener('click', function () {
-        // TODO: validate the input (using protocol?)
-        if (!form.reportValidity()) {
-          console.log('not valid form');
-          return;
-        }
-
-        vaultSubmit.setAttribute('disabled', 'true'); // Partner can send input data to their server for logging if they prefer,
-        // in prototyping we are sending the input directly to api using sdk.
-        //TODO: update it to accept several inputs and send each of them separately
-
-        const inputs = serializeForm(form);
-        console.log('inputs:', inputs); // send input or create job via sdk
-
-        sdk.submitPan(inputs.pan).then(res => {
-          setTimeout(next, 1000);
-          submit.removeAttribute('disabled');
-        });
+  const routes = {
+    '/': () => {
+      sdk.create().then(() => {
+        window.location.hash = '/about-your-pet';
       });
+    },
+    '/about-your-pet': AboutYourPet,
+    '/about-you': AboutYou,
+    '/about-your-policy': aboutYourPolicy,
+    '/finish': () => {
+      console.log('finished');
     }
+  }; // Listen on hash change:
 
-    if (submit) {
-      submit.addEventListener('click', function () {
-        // TODO: validate the input (using protocol?)
-        if (!form.reportValidity()) {
-          console.log('not valid form');
-          return;
-        }
+  window.addEventListener('hashchange', () => router(routes)); // Listen on page load:
 
-        submit.setAttribute('disabled', 'true'); // Partner can send input data to their server for logging if they prefer,
-        // in prototyping we are sending the input directly to api using sdk.
-        //TODO: update it to accept several inputs and send each of them separately
+  window.addEventListener('load', () => router(routes)); //
 
-        const inputs = serializeForm(form);
-        console.log('inputs:', inputs); // send input or create job via sdk
-
-        sdk.createJobInputs(inputs).then(res => {
-          setTimeout(next, 1000);
-          submit.removeAttribute('disabled');
-        });
-      });
-    }
-  }
-  /*
-   window.onload = function() {
-       const name = localStorage.getItem("name");
-      if (name !== null) $('#inputName').val("name");
-       // ...
-  }
-  */
-
+  window.addEventListener('beforeunload', function (e) {
+    // Cancel the job
+    console.log('unload!');
+  });
 });
 
 },{"@ubio/sdk":1,"camelcase-keys":4,"form-serialize":6,"lodash.kebabcase":8}]},{},[11]);

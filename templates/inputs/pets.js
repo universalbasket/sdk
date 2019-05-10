@@ -23,7 +23,7 @@ export default () => html`
             <span class="field__name">Gender</span>
             <div class="field__inputs group group--merged">
                 <input type="radio" name="pets[0][pet-gender]" value="male" id="pets[0][pet-gender]-male" required checked >
-                <label for="pets[0][pet-gender]-female-male" class="button">Male</label>
+                <label for="pets[0][pet-gender]-male" class="button">Male</label>
 
                 <input type="radio" name="pets[0][pet-gender]" id="pets[0][pet-gender]-female" value="female">
                 <label for="pets[0][pet-gender]-female" class="button">Female</label>

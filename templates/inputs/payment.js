@@ -1,5 +1,5 @@
-import { html } from '../src/lit-html';
-import core from '../src/core';
+import { html } from '../../src/lit-html';
+
 export default () => html`
 <div class="section">
     <h3 class="section__header">Your Covers</h3>

@@ -1,11 +1,15 @@
 import pets from './pets';
-import selectedBreedType from './selected-breed-type';
 import account from './account';
 import owner from './owner';
+import policyOptions from './policy-options';
+import selectedCoverType from './selected-cover-type';
+import selectedVetFee from './selected-vet-fee';
 
 export default {
     pets,
-    selectedBreedType,
     account,
-    owner
+    owner,
+    policyOptions,
+    selectedCoverType,
+    selectedVetFee
 };

@@ -21,7 +21,7 @@ export default function serializeForm(formId = '') {
 /**
  *
  * Below is copied over from form-serialize(https://github.com/defunctzombie/form-serialize) with customization:
- * Added `-$number`, `-$boolean` convention in the name, parse these value with specified data type, and remove the identifier
+ * Added `-$number`, `-$boolean` and `-$object` convention in the name, parse these value with specified data type, and remove the identifier
  */
 
 var brackets = /(\[[^\[\]]*\])/g;
@@ -38,6 +38,12 @@ function hash_serializer(result, key, value) {
     }
     else {
         // Non bracket notation can make assignments directly.
+        console.log('[pre]key,value', key,value)
+        const parsed = parse_type(key, value);
+        key = parsed.key;
+        value = parsed.value;
+
+        console.log('[post]key,value', key,value);
         var existing = result[key];
 
         // If the value has been assigned already (for instance when a radio and
@@ -78,13 +84,7 @@ function parse_keys(string) {
     return keys;
 }
 
-function hash_assign(result, keys, value) {
-    if (keys.length === 0) {
-        result = value;
-        return result;
-    }
-
-    var key = keys.shift();
+function parse_type(key, value) {
     if (key.includes('-$number')) {
         key = key.replace('-$number', '');
         const num = Number.parseInt(value);
@@ -95,12 +95,46 @@ function hash_assign(result, keys, value) {
         }
     }
 
-    if (key.includes('-$boolean')) {
+    if (key.includes('-$boolean') || key.includes('-$object')) {
         key = key.replace('-$boolean', '');
+        key = key.replace('-$object', '');
+
         try {
             value = JSON.parse(value);
         } catch(err) { // do nothing
-            console.error('boolen type is specified but non-boolean value is provided:', value);
+            console.error('boolean/object type is specified but could not parse the value:', value);
+        }
+    }
+
+    return { key, value };
+}
+
+function hash_assign(result, keys, value) {
+    if (keys.length === 0) {
+        result = value;
+        return result;
+    }
+
+    var key = keys.shift();
+
+    if (key.includes('-$number')) {
+        key = key.replace('-$number', '');
+        const num = Number.parseInt(value);
+        if (isNaN(num)) {
+            console.error('number type is specified but non-number value is provided:', value);
+        } else {
+            value = num;
+        }
+    }
+
+    if (key.includes('-$boolean') || key.includes('-$object')) {
+        key = key.replace('-$boolean', '');
+        key = key.replace('-$object', '');
+
+        try {
+            value = JSON.parse(value);
+        } catch(err) { // do nothing
+            console.error('boolean/object type is specified but could not parse the value:', value);
         }
     }
 

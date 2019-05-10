@@ -1,8 +1,8 @@
 import { createEndUserSdk } from '@ubio/sdk';
-
-let jobId = null;
-let token = null;
-let serviceId = null;
+import { initialInputs } from '../env';
+let jobId = localStorage.getItem('jobId') || null;
+let token = localStorage.getItem('token') || null;
+let serviceId = localStorage.getItem('serviceId') || null;
 
 class EndUserSdk {
     constructor() {
@@ -11,11 +11,18 @@ class EndUserSdk {
     }
 
     async create(fields = {}) {
-        this.sdk = await createJob(fields);
+        const { token, jobId: currentJobId, serviceId } = await createJob(fields);
+
+        jobId = currentJobId;
+        localStorage.setItem('jobId', jobId);
+        localStorage.setItem('token', token);
+        localStorage.setItem('serviceId', serviceId);
+
+        this.sdk = createEndUserSdk({ token, jobId, serviceId });
         this.initiated = true;
     }
 
-    async retrieve() {
+    retrieve() {
         this.sdk = createEndUserSdk({ token, jobId, serviceId });
         this.initiated = true;
     }
@@ -33,10 +40,10 @@ class EndUserSdk {
 
     waitForJobOutput(outputKey, callback) {
         const stopTracking = this.sdk.trackJob((event, error) => {
-            console.log(`event ${name}`);
-            console.log(event.name);
+            console.log(`event ${event}`);
+            console.log(event);
 
-            if (event.name === 'createOutput') {
+            if (event === 'createOutput') {
                 this.sdk.getJobOutputs()
                     .then(outputs => { return outputs.data.find(jo => jo.key === outputKey) })
                     .then(output => {
@@ -56,8 +63,7 @@ class EndUserSdk {
 }
 
 async function createJob({ input = {}, category = 'test' }) {
-    const url = 'https://pet.morethan.com/h5/pet/step-1?path=%2FquoteAndBuy.do%3Fe%3De1s1%26curPage%3DcaptureDetails';
-    input = { url, ...input };
+    input = { ...initialInputs, ...input };
 
     //const job = await endUserSdk.createJob({ serviceId, input, category });
     const SERVER_URL = "https://ubio-application-bundle-dummy-server.glitch.me";
@@ -72,14 +78,7 @@ async function createJob({ input = {}, category = 'test' }) {
         throw new Error(`Unexpected status from server: ${res.status}`);
     }
 
-    const { token, jobId: currentJobId, serviceId } = await res.json();
-
-    jobId = currentJobId;
-    localStorage.setItem('jobId', jobId);
-    localStorage.setItem('token', token);
-    localStorage.setItem('serviceId', serviceId);
-
-    return createEndUserSdk({ token, jobId, serviceId });
+    return await res.json();
 }
 
 
