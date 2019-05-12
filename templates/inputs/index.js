@@ -4,6 +4,7 @@ import owner from './owner';
 import policyOptions from './policy-options';
 import selectedCoverType from './selected-cover-type';
 import selectedVetFee from './selected-vet-fee';
+import selectedVoluntaryExcess from './selected-voluntary-excess';
 
 export default {
     pets,
@@ -11,5 +12,6 @@ export default {
     owner,
     policyOptions,
     selectedCoverType,
-    selectedVetFee
+    selectedVetFee,
+    selectedVoluntaryExcess
 };

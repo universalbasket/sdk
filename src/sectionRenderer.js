@@ -10,13 +10,13 @@ class Section {
      * @param {String} name
      * @param {String} title
      * @param {Array} inputsMeta
-     * @param {String} nextSection
+     * @param {String} nextRoute
      */
-    constructor(name, title, inputsMeta = [], nextSection = '/finish') {
+    constructor(name, title, inputsMeta = [], nextRoute = '/finish') {
         this.name = name;
         this.title = title || name;
         this.inputsMeta = inputsMeta;
-        this.nextSection = nextSection;
+        this.nextRoute = nextRoute;
 
         this.keysToRender = this.inputsMeta.map(nd => nd.key);
         this.keysRendered = [];
@@ -96,7 +96,7 @@ class Section {
     }
 
     onFinish() {
-        setTimeout(() => { window.location.hash = this.nextSection }, 1000);
+        setTimeout(() => { window.location.hash = this.nextRoute }, 1000);
     }
 }
 
@@ -127,8 +127,9 @@ const SECTIONS = [
             { key: 'selectedVetPaymentTerm', inputMethod: "SelectOne",  sourceOutputKey: 'availableVetPaymentTerms' },
             { key: 'selectedPaymentTerm', inputMethod: "SelectOne",  sourceOutputKey: 'availablePaymentTerms' },
             { key: 'selectedCoverType', inputMethod: "SelectOne", sourceOutputKey: 'availableCoverTypes' },
-            { key: 'selectedCoverOptions', inputMethod: "SelectOne",  sourceOutputKey: 'availableCoverOptions' },
-            { key: 'selectedVetFee', inputMethod: "SelectOne",  sourceOutputKey: 'availableVetFees' }
+            { key: 'selectedCoverOptions', inputMethod: "SelectMany",  sourceOutputKey: 'availableCoverOptions' },
+            { key: 'selectedVoluntaryExcess', inputMethod: 'selectOne', sourceOutputKey: 'availableVoluntaryExcesses' },
+            { key: 'selectedVetFee', inputMethod: "SelectOne",  sourceOutputKey: 'availableVetFees' },
         ]
     },
     {
