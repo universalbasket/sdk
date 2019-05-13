@@ -3464,6 +3464,116 @@ module.exports = QuickLRU;
   formSerialize = formSerialize && formSerialize.hasOwnProperty('default') ? formSerialize['default'] : formSerialize;
   camelCaseKeys = camelCaseKeys && camelCaseKeys.hasOwnProperty('default') ? camelCaseKeys['default'] : camelCaseKeys;
   kebabCase = kebabCase && kebabCase.hasOwnProperty('default') ? kebabCase['default'] : kebabCase;
+  const initialInputs = {
+    url: 'https://pet.morethan.com/h5/pet/step-1?path=%2FquoteAndBuy.do%3Fe%3De1s1%26curPage%3DcaptureDetails'
+  };
+  let jobId = localStorage.getItem('jobId') || null;
+  let token = localStorage.getItem('token') || null;
+  let serviceId = localStorage.getItem('serviceId') || null;
+
+  class EndUserSdk {
+    constructor() {
+      this.sdk = null;
+      this.initiated = false;
+    }
+
+    async create(fields = {}) {
+      const {
+        token,
+        jobId: currentJobId,
+        serviceId
+      } = await createJob(fields);
+      jobId = currentJobId;
+      localStorage.setItem('jobId', jobId);
+      localStorage.setItem('token', token);
+      localStorage.setItem('serviceId', serviceId);
+      this.sdk = sdk$1.createEndUserSdk({
+        token,
+        jobId,
+        serviceId
+      });
+      this.initiated = true;
+    }
+
+    retrieve() {
+      this.sdk = sdk$1.createEndUserSdk({
+        token,
+        jobId,
+        serviceId
+      });
+      this.initiated = true;
+    }
+
+    async createJobInputs(inputs) {
+      const keys = Object.keys(inputs);
+      const createInputs = keys.map(key => {
+        const data = inputs[key];
+        saveJobInput(key, data);
+        return this.sdk.createJobInput(key, data);
+      });
+      await Promise.all(createInputs);
+    }
+
+    waitForJobOutput(outputKey, callback) {
+      const stopTracking = this.sdk.trackJob((event, error) => {
+        console.log(`event ${event}`);
+        console.log(event);
+
+        if (event === 'createOutput') {
+          this.sdk.getJobOutputs().then(outputs => {
+            return outputs.data.find(jo => jo.key === outputKey);
+          }).then(output => {
+            if (output) {
+              stopTracking();
+              callback(null, output);
+            }
+          });
+        }
+      });
+    }
+
+    async submitPan(pan) {
+      const panToken = await this.sdk.vaultPan(pan);
+      await this.createJobInputs({
+        panToken
+      });
+    }
+
+  }
+
+  async function createJob({
+    input = {},
+    category = 'test'
+  }) {
+    input = { ...initialInputs,
+      ...input
+    }; //const job = await endUserSdk.createJob({ serviceId, input, category });
+
+    const SERVER_URL = "https://ubio-application-bundle-dummy-server.glitch.me";
+    const res = await fetch(`${SERVER_URL}/create-job`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        input,
+        category
+      }),
+      mode: 'cors'
+    });
+
+    if (!res.ok) {
+      throw new Error(`Unexpected status from server: ${res.status}`);
+    }
+
+    return await res.json();
+  }
+
+  function saveJobInput(key, data) {
+    localStorage.setItem(`input.${key}`, JSON.stringify(data));
+  }
+
+  const sdk = new EndUserSdk();
   /**
    * @license
    * Copyright (c) 2017 The Polymer Project Authors. All rights reserved.
@@ -4630,121 +4740,11 @@ module.exports = QuickLRU;
    */
 
   const html = (strings, ...values) => new TemplateResult(strings, values, 'html', defaultTemplateProcessor);
-
-  const initialInputs = {
-    url: 'https://pet.morethan.com/h5/pet/step-1?path=%2FquoteAndBuy.do%3Fe%3De1s1%26curPage%3DcaptureDetails'
-  };
-  let jobId = localStorage.getItem('jobId') || null;
-  let token = localStorage.getItem('token') || null;
-  let serviceId = localStorage.getItem('serviceId') || null;
-
-  class EndUserSdk {
-    constructor() {
-      this.sdk = null;
-      this.initiated = false;
-    }
-
-    async create(fields = {}) {
-      const {
-        token,
-        jobId: currentJobId,
-        serviceId
-      } = await createJob(fields);
-      jobId = currentJobId;
-      localStorage.setItem('jobId', jobId);
-      localStorage.setItem('token', token);
-      localStorage.setItem('serviceId', serviceId);
-      this.sdk = sdk$1.createEndUserSdk({
-        token,
-        jobId,
-        serviceId
-      });
-      this.initiated = true;
-    }
-
-    retrieve() {
-      this.sdk = sdk$1.createEndUserSdk({
-        token,
-        jobId,
-        serviceId
-      });
-      this.initiated = true;
-    }
-
-    async createJobInputs(inputs) {
-      const keys = Object.keys(inputs);
-      const createInputs = keys.map(key => {
-        const data = inputs[key];
-        saveJobInput(key, data);
-        return this.sdk.createJobInput(key, data);
-      });
-      await Promise.all(createInputs);
-    }
-
-    waitForJobOutput(outputKey, callback) {
-      const stopTracking = this.sdk.trackJob((event, error) => {
-        console.log(`event ${event}`);
-        console.log(event);
-
-        if (event === 'createOutput') {
-          this.sdk.getJobOutputs().then(outputs => {
-            return outputs.data.find(jo => jo.key === outputKey);
-          }).then(output => {
-            if (output) {
-              stopTracking();
-              callback(null, output);
-            }
-          });
-        }
-      });
-    }
-
-    async submitPan(pan) {
-      const panToken = await this.sdk.vaultPan(pan);
-      await this.createJobInputs({
-        panToken
-      });
-    }
-
-  }
-
-  async function createJob({
-    input = {},
-    category = 'test'
-  }) {
-    input = { ...initialInputs,
-      ...input
-    }; //const job = await endUserSdk.createJob({ serviceId, input, category });
-
-    const SERVER_URL = "https://ubio-application-bundle-dummy-server.glitch.me";
-    const res = await fetch(`${SERVER_URL}/create-job`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        input,
-        category
-      }),
-      mode: 'cors'
-    });
-
-    if (!res.ok) {
-      throw new Error(`Unexpected status from server: ${res.status}`);
-    }
-
-    return await res.json();
-  }
-
-  function saveJobInput(key, data) {
-    localStorage.setItem(`input.${key}`, JSON.stringify(data));
-  }
-
-  const sdk = new EndUserSdk();
   /**
    * @param {String} formId
    * @return {Object}
    */
+
 
   function serializeForm(formId = '') {
     const selector = formId ? `#${formId}` : 'form';
@@ -5455,27 +5455,55 @@ module.exports = QuickLRU;
     });
   }
 
+  const field$4 = (inputKey, options) => html`
+<div class="field field-set">
+    <div class="field__inputs group group--merged">
+    ${options.map(optionObj => html`
+        <input type="radio" id="${inputKey}" name="${inputKey}-$object" value="${JSON.stringify(optionObj)}">
+        <label for="${inputKey}" class="button">
+            <div><b>${optionObj.name}</b>
+            <pre>${optionObj.details}</pre>
+            <p>${optionObj.priceLine}</p></div>
+        </label>`)}
+    </div>
+</div>
+`;
+
+  var selectedVoluntaryExcess = meta => {
+    init$4(meta);
+    return html`
+    <div class="field field-set">
+        <span class="field__name">${meta.title || meta.inputKey}</span>
+        <div id="${meta.key}">
+            <p>please wait...</p>
+        </div>
+    </div>
+`;
+  };
+
+  function init$4(meta) {
+    const {
+      sourceOutputKey
+    } = meta;
+    getOutput(sourceOutputKey, (err, output) => {
+      if (err) {
+        return;
+      }
+
+      render(field$4(kebabCase(meta.key), output), document.querySelector(`#${meta.key}`));
+    });
+  }
+
   var inputs = {
     pets,
     account,
     owner,
     policyOptions,
     selectedCoverType,
-    selectedVetFee
+    selectedVetFee,
+    selectedVoluntaryExcess
   };
   /** Global */
-
-  /** PetInsurance */
-
-  /*
-  import aboutYourPet from './about-your-pet/index';
-  import aboutYou from './about-you/index';
-  import selectedAddress from './selected-address/index';
-  import aboutYourPolicy from './about-your-policy/index';
-  import selectedCover from './covers/index';
-  import selectedVetPaymentTerm from './covers/selected-vet-payment-term';
-  import selectedPaymentTerm from './covers/selected-payment-term';
-  import payment from './payment'; */
   //TODO-test: run this function for all given inputMetas;
 
   var templates = {
@@ -5517,13 +5545,13 @@ module.exports = QuickLRU;
      * @param {String} name
      * @param {String} title
      * @param {Array} inputsMeta
-     * @param {String} nextSection
+     * @param {String} nextRoute
      */
-    constructor(name, title, inputsMeta = [], nextSection = '/finish') {
+    constructor(name, title, inputsMeta = [], nextRoute = '/finish') {
       this.name = name;
       this.title = title || name;
       this.inputsMeta = inputsMeta;
-      this.nextSection = nextSection;
+      this.nextRoute = nextRoute;
       this.keysToRender = this.inputsMeta.map(nd => nd.key);
       this.keysRendered = [];
       this.cachedTemplates = [];
@@ -5598,7 +5626,7 @@ module.exports = QuickLRU;
 
     onFinish() {
       setTimeout(() => {
-        window.location.hash = this.nextSection;
+        window.location.hash = this.nextRoute;
       }, 1000);
     }
 
@@ -5615,7 +5643,8 @@ module.exports = QuickLRU;
       inputMethod: "SelectOne",
       sourceOutputKey: 'availableBreedTypes',
       title: 'select breed type'
-    }]
+    }],
+    initial: []
   }, {
     name: 'aboutYou',
     inputs: [{
@@ -5636,7 +5665,8 @@ module.exports = QuickLRU;
       key: 'selectedAddress',
       inputMethod: "SelectOne",
       sourceOutputKey: 'availableAddresses'
-    }]
+    }],
+    initial: ['account', 'owner']
   }, {
     name: 'aboutYourPolicy',
     inputs: [{
@@ -5661,8 +5691,12 @@ module.exports = QuickLRU;
       sourceOutputKey: 'availableCoverTypes'
     }, {
       key: 'selectedCoverOptions',
-      inputMethod: "SelectOne",
+      inputMethod: "SelectMany",
       sourceOutputKey: 'availableCoverOptions'
+    }, {
+      key: 'selectedVoluntaryExcess',
+      inputMethod: 'selectOne',
+      sourceOutputKey: 'availableVoluntaryExcesses'
     }, {
       key: 'selectedVetFee',
       inputMethod: "SelectOne",
@@ -5720,6 +5754,25 @@ module.exports = QuickLRU;
     return request;
   }
 
+  var Summary = () => html`
+<div class="summary">
+    <b>MoreThan</b>
+    <span class="dimmed">Pet Insurance</span>
+</div>`;
+
+  var Header = () => html`
+<div class="header">
+    <h2>Here goes brand</h2>
+</div>`;
+
+  var Footer = () => html`
+<div class="footer">
+    <span>It is footer</span>
+</div>`;
+
+  render(Header(), document.querySelector('#header'));
+  render(Summary(), document.querySelector('#summary'));
+  render(Footer(), document.querySelector('#footer'));
   const routes = {
     '/': () => {
       sdk.create().then(() => {
@@ -5742,6 +5795,13 @@ module.exports = QuickLRU;
     // Cancel the job
     console.log('unload!');
   });
+  /** TODOS:
+   * need to navigate to awaitingInput's page, when waiting for the output
+   * need to assign all the sub-route so that they can navigate directly there
+   * gets output from previous-input-output as well
+   * CSS - responsive
+   * (?) Should we give a flexibility of showing some inputs together?
+   */
 });
 
 },{"@ubio/sdk":1,"camelcase-keys":4,"form-serialize":6,"lodash.kebabcase":8}]},{},[11]);

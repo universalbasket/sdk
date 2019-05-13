@@ -1,3 +1,4 @@
+import sdk from './src/sdk';
 import router from './router';
 import { render } from './src/lit-html';
 
@@ -6,14 +7,6 @@ import Header from './templates/header';
 import Footer from './templates/footer';
 
 import { AboutYourPet, AboutYou, aboutYourPolicy } from './src/sectionRenderer';
-import sdk from './src/sdk';
-
-const header = document.querySelector('#header');
-const summary = document.querySelector('#summary');
-const footer = document.querySelector('#footer');
-
-console.log(!!header, !!summary, !!footer);
-
 
 render(Header(), document.querySelector('#header'));
 render(Summary(), document.querySelector('#summary'));
@@ -38,3 +31,11 @@ window.addEventListener('beforeunload', function (e) {
     // Cancel the job
     console.log('unload!');
 });
+
+/** TODOS:
+ * need to navigate to awaitingInput's page, when waiting for the output
+ * need to assign all the sub-route so that they can navigate directly there
+ * gets output from previous-input-output as well
+ * CSS - responsive
+ * (?) Should we give a flexibility of showing some inputs together?
+ */

@@ -10,25 +10,6 @@
     margin: 0;
 }
 
-
-#header {
-    background-color: #1C2936;
-    color: white;
-    padding: 10px;
-    height: 25px;
-    position: -webkit-sticky;
-    position: sticky;
-    top: 0;
-}
-
-#summary {
-    background-color: #D3E0ED;
-    padding: 15px 10px;
-    position: -webkit-sticky;
-    position: sticky;
-    top: 50px;
-}
-
 label {
     display: block;
 }
@@ -43,8 +24,69 @@ input, select {
 input:focus {
     border-color: #31AADE;
 }
-.section {
-    margin-top: 10px;
+
+#header {
+    background-color: #1C2936;
+    color: white;
+    padding: 10px;
+    height: 25px;
+    width: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+}
+
+#summary {
+    background-color: #D3E0ED;
+
+    padding: 15px 10px;
+    align-self: stretch;
+}
+
+.container {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: flex-start;
+
+    margin-top: 50px;
+}
+
+@media all and (max-width: 600px) {
+    .container {
+        flex-direction: column;
+        justify-content: flex-start;
+    }
+    /* We tell both sidebars to share a row */
+    .summary {
+        order: 1;
+        position: -webkit-sticky;
+        position: sticky;
+        top: 50px;
+    }
+    .main { order: 2; justify-content: stretch;}
+}
+
+
+  /* Large screens */
+@media all and (min-width: 600px) {
+    /* We invert order of first sidebar and main
+    * And tell the main element to take twice as much width as the other two sidebars
+    */
+    .main { flex: 2 auto; order: 1; max-width: 60vw;  }
+    .summary { flex: 1 auto; order: 2; }
+    .section {
+        max-width: 40vw;
+        min-width: 350px;
+    }
+}
+
+.main {
+    display: flex;
+    justify-content: center;
+}
+
+.section__body {
+    overflow-y: auto;
 }
 
 .section__header {
@@ -56,6 +98,7 @@ input:focus {
 .section__header::after {
     content: "-"
 }
+
 
 .dimmed {
     color: #919191;
@@ -117,10 +160,6 @@ input:focus {
 .button--primary {
     color: #ffffff;
     background: var(--primary-color);
-}
-
-.button--right {
-
 }
 
 .group--merged > label:not(:last-child) {
