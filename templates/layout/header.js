@@ -1,4 +1,4 @@
-import { html } from '../src/lit-html';
+import { html } from '../../src/lit-html';
 
 export default () => html`
 <div class="header">

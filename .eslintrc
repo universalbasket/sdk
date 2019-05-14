@@ -1,0 +1,5 @@
+{
+    "plugins": ["lit"],
+    "extends": ["plugin:lit/recommended"],
+    "env": {"browser": true}
+}

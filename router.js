@@ -12,10 +12,7 @@ export default (routes) => {
     // If the parsed URL is not in our list of supported routes, select the 404 page instead
     let page = routes[parsedURL] ? routes[parsedURL] : NotFound404
 
-    page(() => {
-        console.log('first section finished!');
-        window.location.hash = '/about-you';
-    });
+    page(() => { /*render*/ });
 }
 
 function parseRequestURL() {

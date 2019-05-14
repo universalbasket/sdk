@@ -1,7 +1,6 @@
 import { html, render } from './lit-html';
 import sdk from './sdk';
 import serializeForm from './serialize-form';
-
 import nonFount404 from '../templates/not-found-404';
 import templates from '../templates/index';
 
@@ -12,6 +11,7 @@ class Section {
      * @param {Array} inputsMeta
      * @param {String} nextRoute
      */
+
     constructor(name, title, inputsMeta = [], nextRoute = '/finish') {
         this.name = name;
         this.title = title || name;
@@ -92,6 +92,7 @@ class Section {
 
         const template = templates.getInput(inputMeta);
         render(html`${template}`, document.querySelector('#target'));
+        document.querySelector('.section').scrollIntoView(true);
         this.keysRendered.push(nextKey);
     }
 
@@ -142,7 +143,7 @@ const SECTIONS = [
 
 const AboutYourPet = () => { new Section('AboutYourPet', 'Tell me about your pet', SECTIONS[0].inputs, '/about-you') };
 const AboutYou = () => { new Section('AboutYou', 'Tell me about you', SECTIONS[1].inputs, '/about-your-policy') };
-const aboutYourPolicy = () => { new Section('aboutYourPolicy', 'Your Policy', SECTIONS[2].inputs, '') };
+const aboutYourPolicy = () => { new Section('aboutYourPolicy', 'Your Policy', SECTIONS[2].inputs, null) };
 const NotFound404 = () => { render(nonFount404(), document.querySelector('#app')) }
 
 export { NotFound404, AboutYourPet, AboutYou, aboutYourPolicy };

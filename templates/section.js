@@ -6,6 +6,8 @@ export default (title) => html`
         <pre id="error"></pre>
         <form class="section__body" id="target"></form>
 
-        <button type="button" class="button button--right button--primary" id="submitBtn">Continue</button>
+        <div class="section__actions">
+            <button type="button" class="button button--right button--primary" id="submitBtn">Continue</button>
+        </div>
     </div>
 `;

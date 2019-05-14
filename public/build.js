@@ -4956,7 +4956,9 @@ module.exports = QuickLRU;
         <pre id="error"></pre>
         <form class="section__body" id="target"></form>
 
-        <button type="button" class="button button--right button--primary" id="submitBtn">Continue</button>
+        <div class="section__actions">
+            <button type="button" class="button button--right button--primary" id="submitBtn">Continue</button>
+        </div>
     </div>
 `;
 
@@ -5337,7 +5339,7 @@ module.exports = QuickLRU;
             </div>
 
             <div class="field">
-                <label for="owner[address][postcode]" class="field__name">post-code</label>
+                <label for="owner[address][postcode]" class="field__name">Postcode</label>
                 <input type="text" name="owner[address][postcode]" id="owner[address][postcode]" value="E11 4PB" required />
             </div>
         </div>
@@ -5621,6 +5623,7 @@ module.exports = QuickLRU;
       const inputMeta = this.inputsMeta.find(im => im.key === nextKey);
       const template = templates.getInput(inputMeta);
       render(html`${template}`, document.querySelector('#target'));
+      document.querySelector('.section').scrollIntoView(true);
       this.keysRendered.push(nextKey);
     }
 
@@ -5720,7 +5723,7 @@ module.exports = QuickLRU;
   };
 
   const aboutYourPolicy = () => {
-    new Section('aboutYourPolicy', 'Your Policy', SECTIONS[2].inputs, '');
+    new Section('aboutYourPolicy', 'Your Policy', SECTIONS[2].inputs, null);
   };
 
   const NotFound404 = () => {
@@ -5737,8 +5740,7 @@ module.exports = QuickLRU;
 
     let page = routes[parsedURL] ? routes[parsedURL] : NotFound404;
     page(() => {
-      console.log('first section finished!');
-      window.location.hash = '/about-you';
+      /*render*/
     });
   };
 
@@ -5767,12 +5769,13 @@ module.exports = QuickLRU;
 
   var Footer = () => html`
 <div class="footer">
-    <span>It is footer</span>
+    <span></span>
 </div>`;
 
   render(Header(), document.querySelector('#header'));
   render(Summary(), document.querySelector('#summary'));
-  render(Footer(), document.querySelector('#footer'));
+  render(Footer(), document.querySelector('#footer')); // pet-insurance-specific
+
   const routes = {
     '/': () => {
       sdk.create().then(() => {

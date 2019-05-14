@@ -63,7 +63,7 @@ export default () => html`
             </div>
 
             <div class="field">
-                <label for="owner[address][postcode]" class="field__name">post-code</label>
+                <label for="owner[address][postcode]" class="field__name">Postcode</label>
                 <input type="text" name="owner[address][postcode]" id="owner[address][postcode]" value="E11 4PB" required />
             </div>
         </div>
