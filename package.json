@@ -2,9 +2,10 @@
   "name": "sdk-application-bundle",
   "version": "0.0.0",
   "description": "ubio sdk application bundle (prototype)",
+  "module": "build.js",
   "scripts": {
     "build": "npm run build:copy-static-files && npm run build:rollup && npm run build:build-js && npm run build:clean-up",
-    "build:copy-static-files": "cp index.html public",
+    "build:copy-static-files": "cp index.html public && cp index.css public",
     "build:rollup": "rollup index.js --format umd --name \"ubio-app-sdk\" --file public/bundle.js",
     "build:build-js": "browserify public/bundle.js -o public/build.js -t babelify",
     "build:clean-up": "rm public/bundle.js"
@@ -29,6 +30,6 @@
     "eslint": "^5.16.0",
     "eslint-config-ub": "^3.0.0",
     "eslint-plugin-lit": "^1.0.0",
-    "rollup": "^1.11.3"
+    "rollup": "^1.12.0"
   }
 }

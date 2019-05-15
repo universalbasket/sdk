@@ -29,7 +29,7 @@ function getInput(meta) {
 
     if (templateFunc && typeof templateFunc === 'function') {
         console.log('templateFunc found');
-        return templateFunc(meta);
+        return templateFunc;
     }
 
     return null;

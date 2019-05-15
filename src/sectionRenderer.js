@@ -42,6 +42,7 @@ class Section {
     }
 
     renderWrapper() {
+        render(html``, document.querySelector('#app'));
         render(templates.section(this.title), document.querySelector('#app'));
         this.addListener();
     }
@@ -76,7 +77,9 @@ class Section {
                     }
                 })
                 .catch(err => {
-                    render(html`${err}`, document.querySelector('#error'))
+                    if(document.querySelector('#error')) {
+                        render(html`${err}`, document.querySelector('#error'));
+                    }
                     submitBtn.removeAttribute('disabled');
                 });
         });
@@ -91,9 +94,40 @@ class Section {
         const inputMeta = this.inputsMeta.find(im => im.key === nextKey);
 
         const template = templates.getInput(inputMeta);
-        render(html`${template}`, document.querySelector('#target'));
-        document.querySelector('.section').scrollIntoView(true);
-        this.keysRendered.push(nextKey);
+        // render if the output is here.
+        // when the awaitingInput event has happened, check nextKey and awaitingInputKey.
+        // if it's different, skip this one, and render the awaitingInputKey.
+        if (inputMeta.inputMethod != null) {
+            sdk.waitForJobOutput(inputMeta.sourceOutputKey, nextKey)
+                .then(output => {
+                    render(html`${template(inputMeta, output)}`, document.querySelector('#target'));
+                    document.querySelector('.section').scrollIntoView(true);
+
+                    this.keysRendered.push(nextKey);
+
+                })
+                .catch(err => {
+                    if (err.name === 'jobExpectsDifferentInputKey') {
+                        const input = this.inputsMeta.find(im => im.key === err.details.awaitingInputKey);
+                        if (!input) {
+                            // not found in this section! finish
+                            return this.onFinish();
+                        }
+
+                        const idx = this.keysToRender.indexOf(input.key);
+                        this.keysToRender.splice(idx, 1);
+                        this.keysRendered.unshift([input.key, nextKey]);
+
+                        return this.renderNextContent();
+                    }
+                });
+        } else {
+            render(html`${template()}`, document.querySelector('#target'));
+            document.querySelector('.section').scrollIntoView(true);
+
+            this.keysRendered.push(nextKey);
+        }
+
     }
 
     onFinish() {
@@ -137,13 +171,14 @@ const SECTIONS = [
         name: 'payment',
         inputs: [
             { key: 'payment', inputMethod: null, sourceOutputKey: null },
+            { key: 'directDebit', inputMethod: null, sourceOutputKey: null }
         ]
     }
 ];
 
-const AboutYourPet = () => { new Section('AboutYourPet', 'Tell me about your pet', SECTIONS[0].inputs, '/about-you') };
-const AboutYou = () => { new Section('AboutYou', 'Tell me about you', SECTIONS[1].inputs, '/about-your-policy') };
-const aboutYourPolicy = () => { new Section('aboutYourPolicy', 'Your Policy', SECTIONS[2].inputs, null) };
+const AboutYourPet = () => { new Section('aboutYourPet', 'Tell me about your pet', SECTIONS[0].inputs, '/about-you') };
+const AboutYou = () => { new Section('aboutYou', 'Tell me about you', SECTIONS[1].inputs, '/about-your-policy') };
+const aboutYourPolicy = () => { new Section('aboutYourPolicy', 'Your Policy', SECTIONS[2].inputs, '/payment') };
 const NotFound404 = () => { render(nonFount404(), document.querySelector('#app')) }
 
 export { NotFound404, AboutYourPet, AboutYou, aboutYourPolicy };

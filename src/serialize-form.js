@@ -13,7 +13,7 @@ export default function serializeForm(formId = '') {
         throw new Error('specified form not found');
     }
 
-    const serialized = formSerialize(form, { empty: true, serializer: hash_serializer });
+    const serialized = formSerialize(form, { empty: false, serializer: hash_serializer });
 
     return camelCaseKeys(serialized, { deep: true });
 }

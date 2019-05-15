@@ -4,35 +4,35 @@ export default () => html`
 <div class="job-input">
     <div class="pet" name="pets[0]">
         <div class="field field-set">
-            <label class="field__name" for="pets[0][pet-name]">Pet Name</label>
-            <input type="text" name="pets[0][pet-name]" placeholder="Rex" value="Rex" required />
+            <label class="field__name" for="pets[0][name]">Pet Name</label>
+            <input type="text" name="pets[0][name]" placeholder="Rex" value="Rex" required />
         </div>
 
         <div class="field field-set">
             <span class="field__name">Pet type</span>
             <div class="field__inputs group group--merged">
-                <input type="radio" name="pets[0][pet-type]" id="pets[0][pet-type]-dog" value="dog"/>
-                <label for="pets[0][pet-type]-dog" class="button">Dog</label>
+                <input type="radio" name="pets[0][animal-type]" id="pets[0][animal-type]-dog" value="dog"/>
+                <label for="pets[0][animal-type]-dog" class="button">Dog</label>
 
-                <input type="radio" name="pets[0][pet-type]" id="pets[0][pet-type]-cat" value="cat"/>
-                <label for="pets[0][pet-type]-cat" class="button">Cat</label>
+                <input type="radio" name="pets[0][animal-type]" id="pets[0][animal-type]-cat" value="cat"/>
+                <label for="pets[0][animal-type]-cat" class="button">Cat</label>
             </div>
         </div>
 
         <div class="field field-set">
             <span class="field__name">Gender</span>
             <div class="field__inputs group group--merged">
-                <input type="radio" name="pets[0][pet-gender]" value="male" id="pets[0][pet-gender]-male" required checked >
-                <label for="pets[0][pet-gender]-male" class="button">Male</label>
+                <input type="radio" name="pets[0][gender]" value="male" id="pets[0][gender]-male" required checked >
+                <label for="pets[0][gender]-male" class="button">Male</label>
 
-                <input type="radio" name="pets[0][pet-gender]" id="pets[0][pet-gender]-female" value="female">
-                <label for="pets[0][pet-gender]-female" class="button">Female</label>
+                <input type="radio" name="pets[0][gender]" id="pets[0][gender]-female" value="female">
+                <label for="pets[0][gender]-female" class="button">Female</label>
             </div>
         </div>
 
         <div class="field field-set">
             <label  class="field__name" for="pets[0][breed-name]">Breed Name</label>
-            <input type="text" name="pets[0][breed-name]" value="Maltese Terrier" required>
+            <input type="text" name="pets[0][breed-name]" value="Maltese" required>
         </div>
 
         <div class="field field-set">
@@ -85,7 +85,7 @@ export default () => html`
                 <div class="field__inputs group group--merged">
                     <input
                         type="radio"
-                        name="pets[0][related-questions][any-behaviour-complains-$boolean]"
+                        name="pets[0][related-questions][has-behaviour-complains-$boolean]"
                         id="pets[0]-behaviour-complains-yes"
                         value="true"
                         required checked>
@@ -93,7 +93,7 @@ export default () => html`
 
                     <input
                         type="radio"
-                        name="pets[0][related-questions][any-behaviour-complains-$boolean]"
+                        name="pets[0][related-questions][has-behaviour-complains-$boolean]"
                         id="pets[0]-behaviour-complains-no"
                         value="false"
                         required>
@@ -156,7 +156,7 @@ export default () => html`
                 <div class="field__inputs group group--merged">
                     <input
                         type="radio"
-                        name="pets[0][related-questions][indoor-pet-$boolean]"
+                        name="pets[0][related-questions][is-indoor-$boolean]"
                         id="pets[0]-indoor-yes"
                         value="true"
                         required checked>
@@ -164,7 +164,7 @@ export default () => html`
 
                     <input
                         type="radio"
-                        name="pets[0][related-questions][indoor-pet-$boolean]"
+                        name="pets[0][related-questions][is-indoor-$boolean]"
                         id="pets[0]-indoor-no"
                         value="false"
                         required>
@@ -198,7 +198,7 @@ export default () => html`
                 <div class="field__inputs group group--merged">
                     <input
                         type="radio"
-                        name="pets[0][related-questions][any-legal-action-$boolean]"
+                        name="pets[0][related-questions][has-legal-action-$boolean]"
                         id="pets[0]-legal-yes"
                         value="true"
                         required checked>
@@ -206,7 +206,7 @@ export default () => html`
 
                     <input
                         type="radio"
-                        name="pets[0][related-questions][any-legal-action-$boolean]"
+                        name="pets[0][related-questions][has-legal-action-$boolean]"
                         id="pets[0]-legal-no"
                         value="false"
                         required>
