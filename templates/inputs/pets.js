@@ -32,7 +32,7 @@ export default () => html`
 
         <div class="field field-set">
             <label  class="field__name" for="pets[0][breed-name]">Breed Name</label>
-            <input type="text" name="pets[0][breed-name]" value="Maltese" required>
+            <input type="text" name="pets[0][breed-name]" value="Afghan Hound" required>
         </div>
 
         <div class="field field-set">

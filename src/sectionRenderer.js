@@ -1,7 +1,6 @@
 import { html, render } from './lit-html';
 import sdk from './sdk';
 import serializeForm from './serialize-form';
-import nonFount404 from '../templates/not-found-404';
 import templates from '../templates/index';
 
 class Section {
@@ -9,14 +8,15 @@ class Section {
      * @param {String} name
      * @param {String} title
      * @param {Array} inputsMeta
-     * @param {String} nextRoute
+     * @param {Function} onFinish
      */
 
-    constructor(name, title, inputsMeta = [], nextRoute = '/finish') {
+    constructor(name, title, inputsMeta = [], selector, onFinish) {
         this.name = name;
         this.title = title || name;
+        this.selector = selector;
         this.inputsMeta = inputsMeta;
-        this.nextRoute = nextRoute;
+        this.onFinish = onFinish;
 
         this.keysToRender = this.inputsMeta.map(nd => nd.key);
         this.keysRendered = [];
@@ -42,8 +42,8 @@ class Section {
     }
 
     renderWrapper() {
-        render(html``, document.querySelector('#app'));
-        render(templates.section(this.title), document.querySelector('#app'));
+        render(html``, document.querySelector(this.selector));
+        render(templates.section(this.title), document.querySelector(this.selector));
         this.addListener();
     }
 
@@ -72,7 +72,7 @@ class Section {
                         this.renderNextContent();
                         submitBtn.removeAttribute('disabled');
                     } else {
-                        render(html``, document.querySelector('#app'));
+                        render(html``, document.querySelector(this.selector));
                         this.onFinish();
                     }
                 })
@@ -100,6 +100,7 @@ class Section {
         if (inputMeta.inputMethod != null) {
             sdk.waitForJobOutput(inputMeta.sourceOutputKey, nextKey)
                 .then(output => {
+                    console.log('got an output!');
                     render(html`${template(inputMeta, output)}`, document.querySelector('#target'));
                     document.querySelector('.section').scrollIntoView(true);
 
@@ -108,6 +109,8 @@ class Section {
                 })
                 .catch(err => {
                     if (err.name === 'jobExpectsDifferentInputKey') {
+                        console.log('got jobExpectsDifferentInputKey!');
+
                         const input = this.inputsMeta.find(im => im.key === err.details.awaitingInputKey);
                         if (!input) {
                             // not found in this section! finish
@@ -119,6 +122,7 @@ class Section {
                         this.keysRendered.unshift([input.key, nextKey]);
 
                         return this.renderNextContent();
+
                     }
                 });
         } else {
@@ -129,56 +133,26 @@ class Section {
         }
 
     }
-
+/*
     onFinish() {
         setTimeout(() => { window.location.hash = this.nextRoute }, 1000);
-    }
+    } */
 }
 
-const SECTIONS = [
-    {
-        name: 'aboutYourPet',
-        inputs: [
-            { key: 'pets', inputMethod: null, sourceOutputKey: null },
-            { key: 'selectedBreedType', inputMethod: "SelectOne", sourceOutputKey: 'availableBreedTypes', title: 'select breed type' }
-        ],
-        initial: []
-    },
-    {
-        name: 'aboutYou',
-        inputs: [
-            { key: 'account', inputMethod: null, sourceOutputKey: null },
-            { key: 'owner', inputMethod: null, sourceOutputKey: null },
-            { key: 'selectedMaritalStatusOption', inputMethod: "SelectOne",  sourceOutputKey: 'availableMaritalStatusOptions' },/* in-flow, availableMaritalStatusOptions */
-            { key: 'selectedAddress', inputMethod: "SelectOne",  sourceOutputKey: 'availableAddresses' }
-        ],
-        initial: ['account', 'owner']
-    },
-    {
-        name: 'aboutYourPolicy',
-        inputs: [
-            { key: 'policyOptions', inputMethod: null,  sourceOutputKey: null },
-            { key: 'selectedCover', inputMethod: "SelectOne",  sourceOutputKey: 'availableCovers' },
-            { key: 'selectedVetPaymentTerm', inputMethod: "SelectOne",  sourceOutputKey: 'availableVetPaymentTerms' },
-            { key: 'selectedPaymentTerm', inputMethod: "SelectOne",  sourceOutputKey: 'availablePaymentTerms' },
-            { key: 'selectedCoverType', inputMethod: "SelectOne", sourceOutputKey: 'availableCoverTypes' },
-            { key: 'selectedCoverOptions', inputMethod: "SelectMany",  sourceOutputKey: 'availableCoverOptions' },
-            { key: 'selectedVoluntaryExcess', inputMethod: 'selectOne', sourceOutputKey: 'availableVoluntaryExcesses' },
-            { key: 'selectedVetFee', inputMethod: "SelectOne",  sourceOutputKey: 'availableVetFees' },
-        ]
-    },
-    {
-        name: 'payment',
-        inputs: [
-            { key: 'payment', inputMethod: null, sourceOutputKey: null },
-            { key: 'directDebit', inputMethod: null, sourceOutputKey: null }
-        ]
-    }
-];
-
-const AboutYourPet = () => { new Section('aboutYourPet', 'Tell me about your pet', SECTIONS[0].inputs, '/about-you') };
+/* const AboutYourPet = () => { new Section('aboutYourPet', 'Tell me about your pet', SECTIONS[0].inputs, '/about-you') };
 const AboutYou = () => { new Section('aboutYou', 'Tell me about you', SECTIONS[1].inputs, '/about-your-policy') };
 const aboutYourPolicy = () => { new Section('aboutYourPolicy', 'Your Policy', SECTIONS[2].inputs, '/payment') };
-const NotFound404 = () => { render(nonFount404(), document.querySelector('#app')) }
+const NotFound404 = () => { render(nonFount404(), document.querySelector(this.selector)) } */
 
-export { NotFound404, AboutYourPet, AboutYou, aboutYourPolicy };
+//export { NotFound404, AboutYourPet, AboutYou, aboutYourPolicy };
+/**
+ * @param {String} name
+ * @param {String} title
+ * @param {Array} inputMeta
+ * @param {Function} onFinish
+ */
+function getSection(name, title, inputMeta, selector, onFinish) {
+    return new Section(name, title, inputMeta, selector, onFinish);
+}
+
+export default getSection;

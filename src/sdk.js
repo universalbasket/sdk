@@ -1,8 +1,10 @@
 import { createEndUserSdk } from '@ubio/sdk';
 import { initialInputs } from '../env';
+
 let jobId = localStorage.getItem('jobId') || null;
 let token = localStorage.getItem('token') || null;
 let serviceId = localStorage.getItem('serviceId') || null;
+let submittedInputs = [];
 
 class EndUserSdk {
     constructor() {
@@ -11,9 +13,23 @@ class EndUserSdk {
     }
 
     async create(fields = {}) {
-        const { token, jobId: currentJobId, serviceId } = await createJob(fields);
+        if (jobId && token && serviceId) {
+            let previous;
+            try {
+                previous = createEndUserSdk({ token, jobId, serviceId });
+                await previous.cancelJob();
+            } catch (err) {
+                console.log('failed to cancel previous job. it will be abandoned');
+            }
+        }
 
-        jobId = currentJobId;
+        localStorage.clear();
+
+        const newJob = await createJob(fields);
+
+        jobId = newJob.jobId;
+        token = newJob.token;
+        serviceId = newJob.serviceId;
         localStorage.setItem('jobId', jobId);
         localStorage.setItem('token', token);
         localStorage.setItem('serviceId', serviceId);
@@ -25,14 +41,17 @@ class EndUserSdk {
     retrieve() {
         this.sdk = createEndUserSdk({ token, jobId, serviceId });
         this.initiated = true;
+        submittedInputs = getAllJobInputs();
     }
+
 
     async createJobInputs(inputs) {
         const keys = Object.keys(inputs);
-        const createInputs = keys.map(key => {
+        const createInputs = keys.map(async key => {
             const data = inputs[key];
+
+            await this.sdk.createJobInput(key, data);
             saveJobInput(key, data);
-            return this.sdk.createJobInput(key, data);
         });
 
         await Promise.all(createInputs);
@@ -40,14 +59,14 @@ class EndUserSdk {
 
     async waitForJobOutput(outputKey, inputKey) {
         const outputs = await this.sdk.getJobOutputs();
-        const output = outputs.find(ou => ou.key === outputKey);
+        const output = Array.isArray(outputs.data) && outputs.data.find(ou => ou.key === outputKey);
 
         if (output) {
             return output;
         }
 
         const previousOutputs = await this.sdk.getPreviousJobOuputs(getAllJobInputs()) || [];
-        const previous = previousOutputs.find(ou => ou.key === outputKey);
+        const previous = Array.isArray(previousOutputs.data) && previousOutputs.data.find(ou => ou.key === outputKey);
 
         if (previous) {
             return previous;
@@ -73,7 +92,7 @@ class EndUserSdk {
 
                             if (output) {
                                 stopTracking();
-                                res(output);
+                                res(output.data);
                             }
 
                             createdOutputProcessing = false;
@@ -165,7 +184,11 @@ function getAllJobInputs() {
 
     for (let i = 0; i < length ; i +=1) {
         const key = localStorage.key(i);
-        inputs.push({ key, data: localStorage.getItem(key) });
+        if (key.startsWith('input.')) {
+            const trimmed = key.replace('input.', '');
+            const data = JSON.parse(localStorage.getItem(key));
+            inputs.push({ key: trimmed, data });
+        }
     }
 
     return inputs;

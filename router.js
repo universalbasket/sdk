@@ -1,6 +1,5 @@
-import { NotFound404 } from './src/sectionRenderer'
 // The router code. Takes a URL, checks against the list of supported routes and then renders the corresponding content page.
-export default (routes) => {
+export default (routes, NotFound) => {
 
     // Get the parsed URl from the addressbar
     let request = parseRequestURL()
@@ -10,9 +9,9 @@ export default (routes) => {
 
     // Get the page from our hash of supported routes.
     // If the parsed URL is not in our list of supported routes, select the 404 page instead
-    let page = routes[parsedURL] ? routes[parsedURL] : NotFound404
+    let page = routes[parsedURL] ? routes[parsedURL] : NotFound
 
-    page(() => { /*render*/ });
+    page();
 }
 
 function parseRequestURL() {
