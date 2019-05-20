@@ -4,14 +4,13 @@ const TITLES = ['mr', 'ms', 'mrs', 'miss'];
 
 export default (prefix = 'person') => html`
 <div class="section">
-    <h3 class="section__header">Payment</h3>
     <div class="section__body">
         <div name="${prefix}" class="filed-set">
             <div class="field">
                 <label class="field__name">Title</label>
                 <select name="${prefix}[title]">
                     ${ TITLES.map(t => html`
-                    <option value="${t}" /> ${ t.toUpperCase() }</option>`
+                    <option value="${t}"> ${ t.toUpperCase() }</option>`
                     ) }
                 </select>
             </div>

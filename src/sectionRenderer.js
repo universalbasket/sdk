@@ -90,9 +90,8 @@ class Section {
         if (!nextKey) {
             return this.onFinish();
         }
-
         const inputMeta = this.inputsMeta.find(im => im.key === nextKey);
-
+console.log('inputMeta', JSON.stringify(inputMeta));
         const template = templates.getInput(inputMeta);
         // render if the output is here.
         // when the awaitingInput event has happened, check nextKey and awaitingInputKey.
@@ -109,7 +108,7 @@ class Section {
                 })
                 .catch(err => {
                     if (err.name === 'jobExpectsDifferentInputKey') {
-                        console.log('got jobExpectsDifferentInputKey!');
+                        console.log('got jobExpectsDifferentInputKey!', err.details.awaitingInputKey);
 
                         const input = this.inputsMeta.find(im => im.key === err.details.awaitingInputKey);
                         if (!input) {
@@ -119,10 +118,10 @@ class Section {
 
                         const idx = this.keysToRender.indexOf(input.key);
                         this.keysToRender.splice(idx, 1);
-                        this.keysRendered.unshift([input.key, nextKey]);
+                        this.keysToRender.unshift(...[input.key, nextKey]);
 
+                        console.log(this.keysToRender)
                         return this.renderNextContent();
-
                     }
                 });
         } else {

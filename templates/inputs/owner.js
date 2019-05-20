@@ -47,6 +47,11 @@ export default () => html`
 
         <div name="owner[address]" class="filed-set">
             <div class="field">
+                <label for="owner[address][property-number]" class="field__name">Number of Property</label>
+                <input type="text" name="owner[address][property-number]" id="owner[address][property-number]" value="12" required />
+            </div>
+
+            <div class="field">
                 <label for="owner[address][postcode]" class="field__name">Postcode</label>
                 <input type="text" name="owner[address][postcode]" id="owner[address][postcode]" value="HP4 2PE" required />
             </div>

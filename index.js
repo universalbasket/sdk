@@ -1,11 +1,11 @@
 import sdk from './src/sdk';
 import router from './router';
 import { render } from './src/lit-html';
+import * as submittedInput from './src/submitted-input';
 
 import Summary from './templates/layout/summary';
 import Header from './templates/layout/header';
 import Footer from './templates/layout/footer';
-//import { AboutYourPet, AboutYou, aboutYourPolicy } from './src/sectionRenderer';
 import Section from './src/sectionRenderer';
 import NotFound from './src/NotFound';
 
@@ -26,84 +26,101 @@ import NotFound from './src/NotFound';
  * (?) Should we give a flexibility of showing some inputs together?
  */
 
- function createSection(config = {}, selector, callback) {
-     //TODO: make config validator
-    const { name, title, inputs } = config;
+function createSection(config = {}, selector, callback) {
+    //TODO: make config validator
+const { name, title, inputs } = config;
 
-    if (!name) {
-        throw new Error('name is needed for section');
+if (!name) {
+    throw new Error('name is needed for section');
+}
+
+if (!title) {
+    throw new Error('title is needed for section');
+}
+
+if (!Array.isArray(inputs)) {
+    throw new Error('inputs needed for section');
+}
+
+return {
+    init: () => {
+        sdk
+            .create()
+            .then(() => Section(name, title, inputs, selector, callback))
+            .catch(err => console.log(err));
     }
+};
+}
 
-    if (!title) {
-        throw new Error('title is needed for section');
-    }
+function createApp(configs = [], selector, callback) {
+    //TODO: maybe this core app fetches all domain's meta and store them.
+    // config will accept input keys rather than whole meta
 
-    if (!Array.isArray(inputs)) {
-        throw new Error('inputs needed for section');
-    }
+const isValidConfig = configs.length > 0 && configs.every(config => config.name && config.title && config.inputs && config.route);
 
-    return {
-        init: () => {
-            sdk
-                .create()
-                .then(() => Section(name, title, inputs, selector, callback))
-                .catch(err => console.log(err));
+if (!isValidConfig) {
+    throw new Error('invalid config');
+}
+
+const flow = configs.map(con => con.route);
+flow.push('/finish');
+
+const routes = { '/finish': () => callback(null, 'finish') };
+
+configs.forEach((config, idx) => {
+    const { title, inputs, route } = config;
+    const next = flow[idx + 1];
+
+    const section = () => Section(name, title, inputs, selector, () => setTimeout(() => { window.location.hash = next }, 1000));
+    routes[route] = section;
+})
+
+const entryPoint = flow[0];
+
+return {
+    init: () => {
+        render(Header(), document.querySelector('#header'));
+        render(Summary(), document.querySelector('#summary'));
+        render(Footer(), document.querySelector('#footer'));
+
+        window.addEventListener('hashchange', () => {
+            const inputs = submittedInput.getAll();
+            router(routes, () => NotFound(selector));
+            render(Summary(inputs), document.querySelector('#summary'))
+        });
+
+
+        // Listen on page load:
+        window.addEventListener('load', () => router(routes));
+
+        //
+        window.addEventListener('beforeunload', function (e) {
+            // Cancel the job
+            console.log('unload!');
+        });
+
+        if (window.location.hash !== entryPoint) {
+            try {
+                sdk.retrieve();
+            } catch (err) {
+                console.log('error');
+                return;
+            }
         }
-    };
- }
 
- function createApp(configs = [], selector, callback) {
-     //TODO: maybe this core app fetches all domain's meta and store them.
-     // config will accept input keys rather than whole meta
+        sdk.create()
+            .then(() => { window.location.hash = entryPoint; })
+            .catch(err => console.log(err));
 
-    const isValidConfig = configs.length > 0 && configs.every(config => config.name && config.title && config.inputs && config.route);
-
-    if (!isValidConfig) {
-        throw new Error('invalid config');
     }
+}
+}
 
-    const flow = configs.map(con => con.route);
-    flow.push('/finish');
+export { createSection, createApp };
 
-    const routes = { '/finish': () => callback(null, 'finish') };
+/* examples for createSection and createApp
 
-    configs.forEach((config, idx) => {
-        const { title, inputs, route } = config;
-        const next = flow[idx + 1];
-
-        const section = () => Section(name, title, inputs, selector, () => setTimeout(() => { window.location.hash = next }, 1000));
-        routes[route] = section;
-    })
-
-    const entryPoint = flow[0];
-
-    return {
-        init: () => {
-            render(Header(), document.querySelector('#header'));
-            render(Summary(), document.querySelector('#summary'));
-            render(Footer(), document.querySelector('#footer'));
-
-            window.addEventListener('hashchange', () => router(routes, () => NotFound(selector)));
-
-            // Listen on page load:
-            window.addEventListener('load', () => router(routes));
-
-            //
-            window.addEventListener('beforeunload', function (e) {
-                // Cancel the job
-                console.log('unload!');
-            });
-
-            sdk.create()
-                .then(() => { window.location.hash = entryPoint; })
-                .catch(err => console.log(err));
-        }
-    }
- }
-
- //export { createSection, createApp };
-
-/*  const config = {
+const config = {
     name: 'aboutYourPet',
     title: 'Tell Me About Your Pet',
     inputs: [
@@ -114,8 +131,8 @@ import NotFound from './src/NotFound';
 
 var section = createSection(config, '#app', () => { console.log('finished!')});
 
-section.init(); */
-
+section.init();
+*/
 const SECTIONS = [
     {
         name: 'aboutYourPet',
@@ -133,7 +150,7 @@ const SECTIONS = [
         inputs: [
             { key: 'account', inputMethod: null, sourceOutputKey: null },
             { key: 'owner', inputMethod: null, sourceOutputKey: null },
-            { key: 'selectedMaritalStatusOption', inputMethod: "SelectOne",  sourceOutputKey: 'availableMaritalStatusOptions' },/* in-flow, availableMaritalStatusOptions */
+            { key: 'selectedMaritalStatusOption', inputMethod: "SelectOne",  sourceOutputKey: 'availableMaritalStatusOptions' },
             { key: 'selectedAddress', inputMethod: "SelectOne",  sourceOutputKey: 'availableAddresses' }
         ],
         initial: ['account', 'owner']
@@ -143,13 +160,14 @@ const SECTIONS = [
         route: '/about-your-policy',
         title: 'Tell Me About Your Policy',
         inputs: [
+            { key: 'selectedVoluntaryExcess', inputMethod: 'selectOne', sourceOutputKey: 'availableVoluntaryExcesses' },
+
             { key: 'policyOptions', inputMethod: null,  sourceOutputKey: null },
             { key: 'selectedCover', inputMethod: "SelectOne",  sourceOutputKey: 'availableCovers' },
             { key: 'selectedVetPaymentTerm', inputMethod: "SelectOne",  sourceOutputKey: 'availableVetPaymentTerms' },
             { key: 'selectedPaymentTerm', inputMethod: "SelectOne",  sourceOutputKey: 'availablePaymentTerms' },
             { key: 'selectedCoverType', inputMethod: "SelectOne", sourceOutputKey: 'availableCoverTypes' },
             { key: 'selectedCoverOptions', inputMethod: "SelectMany",  sourceOutputKey: 'availableCoverOptions' },
-            { key: 'selectedVoluntaryExcess', inputMethod: 'selectOne', sourceOutputKey: 'availableVoluntaryExcesses' },
             { key: 'selectedVetFee', inputMethod: "SelectOne",  sourceOutputKey: 'availableVetFees' },
         ]
     },
@@ -158,6 +176,7 @@ const SECTIONS = [
         route: '/payment',
         title: 'Payment Details',
         inputs: [
+            { key: 'finalPriceConsent', inputMethod: 'Consent', sourceOutputKey: 'finalPrice'},
             { key: 'payment', inputMethod: null, sourceOutputKey: null },
             { key: 'directDebit', inputMethod: null, sourceOutputKey: null }
         ]

@@ -2,7 +2,7 @@ import { html } from '../../src/lit-html';
 import Person from './Person';
 import Address from './Address';
 
-const CARD_BRANDS = ['visa, mastercard, amex, discover'];
+const CARD_BRANDS = ['visa', 'mastercard', 'amex', 'discover'];
 
 export default (prefix = 'payment') => html`
 <div class="filed-set">
@@ -24,7 +24,7 @@ export default (prefix = 'payment') => html`
             <label class="field__name">brand</label>
             <select name="${prefix}[card][brand]">
                 ${ CARD_BRANDS.map(c => html`
-                <option value="${c}" /> ${ c }</option>`
+                <option value="${c}"> ${ c }</option>`
                 ) }
             </select>
         </div>

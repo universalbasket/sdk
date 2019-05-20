@@ -36,7 +36,7 @@ export default () => html`
         </div>
 
         <div class="field field-set">
-            <label class="field__name" for="pets[0][pet-date-of-birth]">Date Of Birth</label>
+            <label class="field__name" for="pets[0][date-of-birth]">Date Of Birth</label>
             <input type="date" name="pets[0][date-of-birth]" value="2019-01-02" minDate="${new Date()}" required>
         </div>
 

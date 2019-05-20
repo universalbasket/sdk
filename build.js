@@ -1,19 +1,497 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+(function (Buffer){
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? factory(require('@ubio/sdk'), require('form-serialize'), require('camelcase-keys'), require('lodash.kebabcase')) : typeof define === 'function' && define.amd ? define(['@ubio/sdk', 'form-serialize', 'camelcase-keys', 'lodash.kebabcase'], factory) : (global = global || self, factory(global.sdk$1, global.formSerialize, global.camelCaseKeys, global.kebabCase));
-})(this, function (sdk$1, formSerialize, camelCaseKeys, kebabCase) {
+  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('form-serialize'), require('camelcase-keys'), require('lodash.kebabcase')) : typeof define === 'function' && define.amd ? define(['exports', 'form-serialize', 'camelcase-keys', 'lodash.kebabcase'], factory) : (global = global || self, factory(global['ubio-app-sdk'] = {}, global.formSerialize, global.camelCaseKeys, global.kebabCase));
+})(this, function (exports, formSerialize, camelCaseKeys, kebabCase) {
   'use strict';
 
   formSerialize = formSerialize && formSerialize.hasOwnProperty('default') ? formSerialize['default'] : formSerialize;
   camelCaseKeys = camelCaseKeys && camelCaseKeys.hasOwnProperty('default') ? camelCaseKeys['default'] : camelCaseKeys;
   kebabCase = kebabCase && kebabCase.hasOwnProperty('default') ? kebabCase['default'] : kebabCase;
+  var defaultApiUrl = 'https://api.automationcloud.net';
+  var defaultVaultUrl = 'https://vault.automationcloud.net';
+  var defaultFetch = typeof self !== 'undefined' && self.fetch && self.fetch.bind(self);
+  var base64Encode;
+
+  if (typeof btoa === 'function') {
+    base64Encode = function (string) {
+      return btoa(string);
+    };
+  } else if (typeof Buffer === 'function') {
+    base64Encode = function (string) {
+      return Buffer.from(string).toString('base64');
+    };
+  } else {
+    throw new Error('No way to convert to base64.');
+  }
+
+  function assertStringArguments(obj) {
+    Object.keys(obj || {}).forEach(function (key) {
+      if (typeof obj[key] !== 'string') {
+        throw new TypeError('"' + key + '" must be a string.');
+      }
+    });
+  }
+
+  function createSearch(parameters) {
+    if (!parameters) {
+      return '';
+    }
+
+    var query = [];
+    Object.keys(parameters).forEach(function (key) {
+      if (parameters[key] !== void 0) {
+        query.push(encodeURIComponent(key) + '=' + encodeURIComponent(parameters[key]));
+      }
+    });
+    var search = query.join('&');
+    return search.length ? '?' + search : '';
+  }
+
+  function fetchWrapper(url, fetch, token, opts) {
+    var options = opts || {};
+    var method = options.method || 'GET';
+    var query = options.query;
+
+    if (!token) {
+      throw new Error('No token.');
+    }
+
+    var headers = {};
+    Object.keys(options.headers || {}).forEach(function (key) {
+      headers[key] = options.headers[key];
+    });
+    headers['Authorization'] = 'Basic ' + base64Encode(token + ':');
+    var body = options.body === void 0 ? void 0 : JSON.stringify(options.body);
+    var search = createSearch(query);
+
+    if (typeof body === 'string') {
+      headers['Content-Type'] = 'application/json';
+    }
+
+    var fetchOptions = {
+      method: method,
+      headers: headers,
+      body: body,
+      mode: 'cors',
+      credentials: 'omit',
+      cache: 'no-store',
+      redirect: 'follow',
+      referrer: 'client',
+      referrerPolicy: 'origin',
+      keepalive: false
+    };
+    return fetch(url + search, fetchOptions).then(function (response) {
+      if (!response.ok) {
+        return response.json().then(function (body) {
+          // TODO: Better errors from error bodies.
+          const error = new Error(body.message || 'Unexpected response');
+          error.status = response.status;
+          throw error;
+        });
+      }
+
+      if (options.parse !== false) {
+        return response.json();
+      }
+
+      return response;
+    });
+  }
+
+  function makeApiClient(baseUrl, fetch, token) {
+    var canonicalizedBaseiUrl = baseUrl.slice(-1) === '/' ? baseUrl : baseUrl + '/';
+
+    function apiFetch(path, options) {
+      return fetchWrapper(canonicalizedBaseiUrl + path, fetch, token, options);
+    }
+
+    var api = {
+      raw: function (path, options) {
+        assertStringArguments({
+          path: path
+        });
+        return apiFetch(path, options);
+      },
+      getServices: function () {
+        return apiFetch('services');
+      },
+      getService: function (serviceId) {
+        assertStringArguments({
+          serviceId: serviceId
+        });
+        return apiFetch('services/' + serviceId);
+      },
+      getPreviousJobOutputs: function (serviceId, inputs) {
+        assertStringArguments({
+          serviceId: serviceId
+        });
+        const body = {
+          inputs: inputs || []
+        };
+        return apiFetch('services/' + serviceId + '/previous-job-outputs', {
+          method: 'POST',
+          body: body
+        });
+      },
+      getJobs: function (query) {
+        return apiFetch('jobs', {
+          query: query
+        });
+      },
+      createJob: function (fields) {
+        return apiFetch('jobs', {
+          method: 'POST',
+          body: fields
+        });
+      },
+      getJob: function (jobId) {
+        assertStringArguments({
+          jobId: jobId
+        });
+        return apiFetch('jobs/' + jobId);
+      },
+      cancelJob: function (jobId) {
+        assertStringArguments({
+          jobId: jobId
+        });
+        return apiFetch('jobs/' + jobId + '/cancel', {
+          method: 'POST'
+        });
+      },
+      resetJob: function (jobId) {
+        assertStringArguments({
+          jobId: jobId
+        });
+        return apiFetch('jobs/' + jobId + '/reset', {
+          method: 'POST'
+        });
+      },
+      createJobInput: function (jobId, key, data, stage) {
+        assertStringArguments({
+          jobId: jobId,
+          key: key
+        });
+        return apiFetch('jobs/' + jobId + '/inputs', {
+          method: 'POST',
+          body: {
+            key,
+            stage,
+            data
+          }
+        });
+      },
+      getJobOutputs: function (jobId) {
+        assertStringArguments({
+          jobId: jobId
+        });
+        return apiFetch('jobs/' + jobId + '/outputs');
+      },
+      getJobOutput: function (jobId, key, stage) {
+        assertStringArguments({
+          jobId: jobId,
+          key: key
+        });
+        var path = 'jobs/' + jobId + '/outputs/' + key;
+
+        if (stage) {
+          path += '/' + stage;
+        }
+
+        return apiFetch(path);
+      },
+      getJobScreenshots: function (jobId) {
+        assertStringArguments({
+          jobId: jobId
+        });
+        return apiFetch('jobs/' + jobId + '/screenshots');
+      },
+      getJobScreenshot: function (jobIdOrPath, id, ext) {
+        function toBlob(res) {
+          return res.blob();
+        }
+
+        if (jobIdOrPath && jobIdOrPath[0] === '/') {
+          return apiFetch(jobIdOrPath, {
+            parse: false
+          }).then(toBlob);
+        }
+
+        assertStringArguments({
+          jobId: jobIdOrPath,
+          id: id,
+          ext: ext
+        });
+        return apiFetch('jobs/' + jobIdOrPath + '/screenshots/' + id + '.png', {
+          parse: false
+        }).then(toBlob);
+      },
+      getJobMimoLogs: function (jobId) {
+        assertStringArguments({
+          jobId: jobId
+        });
+        return apiFetch('jobs/' + jobId + '/mimo-logs');
+      },
+      getJobEndUser: function (jobId) {
+        assertStringArguments({
+          jobId: jobId
+        });
+        return apiFetch('jobs/' + jobId + '/end-user');
+      },
+      getJobEvents: function (jobId, offset) {
+        assertStringArguments({
+          jobId: jobId
+        });
+
+        if (offset >>> 0 !== offset) {
+          throw new RangeError('offset must be a positive integer.');
+        }
+
+        return apiFetch('jobs/' + jobId + '/events', {
+          query: {
+            offset: offset || 0
+          }
+        });
+      },
+      trackJob: function (jobId, callback) {
+        assertStringArguments({
+          jobId: jobId
+        });
+        return poll(jobId, callback, 1000);
+      }
+    };
+
+    function delay(t) {
+      return new Promise(function (resolve) {
+        setTimeout(resolve, t);
+      });
+    }
+
+    function poll(jobId, callback, dt) {
+      var offset = 0;
+      var backoff = 0;
+      var stopped = false;
+
+      function stop() {
+        if (!stopped) {
+          stopped = true;
+          callback('close');
+        }
+      }
+
+      function run() {
+        return delay(dt).then(function () {
+          if (!stopped) {
+            return api.getJobEvents(jobId, offset).then(function (body) {
+              backoff = 0;
+              return body;
+            }).catch(function (error) {
+              const message = error.stack || error.message; // 4xy errors don't lead to a retry, since the
+              // client must change something before the
+              // request can work.
+
+              if (error.status < 500) {
+                callback('error', error);
+                stop();
+                return;
+              } // 5xy errors lead to retries with backoff.
+
+
+              callback('error', error);
+              backoff += 1;
+              const backoffTime = ((dt + backoff * dt) / 1000).toFixed(1);
+              console.warn('Error contacting API. Retrying in ' + backoffTime + ' s. ', message);
+              return delay(backoff * dt).then(function () {
+                return {
+                  data: []
+                };
+              });
+            });
+          }
+        }).then(function (body) {
+          if (stopped) {
+            return;
+          }
+
+          var events = body.data.slice();
+          offset += events.length;
+          events.sort(function (a, b) {
+            return a.createdAt - b.createdAt;
+          });
+          events.forEach(function (event) {
+            callback(event.name);
+
+            if (event.name === 'success' || event.name === 'fail') {
+              stop();
+            }
+          });
+        }).then(function () {
+          if (!stopped) {
+            return run();
+          }
+        });
+      }
+
+      run();
+      return stop;
+    }
+
+    return api;
+  }
+
+  function makeVaultClient(baseUrl, fetch, token) {
+    var canonicalizedBaseiUrl = baseUrl.slice(-1) === '/' ? baseUrl : baseUrl + '/';
+
+    function vaultFetch(path, options) {
+      return fetchWrapper(canonicalizedBaseiUrl + path, fetch, token, options);
+    }
+
+    return {
+      vaultPan: function (pan) {
+        return vaultFetch('otp', {
+          method: 'POST'
+        }).then(function (otp) {
+          return vaultFetch('pan', {
+            method: 'POST',
+            body: {
+              otp: otp.id,
+              pan: pan
+            }
+          });
+        }).then(function (pan) {
+          return vaultFetch('pan/temporary', {
+            method: 'POST',
+            body: {
+              panId: pan.id,
+              key: pan.key
+            }
+          });
+        }).then(function (temp) {
+          return temp.panToken;
+        });
+      }
+    };
+  }
+  /**
+   * @param {Object} options
+   * @param {string} options.token
+   * @param {string} options.jobId
+   * @param {string} options.serviceId
+   * @param {string} options.apiUrl
+   * @param {string} options.vaultUrl
+   * @param {function} options.fetch
+   */
+
+
+  function createEndUserSdk(options) {
+    if (!options || !options.token) {
+      throw new Error('A token required.');
+    }
+
+    if (!options.jobId) {
+      throw new Error('A jobId is required.');
+    }
+
+    if (!options.serviceId) {
+      throw new Error('A serviceId is required.');
+    }
+
+    var jobId = options.jobId;
+    var serviceId = options.serviceId;
+    var apiUrl = options.apiUrl || defaultApiUrl;
+    var vaultUrl = options.vaultUrl || defaultVaultUrl;
+    var fetch = options.fetch || defaultFetch;
+    var token = options.token;
+    var apiClient = makeApiClient(apiUrl, fetch, token);
+    var vaultClient = makeVaultClient(vaultUrl, fetch, token);
+    return {
+      getService: function () {
+        return apiClient.getService(serviceId);
+      },
+      getPreviousJobOuputs: function (inputs) {
+        return apiClient.getPreviousJobOutputs(serviceId, inputs);
+      },
+      getJob: function () {
+        return apiClient.getJob(jobId);
+      },
+      cancelJob: function () {
+        return apiClient.cancelJob(jobId);
+      },
+      resetJob: function (jobId) {
+        return apiClient.resetJob(jobId);
+      },
+      createJobInput: function (key, data, stage) {
+        return apiClient.createJobInput(jobId, key, data, stage);
+      },
+      getJobOutputs: function () {
+        return apiClient.getJobOutputs(jobId);
+      },
+      getJobOutput: function (key, stage) {
+        return apiClient.getJobOutputs(jobId, key, stage);
+      },
+      getJobScreenshots: function () {
+        return apiClient.getJobScreenshots(jobId);
+      },
+      getJobScreenshot: function (idOrPath) {
+        if (idOrPath && idOrPath[0] === '/') {
+          return apiClient.getJobScreenshot(idOrPath);
+        }
+
+        return apiClient.getJobScreenshot(jobId, idOrPath);
+      },
+      getJobMimoLogs: function () {
+        return apiClient.getJobMimoLogs(jobId);
+      },
+      getJobEvents: function (offset) {
+        return apiClient.getJobEvents(jobId, offset);
+      },
+      trackJob: function (callback) {
+        return apiClient.trackJob(jobId, callback);
+      },
+      vaultPan: function (pan) {
+        return vaultClient.vaultPan(pan);
+      }
+    };
+  }
+
   const initialInputs = {
     url: 'https://pet.morethan.com/h5/pet/step-1?path=%2FquoteAndBuy.do%3Fe%3De1s1%26curPage%3DcaptureDetails'
   };
+
+  function getAll() {
+    const length = localStorage.length;
+    const inputs = {};
+
+    for (let i = 0; i < length; i += 1) {
+      const key = localStorage.key(i);
+
+      if (key.startsWith('input.')) {
+        const trimmed = key.replace('input.', '');
+        const data = JSON.parse(localStorage.getItem(key));
+        inputs[trimmed] = data;
+      }
+    }
+
+    return inputs;
+  }
+
+  function objectToArray(inputs) {
+    const arr = Object.keys(inputs).map(key => {
+      return {
+        key,
+        data: inputs[key]
+      };
+    });
+    return arr;
+  }
+
+  function set(key, data) {
+    localStorage.setItem(`input.${key}`, JSON.stringify(data));
+  }
+
   let jobId = localStorage.getItem('jobId') || null;
   let token = localStorage.getItem('token') || null;
   let serviceId = localStorage.getItem('serviceId') || null;
-  let submittedInputs = [];
 
   class EndUserSdk {
     constructor() {
@@ -26,7 +504,7 @@
         let previous;
 
         try {
-          previous = sdk$1.createEndUserSdk({
+          previous = createEndUserSdk({
             token,
             jobId,
             serviceId
@@ -45,7 +523,7 @@
       localStorage.setItem('jobId', jobId);
       localStorage.setItem('token', token);
       localStorage.setItem('serviceId', serviceId);
-      this.sdk = sdk$1.createEndUserSdk({
+      this.sdk = createEndUserSdk({
         token,
         jobId,
         serviceId
@@ -53,22 +531,29 @@
       this.initiated = true;
     }
 
-    retrieve() {
-      this.sdk = sdk$1.createEndUserSdk({
+    async retrieve() {
+      this.sdk = createEndUserSdk({
         token,
         jobId,
         serviceId
       });
       this.initiated = true;
-      submittedInputs = getAllJobInputs();
     }
 
     async createJobInputs(inputs) {
+      const pan = Object.keys(inputs).find(key => key === 'pan');
+
+      if (pan) {
+        const panToken = await this.sdk.vaultPan(inputs['pan']);
+        inputs['panToken'] = panToken;
+        inputs['pan'] = undefined;
+      }
+
       const keys = Object.keys(inputs);
       const createInputs = keys.map(async key => {
         const data = inputs[key];
         await this.sdk.createJobInput(key, data);
-        saveJobInput(key, data);
+        set(key, data);
       });
       await Promise.all(createInputs);
     }
@@ -78,14 +563,15 @@
       const output = Array.isArray(outputs.data) && outputs.data.find(ou => ou.key === outputKey);
 
       if (output) {
-        return output;
+        return output.data;
       }
 
-      const previousOutputs = (await this.sdk.getPreviousJobOuputs(getAllJobInputs())) || [];
+      const inputs = getAll();
+      const previousOutputs = (await this.sdk.getPreviousJobOuputs(objectToArray(inputs))) || [];
       const previous = Array.isArray(previousOutputs.data) && previousOutputs.data.find(ou => ou.key === outputKey);
 
       if (previous) {
-        return previous;
+        return previous.data;
       }
 
       return await this.trackJobOutput(outputKey, inputKey);
@@ -164,12 +650,12 @@
     }
 
     async getPreviousOutputs() {
-      const inputs = getAllJobInputs();
+      const inputs = getAll();
       return await this.sdk.getPreviousJobOuputs(inputs);
     }
 
     async getPreviousOutput(outputKey) {
-      const inputs = getAllJobInputs();
+      const inputs = getAll();
       const outputs = await this.sdk.getPreviousJobOuputs(inputs);
       return outputs.find(output => output.key = outputKey);
     }
@@ -204,30 +690,6 @@
     return await res.json();
   }
 
-  function saveJobInput(key, data) {
-    localStorage.setItem(`input.${key}`, JSON.stringify(data));
-  }
-
-  function getAllJobInputs() {
-    const length = localStorage.length;
-    const inputs = [];
-
-    for (let i = 0; i < length; i += 1) {
-      const key = localStorage.key(i);
-
-      if (key.startsWith('input.')) {
-        const trimmed = key.replace('input.', '');
-        const data = JSON.parse(localStorage.getItem(key));
-        inputs.push({
-          key: trimmed,
-          data
-        });
-      }
-    }
-
-    return inputs;
-  }
-
   const sdk = new EndUserSdk(); // The router code. Takes a URL, checks against the list of supported routes and then renders the corresponding content page.
 
   var router = (routes, NotFound) => {
@@ -238,10 +700,7 @@
     // If the parsed URL is not in our list of supported routes, select the 404 page instead
 
     let page = routes[parsedURL] ? routes[parsedURL] : NotFound;
-    console.log('page', page);
-    page(() => {
-      /*render*/
-    });
+    page();
   };
 
   function parseRequestURL() {
@@ -1423,11 +1882,40 @@
 
   const html = (strings, ...values) => new TemplateResult(strings, values, 'html', defaultTemplateProcessor);
 
-  var Summary = () => html`
+  var Summary = (inputs = {}) => html`
 <div class="summary">
     <b>MoreThan</b>
     <span class="dimmed">Pet Insurance</span>
+    <div id="pet-detail">
+        ${inputs.pets ? pet(inputs.pets[0]) : ''}
+    </div>
+    <ul id="policy-detail">
+        ${inputs.policyOption && inputs.policyOption.coverStartDate ? startDate(inputs.policyOptions) : ''}
+        ${inputs.selectedCover ? html`<li>${inputs.selectedCover}</li>` : ''}
+        ${inputs.selectedVoluntaryExcess ? html`<li>${inputs.selectedVoluntaryExcess.name}</li>` : ''}
+        ${inputs.selectedPaymentTerm ? html`<li>${inputs.selectedPaymentTerm}</li>` : ''}
+    </ul>
 </div>`;
+
+  const pet = pet => html`
+<h5>Your ${pet.name} </h5>
+<ul>
+    <li> Breed Name: ${pet.breedName}</li>
+    <li> Date of Birth: ${pet.dateOfBirth}</li>
+    <li> Paid/Donated: £ ${(Number(pet.petPrice) * 100).toFixed(2)}</li>
+</ul>
+`;
+
+  const startDate = policyOptions => {
+    const {
+      coverStartDate
+    } = policyOptions;
+    return html`
+        <li>
+            Starts ${coverStartDate}
+        </li>
+    `;
+  };
 
   var Header = () => html`
 <div class="header">
@@ -1660,58 +2148,19 @@
 `;
   };
 
-  async function getOutput(outputKey, callback) {
-    //check job state and see if it's awaitingInput && key = selectedBreedType
-    console.log(`waiting for job output ${outputKey}`); //TODO: we should show something while waiting.
-
-    const outputs = await sdk.sdk.getJobOutputs();
-    const output = outputs.data.find(jo => jo.key === outputKey);
-
-    if (output) {
-      return callback(null, output.data);
-    }
-
-    sdk.waitForJobOutput(outputKey, (err, output) => {
-      if (err) {
-        callback(err, null);
-      }
-
-      console.log('heres the output');
-      callback(null, output.data);
-    });
-  }
-
-  const field = (fieldName, inputKey, output) => html`
-<div class="field field-set">
-    <span class="field__name">${fieldName || inputKey}</span>
-    <select name="${inputKey}">
-        ${output.map(output => html`
-            <option value="${output}"> ${output}</option>`)}
-    </select>
-</div>
-`;
-
-  var selectMany = meta => {
-    init(meta);
+  var selectMany = (meta, output) => {
     return html`
     <div id="${meta.key}">
-        <p>please wait...</p>
+        <div class="field field-set">
+            <span class="field__name">${meta.title || meta.key}</span>
+            <select name="${meta.key}">
+                ${output.map(o => html`
+                    <option value="${o}"> ${o}</option>`)}
+            </select>
+        </div>
     </div>
 `;
   };
-
-  function init(meta) {
-    const {
-      sourceOutputKey
-    } = meta;
-    getOutput(sourceOutputKey, (err, output) => {
-      if (err) {
-        return;
-      }
-
-      render(field(meta.title, kebabCase(meta.key), output), document.querySelector(`#${meta.key}`));
-    });
-  }
 
   var pets = () => html`
 <div class="job-input">
@@ -1749,7 +2198,7 @@
         </div>
 
         <div class="field field-set">
-            <label class="field__name" for="pets[0][pet-date-of-birth]">Date Of Birth</label>
+            <label class="field__name" for="pets[0][date-of-birth]">Date Of Birth</label>
             <input type="date" name="pets[0][date-of-birth]" value="2019-01-02" minDate="${new Date()}" required>
         </div>
 
@@ -1995,6 +2444,11 @@
 
         <div name="owner[address]" class="filed-set">
             <div class="field">
+                <label for="owner[address][property-number]" class="field__name">Number of Property</label>
+                <input type="text" name="owner[address][property-number]" id="owner[address][property-number]" value="12" required />
+            </div>
+
+            <div class="field">
                 <label for="owner[address][postcode]" class="field__name">Postcode</label>
                 <input type="text" name="owner[address][postcode]" id="owner[address][postcode]" value="HP4 2PE" required />
             </div>
@@ -2013,144 +2467,254 @@
         <label class="field__name" for="policy-options[number-of-pets-owned-$number]">How Many cats and dogs are in your household?</label>
         <input type="tel" name="policy-options[number-of-pets-owned-$number]" value="1" required />
     </div>
-
-    <div class="field">
-        <span class="field__name" for="policy-options[joint-policy-holder-$boolean]">Do you want to include a joint policy holder </span>
-        <div class="field__inputs group group--merged">
-            <input
-                type="radio"
-                name="policy-options[joint-policy-holder-$boolean]"
-                id="policy-options[joint-policy-holder]-yes"
-                value="true" required checked>
-            <label
-                for="policy-options[joint-policy-holder]-yes"
-                class="button">Yes</label>
-
-            <input
-                type="radio"
-                class="button"
-                name="policy-options[joint-policy-holder-$boolean]"
-                id="policy-options[joint-policy-holder]-no"
-                value="false">
-            <label
-                for="policy-options[joint-policy-holder]-no"
-                class="button">No</label>
-        </div>
-    </div>
 </div>`;
 
-  const field$1 = (inputKey, options) => html`
-<div class="field field-set">
-    <div class="field__inputs group group--merged">
-    ${options.map(optionObj => html`
-        <input type="radio" id="${inputKey}" name="${inputKey}-$object" value="${JSON.stringify(optionObj)}">
-        <label for="${inputKey}" class="button">
-            <div><b>${optionObj.coverName}</b> <p>${optionObj.price.value * 0.01} ${optionObj.price.currencyCode}</p></div>
-        </label>`)}
+  var selectedCoverType = (meta, output) => {
+    console.log(meta, output);
+    const key = kebabCase(meta.key);
+    return html`
+    <div class="field field-set">
+        <span class="field__name">${meta.title || meta.key}</span>
+        ${output.map(optionObj => html`
+            <input type="radio" id="${key}-${optionObj.coverName}" name="${key}-$object" value="${JSON.stringify(optionObj)}">
+            <label for="${key}-${optionObj.coverName}" class="button">
+                <div><b>${optionObj.coverName}</b> <p>${optionObj.price.value * 0.01} ${optionObj.price.currencyCode}</p></div>
+            </label>`)}
     </div>
-</div>
 `;
+  };
 
-  var selectedCoverType = meta => {
-    init$1(meta);
+  var selectedVetFee = (meta, output) => {
+    const key = kebabCase(meta.key);
     return html`
     <div class="field field-set">
         <span class="field__name">${meta.title || meta.inputKey}</span>
-        <div id="${meta.key}">
-            <p>please wait...</p>
+        <div class="field__inputs group group--merged">
+            ${output.map(optionObj => html`
+                <input type="radio" id="${key}" name="${key}-$object" value="${JSON.stringify(optionObj)}">
+                <label for="${key}" class="button">
+                    <div><b>${optionObj.text}</b> <p>${optionObj.price.value * 0.01} ${optionObj.price.currencyCode}</p></div>
+                </label>`)}
+            </div>
+    </div>
+`;
+  };
+
+  var selectedVoluntaryExcess = (meta, output) => {
+    const key = kebabCase(meta.key);
+    return html`
+    <div class="field field-set">
+        <span class="field__name">${meta.title || meta.key}</span>
+        <div class="field__inputs group group--merged">
+        ${output.map(optionObj => html`
+            <input type="radio" id="${key}" name="${key}-$object" value="${JSON.stringify(optionObj)}">
+            <label for="${key}" class="button">
+                <div><b>${optionObj.name}</b>
+                <pre>${optionObj.details}</pre>
+                <p>${optionObj.priceLine}</p></div>
+            </label>`)}
         </div>
     </div>
 `;
   };
 
-  function init$1(meta) {
-    const {
-      sourceOutputKey
-    } = meta;
-    getOutput(sourceOutputKey, (err, output) => {
-      if (err) {
-        return;
-      }
-
-      render(field$1(kebabCase(meta.key), output), document.querySelector(`#${meta.key}`));
-    });
-  }
-
-  const field$2 = (inputKey, options) => html`
-<div class="field field-set">
-    <div class="field__inputs group group--merged">
-    ${options.map(optionObj => html`
-        <input type="radio" id="${inputKey}" name="${inputKey}-$object" value="${JSON.stringify(optionObj)}">
-        <label for="${inputKey}" class="button">
-            <div><b>${optionObj.text}</b> <p>${optionObj.price.value * 0.01} ${optionObj.price.currencyCode}</p></div>
-        </label>`)}
-    </div>
-</div>
-`;
-
-  var selectedVetFee = meta => {
-    init$2(meta);
+  var selectedCoverOptions = (meta, output) => {
     return html`
-    <div class="field field-set">
-        <span class="field__name">${meta.title || meta.inputKey}</span>
-        <div id="${meta.key}">
-            <p>please wait...</p>
+    <div id="${meta.key}">
+        <div class="field field-set">
+            <span class="field__name">${meta.title || meta.key}</span>
+            ${output.map(o => html`
+            <input type="checkbox" value="${JSON.stringify(o)}" name="${meta.key}-$object" id="${meta.key}-${o.name}"/>
+            <label for="${meta.key}-${o.name}" class="button">
+                <div>
+                    <b>${o.name}</b>
+                    <pre>${o.detail}</pre>
+                    <p>${(o.price.value * 0.01).toFixed(2)} ${o.price.currencyCode}</p>
+                </div>
+            </label>`)}
         </div>
     </div>
 `;
   };
 
-  function init$2(meta) {
-    const {
-      sourceOutputKey
-    } = meta;
-    getOutput(sourceOutputKey, (err, output) => {
-      if (err) {
-        return;
-      }
+  const TITLES$1 = ['mr', 'ms', 'mrs', 'miss'];
 
-      render(field$2(kebabCase(meta.key), output), document.querySelector(`#${meta.key}`));
-    });
-  }
+  var Person = (prefix = 'person') => html`
+<div class="section">
+    <div class="section__body">
+        <div name="${prefix}" class="filed-set">
+            <div class="field">
+                <label class="field__name">Title</label>
+                <select name="${prefix}[title]">
+                    ${TITLES$1.map(t => html`
+                    <option value="${t}"> ${t.toUpperCase()}</option>`)}
+                </select>
+            </div>
 
-  const field$3 = (inputKey, options) => html`
-<div class="field field-set">
-    <div class="field__inputs group group--merged">
-    ${options.map(optionObj => html`
-        <input type="radio" id="${inputKey}" name="${inputKey}-$object" value="${JSON.stringify(optionObj)}">
-        <label for="${inputKey}" class="button">
-            <div><b>${optionObj.name}</b>
-            <pre>${optionObj.details}</pre>
-            <p>${optionObj.priceLine}</p></div>
-        </label>`)}
+            <div class="field">
+                <label class="field__name" for="${prefix}[first-name]">First Name</label>
+                <input type="text" name="${prefix}[first-name]" placeholder="Jane" required />
+            </div>
+
+            <div class="field">
+                <label class="field__name" for="${prefix}[middle-name]">Middle Name</label>
+                <input type="text" name="${prefix}[middle-name]" placeholder="" />
+            </div>
+
+            <div class="field">
+                <label class="field__name" for="${prefix}[last-name]">Last Name</label>
+                <input type="text" name="${prefix}[last-name]" placeholder="Doe" required />
+            </div>
+        </div>
     </div>
 </div>
 `;
 
-  var selectedVoluntaryExcess = meta => {
-    init$3(meta);
+  var Address = (prefix = 'address') => html`
+<div name="${prefix}" class="filed-set">
+    <div class="field">
+        <label for="${prefix}[line1]" class="field__name">Line 1</label>
+        <input type="text" name="${prefix}[line1]" id="${prefix}[line1]" value="587" required />
+    </div>
+
+    <div class="field">
+        <label for="${prefix}[line2]" class="field__name">Line 2</label>
+        <input type="text" name="${prefix}[line2]" id="${prefix}[line2]" value="high road" required />
+    </div>
+
+    <div class="field">
+        <label for="${prefix}[city]" class="field__name">City</label>
+        <input type="text" name="${prefix}[city]" id="${prefix}[city]" value="london" required />
+    </div>
+
+    <div class="field">
+        <label for="${prefix}[country-subdivision]" class="field__name">County</label>
+        <input type="text" name="${prefix}[country-subdivision]" id="${prefix}[country-subdivision]" value="" />
+    </div>
+
+    <div class="field">
+    <!-- select -->
+        <label for="${prefix}[country-code]" class="field__name">Country Code</label>
+        <input type="text" name="${prefix}[country-code]" id="${prefix}[country-code]" value="gb" required />
+    </div>
+
+    <div class="field">
+        <label for="${prefix}[postcode]" class="field__name">Postcode</label>
+        <input type="text" name="${prefix}[postcode]" id="${prefix}[postcode]" value="E11 4PB" required />
+    </div>
+</div>
+`;
+
+  const CARD_BRANDS = ['visa', 'mastercard', 'amex', 'discover'];
+
+  var Payment = (prefix = 'payment') => html`
+<div class="filed-set">
+    ${Person(`${prefix}[person]`)}
+
+    <div name="${prefix}[card]" class="filed-set">
+        <div class="field">
+            <span class="field__name">Type</span>
+            <div class="field__inputs group group--merged">
+                <input type="radio" name="${prefix}[card][type]" id="${prefix}[card][type]-debit" value="debit"/>
+                <label for="${prefix}[card][type]-debit" class="button">debit</label>
+
+                <input type="radio" name="${prefix}[card][type]" id="${prefix}[card][type]-credit" value="credit"/>
+                <label for="${prefix}[card][type]-credit" class="button">credit</label>
+            </div>
+        </div>
+
+        <div class="field">
+            <label class="field__name">brand</label>
+            <select name="${prefix}[card][brand]">
+                ${CARD_BRANDS.map(c => html`
+                <option value="${c}"> ${c}</option>`)}
+            </select>
+        </div>
+
+        <div class="field">
+            <label class="field__name" for="pan">Card Number</label>
+            <input type="text"
+                name="pan"
+                id= "pan",
+                maxlength="19"
+                placeholder="XXXX XXXX XXXX XXXX"
+                required />
+        </div>
+
+        <div class="field">
+            <label class="field__name" for="${prefix}[card][expiration-date]">Expiry Date</label>
+            <input type="text"
+                name="${prefix}[card][expiration-date]"
+                id= "expiry-year",
+                maxlength="8"
+                placeholder="YYYY-MM"
+                value="2020-10"
+                required />
+        </div>
+
+        <div class="field">
+            <label class="field__name" for="${prefix}[card][name]">name</label>
+            <input type="text"
+                name="${prefix}[card][name]"
+                placeholder="Jane Doe"
+                value="Jane Doe"
+                required />
+        </div>
+
+        <div class="field">
+            <label class="field__name" for="${prefix}[card][cvv]">cvv</label>
+            <input type="tel"
+                name="${prefix}[card][cvv]"
+                placeholder="000"
+                maxlength="4"
+                value="123"
+                required />
+        </div>
+    </div>
+
+    ${Address(`${prefix}[address]`)}
+</div>
+`;
+
+  var payment = () => Payment('payment');
+
+  var directDebit = () => html`
+<div class="section">
+    <h3 class="section__header">Payment</h3>
+    <div class="section__body">
+        <div name="direct-debit" class="filed-set">
+            <div class="field">
+                <label class="field__name" for="direct-debit[sort-code]">Sort Code</label>
+                <input type="text" name="direct-debit[sort-code]" placeholder="56-00-29" required />
+            </div>
+
+            <div class="field">
+                <label class="field__name" for="direct-debit[account-number]">Account Number</label>
+                <input type="text" name="direct-debit[account-number]" placeholder="26207729" required/>
+            </div>
+
+            ${Person('direct-debit[account-holder]')}
+
+            ${Address('direct-debit[account-holder-address]')}
+
+            <div class="field">
+                <label class="field__name" for="direct-debit[selected-payment-day]">Selected Payment Day</label>
+                <input type="text" name="direct-debit[selected-payment-day]" placeholder="10" />
+            </div>
+        </div>
+    </div>
+</div>
+`;
+
+  var finalPriceConsent = (meta, priceConsent) => {
     return html`
     <div class="field field-set">
-        <span class="field__name">${meta.title || meta.inputKey}</span>
-        <div id="${meta.key}">
-            <p>please wait...</p>
-        </div>
+        <span class="field__name">${meta.title || meta.key}</span>
+        <input type="radio" name="${kebabCase(meta.key)}-$object" value="${JSON.stringify(priceConsent)}" required>
+        <b>${priceConsent.value} ${priceConsent.currencyCode}</b>
     </div>
 `;
   };
-
-  function init$3(meta) {
-    const {
-      sourceOutputKey
-    } = meta;
-    getOutput(sourceOutputKey, (err, output) => {
-      if (err) {
-        return;
-      }
-
-      render(field$3(kebabCase(meta.key), output), document.querySelector(`#${meta.key}`));
-    });
-  }
 
   var inputs = {
     pets,
@@ -2159,7 +2723,11 @@
     policyOptions,
     selectedCoverType,
     selectedVetFee,
-    selectedVoluntaryExcess
+    selectedVoluntaryExcess,
+    selectedCoverOptions,
+    payment,
+    directDebit,
+    finalPriceConsent
   };
   /** Global */
   //TODO-test: run this function for all given inputMetas;
@@ -2282,6 +2850,7 @@
       }
 
       const inputMeta = this.inputsMeta.find(im => im.key === nextKey);
+      console.log('inputMeta', JSON.stringify(inputMeta));
       const template = templates.getInput(inputMeta); // render if the output is here.
       // when the awaitingInput event has happened, check nextKey and awaitingInputKey.
       // if it's different, skip this one, and render the awaitingInputKey.
@@ -2294,7 +2863,7 @@
           this.keysRendered.push(nextKey);
         }).catch(err => {
           if (err.name === 'jobExpectsDifferentInputKey') {
-            console.log('got jobExpectsDifferentInputKey!');
+            console.log('got jobExpectsDifferentInputKey!', err.details.awaitingInputKey);
             const input = this.inputsMeta.find(im => im.key === err.details.awaitingInputKey);
 
             if (!input) {
@@ -2304,7 +2873,8 @@
 
             const idx = this.keysToRender.indexOf(input.key);
             this.keysToRender.splice(idx, 1);
-            this.keysRendered.unshift([input.key, nextKey]);
+            this.keysToRender.unshift(...[input.key, nextKey]);
+            console.log(this.keysToRender);
             return this.renderNextContent();
           }
         });
@@ -2353,7 +2923,51 @@
 
   var NotFound = selector => {
     render(notFount404(), document.querySelector(selector));
-  };
+  }; // pet-insurance-specific
+
+  /* const routes = {
+      '/': () => { sdk.create().then(() => { window.location.hash = '/about-your-pet'; })},
+      '/about-your-pet': AboutYourPet,
+      '/about-you': AboutYou,
+      '/about-your-policy': aboutYourPolicy,
+      '/finish': () => { console.log('finished') }
+  }; */
+
+  /** TODOS:
+   * need to navigate to awaitingInput's page, when waiting for the output
+   * need to assign all the sub-route so that they can navigate directly there
+   * gets output from previous-input-output as well
+   * CSS - responsive
+   * (?) Should we give a flexibility of showing some inputs together?
+   */
+
+
+  function createSection(config = {}, selector, callback) {
+    //TODO: make config validator
+    const {
+      name,
+      title,
+      inputs
+    } = config;
+
+    if (!name) {
+      throw new Error('name is needed for section');
+    }
+
+    if (!title) {
+      throw new Error('title is needed for section');
+    }
+
+    if (!Array.isArray(inputs)) {
+      throw new Error('inputs needed for section');
+    }
+
+    return {
+      init: () => {
+        sdk.create().then(() => getSection(name, title, inputs, selector, callback)).catch(err => console.log(err));
+      }
+    };
+  }
 
   function createApp(configs = [], selector, callback) {
     //TODO: maybe this core app fetches all domain's meta and store them.
@@ -2389,7 +3003,11 @@
         render(Header(), document.querySelector('#header'));
         render(Summary(), document.querySelector('#summary'));
         render(Footer(), document.querySelector('#footer'));
-        window.addEventListener('hashchange', () => router(routes, () => NotFound(selector))); // Listen on page load:
+        window.addEventListener('hashchange', () => {
+          const inputs = getAll();
+          router(routes, () => NotFound(selector));
+          render(Summary(inputs), document.querySelector('#summary'));
+        }); // Listen on page load:
 
         window.addEventListener('load', () => router(routes)); //
 
@@ -2397,14 +3015,24 @@
           // Cancel the job
           console.log('unload!');
         });
+
+        if (window.location.hash !== entryPoint) {
+          try {
+            sdk.retrieve();
+          } catch (err) {
+            console.log('error');
+            return;
+          }
+        }
+
         sdk.create().then(() => {
           window.location.hash = entryPoint;
         }).catch(err => console.log(err));
       }
     };
-  } //export { createSection, createApp };
-
-  /*  const config = {
+  }
+  /* examples for createSection and createApp
+   const config = {
       name: 'aboutYourPet',
       title: 'Tell Me About Your Pet',
       inputs: [
@@ -2413,7 +3041,8 @@
       ],
   };
    var section = createSection(config, '#app', () => { console.log('finished!')});
-   section.init(); */
+   section.init();
+  */
 
 
   const SECTIONS = [{
@@ -2446,9 +3075,7 @@
       key: 'selectedMaritalStatusOption',
       inputMethod: "SelectOne",
       sourceOutputKey: 'availableMaritalStatusOptions'
-    },
-    /* in-flow, availableMaritalStatusOptions */
-    {
+    }, {
       key: 'selectedAddress',
       inputMethod: "SelectOne",
       sourceOutputKey: 'availableAddresses'
@@ -2459,6 +3086,10 @@
     route: '/about-your-policy',
     title: 'Tell Me About Your Policy',
     inputs: [{
+      key: 'selectedVoluntaryExcess',
+      inputMethod: 'selectOne',
+      sourceOutputKey: 'availableVoluntaryExcesses'
+    }, {
       key: 'policyOptions',
       inputMethod: null,
       sourceOutputKey: null
@@ -2483,10 +3114,6 @@
       inputMethod: "SelectMany",
       sourceOutputKey: 'availableCoverOptions'
     }, {
-      key: 'selectedVoluntaryExcess',
-      inputMethod: 'selectOne',
-      sourceOutputKey: 'availableVoluntaryExcesses'
-    }, {
       key: 'selectedVetFee',
       inputMethod: "SelectOne",
       sourceOutputKey: 'availableVetFees'
@@ -2496,6 +3123,10 @@
     route: '/payment',
     title: 'Payment Details',
     inputs: [{
+      key: 'finalPriceConsent',
+      inputMethod: 'Consent',
+      sourceOutputKey: 'finalPrice'
+    }, {
       key: 'payment',
       inputMethod: null,
       sourceOutputKey: null
@@ -2509,457 +3140,15 @@
     console.log('finished!');
   });
   app.init();
+  exports.createApp = createApp;
+  exports.createSection = createSection;
+  Object.defineProperty(exports, '__esModule', {
+    value: true
+  });
 });
 
-},{"@ubio/sdk":2,"camelcase-keys":5,"form-serialize":7,"lodash.kebabcase":9}],2:[function(require,module,exports){
-(function (Buffer){
-(function (global, factory) {
-    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
-    typeof define === 'function' && define.amd ? define(['exports'], factory) :
-    (global = global || self, factory(global.ubioSdk = {}));
-}(this, function (exports) { 'use strict';
-
-    var defaultApiUrl = 'https://api.automationcloud.net';
-    var defaultVaultUrl = 'https://vault.automationcloud.net';
-    var defaultFetch = typeof self !== 'undefined' && self.fetch && self.fetch.bind(self);
-    var base64Encode;
-
-    if (typeof btoa === 'function') {
-        base64Encode = function(string) {
-            return btoa(string);
-        };
-    } else if (typeof Buffer === 'function') {
-        base64Encode = function(string) {
-            return Buffer.from(string).toString('base64');
-        };
-    } else {
-        throw new Error('No way to convert to base64.');
-    }
-
-    function assertStringArguments(obj) {
-        Object.keys(obj || {}).forEach(function(key) {
-            if (typeof obj[key] !== 'string') {
-                throw new TypeError('"' + key + '" must be a string.');
-            }
-        });
-    }
-
-    function createSearch(parameters) {
-        if (!parameters) {
-            return '';
-        }
-
-        var query = [];
-
-        Object.keys(parameters).forEach(function(key) {
-            if (parameters[key] !== void 0) {
-                query.push(encodeURIComponent(key) + '=' + encodeURIComponent(parameters[key]));
-            }
-        });
-
-        var search = query.join('&');
-
-        return search.length ? '?' + search : '';
-    }
-
-
-    function fetchWrapper(url, fetch, token, opts) {
-        var options = opts || {};
-        var method = options.method || 'GET';
-        var query = options.query;
-
-        if (!token) {
-            throw new Error('No token.');
-        }
-
-        var headers = {};
-
-        Object.keys(options.headers || {}).forEach(function(key) {
-            headers[key] = options.headers[key];
-        });
-
-        headers['Authorization'] = 'Basic ' + base64Encode(token + ':');
-
-        var body = options.body === void 0 ? void 0 : JSON.stringify(options.body);
-        var search = createSearch(query);
-
-        if (typeof body === 'string') {
-            headers['Content-Type'] = 'application/json';
-        }
-
-        var fetchOptions = {
-            method: method,
-            headers: headers,
-            body: body,
-            mode: 'cors',
-            credentials: 'omit',
-            cache: 'no-store',
-            redirect: 'follow',
-            referrer: 'client',
-            referrerPolicy: 'origin',
-            keepalive: false
-        };
-
-        return fetch(url + search, fetchOptions)
-            .then(function(response) {
-                if (!response.ok) {
-                    return response.json()
-                        .then(function(body) {
-                            // TODO: Better errors from error bodies.
-                            const error = new Error(body.message || 'Unexpected response');
-                            error.status = response.status;
-                            throw error;
-                        });
-                }
-
-                if (options.parse !== false) {
-                    return response.json();
-                }
-
-                return response;
-            });
-    }
-
-    function makeApiClient(baseUrl, fetch, token) {
-        var canonicalizedBaseiUrl = baseUrl.slice(-1) === '/' ? baseUrl : (baseUrl + '/');
-
-        function apiFetch(path, options) {
-            return fetchWrapper(canonicalizedBaseiUrl + path, fetch, token, options);
-        }
-
-        var api = {
-            raw: function(path, options) {
-                assertStringArguments({ path: path });
-                return apiFetch(path, options);
-            },
-            getServices: function() {
-                return apiFetch('services');
-            },
-            getService: function(serviceId) {
-                assertStringArguments({ serviceId: serviceId });
-                return apiFetch('services/' + serviceId);
-            },
-            getPreviousJobOutputs: function(serviceId, inputs) {
-                assertStringArguments({ serviceId: serviceId });
-                const body = { inputs: inputs || [] };
-
-                return apiFetch('services/' + serviceId + '/previous-job-outputs', { method: 'POST', body: body });
-            },
-            getJobs: function(query) {
-                return apiFetch('jobs', { query: query });
-            },
-            createJob: function(fields) {
-                return apiFetch('jobs', { method: 'POST', body: fields });
-            },
-            getJob: function(jobId) {
-                assertStringArguments({ jobId: jobId });
-                return apiFetch('jobs/' + jobId);
-            },
-            cancelJob: function(jobId) {
-                assertStringArguments({ jobId: jobId });
-                return apiFetch('jobs/' + jobId + '/cancel', { method: 'POST' });
-            },
-            resetJob: function(jobId) {
-                assertStringArguments({ jobId: jobId });
-                return apiFetch('jobs/' + jobId + '/reset', { method: 'POST' });
-            },
-            createJobInput: function(jobId, key, data, stage) {
-                assertStringArguments({ jobId: jobId, key: key });
-                return apiFetch('jobs/' + jobId + '/inputs', { method: 'POST', body: { key, stage, data } });
-            },
-            getJobOutputs: function(jobId) {
-                assertStringArguments({ jobId: jobId });
-                return apiFetch('jobs/' + jobId + '/outputs');
-            },
-            getJobOutput: function(jobId, key, stage) {
-                assertStringArguments({ jobId: jobId, key: key });
-
-                var path = 'jobs/' + jobId + '/outputs/' + key;
-
-                if (stage) {
-                    path += '/' + stage;
-                }
-
-                return apiFetch(path);
-            },
-            getJobScreenshots: function(jobId) {
-                assertStringArguments({ jobId: jobId });
-                return apiFetch('jobs/' + jobId + '/screenshots');
-            },
-            getJobScreenshot: function(jobIdOrPath, id, ext) {
-                function toBlob(res) {
-                    return res.blob();
-                }
-
-                if (jobIdOrPath && jobIdOrPath[0] === '/') {
-                    return apiFetch(jobIdOrPath, { parse: false })
-                        .then(toBlob);
-                }
-
-                assertStringArguments({ jobId: jobIdOrPath, id: id, ext: ext });
-
-                return apiFetch('jobs/' + jobIdOrPath + '/screenshots/' + id + '.png', { parse: false })
-                    .then(toBlob);
-            },
-            getJobMimoLogs: function(jobId) {
-                assertStringArguments({ jobId: jobId });
-                return apiFetch('jobs/' + jobId + '/mimo-logs');
-            },
-            getJobEndUser: function(jobId) {
-                assertStringArguments({ jobId: jobId });
-                return apiFetch('jobs/' + jobId + '/end-user');
-            },
-            getJobEvents: function(jobId, offset) {
-                assertStringArguments({ jobId: jobId });
-
-                if (offset >>> 0 !== offset) {
-                    throw new RangeError('offset must be a positive integer.');
-                }
-
-                return apiFetch('jobs/' + jobId + '/events', { query: { offset: offset || 0 } });
-            },
-            trackJob: function(jobId, callback) {
-                assertStringArguments({ jobId: jobId });
-
-                return poll(jobId, callback, 1000);
-            }
-        };
-
-        function delay(t) {
-            return new Promise(function(resolve) {
-                setTimeout(resolve, t);
-            });
-        }
-
-        function poll(jobId, callback, dt) {
-            var offset = 0;
-            var backoff = 0;
-            var stopped = false;
-
-            function stop() {
-                if (!stopped) {
-                    stopped = true;
-                    callback('close');
-                }
-            }
-
-            function run() {
-                return delay(dt)
-                    .then(function() {
-                        if (!stopped) {
-                            return api.getJobEvents(jobId, offset)
-                                .then(function(body) {
-                                    backoff = 0;
-                                    return body;
-                                })
-                                .catch(function(error) {
-                                    const message = error.stack || error.message;
-
-                                    // 4xy errors don't lead to a retry, since the
-                                    // client must change something before the
-                                    // request can work.
-                                    if (error.status < 500) {
-                                        callback('error', error);
-                                        stop();
-                                        return;
-                                    }
-
-                                    // 5xy errors lead to retries with backoff.
-                                    callback('error', error);
-
-                                    backoff += 1;
-
-                                    const backoffTime = ((dt + backoff * dt) / 1000).toFixed(1);
-
-                                    console.warn('Error contacting API. Retrying in ' + backoffTime + ' s. ', message);
-
-                                    return delay(backoff * dt)
-                                        .then(function() {
-                                            return { data: [] };
-                                        });
-                                });
-                        }
-                    })
-                    .then(function(body) {
-                        if (stopped) {
-                            return;
-                        }
-
-                        var events = body.data.slice();
-
-                        offset += events.length;
-
-                        events.sort(function(a, b) {
-                            return a.createdAt - b.createdAt;
-                        });
-
-                        events.forEach(function(event) {
-                            callback(event.name);
-
-                            if (event.name === 'success' || event.name === 'fail') {
-                                stop();
-                            }
-                        });
-                    })
-                    .then(function() {
-                        if (!stopped) {
-                            return run();
-                        }
-                    });
-            }
-
-            run();
-
-            return stop;
-        }
-
-        return api;
-    }
-
-    function makeVaultClient(baseUrl, fetch, token) {
-        var canonicalizedBaseiUrl = baseUrl.slice(-1) === '/' ? baseUrl : (baseUrl + '/');
-
-        function vaultFetch(path, options) {
-            return fetchWrapper(canonicalizedBaseiUrl + path, fetch, token, options);
-        }
-
-        return {
-            vaultPan: function(pan) {
-                return vaultFetch('otp', { method: 'POST' })
-                    .then(function(otp) {
-                        return vaultFetch('pan', {
-                            method: 'POST',
-                            body: {
-                                otp: otp.id,
-                                pan: pan
-                            }
-                        });
-                    })
-                    .then(function(pan) {
-                        return vaultFetch('pan/temporary', {
-                            method: 'POST',
-                            body: {
-                                panId: pan.id,
-                                key: pan.key
-                            }
-                        });
-                    })
-                    .then(function(temp) {
-                        return temp.panToken;
-                    });
-            }
-        };
-    }
-
-    /**
-     * @param {Object} options
-     * @param {string} options.token
-     * @param {string} options.apiUrl
-     * @param {function} options.fetch
-     */
-    function createClientSdk(options) {
-        if (!options || !options.token) {
-            throw new Error('Token required.');
-        }
-
-        var apiUrl = options.apiUrl || defaultApiUrl;
-        var fetch = options.fetch || defaultFetch;
-        var token = options.token;
-
-        return makeApiClient(apiUrl, fetch, token);
-    }
-
-    /**
-     * @param {Object} options
-     * @param {string} options.token
-     * @param {string} options.jobId
-     * @param {string} options.serviceId
-     * @param {string} options.apiUrl
-     * @param {string} options.vaultUrl
-     * @param {function} options.fetch
-     */
-    function createEndUserSdk(options) {
-        if (!options || !options.token) {
-            throw new Error('A token required.');
-        }
-
-        if (!options.jobId) {
-            throw new Error('A jobId is required.');
-        }
-
-        if (!options.serviceId) {
-            throw new Error('A serviceId is required.');
-        }
-
-        var jobId = options.jobId;
-        var serviceId = options.serviceId;
-        var apiUrl = options.apiUrl || defaultApiUrl;
-        var vaultUrl = options.vaultUrl || defaultVaultUrl;
-        var fetch = options.fetch || defaultFetch;
-        var token = options.token;
-
-        var apiClient = makeApiClient(apiUrl, fetch, token);
-        var vaultClient = makeVaultClient(vaultUrl, fetch, token);
-
-        return {
-            getService: function() {
-                return apiClient.getService(serviceId);
-            },
-            getPreviousJobOuputs: function(inputs) {
-                return apiClient.getPreviousJobOutputs(serviceId, inputs);
-            },
-            getJob: function() {
-                return apiClient.getJob(jobId);
-            },
-            cancelJob: function() {
-                return apiClient.cancelJob(jobId);
-            },
-            resetJob: function(jobId) {
-                return apiClient.resetJob(jobId);
-            },
-            createJobInput: function(key, data, stage) {
-                return apiClient.createJobInput(jobId, key, data, stage);
-            },
-            getJobOutputs: function() {
-                return apiClient.getJobOutputs(jobId);
-            },
-            getJobOutput: function(key, stage) {
-                return apiClient.getJobOutputs(jobId, key, stage);
-            },
-            getJobScreenshots: function() {
-                return apiClient.getJobScreenshots(jobId);
-            },
-            getJobScreenshot: function(idOrPath) {
-                if (idOrPath && idOrPath[0] === '/') {
-                    return apiClient.getJobScreenshot(idOrPath);
-                }
-
-                return apiClient.getJobScreenshot(jobId, idOrPath);
-            },
-            getJobMimoLogs: function() {
-                return apiClient.getJobMimoLogs(jobId);
-            },
-            getJobEvents: function(offset) {
-                return apiClient.getJobEvents(jobId, offset);
-            },
-            trackJob: function(callback) {
-                return apiClient.trackJob(jobId, callback);
-            },
-            vaultPan: function(pan) {
-                return vaultClient.vaultPan(pan);
-            }
-        };
-    }
-
-    exports.createClientSdk = createClientSdk;
-    exports.createEndUserSdk = createEndUserSdk;
-
-    Object.defineProperty(exports, '__esModule', { value: true });
-
-}));
-
 }).call(this,require("buffer").Buffer)
-},{"buffer":4}],3:[function(require,module,exports){
+},{"buffer":3,"camelcase-keys":4,"form-serialize":6,"lodash.kebabcase":8}],2:[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -3112,7 +3301,7 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],4:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 (function (Buffer){
 /*!
  * The buffer module from node.js, for the browser.
@@ -4893,7 +5082,7 @@ function numberIsNaN (obj) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"base64-js":3,"buffer":4,"ieee754":8}],5:[function(require,module,exports){
+},{"base64-js":2,"buffer":3,"ieee754":7}],4:[function(require,module,exports){
 'use strict';
 const mapObj = require('map-obj');
 const camelCase = require('camelcase');
@@ -4937,7 +5126,7 @@ module.exports = (input, options) => {
 };
 
 
-},{"camelcase":6,"map-obj":10,"quick-lru":11}],6:[function(require,module,exports){
+},{"camelcase":5,"map-obj":9,"quick-lru":10}],5:[function(require,module,exports){
 'use strict';
 
 const preserveCamelCase = string => {
@@ -5015,7 +5204,7 @@ module.exports = camelCase;
 // TODO: Remove this for the next major release
 module.exports.default = camelCase;
 
-},{}],7:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 // get successful control from form and assemble into object
 // http://www.w3.org/TR/html401/interact/forms.html#h-17.13.2
 
@@ -5277,7 +5466,7 @@ function str_serialize(result, key, value) {
 
 module.exports = serialize;
 
-},{}],8:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = (nBytes * 8) - mLen - 1
@@ -5363,7 +5552,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],9:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 (function (global){
 /**
  * lodash (Custom Build) <https://lodash.com/>
@@ -5802,7 +5991,7 @@ function words(string, pattern, guard) {
 module.exports = kebabCase;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],10:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 'use strict';
 
 // Customized for this use-case
@@ -5852,7 +6041,7 @@ const mapObject = (object, fn, options, isSeen = new WeakMap()) => {
 
 module.exports = mapObject;
 
-},{}],11:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 'use strict';
 
 class QuickLRU {
