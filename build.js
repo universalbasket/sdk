@@ -1,7 +1,7 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 (function (Buffer){
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('form-serialize'), require('camelcase-keys'), require('lodash.kebabcase')) : typeof define === 'function' && define.amd ? define(['exports', 'form-serialize', 'camelcase-keys', 'lodash.kebabcase'], factory) : (global = global || self, factory(global['ubio-app-sdk'] = {}, global.formSerialize, global.camelCaseKeys, global.kebabCase));
+  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('form-serialize'), require('camelcase-keys'), require('lodash.kebabcase')) : typeof define === 'function' && define.amd ? define(['exports', 'form-serialize', 'camelcase-keys', 'lodash.kebabcase'], factory) : (global = global || self, factory(global.ubioApp = {}, global.formSerialize, global.camelCaseKeys, global.kebabCase));
 })(this, function (exports, formSerialize, camelCaseKeys, kebabCase) {
   'use strict';
 
@@ -546,16 +546,18 @@
       if (pan) {
         const panToken = await this.sdk.vaultPan(inputs['pan']);
         inputs['panToken'] = panToken;
-        inputs['pan'] = undefined;
+        delete inputs.pan;
       }
 
       const keys = Object.keys(inputs);
-      const createInputs = keys.map(async key => {
+      const createInputs = keys.map(key => {
         const data = inputs[key];
-        await this.sdk.createJobInput(key, data);
+        this.sdk.createJobInput(key, data);
         set(key, data);
+        return;
       });
       await Promise.all(createInputs);
+      return inputs;
     }
 
     async waitForJobOutput(outputKey, inputKey) {
@@ -1880,25 +1882,42 @@
    * render to and update a container.
    */
 
-  const html = (strings, ...values) => new TemplateResult(strings, values, 'html', defaultTemplateProcessor);
+  const html = (strings, ...values) => new TemplateResult(strings, values, 'html', defaultTemplateProcessor); //get service name & domain
 
-  var Summary = (inputs = {}) => html`
+
+  var Summary = (inputs = {}, outputs = {}) => html`
 <div class="summary">
-    <b>MoreThan</b>
-    <span class="dimmed">Pet Insurance</span>
-    <div id="pet-detail">
-        ${inputs.pets ? pet(inputs.pets[0]) : ''}
+    <div class="summary__header">
+        <b>MoreThan</b>
+        <span class="dimmed">Pet Insurance</span>
     </div>
-    <ul id="policy-detail">
-        ${inputs.policyOption && inputs.policyOption.coverStartDate ? startDate(inputs.policyOptions) : ''}
-        ${inputs.selectedCover ? html`<li>${inputs.selectedCover}</li>` : ''}
-        ${inputs.selectedVoluntaryExcess ? html`<li>${inputs.selectedVoluntaryExcess.name}</li>` : ''}
-        ${inputs.selectedPaymentTerm ? html`<li>${inputs.selectedPaymentTerm}</li>` : ''}
-    </ul>
+
+    <section class="summary__body">
+        <div id="pet-detail" class="summary__block">
+            ${inputs.pets ? pet(inputs.pets[0]) : ''}
+        </div>
+
+        <div id="policy-detail" class="summary__block">
+            <ul>
+                ${inputs.policyOption && inputs.policyOption.coverStartDate ? startDate(inputs.policyOptions) : ''}
+                ${inputs.selectedCover ? html`<li>${inputs.selectedCover}</li>` : ''}
+                ${inputs.selectedVoluntaryExcess ? html`<li>${inputs.selectedVoluntaryExcess.name}</li>` : ''}
+                ${inputs.selectedPaymentTerm ? html`<li>${inputs.selectedPaymentTerm}</li>` : ''}
+            </ul>
+        </div>
+
+        <div id="policy-info" class="summary__block">
+        <h5 class="summary__block-title"> Your Document </h5>
+            <ul>
+                ${outputs.insuranceProductInformationDocument && inputs.policyOption.coverStartDate ? startDate(inputs.policyOptions) : ''}
+            </ul>
+        </div>
+
+    </section>
 </div>`;
 
   const pet = pet => html`
-<h5>Your ${pet.name} </h5>
+<h5 class="summary__block-title"> Your ${pet.name} </h5>
 <ul>
     <li> Breed Name: ${pet.breedName}</li>
     <li> Date of Birth: ${pet.dateOfBirth}</li>
@@ -1916,6 +1935,16 @@
         </li>
     `;
   };
+  /**
+   *
+   *  insuranceProductInformationDocument
+   * 	essentialInformation
+   * 	policyWording
+   *  eligibilityConditions
+   *  estimatedPrice
+   *
+   */
+
 
   var Header = () => html`
 <div class="header">
@@ -2115,12 +2144,13 @@
     return result;
   }
 
-  var loading = msg => html`
+  var Loading = (selector = '#app') => render(template, document.querySelector(selector));
+
+  const template = html`
 <div class="loading">
     <h2 id="loading-message">
         We are processing your request...
     </h2>
-    <pre>${msg}</pre>
 </div>
 `;
 
@@ -2173,7 +2203,7 @@
         <div class="field field-set">
             <span class="field__name">Pet type</span>
             <div class="field__inputs group group--merged">
-                <input type="radio" name="pets[0][animal-type]" id="pets[0][animal-type]-dog" value="dog"/>
+                <input type="radio" name="pets[0][animal-type]" id="pets[0][animal-type]-dog" value="dog" required/>
                 <label for="pets[0][animal-type]-dog" class="button">Dog</label>
 
                 <input type="radio" name="pets[0][animal-type]" id="pets[0][animal-type]-cat" value="cat"/>
@@ -2229,16 +2259,6 @@
                     <label
                         for="pets[0]-neutered-no"
                         class="button">No</label>
-
-                    <input
-                        type="radio"
-                        class="button"
-                        name="pets[0][related-questions][is-spayed-or-neutered-$boolean]"
-                        id="pets[0]-neutered-no"
-                        value="false">
-                    <label
-                        for="pets[0]-neutered-no"
-                        class="button">Unknown</label>
                 </div>
             </div>
 
@@ -2250,7 +2270,7 @@
                         name="pets[0][related-questions][has-behaviour-complains-$boolean]"
                         id="pets[0]-behaviour-complains-yes"
                         value="true"
-                        required checked>
+                        required>
                     <label for="pets[0]-behaviour-complains-yes" class="button">Yes</label>
 
                     <input
@@ -2258,7 +2278,8 @@
                         name="pets[0][related-questions][has-behaviour-complains-$boolean]"
                         id="pets[0]-behaviour-complains-no"
                         value="false"
-                        required>
+                        required
+                        checked>
                     <label for="pets[0]-behaviour-complains-no" class="button">No</label>
                 </div>
             </div>
@@ -2281,14 +2302,6 @@
                         value="false"
                         required>
                     <label for="pets[0]-has-chip-no" class="button">No</label>
-
-                    <input
-                        type="radio"
-                        name="pets[0][related-questions][has-chip-or-tag-$boolean]"
-                        id="pets[0]-has-chip-no"
-                        value=""
-                        required>
-                    <label for="pets[0]-has-chip-no" class="button">Unknown</label>
                 </div>
             </div>
 
@@ -2371,7 +2384,8 @@
                         name="pets[0][related-questions][has-legal-action-$boolean]"
                         id="pets[0]-legal-no"
                         value="false"
-                        required>
+                        required
+                        checked>
                     <label for="pets[0]-legal-no" class="button">No</label>
                 </div>
             </div>
@@ -2382,14 +2396,15 @@
 
   var account = () => html`
 <div name="account" class="filed-set">
-    <div class="field">
+    Contact
+    <div class="field filed-set">
         <label class="field__name" for="account[email]">Email</label>
         <input type="email" name="account[email]" placeholder="example@example.com" value="example@example.com" required>
     </div>
 
-    <div class="field">
-        <label class="field__name" for="account[phone]">Phone</label>
-        <input type="text" name="account[phone][country-code]" value="gb" required>
+    <div class="field filed-set">
+        <label class="field__name" for="account[phone]">Mobile</label>
+        <input type="hidden" name="account[phone][country-code]" value="gb">
         <input type="tel" name="account[phone][number]" placeholder="phone number" value="07912341234" required>
     </div>
 
@@ -2524,7 +2539,7 @@
         <div class="field field-set">
             <span class="field__name">${meta.title || meta.key}</span>
             ${output.map(o => html`
-            <input type="checkbox" value="${JSON.stringify(o)}" name="${meta.key}-$object" id="${meta.key}-${o.name}"/>
+            <input type="checkbox" value="${JSON.stringify(o)}" name="${meta.key}[]-$object" id="${meta.key}-${o.name}"/>
             <label for="${meta.key}-${o.name}" class="button">
                 <div>
                     <b>${o.name}</b>
@@ -2680,7 +2695,6 @@
 
   var directDebit = () => html`
 <div class="section">
-    <h3 class="section__header">Payment</h3>
     <div class="section__body">
         <div name="direct-debit" class="filed-set">
             <div class="field">
@@ -2733,7 +2747,7 @@
   //TODO-test: run this function for all given inputMetas;
 
   var templates = {
-    loading,
+    loading: Loading,
     section,
     getInput
   };
@@ -2767,12 +2781,6 @@
   }
 
   class Section {
-    /**
-     * @param {String} name
-     * @param {String} title
-     * @param {Array} inputsMeta
-     * @param {Function} onFinish
-     */
     constructor(name, title, inputsMeta = [], selector, onFinish) {
       this.name = name;
       this.title = title || name;
@@ -2785,13 +2793,13 @@
       Promise.resolve(this.init());
     }
 
-    async init() {
+    init() {
       if (!sdk.initiated) {
         try {
-          await sdk.retrieve(); //TODO: if it's retrieved, check which input has provided. s
+          sdk.retrieve(); //TODO: if it's retrieved, check which input has provided. s
           // add submitted input to keysRendered, and render the next one.
         } catch (err) {
-          window.location.href = '/';
+          window.location.hash = '/';
           return;
         }
       }
@@ -2817,13 +2825,15 @@
           return;
         }
 
-        submitBtn.setAttribute('disabled', 'true'); // Partner can send input data to their server for logging if they prefer,
-        // in prototyping we are sending the input directly to api using sdk.
-        //TODO: update it to accept several inputs and send each of them separately
-
+        submitBtn.setAttribute('disabled', 'true');
         const inputs = serializeForm(); // send input sdk
 
         sdk.createJobInputs(inputs).then(res => {
+          const event = new CustomEvent('submitinput', {
+            detail: res
+          });
+          window.dispatchEvent(event);
+
           if (this.keysToRender.length !== 0) {
             render(html`Loading...`, document.querySelector('#target'));
             this.renderNextContent();
@@ -2849,8 +2859,8 @@
         return this.onFinish();
       }
 
-      const inputMeta = this.inputsMeta.find(im => im.key === nextKey);
-      console.log('inputMeta', JSON.stringify(inputMeta));
+      const inputMeta = this.inputsMeta.find(im => im.key === nextKey); //error handling?
+
       const template = templates.getInput(inputMeta); // render if the output is here.
       // when the awaitingInput event has happened, check nextKey and awaitingInputKey.
       // if it's different, skip this one, and render the awaitingInputKey.
@@ -2884,11 +2894,6 @@
         this.keysRendered.push(nextKey);
       }
     }
-    /*
-        onFinish() {
-            setTimeout(() => { window.location.hash = this.nextRoute }, 1000);
-        } */
-
 
   }
   /* const AboutYourPet = () => { new Section('aboutYourPet', 'Tell me about your pet', SECTIONS[0].inputs, '/about-you') };
@@ -2923,20 +2928,11 @@
 
   var NotFound = selector => {
     render(notFount404(), document.querySelector(selector));
-  }; // pet-insurance-specific
-
-  /* const routes = {
-      '/': () => { sdk.create().then(() => { window.location.hash = '/about-your-pet'; })},
-      '/about-your-pet': AboutYourPet,
-      '/about-you': AboutYou,
-      '/about-your-policy': aboutYourPolicy,
-      '/finish': () => { console.log('finished') }
-  }; */
-
+  };
   /** TODOS:
-   * need to navigate to awaitingInput's page, when waiting for the output
-   * need to assign all the sub-route so that they can navigate directly there
-   * gets output from previous-input-output as well
+   * [v] need to navigate to awaitingInput's page, when waiting for the output
+   * []need to assign all the sub-route so that they can navigate directly there
+   * [v] gets output from previous-input-output as well
    * CSS - responsive
    * (?) Should we give a flexibility of showing some inputs together?
    */
@@ -2981,6 +2977,7 @@
     const flow = configs.map(con => con.route);
     flow.push('/finish');
     const routes = {
+      '/': selector => Loading(selector),
       '/finish': () => callback(null, 'finish')
     };
     configs.forEach((config, idx) => {
@@ -3004,142 +3001,36 @@
         render(Summary(), document.querySelector('#summary'));
         render(Footer(), document.querySelector('#footer'));
         window.addEventListener('hashchange', () => {
-          const inputs = getAll();
           router(routes, () => NotFound(selector));
-          render(Summary(inputs), document.querySelector('#summary'));
         }); // Listen on page load:
 
-        window.addEventListener('load', () => router(routes)); //
+        window.addEventListener('load', () => router(routes, () => NotFound(selector))); //
 
         window.addEventListener('beforeunload', function (e) {
           // Cancel the job
           console.log('unload!');
         });
+        window.addEventListener('submitinput', () => {
+          const inputs = getAll();
+          render(Summary(inputs), document.querySelector('#summary'));
+        });
 
-        if (window.location.hash !== entryPoint) {
+        if (!window.location.hash || window.location.hash === '/') {
           try {
             sdk.retrieve();
+            return;
           } catch (err) {
             console.log('error');
-            return;
           }
+        } else {
+          sdk.create().then(() => {
+            window.location.hash = entryPoint;
+          }).catch(err => console.log(err));
         }
-
-        sdk.create().then(() => {
-          window.location.hash = entryPoint;
-        }).catch(err => console.log(err));
       }
     };
   }
-  /* examples for createSection and createApp
-   const config = {
-      name: 'aboutYourPet',
-      title: 'Tell Me About Your Pet',
-      inputs: [
-          { key: 'pets', inputMethod: null, sourceOutputKey: null },
-          { key: 'selectedBreedType', inputMethod: "SelectOne", sourceOutputKey: 'availableBreedTypes', title: 'select breed type' }
-      ],
-  };
-   var section = createSection(config, '#app', () => { console.log('finished!')});
-   section.init();
-  */
 
-
-  const SECTIONS = [{
-    name: 'aboutYourPet',
-    route: '/about-your-pet',
-    title: 'Tell Me About Your Pet',
-    inputs: [{
-      key: 'pets',
-      inputMethod: null,
-      sourceOutputKey: null
-    }, {
-      key: 'selectedBreedType',
-      inputMethod: "SelectOne",
-      sourceOutputKey: 'availableBreedTypes',
-      title: 'select breed type'
-    }]
-  }, {
-    name: 'aboutYou',
-    route: '/about-you',
-    title: 'Tell Me About You',
-    inputs: [{
-      key: 'account',
-      inputMethod: null,
-      sourceOutputKey: null
-    }, {
-      key: 'owner',
-      inputMethod: null,
-      sourceOutputKey: null
-    }, {
-      key: 'selectedMaritalStatusOption',
-      inputMethod: "SelectOne",
-      sourceOutputKey: 'availableMaritalStatusOptions'
-    }, {
-      key: 'selectedAddress',
-      inputMethod: "SelectOne",
-      sourceOutputKey: 'availableAddresses'
-    }],
-    initial: ['account', 'owner']
-  }, {
-    name: 'aboutYourPolicy',
-    route: '/about-your-policy',
-    title: 'Tell Me About Your Policy',
-    inputs: [{
-      key: 'selectedVoluntaryExcess',
-      inputMethod: 'selectOne',
-      sourceOutputKey: 'availableVoluntaryExcesses'
-    }, {
-      key: 'policyOptions',
-      inputMethod: null,
-      sourceOutputKey: null
-    }, {
-      key: 'selectedCover',
-      inputMethod: "SelectOne",
-      sourceOutputKey: 'availableCovers'
-    }, {
-      key: 'selectedVetPaymentTerm',
-      inputMethod: "SelectOne",
-      sourceOutputKey: 'availableVetPaymentTerms'
-    }, {
-      key: 'selectedPaymentTerm',
-      inputMethod: "SelectOne",
-      sourceOutputKey: 'availablePaymentTerms'
-    }, {
-      key: 'selectedCoverType',
-      inputMethod: "SelectOne",
-      sourceOutputKey: 'availableCoverTypes'
-    }, {
-      key: 'selectedCoverOptions',
-      inputMethod: "SelectMany",
-      sourceOutputKey: 'availableCoverOptions'
-    }, {
-      key: 'selectedVetFee',
-      inputMethod: "SelectOne",
-      sourceOutputKey: 'availableVetFees'
-    }]
-  }, {
-    name: 'payment',
-    route: '/payment',
-    title: 'Payment Details',
-    inputs: [{
-      key: 'finalPriceConsent',
-      inputMethod: 'Consent',
-      sourceOutputKey: 'finalPrice'
-    }, {
-      key: 'payment',
-      inputMethod: null,
-      sourceOutputKey: null
-    }, {
-      key: 'directDebit',
-      inputMethod: null,
-      sourceOutputKey: null
-    }]
-  }];
-  var app = createApp(SECTIONS, '#app', () => {
-    console.log('finished!');
-  });
-  app.init();
   exports.createApp = createApp;
   exports.createSection = createSection;
   Object.defineProperty(exports, '__esModule', {

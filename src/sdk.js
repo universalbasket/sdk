@@ -49,7 +49,7 @@ class EndUserSdk {
         if (pan) {
             const panToken = await this.sdk.vaultPan(inputs['pan']);
             inputs['panToken'] = panToken;
-            inputs['pan'] = undefined;
+            delete inputs.pan;
         }
 
         const keys = Object.keys(inputs);
@@ -61,6 +61,8 @@ class EndUserSdk {
         });
 
         await Promise.all(createInputs);
+
+        return inputs;
     }
 
     async waitForJobOutput(outputKey, inputKey) {

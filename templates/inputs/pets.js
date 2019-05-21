@@ -11,7 +11,7 @@ export default () => html`
         <div class="field field-set">
             <span class="field__name">Pet type</span>
             <div class="field__inputs group group--merged">
-                <input type="radio" name="pets[0][animal-type]" id="pets[0][animal-type]-dog" value="dog"/>
+                <input type="radio" name="pets[0][animal-type]" id="pets[0][animal-type]-dog" value="dog" required/>
                 <label for="pets[0][animal-type]-dog" class="button">Dog</label>
 
                 <input type="radio" name="pets[0][animal-type]" id="pets[0][animal-type]-cat" value="cat"/>
@@ -67,16 +67,6 @@ export default () => html`
                     <label
                         for="pets[0]-neutered-no"
                         class="button">No</label>
-
-                    <input
-                        type="radio"
-                        class="button"
-                        name="pets[0][related-questions][is-spayed-or-neutered-$boolean]"
-                        id="pets[0]-neutered-no"
-                        value="false">
-                    <label
-                        for="pets[0]-neutered-no"
-                        class="button">Unknown</label>
                 </div>
             </div>
 
@@ -88,7 +78,7 @@ export default () => html`
                         name="pets[0][related-questions][has-behaviour-complains-$boolean]"
                         id="pets[0]-behaviour-complains-yes"
                         value="true"
-                        required checked>
+                        required>
                     <label for="pets[0]-behaviour-complains-yes" class="button">Yes</label>
 
                     <input
@@ -96,7 +86,8 @@ export default () => html`
                         name="pets[0][related-questions][has-behaviour-complains-$boolean]"
                         id="pets[0]-behaviour-complains-no"
                         value="false"
-                        required>
+                        required
+                        checked>
                     <label for="pets[0]-behaviour-complains-no" class="button">No</label>
                 </div>
             </div>
@@ -119,14 +110,6 @@ export default () => html`
                         value="false"
                         required>
                     <label for="pets[0]-has-chip-no" class="button">No</label>
-
-                    <input
-                        type="radio"
-                        name="pets[0][related-questions][has-chip-or-tag-$boolean]"
-                        id="pets[0]-has-chip-no"
-                        value=""
-                        required>
-                    <label for="pets[0]-has-chip-no" class="button">Unknown</label>
                 </div>
             </div>
 
@@ -209,7 +192,8 @@ export default () => html`
                         name="pets[0][related-questions][has-legal-action-$boolean]"
                         id="pets[0]-legal-no"
                         value="false"
-                        required>
+                        required
+                        checked>
                     <label for="pets[0]-legal-no" class="button">No</label>
                 </div>
             </div>

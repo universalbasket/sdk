@@ -1,7 +1,11 @@
 :root {
     --primary-color: #2A3C4F;
     --accent-color: #647A8F;
+    --summary-background: #D3E0ED;
     --input-border-radius: 2px;
+
+    --nav-height--large: 35px;
+    --nav-height--small: 25px;
 }
 
 * {
@@ -23,13 +27,18 @@ input, select {
 
 input:focus {
     border-color: #31AADE;
+    outline: none;
+}
+
+ul {
+    list-style-type: none;
+    padding: 0
 }
 
 #header {
     background-color: #1C2936;
     color: white;
-    padding: 10px;
-    height: 25px;
+    padding: 15px;
     width: 100%;
     position: fixed;
     top: 0;
@@ -37,7 +46,7 @@ input:focus {
 }
 
 #summary {
-    background-color: #D3E0ED;
+    background-color: var(--summary-background);
 
     padding: 15px 10px;
     align-self: stretch;
@@ -47,12 +56,13 @@ input:focus {
     display: flex;
     justify-content: space-evenly;
     align-items: flex-start;
-    margin-top: 50px;
+    margin-top: 65px;
     height: 90%;
 }
 
-@media all and (max-width: 600px) {
+@media all and (max-width: 650px) {
     .container {
+        margin-top: 40px;
         flex-direction: column;
         justify-content: flex-start;
     }
@@ -61,22 +71,46 @@ input:focus {
         order: 1;
         position: -webkit-sticky;
         position: sticky;
-        top: 50px;
+        top: 25px;
     }
-    .main { order: 2; justify-content: stretch;}
+
+    .main {
+        order: 2;
+        justify-content: stretch;
+        margin-top: 10px;
+    }
+
+    #header {
+        height: var(--nav-height--small);
+    }
 }
 
 
   /* Large screens */
-@media all and (min-width: 600px) {
+@media all and (min-width: 650px) {
     /* We invert order of first sidebar and main
     * And tell the main element to take twice as much width as the other two sidebars
     */
-    .main { flex: 2 auto; order: 1; max-width: 60vw;  }
-    .summary { flex: 1 auto; order: 2; }
+    .main {
+        flex: 2 auto;
+        order: 1;
+        max-width: 60vw;
+        margin-top: 20px;
+    }
+
+    .summary {
+        flex: 1 auto;
+        order: 2;
+        padding: 20px;
+    }
+
     .section {
-        max-width: 40vw;
-        min-width: 350px;
+        width: 40vw;
+        min-width: 400px;
+    }
+
+    #header {
+        height: var(--nav-height--large);
     }
 }
 
@@ -176,4 +210,8 @@ input:focus {
 
 .group--merged > * {
     border: 2px solid var(--accent-color);
+}
+
+.summary > li {
+    border-bottom: solid 1px #c8c8c8;
 }

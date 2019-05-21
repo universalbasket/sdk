@@ -4,7 +4,6 @@ import Address from '../Generic/Address';
 
 export default () => html`
 <div class="section">
-    <h3 class="section__header">Payment</h3>
     <div class="section__body">
         <div name="direct-debit" class="filed-set">
             <div class="field">
