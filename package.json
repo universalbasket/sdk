@@ -16,7 +16,7 @@
   "author": "ubio",
   "license": "ISC",
   "dependencies": {
-    "@ubio/sdk": "^0.4.3",
+    "@ubio/sdk": "^0.4.4",
     "camelcase-keys": "^5.2.0",
     "form-serialize": "^0.7.2",
     "lit-html": "^1.0.0",
@@ -29,6 +29,6 @@
     "eslint": "^5.16.0",
     "eslint-config-ub": "^3.0.0",
     "eslint-plugin-lit": "^1.0.0",
-    "rollup": "^1.12.0"
+    "rollup": "^1.12.3"
   }
 }

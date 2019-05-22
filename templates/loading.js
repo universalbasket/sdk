@@ -4,7 +4,7 @@ export default (selector = '#app') => render(template, document.querySelector(se
 const template = html`
 <div class="loading">
     <h2 id="loading-message">
-        We are processing your request...
+        We are preparing your form...
     </h2>
 </div>
 `;

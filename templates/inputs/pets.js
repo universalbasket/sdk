@@ -19,6 +19,9 @@ export default () => html`
             </div>
         </div>
 
+        <div>dog breeds select - cache.dogBreeds</div>
+        <div>cat breeds select - cache.catBreeds</div>
+
         <div class="field field-set">
             <span class="field__name">Gender</span>
             <div class="field__inputs group group--merged">

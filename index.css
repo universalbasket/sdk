@@ -134,6 +134,7 @@ ul {
 .section__actions {
     display: flex;
     justify-content: end;
+    margin-bottom: 30px;
 }
 
 .dimmed {
@@ -214,4 +215,13 @@ ul {
 
 .summary > li {
     border-bottom: solid 1px #c8c8c8;
+}
+
+.summary__block {
+    padding: 5px 0;
+    border-bottom: dotted gray 1px;
+}
+
+.warning {
+    color: red;
 }

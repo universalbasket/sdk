@@ -1,6 +1,6 @@
-import { createEndUserSdk } from '../node_modules/@ubio/sdk/index';
+import { createEndUserSdk } from '@ubio/sdk';
 import { initialInputs } from '../env';
-import * as submittedInput from './submitted-input';
+import * as InputOutput from './input-output';
 
 let jobId = localStorage.getItem('jobId') || null;
 let token = localStorage.getItem('token') || null;
@@ -57,7 +57,7 @@ class EndUserSdk {
             const data = inputs[key];
 
             await this.sdk.createJobInput(key, data);
-            submittedInput.set(key, data);
+            InputOutput.set('input', key, data);
         });
 
         await Promise.all(createInputs);
@@ -66,15 +66,16 @@ class EndUserSdk {
     }
 
     async waitForJobOutput(outputKey, inputKey) {
-        const outputs = await this.sdk.getJobOutputs();
+        const outputs = await this.sdk.getJobOutputs(); // TODO: job
         const output = Array.isArray(outputs.data) && outputs.data.find(ou => ou.key === outputKey);
 
         if (output) {
             return output.data;
         }
-        const inputs = submittedInput.getAll();
 
-        const previousOutputs = await this.sdk.getPreviousJobOuputs(submittedInput.objectToArray(inputs)) || [];
+        const { inputs } = InputOutput.getAll();
+
+        const previousOutputs = await this.sdk.getPreviousJobOutputs(InputOutput.objectToArray(inputs)) || [];
         const previous = Array.isArray(previousOutputs.data) && previousOutputs.data.find(ou => ou.key === outputKey);
 
         if (previous) {
@@ -97,6 +98,10 @@ class EndUserSdk {
                     createdOutputProcessing = true;
                     this.sdk.getJobOutputs()
                         .then(outputs => {
+                            outputs.data.forEach(output => {
+                                InputOutput.set('output', output.key, output.data);
+                            });
+
                             const output = outputs.data.find(jo => jo.key === outputKey)
 
                             if (output) {
@@ -151,13 +156,13 @@ class EndUserSdk {
     }
 
     async getPreviousOutputs() {
-        const inputs = submittedInput.getAll();
-        return await this.sdk.getPreviousJobOuputs(inputs);
+        const { inputs } = InputOutput.getAll();
+        return await this.sdk.getPreviousJobOutputs(inputs);
     }
 
     async getPreviousOutput(outputKey) {
-        const inputs = submittedInput.getAll();
-        const outputs = await this.sdk.getPreviousJobOuputs(inputs);
+        const { inputs } = InputOutput.getAll();
+        const outputs = await this.sdk.getPreviousJobOutputs(inputs);
 
         return outputs.find(output => output.key = outputKey);
     }
@@ -166,7 +171,6 @@ class EndUserSdk {
 async function createJob({ input = {}, category = 'test' }) {
     input = { ...initialInputs, ...input };
 
-    //const job = await endUserSdk.createJob({ serviceId, input, category });
     const SERVER_URL = "https://ubio-application-bundle-dummy-server.glitch.me";
     const res = await fetch(`${SERVER_URL}/create-job`, {
         method: 'POST',

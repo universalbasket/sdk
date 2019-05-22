@@ -9,7 +9,7 @@ export default (prefix = 'address') => html`
 
     <div class="field">
         <label for="${prefix}[line2]" class="field__name">Line 2</label>
-        <input type="text" name="${prefix}[line2]" id="${prefix}[line2]" value="high road" required />
+        <input type="text" name="${prefix}[line2]" id="${prefix}[line2]" value="high road" />
     </div>
 
     <div class="field">
@@ -19,7 +19,7 @@ export default (prefix = 'address') => html`
 
     <div class="field">
         <label for="${prefix}[country-subdivision]" class="field__name">County</label>
-        <input type="text" name="${prefix}[country-subdivision]" id="${prefix}[country-subdivision]" value="" />
+        <input type="text" name="${prefix}[country-subdivision]" id="${prefix}[country-subdivision]" value="London" required/>
     </div>
 
     <div class="field">

@@ -1,7 +1,7 @@
 import sdk from './src/sdk';
 import router from './router';
 import { render } from './src/lit-html';
-import * as submittedInput from './src/submitted-input';
+import * as InputOutput from './src/input-output';
 
 import Summary from './templates/layout/summary';
 import Header from './templates/layout/header';
@@ -81,10 +81,15 @@ function createApp(configs = [], selector, callback) {
 
             window.addEventListener('hashchange', () => {
                 router(routes, () => NotFound(selector));
+                const { inputs, outputs } = InputOutput.getAll();
+                render(Summary(inputs, outputs), document.querySelector('#summary'));
             });
 
             // Listen on page load:
-            window.addEventListener('load', () => router(routes, () => NotFound(selector)));
+            window.addEventListener('load', () => {
+                router(routes, () => NotFound(selector));
+                console.log('onload!');
+            });
 
             //
             window.addEventListener('beforeunload', function (e) {
@@ -92,12 +97,18 @@ function createApp(configs = [], selector, callback) {
                 console.log('unload!');
             });
 
+            //custom event when input submitted
             window.addEventListener('submitinput', () => {
-                const inputs = submittedInput.getAll();
-                render(Summary(inputs), document.querySelector('#summary'));
+                const { inputs, outputs } = InputOutput.getAll();
+                render(Summary(inputs, outputs), document.querySelector('#summary'));
             })
 
-            if (!window.location.hash || window.location.hash  === '/') {
+            window.addEventListener('createoutput', () => {
+                const { inputs, outputs } = InputOutput.getAll();
+                render(Summary(inputs, outputs), document.querySelector('#summary'));
+            })
+
+            if (window.location.hash && window.location.hash  !== '/') {
                 try {
                     sdk.retrieve();
                     return;
@@ -131,6 +142,14 @@ var section = createSection(config, '#app', () => { console.log('finished!')});
 section.init();
 */
 
+const CACHE = [
+    {
+        name: 'priceBreakdown',
+        key: 'priceBreakdown',
+        sourceInputKeys: ['selectedOption1', 'selectedOption2']
+    }
+];
+
 const SECTIONS = [
     {
         name: 'aboutYourPet',
@@ -156,7 +175,7 @@ const SECTIONS = [
         route: '/your-policy',
         title: 'Your Policy',
         inputs: [
-            { key: 'policyOptions', inputMethod: null,  sourceOutputKey: null },
+            { key: 'policyOptions', inputMethod: null,  sourceOutputKey: null }, //todo: allowCache config for previous
             { key: 'selectedCover', inputMethod: "SelectOne",  sourceOutputKey: 'availableCovers' },
             { key: 'selectedVetPaymentTerm', inputMethod: "SelectOne",  sourceOutputKey: 'availableVetPaymentTerms' },
             { key: 'selectedPaymentTerm', inputMethod: "SelectOne",  sourceOutputKey: 'availablePaymentTerms' },

@@ -61,7 +61,7 @@ class Section {
                     window.dispatchEvent(event);
 
                     if (this.keysToRender.length !== 0) {
-                        render(html`Loading...`, document.querySelector('#target'))
+                        render(html`Loading...`, document.querySelector('#target')); //TODO: create template
                         this.renderNextContent();
                         submitBtn.removeAttribute('disabled');
                     } else {
@@ -90,6 +90,7 @@ class Section {
         // render if the output is here.
         // when the awaitingInput event has happened, check nextKey and awaitingInputKey.
         // if it's different, skip this one, and render the awaitingInputKey.
+
         if (inputMeta.inputMethod != null) {
             sdk.waitForJobOutput(inputMeta.sourceOutputKey, nextKey)
                 .then(output => {
