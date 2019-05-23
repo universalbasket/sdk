@@ -1,8 +1,7 @@
 import { html } from '../src/lit-html';
 
-export default (title) => html`
+export default () => html`
     <div class="section">
-        <h3 class="section__header">${title}</h3>
         <pre id="error"></pre>
         <form class="section__body" id="target"></form>
 

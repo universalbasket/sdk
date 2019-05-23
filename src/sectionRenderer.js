@@ -4,9 +4,8 @@ import serializeForm from './serialize-form';
 import templates from '../templates/index';
 
 class Section {
-    constructor(name, title, inputsMeta = [], selector, onFinish) {
+    constructor(name, inputsMeta = [], selector, onFinish) {
         this.name = name;
-        this.title = title || name;
         this.selector = selector;
         this.inputsMeta = inputsMeta;
         this.onFinish = onFinish;
@@ -36,7 +35,7 @@ class Section {
 
     renderWrapper() {
         render(html``, document.querySelector(this.selector));
-        render(templates.section(this.title), document.querySelector(this.selector));
+        render(templates.section(), document.querySelector(this.selector));
         this.addListener();
     }
 
@@ -131,12 +130,11 @@ class Section {
 
 /**
  * @param {String} name
- * @param {String} title
  * @param {Array} inputMeta
  * @param {Function} onFinish
  */
-function getSection(name, title, inputMeta, selector, onFinish) {
-    return new Section(name, title, inputMeta, selector, onFinish);
+function getSection(name, inputMeta, selector, onFinish) {
+    return new Section(name, inputMeta, selector, onFinish);
 }
 
 export default getSection;

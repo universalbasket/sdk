@@ -1,5 +1,5 @@
 import sdk from './src/sdk';
-import router from './router';
+import Router from './router';
 import { render } from './src/lit-html';
 import * as InputOutput from './src/input-output';
 
@@ -9,6 +9,7 @@ import Footer from './templates/layout/footer';
 import Section from './src/sectionRenderer';
 import NotFound from './src/NotFound';
 import Loading from './templates/loading';
+import ProgressBar from './src/ProgressBar';
 
 
 /** TODOS:
@@ -39,7 +40,7 @@ function createSection(config = {}, selector, callback) {
         init: () => {
             sdk
                 .create()
-                .then(() => Section(name, title, inputs, selector, callback))
+                .then(() => Section(name, inputs, selector, callback))
                 .catch(err => console.log(err));
         }
     };
@@ -56,6 +57,8 @@ function createApp(configs = [], selector, callback) {
     }
 
     const flow = configs.map(con => con.route);
+    const titles = configs.map(con => con.title);
+
     flow.push('/finish');
 
     const routes = {
@@ -67,27 +70,29 @@ function createApp(configs = [], selector, callback) {
         const { title, inputs, route } = config;
         const next = flow[idx + 1];
 
-        const section = () => Section(name, title, inputs, selector, () => setTimeout(() => { window.location.hash = next }, 1000));
-        routes[route] = section;
-    })
+        const render = () => Section(name, inputs, selector, () => setTimeout(() => { window.location.hash = next }, 1000));
+        routes[route] = { render, title, step: idx + 1 };
+    });
 
     const entryPoint = flow[0];
 
     return {
         init: () => {
+            const router = Router(routes, titles, NotFound(selector), ProgressBar('#progress-bar'))
             render(Header(), document.querySelector('#header'));
             render(Summary(), document.querySelector('#summary'));
             render(Footer(), document.querySelector('#footer'));
 
             window.addEventListener('hashchange', () => {
-                router(routes, () => NotFound(selector));
+                router.navigate();
+
                 const { inputs, outputs } = InputOutput.getAll();
                 render(Summary(inputs, outputs), document.querySelector('#summary'));
             });
 
             // Listen on page load:
             window.addEventListener('load', () => {
-                router(routes, () => NotFound(selector));
+                router.navigate();
                 console.log('onload!');
             });
 
@@ -147,6 +152,18 @@ const CACHE = [
         name: 'priceBreakdown',
         key: 'priceBreakdown',
         sourceInputKeys: ['selectedOption1', 'selectedOption2']
+    },
+    {
+        key: 'availableCovers',
+        sourceInputKeys: []
+    },
+    {
+        key: 'availableVetPaymentTerms',
+        sourceInputKeys: ['selectedCover']
+    },
+    {
+        key: 'selectedPaymentTerm',
+        sourceInputKeys: ['']
     }
 ];
 

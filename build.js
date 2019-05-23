@@ -149,7 +149,8 @@
     }
 
     async waitForJobOutput(outputKey, inputKey) {
-      const outputs = await this.sdk.getJobOutputs();
+      const outputs = await this.sdk.getJobOutputs(); // TODO: job
+
       const output = Array.isArray(outputs.data) && outputs.data.find(ou => ou.key === outputKey);
 
       if (output) {
@@ -290,16 +291,28 @@
 
   const sdk = new EndUserSdk(); // The router code. Takes a URL, checks against the list of supported routes and then renders the corresponding content page.
 
-  var router = (routes, NotFound) => {
-    // Get the parsed URl from the addressbar
-    let request = parseRequestURL(); // Parse the URL and if it has an id part, change it with the string ":id"
+  var Router = (routes, titles, notFoundTemplate, ProgressBarTemplate) => new Router$1(routes, titles, notFoundTemplate, ProgressBarTemplate);
 
-    let parsedURL = (request.section ? '/' + request.section : '/') + (request.input ? '/' + request.input : ''); // Get the page from our hash of supported routes.
-    // If the parsed URL is not in our list of supported routes, select the 404 page instead
+  class Router$1 {
+    constructor(routes, titles, notFoundTemplate, ProgressBarTemplate) {
+      this.routes = routes;
+      this.titles = titles;
+      this.notFoundTemplate = notFoundTemplate;
+      this.ProgressBarTemplate = ProgressBarTemplate;
+    }
 
-    let page = routes[parsedURL] ? routes[parsedURL] : NotFound;
-    page();
-  };
+    navigate() {
+      let request = parseRequestURL(); // Parse the URL and if it has an id part, change it with the string ":id"
+
+      let parsedURL = (request.section ? '/' + request.section : '/') + (request.input ? '/' + request.input : ''); // Get the page from our hash of supported routes.
+      // If the parsed URL is not in our list of supported routes, select the 404 page instead
+
+      let route = this.routes[parsedURL] ? this.routes[parsedURL] : this.notFoundTemplate;
+      route.render();
+      this.ProgressBarTemplate(this.titles, route.step);
+    }
+
+  }
 
   function parseRequestURL() {
     let url = location.hash.slice(1).toLowerCase() || '/';
@@ -1502,16 +1515,18 @@
             <ul>
                 ${inputs.policyOptions && inputs.policyOptions.coverStartDate ? startDate(inputs.policyOptions) : ''}
                 ${inputs.selectedCover ? html`<li>Cover: ${inputs.selectedCover}</li>` : ''}
-                ${inputs.selectedVoluntaryExcess ? html`<li> VoluntaryExcess: ${inputs.selectedVoluntaryExcess.name}</li>` : ''}
+                ${inputs.selectedVetPaymentTerm ? html`<li> Vet Payment Term: ${inputs.selectedVetPaymentTerm}</li>` : ''}
                 ${inputs.selectedPaymentTerm ? html`<li>Payment term: ${inputs.selectedPaymentTerm}</li>` : ''}
-                ${inputs.selectedCoverType ? html`<li>Cover type: ${inputs.selectedCoverType}</li>` : ''}
+                ${inputs.selectedCoverType ? html`<li>Cover type: ${inputs.selectedCoverType.coverName} - ${(inputs.selectedCoverType.price.value * 0.01).toFixed(2)} ${inputs.selectedCoverType.price.currencyCode} </li>` : ''}
+                ${inputs.selectedVetFee ? html`<li>Vet Fee:  - <p>${inputs.selectedVetFee.price.value * 0.01} ${inputs.selectedVetFee.price.currencyCode} </li>` : ''}
+                ${inputs.selectedVoluntaryExcess ? html`<li>Voluntary Excess: ${inputs.selectedVoluntaryExcess.name}</li>` : ''}
                 ${inputs.selectedCoverOptions ? html`<li>Cover options: ${inputs.selectedCoverOptions}</li>` : ''}
             </ul>
         </div>` : ''}
 
         ${outputs.insuranceProductInformationDocument || outputs.essentialInformation || outputs.policyWording || outputs.eligibilityConditions ? html`
         <div id="policy-info" class="summary__block">
-            <h5 class="summary__block-title"> Your Policy </h5>
+            <h5 class="summary__block-title"> Your Documents </h5>
             <ul>
                 ${outputs.insuranceProductInformationDocument ? fileType(outputs.insuranceProductInformationDocument) : ''}
                 ${outputs.essentialInformation ? fileType(outputs.essentialInformation) : ''}
@@ -1542,7 +1557,7 @@
     } = policyOptions;
     return html`
         <li>
-            Policy starts on ${coverStartDate}
+            Starts on ${coverStartDate}
         </li>
     `;
   };
@@ -1789,9 +1804,8 @@
 </div>
 `;
 
-  var section = title => html`
+  var section = () => html`
     <div class="section">
-        <h3 class="section__header">${title}</h3>
         <pre id="error"></pre>
         <form class="section__body" id="target"></form>
 
@@ -1845,6 +1859,9 @@
                 <label for="pets[0][animal-type]-cat" class="button">Cat</label>
             </div>
         </div>
+
+        <div>dog breeds select - cache.dogBreeds</div>
+        <div>cat breeds select - cache.catBreeds</div>
 
         <div class="field field-set">
             <span class="field__name">Gender</span>
@@ -2142,7 +2159,7 @@
     const key = kebabCase(meta.key);
     return html`
     <div class="field field-set">
-        <span class="field__name">${meta.title || meta.inputKey}</span>
+        <span class="field__name">${meta.title || meta.key}</span>
         <div class="field__inputs group group--merged">
             ${output.map(optionObj => html`
                 <input
@@ -2167,19 +2184,22 @@
         <span class="field__name">${meta.title || meta.key}</span>
         <div class="field__inputs group group--merged">
         ${output.map(optionObj => html`
+        <div>
             <input
                 type="radio"
                 id="${key}-${optionObj.priceLine}"
                 name="${key}-$object"
                 value="${JSON.stringify(optionObj)}">
 
-            <label for="${key}-${optionObj.priceLine}">
+            <label for="${key}-${optionObj.priceLine}" class="button">
                 <div>
-                    <p class="button">${optionObj.priceLine}</p>
                     <b>${optionObj.name}</b>
                     <pre>${optionObj.details}</pre>
                 </div>
-            </label>`)}
+            </label>
+            <p>${optionObj.priceLine}</p>
+        </div>
+            `)}
         </div>
     </div>
 `;
@@ -2434,9 +2454,8 @@
   }
 
   class Section {
-    constructor(name, title, inputsMeta = [], selector, onFinish) {
+    constructor(name, inputsMeta = [], selector, onFinish) {
       this.name = name;
-      this.title = title || name;
       this.selector = selector;
       this.inputsMeta = inputsMeta;
       this.onFinish = onFinish;
@@ -2463,7 +2482,7 @@
 
     renderWrapper() {
       render(html``, document.querySelector(this.selector));
-      render(templates.section(this.title), document.querySelector(this.selector));
+      render(templates.section(), document.querySelector(this.selector));
       this.addListener();
     }
 
@@ -2488,7 +2507,8 @@
           window.dispatchEvent(event);
 
           if (this.keysToRender.length !== 0) {
-            render(html`Loading...`, document.querySelector('#target'));
+            render(html`Loading...`, document.querySelector('#target')); //TODO: create template
+
             this.renderNextContent();
             submitBtn.removeAttribute('disabled');
           } else {
@@ -2551,30 +2571,38 @@
   }
   /**
    * @param {String} name
-   * @param {String} title
    * @param {Array} inputMeta
    * @param {Function} onFinish
    */
 
 
-  function getSection(name, title, inputMeta, selector, onFinish) {
-    return new Section(name, title, inputMeta, selector, onFinish);
+  function getSection(name, inputMeta, selector, onFinish) {
+    return new Section(name, inputMeta, selector, onFinish);
   }
 
-  var notFount404 = () => {
+  var NotFound = selector => {};
+
+  const stepTemplate = (title, index, activeIndex) => html`
+    <li class="progress-bar__step ${index === activeIndex ? 'progress-bar__step--active' : ''}">
+        <div class="progress-bar__icon-container">
+            <div class="progress-bar__icon">
+                <span class="progress-bar__step-index">${index}</span>
+            </div>
+        </div>
+        <div class="progress-bar__label">${title}</div>
+    </li>`;
+
+  var progressBar = (titles, activeIndex) => {
+    console.log(titles, activeIndex);
     return html`
-    <div>
-        <h1>Uh oh, We cannot find the page!</h1>
-        <p>404</p>
-        <button type="button" class="button button--right button--primary" id="submitBtn" @click="${() => {
-      window.location.hash = '/#';
-    }}">Continue</button>
-    </div>
-    `;
+<ol class="progress-bar-list">
+    ${titles.map((title, index) => stepTemplate(title, index + 1, activeIndex))}
+</ol>
+`;
   };
 
-  var NotFound = selector => {
-    render(notFount404(), document.querySelector(selector));
+  var ProgressBar = selector => {
+    return (titles, activeIndex) => render(progressBar(titles, activeIndex), document.querySelector(selector));
   };
   /** TODOS:
    * [v] need to navigate to awaitingInput's page, when waiting for the output
@@ -2607,7 +2635,7 @@
 
     return {
       init: () => {
-        sdk.create().then(() => getSection(name, title, inputs, selector, callback)).catch(err => console.log(err));
+        sdk.create().then(() => getSection(name, inputs, selector, callback)).catch(err => console.log(err));
       }
     };
   }
@@ -2622,6 +2650,7 @@
     }
 
     const flow = configs.map(con => con.route);
+    const titles = configs.map(con => con.title);
     flow.push('/finish');
     const routes = {
       '/': selector => Loading(selector),
@@ -2635,20 +2664,25 @@
       } = config;
       const next = flow[idx + 1];
 
-      const section = () => getSection(name, title, inputs, selector, () => setTimeout(() => {
+      const render = () => getSection(name, inputs, selector, () => setTimeout(() => {
         window.location.hash = next;
       }, 1000));
 
-      routes[route] = section;
+      routes[route] = {
+        render,
+        title,
+        step: idx + 1
+      };
     });
     const entryPoint = flow[0];
     return {
       init: () => {
+        const router = Router(routes, titles, NotFound(selector), ProgressBar('#progress-bar'));
         render(Header(), document.querySelector('#header'));
         render(Summary(), document.querySelector('#summary'));
         render(Footer(), document.querySelector('#footer'));
         window.addEventListener('hashchange', () => {
-          router(routes, () => NotFound(selector));
+          router.navigate();
           const {
             inputs,
             outputs
@@ -2657,7 +2691,7 @@
         }); // Listen on page load:
 
         window.addEventListener('load', () => {
-          router(routes, () => NotFound(selector));
+          router.navigate();
           console.log('onload!');
         }); //
 
@@ -2696,19 +2730,6 @@
       }
     };
   }
-  /* examples for createSection and createApp
-   const config = {
-      name: 'aboutYourPet',
-      title: 'Tell Me About Your Pet',
-      inputs: [
-          { key: 'pets', inputMethod: null, sourceOutputKey: null },
-          { key: 'selectedBreedType', inputMethod: "SelectOne", sourceOutputKey: 'availableBreedTypes', title: 'select breed type' }
-      ],
-  };
-   var section = createSection(config, '#app', () => { console.log('finished!')});
-   section.init();
-  */
-
 
   const SECTIONS = [{
     name: 'aboutYourPet',
@@ -2749,7 +2770,8 @@
       key: 'policyOptions',
       inputMethod: null,
       sourceOutputKey: null
-    }, {
+    }, //todo: allowCache config for previous
+    {
       key: 'selectedCover',
       inputMethod: "SelectOne",
       sourceOutputKey: 'availableCovers'
