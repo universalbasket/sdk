@@ -1,6 +1,6 @@
 :root {
     --header-background-color: #333;
-    --summary-background-color: #ccc;
+    --summary-background-color: #fff;
     --progress-bar-background-color: #f1f1f1;
 
     --primary-color: #2A3C4F;
@@ -10,9 +10,8 @@
     --step-icon--active: #606060;
 
     --input-border-radius: 2px;
-    --nav-height--large: 35px;
-    --nav-height--small: 25px;
-
+    --nav-height--large: 60px;
+    --nav-height--small: 45px;
 }
 
 * {
@@ -42,21 +41,21 @@ ul, ol {
     padding: 0
 }
 
-#header {
-    background-color: var(--header-background-color);
-    color: white;
-    padding: 15px;
-    width: 100%;
-    position: fixed;
-    top: 0;
-    left: 0;
-}
-
 #summary {
     background-color: var(--summary-background-color);
 
     padding: 15px 10px;
     align-self: stretch;
+    border-bottom: 2px solid #ccc;
+}
+
+.header {
+    background-color: var(--header-background-color);
+    color: white;
+    width: 100%;
+    position: fixed;
+    top: 0;
+    padding: 10px;
 }
 
 .progress-bar {
@@ -88,6 +87,7 @@ ul, ol {
 
     .progress-bar {
         order: 2;
+        align-self: stretch;
     }
 
     .main {
@@ -96,7 +96,7 @@ ul, ol {
         margin-top: 10px;
     }
 
-    #header {
+    .header {
         height: var(--nav-height--small);
     }
 }
@@ -130,7 +130,7 @@ ul, ol {
         min-width: 400px;
     }
 
-    #header {
+    .header {
         height: var(--nav-height--large);
     }
 }
