@@ -1,4 +1,8 @@
 import { html } from '../../src/lit-html';
+/*
+see https://lit-html.polymer-project.org/guide/template-reference#cache
+for details view and summary view for mobile version.
+*/
 
 //get service name & domain
 export default (inputs = {}, outputs = {}) => html`

@@ -3,6 +3,8 @@ import sdk from './sdk';
 import serializeForm from './serialize-form';
 import templates from '../templates/index';
 
+import cache from '../cache';
+
 class Section {
     constructor(name, inputsMeta = [], selector, onFinish) {
         this.name = name;
@@ -45,7 +47,7 @@ class Section {
             // TODO: validate the input (using protocol?)
             const form = document.querySelector('form');
             if (!form.reportValidity()) {
-                console.log('not valid form');
+                console.log('invalid form');
                 return;
             }
 
@@ -55,12 +57,12 @@ class Section {
 
             // send input sdk
             sdk.createJobInputs(inputs)
-                .then(res => {
-                    const event = new CustomEvent('submitinput', { detail: res });
+                .then(submittedInputs => {
+                    const event = new CustomEvent('submitinput', { detail: submittedInputs });
                     window.dispatchEvent(event);
 
                     if (this.keysToRender.length !== 0) {
-                        render(html`Loading...`, document.querySelector('#target')); //TODO: create template
+                        render(html`Loading...`, document.querySelector('#next-of-pets')); //TODO: create template
                         this.renderNextContent();
                         submitBtn.removeAttribute('disabled');
                     } else {
@@ -82,6 +84,7 @@ class Section {
         if (!nextKey) {
             return this.onFinish();
         }
+
         const inputMeta = this.inputsMeta.find(im => im.key === nextKey);
 
         //error handling?
@@ -90,15 +93,12 @@ class Section {
         // when the awaitingInput event has happened, check nextKey and awaitingInputKey.
         // if it's different, skip this one, and render the awaitingInputKey.
 
-        if (inputMeta.inputMethod != null) {
+        if (inputMeta.sourceOutputKey != null) {
             sdk.waitForJobOutput(inputMeta.sourceOutputKey, nextKey)
                 .then(output => {
-                    console.log('got an output!');
                     render(html`${template(inputMeta, output)}`, document.querySelector('#target'));
-                    document.querySelector('.section').scrollIntoView(true);
 
                     this.keysRendered.push(nextKey);
-
                 })
                 .catch(err => {
                     if (err.name === 'jobExpectsDifferentInputKey') {
@@ -114,13 +114,11 @@ class Section {
                         this.keysToRender.splice(idx, 1);
                         this.keysToRender.unshift(...[input.key, nextKey]);
 
-                        console.log(this.keysToRender)
                         return this.renderNextContent();
                     }
                 });
         } else {
-            render(html`${template()}`, document.querySelector('#target'));
-            document.querySelector('.section').scrollIntoView(true);
+            render(html`${template(null, cache)}<div id="next-of-${inputMeta.key}"></div>`, document.querySelector('#target'));
 
             this.keysRendered.push(nextKey);
         }

@@ -1,4 +1,4 @@
-import pets from './pets';
+import petsSelectedBreedType from './pets_selected-breed-type';
 import account from './account';
 import owner from './owner';
 import policyOptions from './policy-options';
@@ -12,7 +12,7 @@ import directDebit from './direct-debit';
 import finalPriceConsent from './final-price-consent';
 
 export default {
-    pets,
+    petsSelectedBreedType,
     account,
     owner,
     policyOptions,

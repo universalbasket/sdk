@@ -2,6 +2,7 @@ import sdk from './src/sdk';
 import Router from './router';
 import { render } from './src/lit-html';
 import * as InputOutput from './src/input-output';
+import * as Cache from './src/cache';
 
 import Summary from './templates/layout/summary';
 import Header from './templates/layout/header';
@@ -10,7 +11,6 @@ import Section from './src/sectionRenderer';
 import NotFound from './src/NotFound';
 import Loading from './templates/loading';
 import ProgressBar from './src/ProgressBar';
-
 
 /** TODOS:
  * [v] need to navigate to awaitingInput's page, when waiting for the output
@@ -44,20 +44,20 @@ function createSection(config = {}, selector, callback) {
                 .catch(err => console.log(err));
         }
     };
-    }
+}
 
-function createApp(configs = [], selector, callback) {
+function createApp(SECTION_CONFIGS = [], CACHE_CONFIGS = [], selector, callback) {
         //TODO: maybe this core app fetches all domain's meta and store them.
         // config will accept input keys rather than whole meta
 
-    const isValidConfig = configs.length > 0 && configs.every(config => config.name && config.title && config.inputs && config.route);
+    const isValidConfig = SECTION_CONFIGS.length > 0 && SECTION_CONFIGS.every(config => config.name && config.title && config.inputs && config.route);
 
     if (!isValidConfig) {
         throw new Error('invalid config');
     }
 
-    const flow = configs.map(con => con.route);
-    const titles = configs.map(con => con.title);
+    const flow = SECTION_CONFIGS.map(con => con.route);
+    const titles = SECTION_CONFIGS.map(con => con.title);
 
     flow.push('/finish');
 
@@ -66,7 +66,7 @@ function createApp(configs = [], selector, callback) {
         '/finish': () => callback(null, 'finish')
     };
 
-    configs.forEach((config, idx) => {
+    SECTION_CONFIGS.forEach((config, idx) => {
         const { title, inputs, route } = config;
         const next = flow[idx + 1];
 
@@ -92,18 +92,21 @@ function createApp(configs = [], selector, callback) {
 
             // Listen on page load:
             window.addEventListener('load', () => {
+                console.info('onload!');
+
                 router.navigate();
-                console.log('onload!');
             });
 
             //
             window.addEventListener('beforeunload', function (e) {
                 // Cancel the job
-                console.log('unload!');
+                console.info('unload!');
             });
 
             //custom event when input submitted
-            window.addEventListener('submitinput', () => {
+            window.addEventListener('submitinput', (e) => {
+                //TODO: get cache using output
+                Cache.poll(CACHE_CONFIGS, Object.keys(e.detail.key));
                 const { inputs, outputs } = InputOutput.getAll();
                 render(Summary(inputs, outputs), document.querySelector('#summary'));
             })
@@ -116,13 +119,17 @@ function createApp(configs = [], selector, callback) {
             if (window.location.hash && window.location.hash  !== '/') {
                 try {
                     sdk.retrieve();
+                    Cache.pollDefault(CACHE_CONFIGS);
                     return;
                 } catch (err) {
                     console.log('error');
                 }
             } else {
                 sdk.create()
-                    .then(() => { window.location.hash = entryPoint; })
+                    .then(() => {
+                        window.location.hash = entryPoint;
+                        Cache.pollDefault(CACHE_CONFIGS);
+                    })
                     .catch(err => console.log(err));
             }
         }
@@ -137,8 +144,8 @@ const config = {
     name: 'aboutYourPet',
     title: 'Tell Me About Your Pet',
     inputs: [
-        { key: 'pets', inputMethod: null, sourceOutputKey: null },
-        { key: 'selectedBreedType', inputMethod: "SelectOne", sourceOutputKey: 'availableBreedTypes', title: 'select breed type' }
+        { key: 'pets', sourceOutputKey: null },
+        { key: 'selectedBreedType', sourceOutputKey: 'availableBreedTypes', title: 'select breed type' }
     ],
 };
 
@@ -162,8 +169,8 @@ const CACHE = [
         sourceInputKeys: ['selectedCover']
     },
     {
-        key: 'selectedPaymentTerm',
-        sourceInputKeys: ['']
+        key: 'availablePaymentTerms',
+        sourceInputKeys: []
     }
 ];
 
@@ -173,8 +180,7 @@ const SECTIONS = [
         route: '/about-your-pet',
         title: 'About Your Pet',
         inputs: [
-            { key: 'pets', inputMethod: null, sourceOutputKey: null },
-            { key: 'selectedBreedType', inputMethod: "SelectOne", sourceOutputKey: 'availableBreedTypes', title: 'select breed type' }
+            { key: 'petsSelectedBreedType', sourceOutputKey: null }
         ],
     },
     {
@@ -182,9 +188,9 @@ const SECTIONS = [
         route: '/about-you',
         title: 'About You',
         inputs: [
-            { key: 'account', inputMethod: null, sourceOutputKey: null },
-            { key: 'owner', inputMethod: null, sourceOutputKey: null },
-            { key: 'selectedAddress', inputMethod: "SelectOne",  sourceOutputKey: 'availableAddresses' }
+            { key: 'account', sourceOutputKey: null },
+            { key: 'owner', sourceOutputKey: null },
+            { key: 'selectedAddress',  sourceOutputKey: 'availableAddresses' }
         ]
     },
     {
@@ -192,14 +198,14 @@ const SECTIONS = [
         route: '/your-policy',
         title: 'Your Policy',
         inputs: [
-            { key: 'policyOptions', inputMethod: null,  sourceOutputKey: null }, //todo: allowCache config for previous
-            { key: 'selectedCover', inputMethod: "SelectOne",  sourceOutputKey: 'availableCovers' },
-            { key: 'selectedVetPaymentTerm', inputMethod: "SelectOne",  sourceOutputKey: 'availableVetPaymentTerms' },
-            { key: 'selectedPaymentTerm', inputMethod: "SelectOne",  sourceOutputKey: 'availablePaymentTerms' },
-            { key: 'selectedCoverType', inputMethod: "SelectOne", sourceOutputKey: 'availableCoverTypes' },
-            { key: 'selectedVoluntaryExcess', inputMethod: 'selectOne', sourceOutputKey: 'availableVoluntaryExcesses' },
-            { key: 'selectedCoverOptions', inputMethod: "SelectMany",  sourceOutputKey: 'availableCoverOptions' },
-            { key: 'selectedVetFee', inputMethod: "SelectOne",  sourceOutputKey: 'availableVetFees' },
+            { key: 'policyOptions', sourceOutputKey: null }, //todo: allowCache config for previous
+            { key: 'selectedCover', sourceOutputKey: 'availableCovers' },
+            { key: 'selectedVetPaymentTerm', sourceOutputKey: 'availableVetPaymentTerms' },
+            { key: 'selectedPaymentTerm', sourceOutputKey: 'availablePaymentTerms' },
+            { key: 'selectedCoverType', sourceOutputKey: 'availableCoverTypes' },
+            { key: 'selectedVoluntaryExcess', sourceOutputKey: 'availableVoluntaryExcesses' },
+            { key: 'selectedCoverOptions', sourceOutputKey: 'availableCoverOptions' },
+            { key: 'selectedVetFee', sourceOutputKey: 'availableVetFees' },
         ]
     },
     {
@@ -207,8 +213,8 @@ const SECTIONS = [
         route: '/payment',
         title: 'Payment Details',
         inputs: [
-            { key: 'payment', inputMethod: null, sourceOutputKey: null },
-            { key: 'directDebit', inputMethod: null, sourceOutputKey: null }
+            { key: 'payment', sourceOutputKey: null },
+            { key: 'directDebit', sourceOutputKey: null }
         ]
     },
     {
@@ -216,11 +222,11 @@ const SECTIONS = [
         route: '/consent-payment',
         title: 'Ready to insure your pet',
         inputs: [
-            { key: 'finalPriceConsent', inputMethod: 'Consent', sourceOutputKey: 'finalPrice'},
+            { key: 'finalPriceConsent', sourceOutputKey: 'finalPrice'},
         ]
     }
 ];
 
-var app = createApp(SECTIONS, '#app', () => { console.log('finished!')});
+var app = createApp(SECTIONS, CACHE, '#app', () => { console.log('finished!')});
 
 app.init();

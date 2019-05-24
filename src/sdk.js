@@ -15,6 +15,7 @@ class EndUserSdk {
     async create(fields = {}) {
         if (jobId && token && serviceId) {
             let previous;
+
             try {
                 previous = createEndUserSdk({ token, jobId, serviceId });
                 await previous.cancelJob();
@@ -66,23 +67,32 @@ class EndUserSdk {
     }
 
     async waitForJobOutput(outputKey, inputKey) {
-        const outputs = await this.sdk.getJobOutputs(); // TODO: job
+        const outputs = await this.sdk.getJob(); // TODO: job
         const output = Array.isArray(outputs.data) && outputs.data.find(ou => ou.key === outputKey);
 
         if (output) {
             return output.data;
         }
 
-        const { inputs } = InputOutput.getAll();
-
-        const previousOutputs = await this.sdk.getPreviousJobOutputs(InputOutput.objectToArray(inputs)) || [];
-        const previous = Array.isArray(previousOutputs.data) && previousOutputs.data.find(ou => ou.key === outputKey);
-
-        if (previous) {
-            return previous.data;
-        }
-
         return await this.trackJobOutput(outputKey, inputKey);
+    }
+
+    async getCache({ key: outputKey, sourceInputKeys }) {
+        const sourceInputs = sourceInputKeys.map(key => { return { key, data: InputOutput.get('input', key) }});
+
+        const { data: caches = null } = await this.sdk.getPreviousJobOutputs(sourceInputs) || {};
+
+        const cache = caches && caches.find(c => c.key === outputKey) || null;
+
+        return cache ? { key: cache.key, data: cache.data } : null;
+    }
+
+    async getDefaultCache(keys = []) {
+        const { data: caches = null } = await this.sdk.getPreviousJobOutputs([]) || {};
+
+        return caches
+            .filter(cache => keys.includes(cache.key))
+            .map(cache => { return { key: cache.key, data: cache.data }});
     }
 
     trackJobOutput(outputKey, inputKey) {

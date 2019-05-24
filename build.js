@@ -10,11 +10,13 @@
   const initialInputs = {
     url: 'https://pet.morethan.com/h5/pet/step-1?path=%2FquoteAndBuy.do%3Fe%3De1s1%26curPage%3DcaptureDetails'
   };
+  const TYPES = ['input', 'output', 'cache'];
 
   function getAll() {
     const length = localStorage.length;
     const inputs = {};
     const outputs = {};
+    const caches = {};
 
     for (let i = 0; i < length; i += 1) {
       const key = localStorage.key(i);
@@ -30,11 +32,18 @@
         const data = JSON.parse(localStorage.getItem(key));
         outputs[trimmed] = data;
       }
+
+      if (key.startsWith('cache.')) {
+        const trimmed = key.replace('cache.', '');
+        const data = JSON.parse(localStorage.getItem(key));
+        caches[trimmed] = data;
+      }
     }
 
     return {
       inputs,
-      outputs
+      outputs,
+      caches
     };
   }
 
@@ -49,8 +58,8 @@
   }
 
   function get(type, key) {
-    if (!['input', 'output'].includes(type)) {
-      throw new Error('InputOutput.get(): type must be `input` or `output`');
+    if (!TYPES.includes(type)) {
+      throw new Error(`InputOutput.get(): type must be one of ${TYPES.join(', ')}`);
     }
 
     const inputOrOutput = localStorage.getItem(`${type}.${key}`);
@@ -63,8 +72,8 @@
   }
 
   function set(type, key, data) {
-    if (!['input', 'output'].includes(type)) {
-      throw new Error('InputOutput.get(): type must be `input` or `output`');
+    if (!TYPES.includes(type)) {
+      throw new Error(`InputOutput.set(): type must be one of ${TYPES.join(', ')}`);
     }
 
     localStorage.setItem(`${type}.${key}`, JSON.stringify(data));
@@ -149,7 +158,7 @@
     }
 
     async waitForJobOutput(outputKey, inputKey) {
-      const outputs = await this.sdk.getJobOutputs(); // TODO: job
+      const outputs = await this.sdk.getJob(); // TODO: job
 
       const output = Array.isArray(outputs.data) && outputs.data.find(ou => ou.key === outputKey);
 
@@ -157,17 +166,39 @@
         return output.data;
       }
 
-      const {
-        inputs
-      } = getAll();
-      const previousOutputs = (await this.sdk.getPreviousJobOutputs(objectToArray(inputs))) || [];
-      const previous = Array.isArray(previousOutputs.data) && previousOutputs.data.find(ou => ou.key === outputKey);
-
-      if (previous) {
-        return previous.data;
-      }
-
       return await this.trackJobOutput(outputKey, inputKey);
+    }
+
+    async getCache({
+      key: outputKey,
+      sourceInputKeys
+    }) {
+      const sourceInputs = sourceInputKeys.map(key => {
+        return {
+          key,
+          data: get('input', key)
+        };
+      });
+      const {
+        data: caches = null
+      } = (await this.sdk.getPreviousJobOutputs(sourceInputs)) || {};
+      const cache = caches && caches.find(c => c.key === outputKey) || null;
+      return cache ? {
+        key: cache.key,
+        data: cache.data
+      } : null;
+    }
+
+    async getDefaultCache(keys = []) {
+      const {
+        data: caches = null
+      } = (await this.sdk.getPreviousJobOutputs([])) || {};
+      return caches.filter(cache => keys.includes(cache.key)).map(cache => {
+        return {
+          key: cache.key,
+          data: cache.data
+        };
+      });
     }
 
     trackJobOutput(outputKey, inputKey) {
@@ -1491,7 +1522,61 @@
    * render to and update a container.
    */
 
-  const html = (strings, ...values) => new TemplateResult(strings, values, 'html', defaultTemplateProcessor); //get service name & domain
+  const html = (strings, ...values) => new TemplateResult(strings, values, 'html', defaultTemplateProcessor);
+  /**
+   * @license
+   * Copyright (c) 2017 The Polymer Project Authors. All rights reserved.
+   * This code may only be used under the BSD style license found at
+   * http://polymer.github.io/LICENSE.txt
+   * The complete set of authors may be found at
+   * http://polymer.github.io/AUTHORS.txt
+   * The complete set of contributors may be found at
+   * http://polymer.github.io/CONTRIBUTORS.txt
+   * Code distributed by Google as part of the polymer project is also
+   * subject to an additional IP rights grant found at
+   * http://polymer.github.io/PATENTS.txt
+   */
+
+
+  function poll(CACHE_CONFIG, newInputKey) {
+    if (!newInputKey) {
+      pollDefault(CACHE_CONFIG);
+    } else {
+      const {
+        inputs
+      } = getAll();
+      CACHE_CONFIG.forEach(config => {
+        if (config.sourceInputKeys.includes[newInputKey]) {
+          const readyToFetch = config.sourceInputKeys.every(input => inputs[input]);
+
+          if (readyToFetch) {
+            fetchAndSave(config);
+          }
+        }
+      });
+    }
+  }
+
+  function pollDefault(CACHE_CONFIG) {
+    const DEFAULT_KEYS = CACHE_CONFIG.filter(config => config.sourceInputKeys.length === 0).map(config => config.key);
+    sdk.getDefaultCache(DEFAULT_KEYS).then(caches => {
+      console.log('caches', caches);
+      caches.map(cache => set('cache', cache.key, cache.data));
+    }).catch(err => console.error('failed to fetch default caches', err));
+  }
+
+  function fetchAndSave(config) {
+    sdk.getCache(config).then(cache => {
+      if (cache) {
+        set('cache', cache.key, cache.data);
+      }
+    }).catch(err => console.error('failed to fetch cache', err));
+  }
+  /*
+  see https://lit-html.polymer-project.org/guide/template-reference#cache
+  for details view and summary view for mobile version.
+  */
+  //get service name & domain
 
 
   var Summary = (inputs = {}, outputs = {}) => html`
@@ -1841,7 +1926,14 @@
 `;
   };
 
-  var pets = () => html`
+  let availableBreedTypes = {};
+
+  var petsSelectedBreedType = (meta, outputOrCache) => {
+    availableBreedTypes = outputOrCache.availableBreedTypes;
+    return petsAndSelectedBreedType();
+  };
+
+  const petsAndSelectedBreedType = () => html`
 <div class="job-input">
     <div class="pet" name="pets[0]">
         <div class="field field-set">
@@ -1852,21 +1944,26 @@
         <div class="field field-set">
             <span class="field__name">Pet type</span>
             <div class="field__inputs group group--merged">
-                <input type="radio" name="pets[0][animal-type]" id="pets[0][animal-type]-dog" value="dog" required/>
+                <input type="radio" name="pets[0][animal-type]" id="pets[0][animal-type]-dog" value="dog" @change="${breedTypeHandler}"
+                    required />
                 <label for="pets[0][animal-type]-dog" class="button">Dog</label>
 
-                <input type="radio" name="pets[0][animal-type]" id="pets[0][animal-type]-cat" value="cat"/>
+                <input type="radio" name="pets[0][animal-type]" id="pets[0][animal-type]-cat" value="cat" @change="${breedTypeHandler}" />
                 <label for="pets[0][animal-type]-cat" class="button">Cat</label>
             </div>
         </div>
 
-        <div>dog breeds select - cache.dogBreeds</div>
-        <div>cat breeds select - cache.catBreeds</div>
+        <div class="field field-set">
+        <span class="field__name">Breed Type</span>
+            <select name="selected-breed-type" id="selected-breed-type" required>
+                <option>Please select pet type</option>
+            </select>
+        </div>
 
         <div class="field field-set">
             <span class="field__name">Gender</span>
             <div class="field__inputs group group--merged">
-                <input type="radio" name="pets[0][gender]" value="male" id="pets[0][gender]-male" required checked >
+                <input type="radio" name="pets[0][gender]" value="male" id="pets[0][gender]-male" required checked>
                 <label for="pets[0][gender]-male" class="button">Male</label>
 
                 <input type="radio" name="pets[0][gender]" id="pets[0][gender]-female" value="female">
@@ -1875,7 +1972,7 @@
         </div>
 
         <div class="field field-set">
-            <label  class="field__name" for="pets[0][breed-name]">Breed Name</label>
+            <label class="field__name" for="pets[0][breed-name]">Breed Name</label>
             <input type="text" name="pets[0][breed-name]" value="Afghan Hound" required>
         </div>
 
@@ -1893,45 +1990,25 @@
             <div class="field field-set">
                 <span class="field__name">Is your pet spayed or neutered?</span>
                 <div class="field__inputs group group--merged">
-                    <input
-                        type="radio"
-                        name="pets[0][related-questions][is-spayed-or-neutered-$boolean]"
-                        id="pets[0]-neutered-yes"
+                    <input type="radio" name="pets[0][related-questions][is-spayed-or-neutered-$boolean]" id="pets[0]-neutered-yes"
                         value="true" required checked>
-                    <label
-                        for="pets[0]-neutered-yes"
-                        class="button">Yes</label>
+                    <label for="pets[0]-neutered-yes" class="button">Yes</label>
 
-                    <input
-                        type="radio"
-                        class="button"
-                        name="pets[0][related-questions][is-spayed-or-neutered-$boolean]"
-                        id="pets[0]-neutered-no"
-                        value="false">
-                    <label
-                        for="pets[0]-neutered-no"
-                        class="button">No</label>
+                    <input type="radio" class="button" name="pets[0][related-questions][is-spayed-or-neutered-$boolean]"
+                        id="pets[0]-neutered-no" value="false">
+                    <label for="pets[0]-neutered-no" class="button">No</label>
                 </div>
             </div>
 
             <div class="field field-set">
                 <span class="field__name">Has your pet had any behaviour complains?</span>
                 <div class="field__inputs group group--merged">
-                    <input
-                        type="radio"
-                        name="pets[0][related-questions][has-behaviour-complains-$boolean]"
-                        id="pets[0]-behaviour-complains-yes"
-                        value="true"
-                        required>
+                    <input type="radio" name="pets[0][related-questions][has-behaviour-complains-$boolean]" id="pets[0]-behaviour-complains-yes"
+                        value="true" required>
                     <label for="pets[0]-behaviour-complains-yes" class="button">Yes</label>
 
-                    <input
-                        type="radio"
-                        name="pets[0][related-questions][has-behaviour-complains-$boolean]"
-                        id="pets[0]-behaviour-complains-no"
-                        value="false"
-                        required
-                        checked>
+                    <input type="radio" name="pets[0][related-questions][has-behaviour-complains-$boolean]" id="pets[0]-behaviour-complains-no"
+                        value="false" required checked>
                     <label for="pets[0]-behaviour-complains-no" class="button">No</label>
                 </div>
             </div>
@@ -1939,20 +2016,12 @@
             <div class="field field-set">
                 <span class="field__name">Does your pet have chip or tag?</span>
                 <div class="field__inputs group group--merged">
-                    <input
-                        type="radio"
-                        name="pets[0][related-questions][has-chip-or-tag-$boolean]"
-                        id="pets[0]-has-chip-yes"
-                        value="true"
-                        required checked>
+                    <input type="radio" name="pets[0][related-questions][has-chip-or-tag-$boolean]" id="pets[0]-has-chip-yes"
+                        value="true" required checked>
                     <label for="pets[0]-has-chip-yes" class="button">Yes</label>
 
-                    <input
-                        type="radio"
-                        name="pets[0][related-questions][has-chip-or-tag-$boolean]"
-                        id="pets[0]-has-chip-no"
-                        value="false"
-                        required>
+                    <input type="radio" name="pets[0][related-questions][has-chip-or-tag-$boolean]" id="pets[0]-has-chip-no"
+                        value="false" required>
                     <label for="pets[0]-has-chip-no" class="button">No</label>
                 </div>
             </div>
@@ -1960,20 +2029,12 @@
             <div class="field field-set">
                 <span class="field__name">Is your pet kept at your address?</span>
                 <div class="field__inputs group group--merged">
-                    <input
-                        type="radio"
-                        name="pets[0][related-questions][is-kept-at-your-address-$boolean]"
-                        id="pets[0]-kept-at-yours-yes"
-                        value="true"
-                        required checked>
+                    <input type="radio" name="pets[0][related-questions][is-kept-at-your-address-$boolean]" id="pets[0]-kept-at-yours-yes"
+                        value="true" required checked>
                     <label for="pets[0]-kept-at-yours-yes" class="button">Yes</label>
 
-                    <input
-                        type="radio"
-                        name="pets[0][related-questions][is-kept-at-your-address-$boolean]"
-                        id="pets[0]-kept-at-yours-no"
-                        value="false"
-                        required>
+                    <input type="radio" name="pets[0][related-questions][is-kept-at-your-address-$boolean]" id="pets[0]-kept-at-yours-no"
+                        value="false" required>
                     <label for="pets[0]-kept-at-yours-no" class="button">No</label>
                 </div>
             </div>
@@ -1981,41 +2042,26 @@
             <div class="field field-set">
                 <span class="field__name">Is your pet kept indoor?</span>
                 <div class="field__inputs group group--merged">
-                    <input
-                        type="radio"
-                        name="pets[0][related-questions][is-indoor-$boolean]"
-                        id="pets[0]-indoor-yes"
-                        value="true"
-                        required checked>
+                    <input type="radio" name="pets[0][related-questions][is-indoor-$boolean]" id="pets[0]-indoor-yes"
+                        value="true" required checked>
                     <label for="pets[0]-indoor-yes" class="button">Yes</label>
 
-                    <input
-                        type="radio"
-                        name="pets[0][related-questions][is-indoor-$boolean]"
-                        id="pets[0]-indoor-no"
-                        value="false"
-                        required>
+                    <input type="radio" name="pets[0][related-questions][is-indoor-$boolean]" id="pets[0]-indoor-no"
+                        value="false" required>
                     <label for="pets[0]-indoor-no" class="button">No</label>
                 </div>
             </div>
 
             <div class="field field-set">
-                <span class="field__name">Is your pet in good health, and not showing any sign of illness, injury or other medical conditions?</span>
+                <span class="field__name">Is your pet in good health, and not showing any sign of illness, injury or
+                    other medical conditions?</span>
                 <div class="field__inputs group group--merged">
-                    <input
-                        type="radio"
-                        name="pets[0][related-questions][is-your-pet-healthy-$boolean]"
-                        id="pets[0]-healthy-yes"
-                        value="true"
-                        required checked>
+                    <input type="radio" name="pets[0][related-questions][is-your-pet-healthy-$boolean]" id="pets[0]-healthy-yes"
+                        value="true" required checked>
                     <label for="pets[0]-healthy-yes" class="button">Yes</label>
 
-                    <input
-                        type="radio"
-                        name="pets[0][related-questions][is-your-pet-healthy-$boolean]"
-                        id="pets[0]-healthy-no"
-                        value="false"
-                        required>
+                    <input type="radio" name="pets[0][related-questions][is-your-pet-healthy-$boolean]" id="pets[0]-healthy-no"
+                        value="false" required>
                     <label for="pets[0]-healthy-no" class="button">No</label>
                 </div>
             </div>
@@ -2023,21 +2069,12 @@
             <div class="field field-set">
                 <span class="field__name">Has there been legal action resulting from an incident involving your pet?</span>
                 <div class="field__inputs group group--merged">
-                    <input
-                        type="radio"
-                        name="pets[0][related-questions][has-legal-action-$boolean]"
-                        id="pets[0]-legal-yes"
-                        value="true"
-                        required checked>
+                    <input type="radio" name="pets[0][related-questions][has-legal-action-$boolean]" id="pets[0]-legal-yes"
+                        value="true" required checked>
                     <label for="pets[0]-legal-yes" class="button">Yes</label>
 
-                    <input
-                        type="radio"
-                        name="pets[0][related-questions][has-legal-action-$boolean]"
-                        id="pets[0]-legal-no"
-                        value="false"
-                        required
-                        checked>
+                    <input type="radio" name="pets[0][related-questions][has-legal-action-$boolean]" id="pets[0]-legal-no"
+                        value="false" required checked>
                     <label for="pets[0]-legal-no" class="button">No</label>
                 </div>
             </div>
@@ -2045,6 +2082,21 @@
     </div>
 </div>
 `;
+
+  const breedTypeOptions = options => html`
+    ${options.map(o => html`
+        <option value="${o}"> ${o}</option>`)}`;
+
+  const breedTypeHandler = {
+    // handleEvent method is required.
+    handleEvent(e) {
+      console.log('e.target.value', e.target.value);
+      const animalType = e.target.value;
+      const options = availableBreedTypes[animalType] || [];
+      render(breedTypeOptions(options), document.querySelector('#selected-breed-type'));
+    }
+
+  };
 
   var account = () => html`
 <div name="account" class="filed-set">
@@ -2404,7 +2456,7 @@
   };
 
   var inputs = {
-    pets,
+    petsSelectedBreedType,
     account,
     owner,
     policyOptions,
@@ -2453,6 +2505,13 @@
     return null;
   }
 
+  var cache = {
+    availableBreedTypes: {
+      "cat": ["Pedigree", "Non-Pedigree"],
+      "dog": ["Cross Breed", "Pedigree", "Small mixed breed (up to 10kg)", "Medium mixed breed (10 - 20kg)", "Large mixed breed (above 20kg)"]
+    }
+  };
+
   class Section {
     constructor(name, inputsMeta = [], selector, onFinish) {
       this.name = name;
@@ -2493,21 +2552,21 @@
         const form = document.querySelector('form');
 
         if (!form.reportValidity()) {
-          console.log('not valid form');
+          console.log('invalid form');
           return;
         }
 
         submitBtn.setAttribute('disabled', 'true');
         const inputs = serializeForm(); // send input sdk
 
-        sdk.createJobInputs(inputs).then(res => {
+        sdk.createJobInputs(inputs).then(submittedInputs => {
           const event = new CustomEvent('submitinput', {
-            detail: res
+            detail: submittedInputs
           });
           window.dispatchEvent(event);
 
           if (this.keysToRender.length !== 0) {
-            render(html`Loading...`, document.querySelector('#target')); //TODO: create template
+            render(html`Loading...`, document.querySelector('#next-of-pets')); //TODO: create template
 
             this.renderNextContent();
             submitBtn.removeAttribute('disabled');
@@ -2538,11 +2597,9 @@
       // when the awaitingInput event has happened, check nextKey and awaitingInputKey.
       // if it's different, skip this one, and render the awaitingInputKey.
 
-      if (inputMeta.inputMethod != null) {
+      if (inputMeta.sourceOutputKey != null) {
         sdk.waitForJobOutput(inputMeta.sourceOutputKey, nextKey).then(output => {
-          console.log('got an output!');
           render(html`${template(inputMeta, output)}`, document.querySelector('#target'));
-          document.querySelector('.section').scrollIntoView(true);
           this.keysRendered.push(nextKey);
         }).catch(err => {
           if (err.name === 'jobExpectsDifferentInputKey') {
@@ -2557,13 +2614,11 @@
             const idx = this.keysToRender.indexOf(input.key);
             this.keysToRender.splice(idx, 1);
             this.keysToRender.unshift(...[input.key, nextKey]);
-            console.log(this.keysToRender);
             return this.renderNextContent();
           }
         });
       } else {
-        render(html`${template()}`, document.querySelector('#target'));
-        document.querySelector('.section').scrollIntoView(true);
+        render(html`${template(null, cache)}<div id="next-of-${inputMeta.key}"></div>`, document.querySelector('#target'));
         this.keysRendered.push(nextKey);
       }
     }
@@ -2640,23 +2695,23 @@
     };
   }
 
-  function createApp(configs = [], selector, callback) {
+  function createApp(SECTION_CONFIGS = [], CACHE_CONFIGS = [], selector, callback) {
     //TODO: maybe this core app fetches all domain's meta and store them.
     // config will accept input keys rather than whole meta
-    const isValidConfig = configs.length > 0 && configs.every(config => config.name && config.title && config.inputs && config.route);
+    const isValidConfig = SECTION_CONFIGS.length > 0 && SECTION_CONFIGS.every(config => config.name && config.title && config.inputs && config.route);
 
     if (!isValidConfig) {
       throw new Error('invalid config');
     }
 
-    const flow = configs.map(con => con.route);
-    const titles = configs.map(con => con.title);
+    const flow = SECTION_CONFIGS.map(con => con.route);
+    const titles = SECTION_CONFIGS.map(con => con.title);
     flow.push('/finish');
     const routes = {
       '/': selector => Loading(selector),
       '/finish': () => callback(null, 'finish')
     };
-    configs.forEach((config, idx) => {
+    SECTION_CONFIGS.forEach((config, idx) => {
       const {
         title,
         inputs,
@@ -2691,16 +2746,18 @@
         }); // Listen on page load:
 
         window.addEventListener('load', () => {
+          console.info('onload!');
           router.navigate();
-          console.log('onload!');
         }); //
 
         window.addEventListener('beforeunload', function (e) {
           // Cancel the job
-          console.log('unload!');
+          console.info('unload!');
         }); //custom event when input submitted
 
-        window.addEventListener('submitinput', () => {
+        window.addEventListener('submitinput', e => {
+          //TODO: get cache using output
+          poll(CACHE_CONFIGS, Object.keys(e.detail.key));
           const {
             inputs,
             outputs
@@ -2718,6 +2775,7 @@
         if (window.location.hash && window.location.hash !== '/') {
           try {
             sdk.retrieve();
+            pollDefault(CACHE_CONFIGS);
             return;
           } catch (err) {
             console.log('error');
@@ -2725,25 +2783,47 @@
         } else {
           sdk.create().then(() => {
             window.location.hash = entryPoint;
+            pollDefault(CACHE_CONFIGS);
           }).catch(err => console.log(err));
         }
       }
     };
   }
+  /* examples for createSection and createApp
+   const config = {
+      name: 'aboutYourPet',
+      title: 'Tell Me About Your Pet',
+      inputs: [
+          { key: 'pets', sourceOutputKey: null },
+          { key: 'selectedBreedType', sourceOutputKey: 'availableBreedTypes', title: 'select breed type' }
+      ],
+  };
+   var section = createSection(config, '#app', () => { console.log('finished!')});
+   section.init();
+  */
 
+
+  const CACHE = [{
+    name: 'priceBreakdown',
+    key: 'priceBreakdown',
+    sourceInputKeys: ['selectedOption1', 'selectedOption2']
+  }, {
+    key: 'availableCovers',
+    sourceInputKeys: []
+  }, {
+    key: 'availableVetPaymentTerms',
+    sourceInputKeys: ['selectedCover']
+  }, {
+    key: 'availablePaymentTerms',
+    sourceInputKeys: []
+  }];
   const SECTIONS = [{
     name: 'aboutYourPet',
     route: '/about-your-pet',
     title: 'About Your Pet',
     inputs: [{
-      key: 'pets',
-      inputMethod: null,
+      key: 'petsSelectedBreedType',
       sourceOutputKey: null
-    }, {
-      key: 'selectedBreedType',
-      inputMethod: "SelectOne",
-      sourceOutputKey: 'availableBreedTypes',
-      title: 'select breed type'
     }]
   }, {
     name: 'aboutYou',
@@ -2751,15 +2831,12 @@
     title: 'About You',
     inputs: [{
       key: 'account',
-      inputMethod: null,
       sourceOutputKey: null
     }, {
       key: 'owner',
-      inputMethod: null,
       sourceOutputKey: null
     }, {
       key: 'selectedAddress',
-      inputMethod: "SelectOne",
       sourceOutputKey: 'availableAddresses'
     }]
   }, {
@@ -2768,36 +2845,28 @@
     title: 'Your Policy',
     inputs: [{
       key: 'policyOptions',
-      inputMethod: null,
       sourceOutputKey: null
     }, //todo: allowCache config for previous
     {
       key: 'selectedCover',
-      inputMethod: "SelectOne",
       sourceOutputKey: 'availableCovers'
     }, {
       key: 'selectedVetPaymentTerm',
-      inputMethod: "SelectOne",
       sourceOutputKey: 'availableVetPaymentTerms'
     }, {
       key: 'selectedPaymentTerm',
-      inputMethod: "SelectOne",
       sourceOutputKey: 'availablePaymentTerms'
     }, {
       key: 'selectedCoverType',
-      inputMethod: "SelectOne",
       sourceOutputKey: 'availableCoverTypes'
     }, {
       key: 'selectedVoluntaryExcess',
-      inputMethod: 'selectOne',
       sourceOutputKey: 'availableVoluntaryExcesses'
     }, {
       key: 'selectedCoverOptions',
-      inputMethod: "SelectMany",
       sourceOutputKey: 'availableCoverOptions'
     }, {
       key: 'selectedVetFee',
-      inputMethod: "SelectOne",
       sourceOutputKey: 'availableVetFees'
     }]
   }, {
@@ -2806,11 +2875,9 @@
     title: 'Payment Details',
     inputs: [{
       key: 'payment',
-      inputMethod: null,
       sourceOutputKey: null
     }, {
       key: 'directDebit',
-      inputMethod: null,
       sourceOutputKey: null
     }]
   }, {
@@ -2819,11 +2886,10 @@
     title: 'Ready to insure your pet',
     inputs: [{
       key: 'finalPriceConsent',
-      inputMethod: 'Consent',
       sourceOutputKey: 'finalPrice'
     }]
   }];
-  var app = createApp(SECTIONS, '#app', () => {
+  var app = createApp(SECTIONS, CACHE, '#app', () => {
     console.log('finished!');
   });
   app.init();
