@@ -1,12 +1,10 @@
 import kebabCase from 'lodash.kebabcase';
 import { html } from '../../src/lit-html';
 
-export default (meta, output) => {
-    const key = kebabCase(meta.key);
-    return html`
+export default (outputs) => html`
     <div class="field field-set">
-        <span class="field__name">${meta.title || meta.key}</span>
-        ${output.map(optionObj => html`
+        <span class="field__name">Available Cover Type</span>
+        ${outputs.map(optionObj => html`
             <input
                 type="radio"
                 id="${key}-${optionObj.coverName}"
@@ -18,4 +16,4 @@ export default (meta, output) => {
             </label>`
         )}
     </div>
-`};
+`;

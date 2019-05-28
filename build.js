@@ -1,12 +1,12 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('@ubio/sdk'), require('form-serialize'), require('camelcase-keys'), require('lodash.kebabcase')) : typeof define === 'function' && define.amd ? define(['exports', '@ubio/sdk', 'form-serialize', 'camelcase-keys', 'lodash.kebabcase'], factory) : (global = global || self, factory(global['ubio-app-sdk'] = {}, global.sdk$1, global.formSerialize, global.camelCaseKeys, global.kebabCase));
-})(this, function (exports, sdk$1, formSerialize, camelCaseKeys, kebabCase) {
+  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('@ubio/sdk'), require('form-serialize'), require('camelcase-keys'), require('lodash.kebabcase')) : typeof define === 'function' && define.amd ? define(['exports', '@ubio/sdk', 'form-serialize', 'camelcase-keys', 'lodash.kebabcase'], factory) : (global = global || self, factory(global['ubio-app-sdk'] = {}, global.sdk$1, global.formSerialize, global.camelCaseKeys, global.lodash_kebabcase));
+})(this, function (exports, sdk$1, formSerialize, camelCaseKeys, lodash_kebabcase) {
   'use strict';
 
   formSerialize = formSerialize && formSerialize.hasOwnProperty('default') ? formSerialize['default'] : formSerialize;
   camelCaseKeys = camelCaseKeys && camelCaseKeys.hasOwnProperty('default') ? camelCaseKeys['default'] : camelCaseKeys;
-  kebabCase = kebabCase && kebabCase.hasOwnProperty('default') ? kebabCase['default'] : kebabCase;
+  lodash_kebabcase = lodash_kebabcase && lodash_kebabcase.hasOwnProperty('default') ? lodash_kebabcase['default'] : lodash_kebabcase;
   const initialInputs = {
     url: 'https://pet.morethan.com/h5/pet/step-1?path=%2FquoteAndBuy.do%3Fe%3De1s1%26curPage%3DcaptureDetails'
   };
@@ -65,7 +65,7 @@
     const inputOrOutput = localStorage.getItem(`${type}.${key}`);
 
     if (!inputOrOutput) {
-      return null;
+      return undefined;
     }
 
     return JSON.parse(inputOrOutput);
@@ -152,13 +152,16 @@
         const data = inputs[key];
         await this.sdk.createJobInput(key, data);
         set('input', key, data);
+        return {
+          key,
+          data
+        };
       });
-      await Promise.all(createInputs);
-      return inputs;
+      return await Promise.all(createInputs);
     }
 
     async waitForJobOutput(outputKey, inputKey) {
-      const outputs = await this.sdk.getJob(); // TODO: job
+      const outputs = await this.sdk.getJobOutputs(); // TODO: job
 
       const output = Array.isArray(outputs.data) && outputs.data.find(ou => ou.key === outputKey);
 
@@ -203,7 +206,6 @@
 
     trackJobOutput(outputKey, inputKey) {
       return new Promise((res, rej) => {
-        let awaitingInputProcessing = false;
         let createdOutputProcessing = false;
         const stopTracking = this.sdk.trackJob((event, error) => {
           console.log(`event ${event}`);
@@ -225,30 +227,24 @@
               createdOutputProcessing = false;
             });
           }
+          /*
+                          if (event === 'awaitingInput' && !awaitingInputProcessing) {
+                              awaitingInputProcessing = true;
+                              this.sdk.getJob()
+                                  .then(job => {
+                                      const { state, awaitingInputKey } = job;
+                                      if (state === 'awaitingInput' && awaitingInputKey !== inputKey) {
+                                          const error = {
+                                              name: 'jobExpectsDifferentInputKey',
+                                              details: { state, awaitingInputKey }
+                                          };
+                                           stopTracking();
+                                          rej(error);
+                                      }
+                                      awaitingInputProcessing = false;
+                                  })
+                          } */
 
-          if (event === 'awaitingInput' && !awaitingInputProcessing) {
-            awaitingInputProcessing = true;
-            this.sdk.getJob().then(job => {
-              const {
-                state,
-                awaitingInputKey
-              } = job;
-
-              if (state === 'awaitingInput' && awaitingInputKey !== inputKey) {
-                const error = {
-                  name: 'jobExpectsDifferentInputKey',
-                  details: {
-                    state,
-                    awaitingInputKey
-                  }
-                };
-                stopTracking();
-                rej(error);
-              }
-
-              awaitingInputProcessing = false;
-            });
-          }
         });
       });
     }
@@ -274,21 +270,6 @@
           callback(null, error);
         }
       });
-    }
-
-    async getPreviousOutputs() {
-      const {
-        inputs
-      } = getAll();
-      return await this.sdk.getPreviousJobOutputs(inputs);
-    }
-
-    async getPreviousOutput(outputKey) {
-      const {
-        inputs
-      } = getAll();
-      const outputs = await this.sdk.getPreviousJobOutputs(inputs);
-      return outputs.find(output => output.key = outputKey);
     }
 
   }
@@ -372,6 +353,33 @@
 
 
   const directives = new WeakMap();
+  /**
+   * Brands a function as a directive so that lit-html will call the function
+   * during template rendering, rather than passing as a value.
+   *
+   * @param f The directive factory function. Must be a function that returns a
+   * function of the signature `(part: Part) => void`. The returned function will
+   * be called with the part object
+   *
+   * @example
+   *
+   * ```
+   * import {directive, html} from 'lit-html';
+   *
+   * const immutable = directive((v) => (part) => {
+   *   if (part.value !== v) {
+   *     part.setValue(v)
+   *   }
+   * });
+   * ```
+   */
+  // tslint:disable-next-line:no-any
+
+  const directive = f => (...args) => {
+    const d = f(...args);
+    directives.set(d, true);
+    return d;
+  };
 
   const isDirective = o => {
     return typeof o === 'function' && directives.has(o);
@@ -1538,6 +1546,80 @@
    */
 
 
+  const _state = new WeakMap();
+  /**
+   * Renders one of a series of values, including Promises, to a Part.
+   *
+   * Values are rendered in priority order, with the first argument having the
+   * highest priority and the last argument having the lowest priority. If a
+   * value is a Promise, low-priority values will be rendered until it resolves.
+   *
+   * The priority of values can be used to create placeholder content for async
+   * data. For example, a Promise with pending content can be the first,
+   * highest-priority, argument, and a non_promise loading indicator template can
+   * be used as the second, lower-priority, argument. The loading indicator will
+   * render immediately, and the primary content will render when the Promise
+   * resolves.
+   *
+   * Example:
+   *
+   *     const content = fetch('./content.txt').then(r => r.text());
+   *     html`${until(content, html`<span>Loading...</span>`)}`
+   */
+
+
+  const until = directive((...args) => part => {
+    let state = _state.get(part);
+
+    if (state === undefined) {
+      state = {
+        values: []
+      };
+
+      _state.set(part, state);
+    }
+
+    const previousValues = state.values;
+    state.values = args;
+
+    for (let i = 0; i < args.length; i++) {
+      // If we've rendered a higher-priority value already, stop.
+      if (state.lastRenderedIndex !== undefined && i > state.lastRenderedIndex) {
+        break;
+      }
+
+      const value = args[i]; // Render non-Promise values immediately
+
+      if (isPrimitive(value) || typeof value.then !== 'function') {
+        part.setValue(value);
+        state.lastRenderedIndex = i; // Since a lower-priority value will never overwrite a higher-priority
+        // synchronous value, we can stop processsing now.
+
+        break;
+      } // If this is a Promise we've already handled, skip it.
+
+
+      if (state.lastRenderedIndex !== undefined && typeof value.then === 'function' && value === previousValues[i]) {
+        continue;
+      } // We have a Promise that we haven't seen before, so priorities may have
+      // changed. Forget what we rendered before.
+
+
+      state.lastRenderedIndex = undefined;
+      Promise.resolve(value).then(resolvedValue => {
+        const index = state.values.indexOf(value); // If state.values doesn't contain the value, we've re-rendered without
+        // the value, so don't render it. Then, only render if the value is
+        // higher-priority than what's already been rendered.
+
+        if (index > -1 && (state.lastRenderedIndex === undefined || index < state.lastRenderedIndex)) {
+          state.lastRenderedIndex = index;
+          part.setValue(resolvedValue);
+          part.commit();
+        }
+      });
+    }
+  });
+
   function poll(CACHE_CONFIG, newInputKey) {
     if (!newInputKey) {
       pollDefault(CACHE_CONFIG);
@@ -1892,48 +1974,18 @@
   var section = () => html`
     <div class="section">
         <pre id="error"></pre>
-        <form class="section__body" id="target"></form>
+        <div class="section__body" id="target"></div>
 
         <div class="section__actions">
-            <button type="button" class="button button--right button--primary" id="submitBtn">Continue</button>
         </div>
     </div>
 `;
-
-  var selectOne = (meta, output) => {
-    return html`
-    <div class="field field-set">
-        <span class="field__name">${meta.title || meta.key}</span>
-        <select name="${kebabCase(meta.key)}">
-            ${output.map(o => html`
-                <option value="${o}"> ${o}</option>`)}
-        </select>
-    </div>
-`;
-  };
-
-  var selectMany = (meta, output) => {
-    return html`
-    <div id="${meta.key}">
-        <div class="field field-set">
-            <span class="field__name">${meta.title || meta.key}</span>
-            <select name="${meta.key}">
-                ${output.map(o => html`
-                    <option value="${o}"> ${o}</option>`)}
-            </select>
-        </div>
-    </div>
-`;
-  };
 
   let availableBreedTypes = {};
 
-  var petsSelectedBreedType = (meta, outputOrCache) => {
-    availableBreedTypes = outputOrCache.availableBreedTypes;
-    return petsAndSelectedBreedType();
-  };
-
-  const petsAndSelectedBreedType = () => html`
+  var petsSelectedBreedType = data => {
+    availableBreedTypes = data;
+    return html`
 <div class="job-input">
     <div class="pet" name="pets[0]">
         <div class="field field-set">
@@ -2082,6 +2134,7 @@
     </div>
 </div>
 `;
+  };
 
   const breedTypeOptions = options => html`
     ${options.map(o => html`
@@ -2093,6 +2146,7 @@
       console.log('e.target.value', e.target.value);
       const animalType = e.target.value;
       const options = availableBreedTypes[animalType] || [];
+      console.log('options', options);
       render(breedTypeOptions(options), document.querySelector('#selected-breed-type'));
     }
 
@@ -2175,6 +2229,18 @@
     </div>
 `;
 
+  const key$1 = 'selected-address';
+
+  var selectedAddress = output => html`
+    <div class="field field-set">
+        <span class="field__name">Address</span>
+        <select name="${key$1}">
+            ${output.map(o => html`
+                <option value="${o}"> ${o}</option>`)}
+        </select>
+    </div>
+`;
+
   var policyOptions = () => html`
 <div name="policy-options" class="filed-set">
     <div class="field">
@@ -2188,12 +2254,40 @@
     </div>
 </div>`;
 
-  var selectedCoverType = (meta, output) => {
-    const key = kebabCase(meta.key);
+  var selectedCover = covers => html`
+    <div class="field field-set">
+        <span class="field__name">Select Cover</span>
+        <div class="field__inputs group group--merged">
+        ${covers.map(cover => html`
+            <input
+                type="radio"
+                name="selected-cover"
+                value="${cover}"
+                id="selected-cover-${cover}"
+                required>
+            <label for="selected-cover-${cover}" class="button">${cover}</label>
+            `)}
+        </div>
+    </div>
+`;
+
+  const key$2 = 'selected-vet-payment-term';
+
+  var selectedVetPaymentTerm = output => {
     return html`
     <div class="field field-set">
-        <span class="field__name">${meta.title || meta.key}</span>
-        ${output.map(optionObj => html`
+        <span class="field__name">Select Vet Payment Term </span>
+        <select name="${key$2}">
+            ${output.map(o => html`<option value="${o}"> ${o}</option>`)}
+        </select>
+    </div>
+`;
+  };
+
+  var selectedCoverType = outputs => html`
+    <div class="field field-set">
+        <span class="field__name">Available Cover Type</span>
+        ${outputs.map(optionObj => html`
             <input
                 type="radio"
                 id="${key}-${optionObj.coverName}"
@@ -2205,22 +2299,39 @@
             </label>`)}
     </div>
 `;
-  };
 
-  var selectedVetFee = (meta, output) => {
-    const key = kebabCase(meta.key);
+  var selectedPaymentTerm = terms => html`
+    <div class="field field-set">
+        <span class="field__name">Select Payment term</span>
+        <div class="field__inputs group group--merged">
+        ${terms.map(term => html`
+            <input
+                type="radio"
+                name="selected-payment-term"
+                value="${term}"
+                id="selected-payment-term-${term}"
+                required>
+            <label for="selected-payment-term-${term}" class="button">${term}</label>
+            `)}
+        </div>
+    </div>
+`;
+
+  const key$3 = 'selected-vet-fee';
+
+  var selectedVetFee = output => {
     return html`
     <div class="field field-set">
-        <span class="field__name">${meta.title || meta.key}</span>
+        <span class="field__name">Vet Fee</span>
         <div class="field__inputs group group--merged">
             ${output.map(optionObj => html`
                 <input
                     type="radio"
-                    id="${key}-${optionObj.price.value}"
-                    name="${key}-$object"
+                    id="${key$3}-${optionObj.price.value}"
+                    name="${key$3}-$object"
                     value="${JSON.stringify(optionObj)}">
                 <label
-                    for="${key}-${optionObj.price.value}"
+                    for="${key$3}-${optionObj.price.value}"
                     class="button">
                     <div><b>${optionObj.text}</b> <p>${optionObj.price.value * 0.01} ${optionObj.price.currencyCode}</p></div>
                 </label>`)}
@@ -2229,21 +2340,22 @@
 `;
   };
 
-  var selectedVoluntaryExcess = (meta, output) => {
-    const key = kebabCase(meta.key);
+  const key$4 = 'selected-voluntary-excess';
+
+  var selectedVoluntaryExcess = output => {
     return html`
     <div class="field field-set">
-        <span class="field__name">${meta.title || meta.key}</span>
+        <span class="field__name">Select voluntary excess </span>
         <div class="field__inputs group group--merged">
         ${output.map(optionObj => html`
         <div>
             <input
                 type="radio"
-                id="${key}-${optionObj.priceLine}"
-                name="${key}-$object"
+                id="${key$4}-${optionObj.priceLine}"
+                name="${key$4}-$object"
                 value="${JSON.stringify(optionObj)}">
 
-            <label for="${key}-${optionObj.priceLine}" class="button">
+            <label for="${key$4}-${optionObj.priceLine}" class="button">
                 <div>
                     <b>${optionObj.name}</b>
                     <pre>${optionObj.details}</pre>
@@ -2257,14 +2369,16 @@
 `;
   };
 
-  var selectedCoverOptions = (meta, output) => {
+  const key$5 = 'selected-cover-options';
+
+  var selectedCoverOptions = output => {
     return html`
-    <div id="${meta.key}">
+    <div id="${key$5}">
         <div class="field field-set">
-            <span class="field__name">${meta.title || meta.key}</span>
+            <span class="field__name">Select Covers</span>
             ${output.map(o => html`
-            <input type="checkbox" value="${JSON.stringify(o)}" name="${meta.key}-$object[]" id="${meta.key}-${o.name}"/>
-            <label for="${meta.key}-${o.name}" class="button">
+            <input type="checkbox" value="${JSON.stringify(o)}" name="${key$5}-$object[]" id="${key$5}-${o.name}"/>
+            <label for="${key$5}-${o.name}" class="button">
                 <div>
                     <b>${o.name}</b>
                     <pre>${o.detail}</pre>
@@ -2444,22 +2558,28 @@
 </div>
 `;
 
-  var finalPriceConsent = (meta, priceConsent) => {
+  const key$6 = 'final-price-consent';
+
+  var finalPriceConsent = priceConsent => {
     return html`
     <div class="field field-set">
-        <span class="field__name">${meta.title || meta.key}</span>
+        <span class="field__name"></span>
         <h4 class="warning">By clicking continue, we are going to process your payment</h4>
-        <input type="radio" name="${kebabCase(meta.key)}-$object" value="${JSON.stringify(priceConsent)}" required>
+        <input type="radio" name="${key$6}-$object" value="${JSON.stringify(priceConsent)}" required>
         <b>${priceConsent.price.value} ${priceConsent.price.currencyCode}</b>
     </div>
 `;
   };
 
-  var inputs = {
+  var templates = {
     petsSelectedBreedType,
     account,
     owner,
+    selectedAddress,
     policyOptions,
+    selectedCover,
+    selectedPaymentTerm,
+    selectedVetPaymentTerm,
     selectedCoverType,
     selectedVetFee,
     selectedVoluntaryExcess,
@@ -2471,56 +2591,65 @@
   /** Global */
   //TODO-test: run this function for all given inputMetas;
 
-  var templates = {
+  var templates$1 = {
     loading: Loading,
     section,
-    getInput
+    get: get$1
   };
 
-  function getInput(meta) {
-    const {
-      key,
-      inputMethod
-    } = meta;
-    let templateFunc = inputs[key];
-
-    if (!templateFunc && inputMethod === 'SelectOne') {
-      templateFunc = selectOne;
+  function get$1(screen, asyncFunc) {
+    if (typeof asyncFunc !== 'function') {
+      throw new Error('asyncFunc is not a function');
+      console.debug(asyncFunc);
     }
 
-    if (!templateFunc && inputMethod === 'SelectMany') {
-      templateFunc = selectMany;
-    }
-    /*
-    if (!template && inputMethod === 'Consent') {
-        template = consent;
-    } */
+    let templateFunc = templates[screen];
 
-
-    if (templateFunc && typeof templateFunc === 'function') {
-      console.log('templateFunc found');
-      return templateFunc;
+    if (!templateFunc) {
+      throw new Error('No template found for give screen');
     }
 
-    return null;
+    const awaiting = asyncFunc().then(({
+      data,
+      skip
+    }) => {
+      if (skip) {
+        return html``;
+      }
+
+      return templateFunc(data);
+    });
+    return html`${until(awaiting, html`<span>Loading....</span>`)}`;
   }
 
-  var cache = {
+  var Data = {
     availableBreedTypes: {
       "cat": ["Pedigree", "Non-Pedigree"],
       "dog": ["Cross Breed", "Pedigree", "Small mixed breed (up to 10kg)", "Medium mixed breed (10 - 20kg)", "Large mixed breed (above 20kg)"]
     }
   };
 
+  function getSource(maxType = 'data', key) {
+    let source = get('output', key);
+
+    if (!source && ['cache', 'data'].includes(maxType)) {
+      source = get('cache', key);
+    }
+
+    if (!source && maxType === 'data') {
+      source = Data[key] || null;
+    }
+
+    return source;
+  }
+
   class Section {
-    constructor(name, inputsMeta = [], selector, onFinish) {
+    constructor(name, screens = [], selector, onFinish) {
       this.name = name;
       this.selector = selector;
-      this.inputsMeta = inputsMeta;
+      this.screens = screens;
       this.onFinish = onFinish;
-      this.keysToRender = this.inputsMeta.map(nd => nd.key);
-      this.keysRendered = [];
-      this.cachedTemplates = [];
+      this.screenToSubmit = this.screens.length;
       Promise.resolve(this.init());
     }
 
@@ -2528,7 +2657,7 @@
       if (!sdk.initiated) {
         try {
           sdk.retrieve(); //TODO: if it's retrieved, check which input has provided. s
-          // add submitted input to keysRendered, and render the next one.
+          // add submitted input to keysSubmitted, and render the next one.
         } catch (err) {
           window.location.hash = '/';
           return;
@@ -2536,20 +2665,29 @@
       }
 
       this.renderWrapper();
-      this.renderNextContent();
+      this.renderScreens();
     }
 
     renderWrapper() {
-      render(html``, document.querySelector(this.selector));
-      render(templates.section(), document.querySelector(this.selector));
-      this.addListener();
+      render(templates$1.section(), document.querySelector(this.selector));
+      const wrappers = this.screens.map(screen => screen.key).map(key => {
+        return html`<form id="screen-${key}"></form>`;
+      });
+      render(html`${wrappers.map(w => w)}`, document.querySelector('#target'));
+      /* this.addListener(); */
     }
 
-    addListener() {
-      const submitBtn = document.querySelector(`#submitBtn`);
+    addListener(key) {
+      const submitBtn = document.querySelector(`#submitBtn-${key}`);
+
+      if (!submitBtn) {
+        console.warn(`no button #submitBtn-${key} found`);
+        return;
+      }
+
       submitBtn.addEventListener('click', () => {
         // TODO: validate the input (using protocol?)
-        const form = document.querySelector('form');
+        const form = document.querySelector(`#screen-${key}`);
 
         if (!form.reportValidity()) {
           console.log('invalid form');
@@ -2557,82 +2695,155 @@
         }
 
         submitBtn.setAttribute('disabled', 'true');
-        const inputs = serializeForm(); // send input sdk
+        const inputs = serializeForm(`screen-${key}`); // send input sdk
 
-        sdk.createJobInputs(inputs).then(submittedInputs => {
-          const event = new CustomEvent('submitinput', {
-            detail: submittedInputs
-          });
-          window.dispatchEvent(event);
-
-          if (this.keysToRender.length !== 0) {
-            render(html`Loading...`, document.querySelector('#next-of-pets')); //TODO: create template
-
-            this.renderNextContent();
-            submitBtn.removeAttribute('disabled');
-          } else {
-            render(html``, document.querySelector(this.selector));
-            this.onFinish();
-          }
-        }).catch(err => {
-          if (document.querySelector('#error')) {
-            render(html`${err}`, document.querySelector('#error'));
-          }
-
-          submitBtn.removeAttribute('disabled');
-        });
+        this.submitInputs(inputs);
       });
     }
 
-    renderNextContent() {
-      const nextKey = this.keysToRender.shift();
-
-      if (!nextKey) {
-        return this.onFinish();
-      }
-
-      const inputMeta = this.inputsMeta.find(im => im.key === nextKey); //error handling?
-
-      const template = templates.getInput(inputMeta); // render if the output is here.
-      // when the awaitingInput event has happened, check nextKey and awaitingInputKey.
-      // if it's different, skip this one, and render the awaitingInputKey.
-
-      if (inputMeta.sourceOutputKey != null) {
-        sdk.waitForJobOutput(inputMeta.sourceOutputKey, nextKey).then(output => {
-          render(html`${template(inputMeta, output)}`, document.querySelector('#target'));
-          this.keysRendered.push(nextKey);
-        }).catch(err => {
-          if (err.name === 'jobExpectsDifferentInputKey') {
-            console.log('got jobExpectsDifferentInputKey!', err.details.awaitingInputKey);
-            const input = this.inputsMeta.find(im => im.key === err.details.awaitingInputKey);
-
-            if (!input) {
-              // not found in this section! finish
-              return this.onFinish();
-            }
-
-            const idx = this.keysToRender.indexOf(input.key);
-            this.keysToRender.splice(idx, 1);
-            this.keysToRender.unshift(...[input.key, nextKey]);
-            return this.renderNextContent();
-          }
+    submitInputs(inputs) {
+      sdk.createJobInputs(inputs).then(submittedInputs => {
+        this.screenToSubmit -= 1;
+        const event = new CustomEvent('submitinput', {
+          detail: submittedInputs
         });
-      } else {
-        render(html`${template(null, cache)}<div id="next-of-${inputMeta.key}"></div>`, document.querySelector('#target'));
-        this.keysRendered.push(nextKey);
+        window.dispatchEvent(event);
+
+        if (this.screenToSubmit === 0) {
+          render(html``, document.querySelector(this.selector));
+          this.onFinish();
+        }
+      }).catch(err => {
+        if (document.querySelector('#error')) {
+          render(html`${err}`, document.querySelector('#error'));
+        }
+      });
+    }
+
+    skipScreen() {
+      this.screenToSubmit -= 1;
+
+      if (this.screenToSubmit === 0) {
+        render(html``, document.querySelector(this.selector));
+        this.onFinish();
       }
     }
+
+    renderScreen({
+      key,
+      waitFor = ''
+      /* , submitOn:[button, onComplete] */
+
+    }) {
+      const template = templates$1.get(key, getDataForScreen);
+      const selector = document.querySelector(`#screen-${key}`);
+      const buttonTemplate = html`<button type="button" class="button button--right button--primary" id="submitBtn-${key}">Select</button>`;
+
+      if (!template || !selector) {
+        throw new Error('Template or selector not found, check the config');
+      }
+      /** build a promise function that applicable for all kind */
+
+
+      function getDataForScreen() {
+        return new Promise(res => {
+          if (!waitFor) {
+            return res({
+              data: null,
+              skip: false
+            });
+          }
+
+          const [type, sourceKey] = waitFor.split('.');
+          const data = getSource(type, sourceKey);
+          console.log('data in example', data);
+
+          if (data === null) {
+            this.skipScreen();
+            return res({
+              data: null,
+              skip: true
+            });
+          }
+
+          if (data) {
+            return res({
+              data,
+              skip: false
+            });
+          }
+
+          sdk.waitForJobOutput(sourceKey, key).then(data => {
+            if (data === null) {
+              this.skipScreen();
+              return res({
+                data: null,
+                skip: true
+              });
+            }
+
+            return res({
+              data,
+              skip: false
+            });
+          });
+        });
+      }
+
+      render(html`
+                ${template}
+                ${buttonTemplate}
+            `, selector);
+    }
+
+    renderScreens() {
+      this.screens.forEach(screen => {
+        this.renderScreen(screen);
+        this.addListener(screen.key);
+      });
+    }
+    /*
+            //error handling?
+            const template = templates.getInput(screen);
+            // render if the output is here.
+            // when the awaitingInput event has happened, check nextKey and awaitingInputKey.
+            // if it's different, skip this one, and render the awaitingInputKey.
+            if (screen.sourceOutputKey != null) {
+                sdk.waitForJobOutput(screen.sourceOutputKey, nextKey)
+                    .then(output => {
+                        render(html`${template(screen, output)}`, document.querySelector('#target'));
+                         this.keysSubmitted.push(nextKey);
+                    })
+                    .catch(err => {
+                        if (err.name === 'jobExpectsDifferentInputKey') {
+                            console.log('got jobExpectsDifferentInputKey!', err.details.awaitingInputKey);
+                             const input = this.screens.find(im => im.key === err.details.awaitingInputKey);
+                            if (!input) {
+                                // not found in this section! finish
+                                return this.onFinish();
+                            }
+                             const idx = this.keysToSubmit.indexOf(input.key);
+                            this.keysToSubmit.splice(idx, 1);
+                            this.keysToSubmit.unshift(...[input.key, nextKey]);
+                             return this.renderScreens();
+                        }
+                    });
+            } else {
+                render(html`${template(null, cache)}<div id="next-of-${screen.key}"></div>`, document.querySelector('#target'));
+                 this.keysSubmitted.push(nextKey);
+            } */
+
 
   }
   /**
    * @param {String} name
-   * @param {Array} inputMeta
+   * @param {Array} screens
    * @param {Function} onFinish
    */
 
 
-  function getSection(name, inputMeta, selector, onFinish) {
-    return new Section(name, inputMeta, selector, onFinish);
+  function getSection(name, screens, selector, onFinish) {
+    return new Section(name, screens, selector, onFinish);
   }
 
   var NotFound = selector => {};
@@ -2673,7 +2884,7 @@
     const {
       name,
       title,
-      inputs
+      screens
     } = config;
 
     if (!name) {
@@ -2684,13 +2895,13 @@
       throw new Error('title is needed for section');
     }
 
-    if (!Array.isArray(inputs)) {
-      throw new Error('inputs needed for section');
+    if (!Array.isArray(screens)) {
+      throw new Error('screens needed for section');
     }
 
     return {
       init: () => {
-        sdk.create().then(() => getSection(name, inputs, selector, callback)).catch(err => console.log(err));
+        sdk.create().then(() => getSection(name, screens, selector, callback)).catch(err => console.log(err));
       }
     };
   }
@@ -2698,7 +2909,7 @@
   function createApp(SECTION_CONFIGS = [], CACHE_CONFIGS = [], selector, callback) {
     //TODO: maybe this core app fetches all domain's meta and store them.
     // config will accept input keys rather than whole meta
-    const isValidConfig = SECTION_CONFIGS.length > 0 && SECTION_CONFIGS.every(config => config.name && config.title && config.inputs && config.route);
+    const isValidConfig = SECTION_CONFIGS.length > 0 && SECTION_CONFIGS.every(config => config.name && config.title && config.screens && config.route);
 
     if (!isValidConfig) {
       throw new Error('invalid config');
@@ -2714,12 +2925,12 @@
     SECTION_CONFIGS.forEach((config, idx) => {
       const {
         title,
-        inputs,
+        screens,
         route
       } = config;
       const next = flow[idx + 1];
 
-      const render = () => getSection(name, inputs, selector, () => setTimeout(() => {
+      const render = () => getSection(name, screens, selector, () => setTimeout(() => {
         window.location.hash = next;
       }, 1000));
 
@@ -2757,7 +2968,7 @@
 
         window.addEventListener('submitinput', e => {
           //TODO: get cache using output
-          poll(CACHE_CONFIGS, Object.keys(e.detail.key));
+          poll(CACHE_CONFIGS, Object.keys(e.detail));
           const {
             inputs,
             outputs
@@ -2794,8 +3005,8 @@
       name: 'aboutYourPet',
       title: 'Tell Me About Your Pet',
       inputs: [
-          { key: 'pets', sourceOutputKey: null },
-          { key: 'selectedBreedType', sourceOutputKey: 'availableBreedTypes', title: 'select breed type' }
+          { key: 'pets', waitFor: null },
+          { key: 'selectedBreedType', waitFor: 'availableBreedTypes', title: 'select breed type' }
       ],
   };
    var section = createSection(config, '#app', () => { console.log('finished!')});
@@ -2804,7 +3015,6 @@
 
 
   const CACHE = [{
-    name: 'priceBreakdown',
     key: 'priceBreakdown',
     sourceInputKeys: ['selectedOption1', 'selectedOption2']
   }, {
@@ -2821,72 +3031,72 @@
     name: 'aboutYourPet',
     route: '/about-your-pet',
     title: 'About Your Pet',
-    inputs: [{
+    screens: [{
       key: 'petsSelectedBreedType',
-      sourceOutputKey: null
+      waitFor: 'data.availableBreedTypes'
     }]
   }, {
     name: 'aboutYou',
     route: '/about-you',
     title: 'About You',
-    inputs: [{
+    screens: [{
       key: 'account',
-      sourceOutputKey: null
+      waitFor: null
     }, {
       key: 'owner',
-      sourceOutputKey: null
+      waitFor: null
     }, {
       key: 'selectedAddress',
-      sourceOutputKey: 'availableAddresses'
+      waitFor: 'output.availableAddresses'
     }]
   }, {
     name: 'yourPolicy',
     route: '/your-policy',
     title: 'Your Policy',
-    inputs: [{
+    screens: [{
       key: 'policyOptions',
-      sourceOutputKey: null
+      waitFor: null
     }, //todo: allowCache config for previous
     {
       key: 'selectedCover',
-      sourceOutputKey: 'availableCovers'
+      waitFor: 'cache.availableCovers'
     }, {
       key: 'selectedVetPaymentTerm',
-      sourceOutputKey: 'availableVetPaymentTerms'
+      waitFor: 'output.availableVetPaymentTerms'
     }, {
       key: 'selectedPaymentTerm',
-      sourceOutputKey: 'availablePaymentTerms'
+      waitFor: 'cache.availablePaymentTerms'
     }, {
       key: 'selectedCoverType',
-      sourceOutputKey: 'availableCoverTypes'
+      waitFor: 'output.availableCoverTypes'
     }, {
       key: 'selectedVoluntaryExcess',
-      sourceOutputKey: 'availableVoluntaryExcesses'
+      waitFor: 'output.availableVoluntaryExcesses'
     }, {
       key: 'selectedCoverOptions',
-      sourceOutputKey: 'availableCoverOptions'
+      waitFor: 'output.availableCoverOptions'
     }, {
       key: 'selectedVetFee',
-      sourceOutputKey: 'availableVetFees'
+      waitFor: 'output.availableVetFees'
     }]
   }, {
     name: 'paymentDetail',
     route: '/payment',
     title: 'Payment Details',
-    inputs: [{
+    screens: [{
       key: 'payment',
-      sourceOutputKey: null
+      waitFor: 'output.estimatedPrice'
     }, {
       key: 'directDebit',
-      sourceOutputKey: null
+      waitFor: 'output.estimatedPrice'
     }]
   }, {
     name: 'consentPayment',
     route: '/consent-payment',
     title: 'Ready to insure your pet',
-    inputs: [{
+    screens: [{
       key: 'finalPriceConsent',
-      sourceOutputKey: 'finalPrice'
+      waitFor: 'finalPrice'
     }]
   }];
   var app = createApp(SECTIONS, CACHE, '#app', () => {

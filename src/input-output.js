@@ -46,7 +46,7 @@ function get(type, key) {
     const inputOrOutput = localStorage.getItem(`${type}.${key}`);
 
     if (!inputOrOutput) {
-        return null;
+        return undefined;
     }
 
     return JSON.parse(inputOrOutput);

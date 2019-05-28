@@ -1,12 +1,12 @@
-import kebabCase from 'lodash.kebabcase';
 import { html } from '../../src/lit-html';
+const key = 'final-price-consent';
 
-export default (meta, priceConsent) => {
+export default (priceConsent) => {
     return html`
     <div class="field field-set">
-        <span class="field__name">${meta.title || meta.key}</span>
+        <span class="field__name"></span>
         <h4 class="warning">By clicking continue, we are going to process your payment</h4>
-        <input type="radio" name="${kebabCase(meta.key)}-$object" value="${JSON.stringify(priceConsent)}" required>
+        <input type="radio" name="${key}-$object" value="${JSON.stringify(priceConsent)}" required>
         <b>${ priceConsent.price.value } ${ priceConsent.price.currencyCode }</b>
     </div>
 `};

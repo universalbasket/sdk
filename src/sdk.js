@@ -59,22 +59,21 @@ class EndUserSdk {
 
             await this.sdk.createJobInput(key, data);
             InputOutput.set('input', key, data);
+            return { key, data };
         });
 
-        await Promise.all(createInputs);
-
-        return inputs;
+        return await Promise.all(createInputs);
     }
 
     async waitForJobOutput(outputKey, inputKey) {
-        const outputs = await this.sdk.getJob(); // TODO: job
+        const outputs = await this.sdk.getJobOutputs(); // TODO: job
         const output = Array.isArray(outputs.data) && outputs.data.find(ou => ou.key === outputKey);
 
         if (output) {
             return output.data;
         }
 
-        return await this.trackJobOutput(outputKey, inputKey);
+        return await this.trackJobOutput(outputKey);
     }
 
     async getCache({ key: outputKey, sourceInputKeys }) {
@@ -95,15 +94,11 @@ class EndUserSdk {
             .map(cache => { return { key: cache.key, data: cache.data }});
     }
 
-    trackJobOutput(outputKey, inputKey) {
+    trackJobOutput(outputKey) {
         return new Promise((res, rej) => {
-            let awaitingInputProcessing = false;
             let createdOutputProcessing = false;
 
             const stopTracking = this.sdk.trackJob((event, error) => {
-                console.log(`event ${event}`);
-                console.log(event);
-
                 if (event === 'createOutput' && !createdOutputProcessing) {
                     createdOutputProcessing = true;
                     this.sdk.getJobOutputs()
@@ -112,6 +107,7 @@ class EndUserSdk {
                                 InputOutput.set('output', output.key, output.data);
                             });
 
+                            createdOutputProcessing = false;
                             const output = outputs.data.find(jo => jo.key === outputKey)
 
                             if (output) {
@@ -119,26 +115,7 @@ class EndUserSdk {
                                 res(output.data);
                             }
 
-                            createdOutputProcessing = false;
                         });
-                }
-
-                if (event === 'awaitingInput' && !awaitingInputProcessing) {
-                    awaitingInputProcessing = true;
-                    this.sdk.getJob()
-                        .then(job => {
-                            const { state, awaitingInputKey } = job;
-                            if (state === 'awaitingInput' && awaitingInputKey !== inputKey) {
-                                const error = {
-                                    name: 'jobExpectsDifferentInputKey',
-                                    details: { state, awaitingInputKey }
-                                };
-
-                                stopTracking();
-                                rej(error);
-                            }
-                            awaitingInputProcessing = false;
-                        })
                 }
             });
         });
@@ -163,18 +140,6 @@ class EndUserSdk {
                 callback(null, error);
             }
         });
-    }
-
-    async getPreviousOutputs() {
-        const { inputs } = InputOutput.getAll();
-        return await this.sdk.getPreviousJobOutputs(inputs);
-    }
-
-    async getPreviousOutput(outputKey) {
-        const { inputs } = InputOutput.getAll();
-        const outputs = await this.sdk.getPreviousJobOutputs(inputs);
-
-        return outputs.find(output => output.key = outputKey);
     }
 }
 

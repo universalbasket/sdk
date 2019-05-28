@@ -1,38 +1,25 @@
 /** Global */
-
+import { html, until } from '../src/lit-html';
 import loading from './loading';
 import section from './section';
-import selectOne from './selected-input-one';
-import selectMany from './selected-input-many';
-
-import inputs from './inputs/index';
+import templates from './screens/index';
 
 //TODO-test: run this function for all given inputMetas;
-export default { loading, section, getInput };
+export default { loading, section, get };
 
-function getInput(meta) {
-    const { key, inputMethod } = meta;
-    let templateFunc = inputs[key];
+function get(screen, asyncFunc) {
+    let templateFunc = templates[screen];
 
-    if (!templateFunc && inputMethod === 'SelectOne') {
-        templateFunc = selectOne;
+    if(!templateFunc) {
+        throw new Error('No template found for give screen');
     }
 
-    if (!templateFunc && inputMethod === 'SelectMany') {
-        templateFunc = selectMany;
-    }
+    const awaiting = asyncFunc().then(({ data, skip }) => {
+        if (skip) {
+            return html``;
+        }
+        return templateFunc(data);
+    });
 
-    /*
-    if (!template && inputMethod === 'Consent') {
-        template = consent;
-    } */
-
-    if (templateFunc && typeof templateFunc === 'function') {
-        console.log('templateFunc found');
-        return templateFunc;
-    }
-
-    return null;
+    return html`${until(awaiting, html`<span>Loading....</span>`)}`;
 }
-
-const INPUT_METHOD = [ "SeatSelection", "Consent", "SelectOne", "SelectMany" ];

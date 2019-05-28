@@ -2,12 +2,9 @@ import { html, render } from '../../src/lit-html';
 
 let availableBreedTypes = {};
 
-export default (meta, outputOrCache) => {
-    availableBreedTypes = outputOrCache.availableBreedTypes;
-    return petsAndSelectedBreedType();
-}
-
-const petsAndSelectedBreedType = () => html`
+export default (data) => {
+    availableBreedTypes = data;
+    return html`
 <div class="job-input">
     <div class="pet" name="pets[0]">
         <div class="field field-set">
@@ -156,6 +153,7 @@ const petsAndSelectedBreedType = () => html`
     </div>
 </div>
 `;
+}
 
 const breedTypeOptions = (options) => html`
     ${ options.map(o => html`
@@ -169,6 +167,7 @@ const breedTypeHandler = {
         const animalType = e.target.value;
         const options = availableBreedTypes[animalType] || [];
 
+        console.log('options', options);
         render(breedTypeOptions(options), document.querySelector('#selected-breed-type'));
     },
 // event listener objects can also define zero or more of the event

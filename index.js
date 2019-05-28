@@ -22,7 +22,7 @@ import ProgressBar from './src/ProgressBar';
 
 function createSection(config = {}, selector, callback) {
     //TODO: make config validator
-    const { name, title, inputs } = config;
+    const { name, title, screens } = config;
 
     if (!name) {
         throw new Error('name is needed for section');
@@ -32,15 +32,15 @@ function createSection(config = {}, selector, callback) {
         throw new Error('title is needed for section');
     }
 
-    if (!Array.isArray(inputs)) {
-        throw new Error('inputs needed for section');
+    if (!Array.isArray(screens)) {
+        throw new Error('screens needed for section');
     }
 
     return {
         init: () => {
             sdk
                 .create()
-                .then(() => Section(name, inputs, selector, callback))
+                .then(() => Section(name, screens, selector, callback))
                 .catch(err => console.log(err));
         }
     };
@@ -50,7 +50,7 @@ function createApp(SECTION_CONFIGS = [], CACHE_CONFIGS = [], selector, callback)
         //TODO: maybe this core app fetches all domain's meta and store them.
         // config will accept input keys rather than whole meta
 
-    const isValidConfig = SECTION_CONFIGS.length > 0 && SECTION_CONFIGS.every(config => config.name && config.title && config.inputs && config.route);
+    const isValidConfig = SECTION_CONFIGS.length > 0 && SECTION_CONFIGS.every(config => config.name && config.title && config.screens && config.route);
 
     if (!isValidConfig) {
         throw new Error('invalid config');
@@ -67,10 +67,10 @@ function createApp(SECTION_CONFIGS = [], CACHE_CONFIGS = [], selector, callback)
     };
 
     SECTION_CONFIGS.forEach((config, idx) => {
-        const { title, inputs, route } = config;
+        const { title, screens, route } = config;
         const next = flow[idx + 1];
 
-        const render = () => Section(name, inputs, selector, () => setTimeout(() => { window.location.hash = next }, 1000));
+        const render = () => Section(name, screens, selector, () => setTimeout(() => { window.location.hash = next }, 1000));
         routes[route] = { render, title, step: idx + 1 };
     });
 
@@ -106,7 +106,7 @@ function createApp(SECTION_CONFIGS = [], CACHE_CONFIGS = [], selector, callback)
             //custom event when input submitted
             window.addEventListener('submitinput', (e) => {
                 //TODO: get cache using output
-                Cache.poll(CACHE_CONFIGS, Object.keys(e.detail.key));
+                Cache.poll(CACHE_CONFIGS, Object.keys(e.detail));
                 const { inputs, outputs } = InputOutput.getAll();
                 render(Summary(inputs, outputs), document.querySelector('#summary'));
             })
@@ -144,8 +144,8 @@ const config = {
     name: 'aboutYourPet',
     title: 'Tell Me About Your Pet',
     inputs: [
-        { key: 'pets', sourceOutputKey: null },
-        { key: 'selectedBreedType', sourceOutputKey: 'availableBreedTypes', title: 'select breed type' }
+        { key: 'pets', waitFor: null },
+        { key: 'selectedBreedType', waitFor: 'availableBreedTypes', title: 'select breed type' }
     ],
 };
 
@@ -156,7 +156,6 @@ section.init();
 
 const CACHE = [
     {
-        name: 'priceBreakdown',
         key: 'priceBreakdown',
         sourceInputKeys: ['selectedOption1', 'selectedOption2']
     },
@@ -179,50 +178,50 @@ const SECTIONS = [
         name: 'aboutYourPet',
         route: '/about-your-pet',
         title: 'About Your Pet',
-        inputs: [
-            { key: 'petsSelectedBreedType', sourceOutputKey: null }
-        ],
+        screens: [
+            { key: 'petsSelectedBreedType', waitFor: 'data.availableBreedTypes' }
+        ]
     },
     {
         name: 'aboutYou',
         route: '/about-you',
         title: 'About You',
-        inputs: [
-            { key: 'account', sourceOutputKey: null },
-            { key: 'owner', sourceOutputKey: null },
-            { key: 'selectedAddress',  sourceOutputKey: 'availableAddresses' }
+        screens: [
+            { key: 'account', waitFor: null },
+            { key: 'owner', waitFor: null },
+            { key: 'selectedAddress', waitFor: 'output.availableAddresses' }
         ]
     },
     {
         name: 'yourPolicy',
         route: '/your-policy',
         title: 'Your Policy',
-        inputs: [
-            { key: 'policyOptions', sourceOutputKey: null }, //todo: allowCache config for previous
-            { key: 'selectedCover', sourceOutputKey: 'availableCovers' },
-            { key: 'selectedVetPaymentTerm', sourceOutputKey: 'availableVetPaymentTerms' },
-            { key: 'selectedPaymentTerm', sourceOutputKey: 'availablePaymentTerms' },
-            { key: 'selectedCoverType', sourceOutputKey: 'availableCoverTypes' },
-            { key: 'selectedVoluntaryExcess', sourceOutputKey: 'availableVoluntaryExcesses' },
-            { key: 'selectedCoverOptions', sourceOutputKey: 'availableCoverOptions' },
-            { key: 'selectedVetFee', sourceOutputKey: 'availableVetFees' },
+        screens: [
+            { key: 'policyOptions', waitFor: null }, //todo: allowCache config for previous
+            { key: 'selectedCover', waitFor: 'cache.availableCovers' },
+            { key: 'selectedVetPaymentTerm', waitFor: 'output.availableVetPaymentTerms' },
+            { key: 'selectedPaymentTerm', waitFor: 'cache.availablePaymentTerms' },
+            { key: 'selectedCoverType', waitFor: 'output.availableCoverTypes' },
+            { key: 'selectedVoluntaryExcess', waitFor: 'output.availableVoluntaryExcesses' },
+            { key: 'selectedCoverOptions', waitFor: 'output.availableCoverOptions' },
+            { key: 'selectedVetFee', waitFor: 'output.availableVetFees' }
         ]
     },
     {
         name: 'paymentDetail',
         route: '/payment',
         title: 'Payment Details',
-        inputs: [
-            { key: 'payment', sourceOutputKey: null },
-            { key: 'directDebit', sourceOutputKey: null }
+        screens: [
+            { key: 'payment', waitFor: 'output.estimatedPrice' },
+            { key: 'directDebit', waitFor: 'output.estimatedPrice' }
         ]
     },
     {
         name: 'consentPayment',
         route: '/consent-payment',
         title: 'Ready to insure your pet',
-        inputs: [
-            { key: 'finalPriceConsent', sourceOutputKey: 'finalPrice'},
+        screens: [
+            { key: 'finalPriceConsent', waitFor: 'finalPrice'},
         ]
     }
 ];

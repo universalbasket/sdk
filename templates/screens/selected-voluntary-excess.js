@@ -1,11 +1,10 @@
-import kebabCase from 'lodash.kebabcase';
 import { html } from '../../src/lit-html';
+const key = 'selected-voluntary-excess';
 
-export default (meta, output) => {
-    const key = kebabCase(meta.key);
+export default (output) => {
     return html`
     <div class="field field-set">
-        <span class="field__name">${meta.title || meta.key}</span>
+        <span class="field__name">Select voluntary excess </span>
         <div class="field__inputs group group--merged">
         ${output.map(optionObj => html`
         <div>

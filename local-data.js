@@ -12,4 +12,4 @@ export default {
             "Large mixed breed (above 20kg)"
         ]
     }
-}
+};
