@@ -1,14 +1,33 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('@ubio/sdk'), require('form-serialize'), require('camelcase-keys'), require('lodash.kebabcase')) : typeof define === 'function' && define.amd ? define(['exports', '@ubio/sdk', 'form-serialize', 'camelcase-keys', 'lodash.kebabcase'], factory) : (global = global || self, factory(global['ubio-app-sdk'] = {}, global.sdk$1, global.formSerialize, global.camelCaseKeys, global.lodash_kebabcase));
-})(this, function (exports, sdk$1, formSerialize, camelCaseKeys, lodash_kebabcase) {
+  typeof exports === 'object' && typeof module !== 'undefined' ? factory(require('@ubio/sdk'), require('form-serialize'), require('camelcase-keys'), require('lodash.kebabcase')) : typeof define === 'function' && define.amd ? define(['@ubio/sdk', 'form-serialize', 'camelcase-keys', 'lodash.kebabcase'], factory) : (global = global || self, factory(global.sdk$1, global.formSerialize, global.camelCaseKeys, global.lodash_kebabcase));
+})(this, function (sdk$1, formSerialize, camelCaseKeys, lodash_kebabcase) {
   'use strict';
 
   formSerialize = formSerialize && formSerialize.hasOwnProperty('default') ? formSerialize['default'] : formSerialize;
   camelCaseKeys = camelCaseKeys && camelCaseKeys.hasOwnProperty('default') ? camelCaseKeys['default'] : camelCaseKeys;
   lodash_kebabcase = lodash_kebabcase && lodash_kebabcase.hasOwnProperty('default') ? lodash_kebabcase['default'] : lodash_kebabcase;
   const initialInputs = {
-    url: 'https://pet.morethan.com/h5/pet/step-1?path=%2FquoteAndBuy.do%3Fe%3De1s1%26curPage%3DcaptureDetails'
+    url: 'https://www.moneysupermarket.com/broadband/goto/?linktrackerid=8307&productname=Sky+Entertainment+%2B+Broadband+Essential+%2B+Talk+Anytime+Extra&bundleid=58&clickout=00000000-0000-0000-0000-000000000003&dtluid=SqADhopj*6Q*eioD&location=',
+    options: {
+      "marketingContact": true,
+      "success": true,
+      "directoryListing": true,
+      "addressSelection": true,
+      "moveInDateSelection": true,
+      "keepLandlineNumber": false,
+      "screenshots": true,
+      "testingFlow": false
+    },
+    selectedBroadbandPackage: {
+      "name": "Sky Broadband Essential"
+    },
+    selectedTvPackages: [{
+      "name": "Sky Entertainment"
+    }],
+    selectedPhonePackage: {
+      "name": "Sky Talk Anytime Extra"
+    }
   };
   const TYPES = ['input', 'output', 'cache'];
 
@@ -2858,34 +2877,23 @@
    */
 
 
-  function createSection(config = {}, selector, callback) {
-    //TODO: make config validator
-    const {
-      name,
-      title,
-      screens
-    } = config;
+  const LAYOUT_DEFAULT = [
+  /* { selector: '#progress-bar', template: ProgressBar }, */
+  {
+    selector: '#header',
+    template: Header
+  }, {
+    selector: '#summary',
+    template: Summary
+  }, {
+    selector: '#main',
+    mainTarget: true
+  }, {
+    selector: '#footer',
+    template: Footer
+  }];
 
-    if (!name) {
-      throw new Error('name is needed for section');
-    }
-
-    if (!title) {
-      throw new Error('title is needed for section');
-    }
-
-    if (!Array.isArray(screens)) {
-      throw new Error('screens needed for section');
-    }
-
-    return {
-      init: () => {
-        sdk.create().then(() => getSection(name, screens, selector, callback)).catch(err => console.log(err));
-      }
-    };
-  }
-
-  function createApp(SECTION_CONFIGS = [], CACHE_CONFIGS = [], LAYOUT = [], callback) {
+  function createApp(SECTION_CONFIGS = [], CACHE_CONFIGS = [], LAYOUT = LAYOUT_DEFAULT, callback) {
     //TODO: maybe this core app fetches all domain's meta and store them.
     // config will accept input keys rather than whole met
     const isValidConfig = SECTION_CONFIGS.length > 0 && SECTION_CONFIGS.every(config => config.name && config.title && config.screens && config.route);
@@ -2987,116 +2995,178 @@
       }
     };
   }
+  /* const CACHE = [
+      {
+          key: 'priceBreakdown',
+          sourceInputKeys: ['selectedOption1', 'selectedOption2']
+      },
+      {
+          key: 'availableCovers',
+          sourceInputKeys: []
+      },
+      {
+          key: 'availableVetPaymentTerms',
+          sourceInputKeys: ['selectedCover']
+      },
+      {
+          key: 'availablePaymentTerms',
+          sourceInputKeys: []
+      }
+  ];
+   const SECTIONS = [
+      {
+          name: 'aboutYourPet',
+          route: '/about-your-pet',
+          title: 'About Your Pet',
+          screens: [
+              { key: 'petsSelectedBreedType', waitFor: 'data.availableBreedTypes' }
+          ]
+      },
+      {
+          name: 'aboutYou',
+          route: '/about-you',
+          title: 'About You',
+          screens: [
+              { key: 'account', waitFor: null },
+              { key: 'owner', waitFor: null },
+              { key: 'selectedAddress', waitFor: 'output.availableAddresses' }
+          ]
+      },
+      {
+          name: 'yourPolicy',
+          route: '/your-policy',
+          title: 'Your Policy',
+          screens: [
+              { key: 'policyOptions', waitFor: null }, //todo: allowCache config for previous
+              { key: 'selectedCover', waitFor: 'cache.availableCovers' },
+              { key: 'selectedVetPaymentTerm', waitFor: 'output.availableVetPaymentTerms' },
+              { key: 'selectedPaymentTerm', waitFor: 'cache.availablePaymentTerms' },
+              { key: 'selectedCoverType', waitFor: 'output.availableCoverTypes' },
+              { key: 'selectedVoluntaryExcess', waitFor: 'output.availableVoluntaryExcesses' },
+              { key: 'selectedCoverOptions', waitFor: 'output.availableCoverOptions' },
+              { key: 'selectedVetFee', waitFor: 'output.availableVetFees' }
+          ]
+      },
+      {
+          name: 'paymentDetail',
+          route: '/payment',
+          title: 'Payment Details',
+          screens: [
+              { key: 'payment', waitFor: 'output.estimatedPrice' },
+              { key: 'directDebit', waitFor: 'output.estimatedPrice' }
+          ]
+      },
+      {
+          name: 'consentPayment',
+          route: '/consent-payment',
+          title: 'Ready to insure your pet',
+          screens: [
+              { key: 'finalPriceConsent', waitFor: 'finalPrice'},
+          ]
+      }
+  ];
+   var app = createApp(SECTIONS, CACHE, LAYOUT, () => { console.log('finished!')});
+   app.init(); */
 
-  const CACHE = [{
-    key: 'priceBreakdown',
-    sourceInputKeys: ['selectedOption1', 'selectedOption2']
-  }, {
-    key: 'availableCovers',
-    sourceInputKeys: []
-  }, {
-    key: 'availableVetPaymentTerms',
-    sourceInputKeys: ['selectedCover']
-  }, {
-    key: 'availablePaymentTerms',
-    sourceInputKeys: []
-  }];
-  const SECTIONS = [{
-    name: 'aboutYourPet',
-    route: '/about-your-pet',
-    title: 'About Your Pet',
-    screens: [{
-      key: 'petsSelectedBreedType',
-      waitFor: 'data.availableBreedTypes'
-    }]
-  }, {
-    name: 'aboutYou',
-    route: '/about-you',
-    title: 'About You',
-    screens: [{
-      key: 'account',
-      waitFor: null
+
+  var CONFIG = {
+    cache: [{
+      key: 'availableTvPackages',
+      sourceInputKeys: []
     }, {
-      key: 'owner',
-      waitFor: null
+      key: 'availableBroadbandPackages',
+      sourceInputKeys: []
     }, {
-      key: 'selectedAddress',
-      waitFor: 'output.availableAddresses'
-    }]
-  }, {
-    name: 'yourPolicy',
-    route: '/your-policy',
-    title: 'Your Policy',
-    screens: [{
-      key: 'policyOptions',
-      waitFor: null
-    }, //todo: allowCache config for previous
-    {
-      key: 'selectedCover',
-      waitFor: 'cache.availableCovers'
+      key: 'availablePhonePackages',
+      sourceInputKeys: []
     }, {
-      key: 'selectedVetPaymentTerm',
-      waitFor: 'output.availableVetPaymentTerms'
+      key: 'oneOffCosts',
+      sourceInputKeys: ['selectedBroadbandPackage', 'selectedTvPackages', 'selectedPhonePackage']
     }, {
-      key: 'selectedPaymentTerm',
-      waitFor: 'cache.availablePaymentTerms'
+      key: 'monthlyCosts',
+      sourceInputKeys: ['selectedBroadbandPackage', 'selectedTvPackages', 'selectedPhonePackage']
+    }],
+    section: [{
+      name: 'landline',
+      route: '/land-line',
+      title: 'Landline Check',
+      screens: [{
+        key: 'landline-check'
+      }, {
+        key: 'selected-address',
+        waitFor: ['output.availableAddresses'],
+        renderAfter: ['input.landlineCheck']
+      }, {
+        key: 'landline-options'
+      }]
     }, {
-      key: 'selectedCoverType',
-      waitFor: 'output.availableCoverTypes'
+      name: 'aboutYou',
+      route: '/about-you',
+      title: 'About You',
+      screens: [{
+        key: 'contact-person'
+      }, {
+        key: 'account'
+      }, {
+        key: 'selected-marketing-contact-options'
+      }, {
+        key: 'directory-listing'
+      }, {
+        key: 'installation'
+      }]
     }, {
-      key: 'selectedVoluntaryExcess',
-      waitFor: 'output.availableVoluntaryExcesses'
+      name: 'package',
+      route: '/package',
+      title: 'Package',
+      screens: [{
+        key: 'package',
+        waitFor: ['cache.oneOffCosts', 'cache.monthlyCosts']
+      }]
     }, {
-      key: 'selectedCoverOptions',
-      waitFor: 'output.availableCoverOptions'
+      name: 'checkout',
+      route: '/checkout',
+      title: 'Set-up and payment',
+      screens: [{
+        key: 'selectedBroadbandSetupDate',
+        waitFor: ['output.availableBroadbandSetupDates']
+      }, {
+        key: 'payment'
+      }]
     }, {
-      key: 'selectedVetFee',
-      waitFor: 'output.availableVetFees'
-    }]
-  }, {
-    name: 'paymentDetail',
-    route: '/payment',
-    title: 'Payment Details',
-    screens: [{
-      key: 'payment',
-      waitFor: 'output.estimatedPrice'
-    }, {
-      key: 'directDebit',
-      waitFor: 'output.estimatedPrice'
-    }]
-  }, {
-    name: 'consentPayment',
-    route: '/consent-payment',
-    title: 'Ready to insure your pet',
-    screens: [{
-      key: 'finalPriceConsent',
-      waitFor: 'finalPrice'
-    }]
-  }];
-  const LAYOUT = [
-  /* { selector: '#progress-bar', template: ProgressBar }, */
-  {
-    selector: '#header',
-    template: Header
-  }, {
-    selector: '#summary',
-    template: Summary
-  }, {
-    selector: '#main',
-    mainTarget: true
-  }, {
-    selector: '#footer',
-    template: Footer
-  }];
-  var app = createApp(SECTIONS, CACHE, LAYOUT, () => {
+      name: 'consentPayment',
+      route: '/consent-payment',
+      title: 'Confirmation',
+      screens: [{
+        key: 'finalPriceConsent',
+        waitFor: ['output.finalPrice']
+      }, {
+        key: 'confirmation',
+        waitFor: ['output.confirmation']
+      }]
+    }],
+
+    /*     layout: [
+            { selector: '#header' },
+            { selector: '#summary' },
+            { selector: '#main' },
+            { selector: '#footer', name: Footer }
+        ], */
+    templatesPath: {
+      layout: './templates/layout/index',
+      screens: './templates/BroadbandSignup/index',
+      notFound: null
+    },
+    server: {
+      url: 'https://ubio-application-bundle-dummy-server.glitch.me',
+      path: '/create-job/sky'
+    },
+    predefinedData: {//local-data.js
+    }
+  };
+  var app = createApp(CONFIG.section, CONFIG.cache, CONFIG.layout, () => {
     console.log('finished!');
   });
   app.init();
-  exports.createApp = createApp;
-  exports.createSection = createSection;
-  Object.defineProperty(exports, '__esModule', {
-    value: true
-  });
 });
 
 },{"@ubio/sdk":2,"camelcase-keys":5,"form-serialize":7,"lodash.kebabcase":9}],2:[function(require,module,exports){

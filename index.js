@@ -1,6 +1,7 @@
 import sdk from './src/sdk';
 import Router from './router';
 import { render } from './src/lit-html';
+
 import * as InputOutput from './src/input-output';
 import * as Cache from './src/cache';
 
@@ -20,33 +21,15 @@ import ProgressBar from './src/ProgressBar';
  * (?) Should we give a flexibility of showing some inputs together?
  */
 
-function createSection(config = {}, selector, callback) {
-    //TODO: make config validator
-    const { name, title, screens } = config;
+const LAYOUT_DEFAULT = [
+    /* { selector: '#progress-bar', template: ProgressBar }, */
+    { selector: '#header', template: Header },
+    { selector: '#summary', template: Summary },
+    { selector: '#main', mainTarget: true },
+    { selector: '#footer', template: Footer }
+]
 
-    if (!name) {
-        throw new Error('name is needed for section');
-    }
-
-    if (!title) {
-        throw new Error('title is needed for section');
-    }
-
-    if (!Array.isArray(screens)) {
-        throw new Error('screens needed for section');
-    }
-
-    return {
-        init: () => {
-            sdk
-                .create()
-                .then(() => Section(name, screens, selector, callback))
-                .catch(err => console.log(err));
-        }
-    };
-}
-
-function createApp(SECTION_CONFIGS = [], CACHE_CONFIGS = [], LAYOUT = [], callback) {
+function createApp(SECTION_CONFIGS = [], CACHE_CONFIGS = [], LAYOUT = LAYOUT_DEFAULT, callback) {
         //TODO: maybe this core app fetches all domain's meta and store them.
         // config will accept input keys rather than whole met
 
@@ -137,15 +120,14 @@ function createApp(SECTION_CONFIGS = [], CACHE_CONFIGS = [], LAYOUT = [], callba
                     })
                     .catch(err => console.log(err));
             }
-
             window.location.hash = entryPoint;
         }
     }
 }
 
-export { createSection, createApp };
+export { createApp };
 
-const CACHE = [
+/* const CACHE = [
     {
         key: 'priceBreakdown',
         sourceInputKeys: ['selectedOption1', 'selectedOption2']
@@ -217,13 +199,6 @@ const SECTIONS = [
     }
 ];
 
-const LAYOUT = [
-    /* { selector: '#progress-bar', template: ProgressBar }, */
-    { selector: '#header', template: Header },
-    { selector: '#summary', template: Summary },
-    { selector: '#main', mainTarget: true },
-    { selector: '#footer', template: Footer }
-]
 var app = createApp(SECTIONS, CACHE, LAYOUT, () => { console.log('finished!')});
 
-app.init();
+app.init(); */
