@@ -2934,6 +2934,14 @@
         LAYOUT.filter(l => !l.mainTarget).forEach(layout => render(layout.template(), document.querySelector(layout.selector)));
         window.addEventListener('hashchange', () => {
           router.navigate();
+
+          if (!window.location.hash || window.location.hash === '/') {
+            sdk.create().then(() => {
+              window.location.hash = entryPoint;
+              pollDefault(CACHE_CONFIGS);
+            }).catch(err => console.log(err));
+          }
+
           const {
             inputs,
             outputs
@@ -2961,25 +2969,19 @@
           } = getAll();
           render(Summary(inputs, outputs), document.querySelector('#summary'));
         });
-        /* [temp] to not create the job
-                    if (window.location.hash && window.location.hash  !== '/') {
-                        try {
-                            sdk.retrieve();
-                            Cache.pollDefault(CACHE_CONFIGS);
-                            return;
-                        } catch (err) {
-                            console.log('error');
-                        }
-                    } else {
-                        sdk.create()
-                            .then(() => {
-                                window.location.hash = entryPoint;
-                                Cache.pollDefault(CACHE_CONFIGS);
-                            })
-                            .catch(err => console.log(err));
-                    } */
 
-        window.location.hash = entryPoint;
+        if (window.location.hash && window.location.hash !== '/') {
+          sdk.retrieve().then(() => {
+            pollDefault(CACHE_CONFIGS);
+            console.log('job info retrieved');
+          }).catch(err => {
+            window.location.hash = '';
+          });
+        } else {
+          sdk.create().then(() => {
+            window.location.hash = entryPoint;
+          }).catch(err => console.log(err));
+        }
       }
     };
   }

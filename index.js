@@ -89,6 +89,14 @@ function createApp(SECTION_CONFIGS = [], CACHE_CONFIGS = [], LAYOUT = [], callba
 
             window.addEventListener('hashchange', () => {
                 router.navigate();
+                if (!window.location.hash || window.location.hash === '/') {
+                    sdk.create()
+                        .then(() => {
+                            window.location.hash = entryPoint;
+                            Cache.pollDefault(CACHE_CONFIGS);
+                        })
+                        .catch(err => console.log(err));
+                }
 
                 const { inputs, outputs } = InputOutput.getAll();
                 render(Summary(inputs, outputs), document.querySelector('#summary'));
@@ -112,23 +120,23 @@ function createApp(SECTION_CONFIGS = [], CACHE_CONFIGS = [], LAYOUT = [], callba
                 render(Summary(inputs, outputs), document.querySelector('#summary'));
             })
 
-/* [temp] to not create the job
-            if (window.location.hash && window.location.hash  !== '/') {
-                try {
-                    sdk.retrieve();
-                    Cache.pollDefault(CACHE_CONFIGS);
-                    return;
-                } catch (err) {
-                    console.log('error');
-                }
+            if (window.location.hash && window.location.hash !== '/') {
+                sdk.retrieve()
+                    .then(() => {
+                        Cache.pollDefault(CACHE_CONFIGS);
+                        console.log('job info retrieved');
+                    })
+                    .catch(err => {
+                        window.location.hash = '';
+                    });
+
             } else {
                 sdk.create()
                     .then(() => {
                         window.location.hash = entryPoint;
-                        Cache.pollDefault(CACHE_CONFIGS);
                     })
                     .catch(err => console.log(err));
-            } */
+            }
 
             window.location.hash = entryPoint;
         }
