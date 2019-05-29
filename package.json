@@ -5,8 +5,9 @@
   "module": "build.js",
   "scripts": {
     "start": "npm run build && npm run serve",
-    "serve": "browser-sync start --index 'example/index.html' --server --files 'index.css' 'bundle.js'",
-    "watch": "watch 'npm run build:css' css",
+    "serve": "browser-sync start --index 'example/index.html' --server --files 'index.css' 'build.js'",
+    "watch:css": "watch 'npm run build:css' css",
+    "watch:js": "watch 'npm run build:rollup && npm run build:js && npm run build:clean-up' templates",
     "build": "npm run build:rollup && npm run build:js && npm run build:clean-up && npm run build:css",
     "build:rollup": "rollup index.js --format umd --name \"ubio-app-sdk\" --file bundle.js",
     "build:js": "browserify bundle.js -o build.js -t babelify",
