@@ -169,7 +169,7 @@
         return output.data;
       }
 
-      return await this.trackJobOutput(outputKey, inputKey);
+      return await this.trackJobOutput(outputKey);
     }
 
     async getCache({
@@ -204,47 +204,25 @@
       });
     }
 
-    trackJobOutput(outputKey, inputKey) {
+    trackJobOutput(outputKey) {
       return new Promise((res, rej) => {
         let createdOutputProcessing = false;
         const stopTracking = this.sdk.trackJob((event, error) => {
-          console.log(`event ${event}`);
-          console.log(event);
-
           if (event === 'createOutput' && !createdOutputProcessing) {
             createdOutputProcessing = true;
             this.sdk.getJobOutputs().then(outputs => {
               outputs.data.forEach(output => {
                 set('output', output.key, output.data);
               });
+              createdOutputProcessing = false;
               const output = outputs.data.find(jo => jo.key === outputKey);
 
               if (output) {
                 stopTracking();
                 res(output.data);
               }
-
-              createdOutputProcessing = false;
             });
           }
-          /*
-                          if (event === 'awaitingInput' && !awaitingInputProcessing) {
-                              awaitingInputProcessing = true;
-                              this.sdk.getJob()
-                                  .then(job => {
-                                      const { state, awaitingInputKey } = job;
-                                      if (state === 'awaitingInput' && awaitingInputKey !== inputKey) {
-                                          const error = {
-                                              name: 'jobExpectsDifferentInputKey',
-                                              details: { state, awaitingInputKey }
-                                          };
-                                           stopTracking();
-                                          rej(error);
-                                      }
-                                      awaitingInputProcessing = false;
-                                  })
-                          } */
-
         });
       });
     }
@@ -1961,7 +1939,19 @@
     return result;
   }
 
-  var Loading = (selector = '#app') => render(template, document.querySelector(selector));
+  var Loading = (selector = '#app') => {
+    return {
+      render: () => {
+        const target = document.querySelector(selector);
+
+        if (!target) {
+          throw new Error(`loading: selector ${selector} not found`);
+        }
+
+        render(template, target);
+      }
+    };
+  };
 
   const template = html`
 <div class="loading">
@@ -2598,11 +2588,6 @@
   };
 
   function get$1(screen, asyncFunc) {
-    if (typeof asyncFunc !== 'function') {
-      throw new Error('asyncFunc is not a function');
-      console.debug(asyncFunc);
-    }
-
     let templateFunc = templates[screen];
 
     if (!templateFunc) {
@@ -2861,7 +2846,7 @@
   var progressBar = (titles, activeIndex) => {
     console.log(titles, activeIndex);
     return html`
-<ol class="progress-bar-list">
+<ol class="progress-bar">
     ${titles.map((title, index) => stepTemplate(title, index + 1, activeIndex))}
 </ol>
 `;
@@ -2906,20 +2891,28 @@
     };
   }
 
-  function createApp(SECTION_CONFIGS = [], CACHE_CONFIGS = [], selector, callback) {
+  function createApp(SECTION_CONFIGS = [], CACHE_CONFIGS = [], LAYOUT = [], callback) {
     //TODO: maybe this core app fetches all domain's meta and store them.
-    // config will accept input keys rather than whole meta
+    // config will accept input keys rather than whole met
     const isValidConfig = SECTION_CONFIGS.length > 0 && SECTION_CONFIGS.every(config => config.name && config.title && config.screens && config.route);
 
     if (!isValidConfig) {
       throw new Error('invalid config');
     }
 
+    const {
+      selector: mainSelector
+    } = LAYOUT.find(_ => _.mainTarget == true) || {};
+
+    if (!mainSelector) {
+      throw new Error(`main target not found in config`);
+    }
+
     const flow = SECTION_CONFIGS.map(con => con.route);
     const titles = SECTION_CONFIGS.map(con => con.title);
     flow.push('/finish');
     const routes = {
-      '/': selector => Loading(selector),
+      '/': Loading(mainSelector),
       '/finish': () => callback(null, 'finish')
     };
     SECTION_CONFIGS.forEach((config, idx) => {
@@ -2930,7 +2923,7 @@
       } = config;
       const next = flow[idx + 1];
 
-      const render = () => getSection(name, screens, selector, () => setTimeout(() => {
+      const render = () => getSection(name, screens, mainSelector, () => setTimeout(() => {
         window.location.hash = next;
       }, 1000));
 
@@ -2943,10 +2936,8 @@
     const entryPoint = flow[0];
     return {
       init: () => {
-        const router = Router(routes, titles, NotFound(selector), ProgressBar('#progress-bar'));
-        render(Header(), document.querySelector('#header'));
-        render(Summary(), document.querySelector('#summary'));
-        render(Footer(), document.querySelector('#footer'));
+        const router = Router(routes, titles, NotFound(mainSelector), ProgressBar('#progress-bar'));
+        LAYOUT.filter(l => !l.mainTarget).forEach(layout => render(layout.template(), document.querySelector(layout.selector)));
         window.addEventListener('hashchange', () => {
           router.navigate();
           const {
@@ -2957,13 +2948,7 @@
         }); // Listen on page load:
 
         window.addEventListener('load', () => {
-          console.info('onload!');
           router.navigate();
-        }); //
-
-        window.addEventListener('beforeunload', function (e) {
-          // Cancel the job
-          console.info('unload!');
         }); //custom event when input submitted
 
         window.addEventListener('submitinput', e => {
@@ -2982,37 +2967,28 @@
           } = getAll();
           render(Summary(inputs, outputs), document.querySelector('#summary'));
         });
+        /* [temp] to not create the job
+                    if (window.location.hash && window.location.hash  !== '/') {
+                        try {
+                            sdk.retrieve();
+                            Cache.pollDefault(CACHE_CONFIGS);
+                            return;
+                        } catch (err) {
+                            console.log('error');
+                        }
+                    } else {
+                        sdk.create()
+                            .then(() => {
+                                window.location.hash = entryPoint;
+                                Cache.pollDefault(CACHE_CONFIGS);
+                            })
+                            .catch(err => console.log(err));
+                    } */
 
-        if (window.location.hash && window.location.hash !== '/') {
-          try {
-            sdk.retrieve();
-            pollDefault(CACHE_CONFIGS);
-            return;
-          } catch (err) {
-            console.log('error');
-          }
-        } else {
-          sdk.create().then(() => {
-            window.location.hash = entryPoint;
-            pollDefault(CACHE_CONFIGS);
-          }).catch(err => console.log(err));
-        }
+        window.location.hash = entryPoint;
       }
     };
   }
-  /* examples for createSection and createApp
-   const config = {
-      name: 'aboutYourPet',
-      title: 'Tell Me About Your Pet',
-      inputs: [
-          { key: 'pets', waitFor: null },
-          { key: 'selectedBreedType', waitFor: 'availableBreedTypes', title: 'select breed type' }
-      ],
-  };
-   var section = createSection(config, '#app', () => { console.log('finished!')});
-   section.init();
-  */
-
 
   const CACHE = [{
     key: 'priceBreakdown',
@@ -3099,7 +3075,22 @@
       waitFor: 'finalPrice'
     }]
   }];
-  var app = createApp(SECTIONS, CACHE, '#app', () => {
+  const LAYOUT = [
+  /* { selector: '#progress-bar', template: ProgressBar }, */
+  {
+    selector: '#header',
+    template: Header
+  }, {
+    selector: '#summary',
+    template: Summary
+  }, {
+    selector: '#main',
+    mainTarget: true
+  }, {
+    selector: '#footer',
+    template: Footer
+  }];
+  var app = createApp(SECTIONS, CACHE, LAYOUT, () => {
     console.log('finished!');
   });
   app.init();

@@ -46,14 +46,19 @@ function createSection(config = {}, selector, callback) {
     };
 }
 
-function createApp(SECTION_CONFIGS = [], CACHE_CONFIGS = [], selector, callback) {
+function createApp(SECTION_CONFIGS = [], CACHE_CONFIGS = [], LAYOUT = [], callback) {
         //TODO: maybe this core app fetches all domain's meta and store them.
-        // config will accept input keys rather than whole meta
+        // config will accept input keys rather than whole met
 
     const isValidConfig = SECTION_CONFIGS.length > 0 && SECTION_CONFIGS.every(config => config.name && config.title && config.screens && config.route);
 
     if (!isValidConfig) {
         throw new Error('invalid config');
+    }
+    const { selector: mainSelector } = LAYOUT.find(_ => _.mainTarget == true) || {};
+
+    if (!mainSelector) {
+        throw new Error(`main target not found in config`);
     }
 
     const flow = SECTION_CONFIGS.map(con => con.route);
@@ -62,7 +67,7 @@ function createApp(SECTION_CONFIGS = [], CACHE_CONFIGS = [], selector, callback)
     flow.push('/finish');
 
     const routes = {
-        '/': (selector) => Loading(selector),
+        '/': Loading(mainSelector),
         '/finish': () => callback(null, 'finish')
     };
 
@@ -70,7 +75,7 @@ function createApp(SECTION_CONFIGS = [], CACHE_CONFIGS = [], selector, callback)
         const { title, screens, route } = config;
         const next = flow[idx + 1];
 
-        const render = () => Section(name, screens, selector, () => setTimeout(() => { window.location.hash = next }, 1000));
+        const render = () => Section(name, screens, mainSelector, () => setTimeout(() => { window.location.hash = next }, 1000));
         routes[route] = { render, title, step: idx + 1 };
     });
 
@@ -78,10 +83,9 @@ function createApp(SECTION_CONFIGS = [], CACHE_CONFIGS = [], selector, callback)
 
     return {
         init: () => {
-            const router = Router(routes, titles, NotFound(selector), ProgressBar('#progress-bar'))
-            render(Header(), document.querySelector('#header'));
-            render(Summary(), document.querySelector('#summary'));
-            render(Footer(), document.querySelector('#footer'));
+            const router = Router(routes, titles, NotFound(mainSelector), ProgressBar('#progress-bar'))
+
+            LAYOUT.filter(l => !l.mainTarget).forEach(layout => render(layout.template(), document.querySelector(layout.selector)));
 
             window.addEventListener('hashchange', () => {
                 router.navigate();
@@ -92,15 +96,7 @@ function createApp(SECTION_CONFIGS = [], CACHE_CONFIGS = [], selector, callback)
 
             // Listen on page load:
             window.addEventListener('load', () => {
-                console.info('onload!');
-
                 router.navigate();
-            });
-
-            //
-            window.addEventListener('beforeunload', function (e) {
-                // Cancel the job
-                console.info('unload!');
             });
 
             //custom event when input submitted
@@ -116,6 +112,7 @@ function createApp(SECTION_CONFIGS = [], CACHE_CONFIGS = [], selector, callback)
                 render(Summary(inputs, outputs), document.querySelector('#summary'));
             })
 
+/* [temp] to not create the job
             if (window.location.hash && window.location.hash  !== '/') {
                 try {
                     sdk.retrieve();
@@ -131,28 +128,14 @@ function createApp(SECTION_CONFIGS = [], CACHE_CONFIGS = [], selector, callback)
                         Cache.pollDefault(CACHE_CONFIGS);
                     })
                     .catch(err => console.log(err));
-            }
+            } */
+
+            window.location.hash = entryPoint;
         }
     }
 }
 
 export { createSection, createApp };
-
-/* examples for createSection and createApp
-
-const config = {
-    name: 'aboutYourPet',
-    title: 'Tell Me About Your Pet',
-    inputs: [
-        { key: 'pets', waitFor: null },
-        { key: 'selectedBreedType', waitFor: 'availableBreedTypes', title: 'select breed type' }
-    ],
-};
-
-var section = createSection(config, '#app', () => { console.log('finished!')});
-
-section.init();
-*/
 
 const CACHE = [
     {
@@ -226,6 +209,13 @@ const SECTIONS = [
     }
 ];
 
-var app = createApp(SECTIONS, CACHE, '#app', () => { console.log('finished!')});
+const LAYOUT = [
+    /* { selector: '#progress-bar', template: ProgressBar }, */
+    { selector: '#header', template: Header },
+    { selector: '#summary', template: Summary },
+    { selector: '#main', mainTarget: true },
+    { selector: '#footer', template: Footer }
+]
+var app = createApp(SECTIONS, CACHE, LAYOUT, () => { console.log('finished!')});
 
 app.init();

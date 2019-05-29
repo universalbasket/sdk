@@ -1,6 +1,18 @@
 import { html, render } from '../node_modules/lit-html/lit-html.js';
 
-export default (selector = '#app') => render(template, document.querySelector(selector));
+export default (selector = '#app') => {
+    return {
+        render: () => {
+            const target = document.querySelector(selector);
+            if (!target) {
+                throw new Error(`loading: selector ${selector} not found`);
+            }
+
+            render(template, target);
+        }
+    }
+}
+
 const template = html`
 <div class="loading">
     <h2 id="loading-message">

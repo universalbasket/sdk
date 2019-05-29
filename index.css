@@ -41,15 +41,7 @@ ul, ol {
     padding: 0
 }
 
-#summary {
-    background-color: var(--summary-background-color);
-
-    padding: 15px 10px;
-    align-self: stretch;
-    border-bottom: 2px solid #ccc;
-}
-
-.header {
+.header-wrapper {
     background-color: var(--header-background-color);
     color: white;
     width: 100%;
@@ -58,9 +50,6 @@ ul, ol {
     padding: 10px;
 }
 
-.progress-bar {
-    background-color: var(--progress-bar-background-color);
-}
 
 .container {
     display: flex;
@@ -71,6 +60,25 @@ ul, ol {
     height: 90%;
 }
 
+.progress-bar-wrapper {
+    background-color: var(--progress-bar-background-color);
+}
+
+.summary-wrapper {
+    background-color: var(--summary-background-color);
+
+    padding: 15px 10px;
+    align-self: stretch;
+    border-bottom: 2px solid #ccc;
+}
+
+.main-wrapper {
+    display: flex;
+    justify-content: center;
+    height: 100%;
+    overflow-y: auto;
+}
+
 @media all and (max-width: 650px) {
     .container {
         margin-top: 40px;
@@ -78,25 +86,25 @@ ul, ol {
         justify-content: flex-start;
     }
     /* We tell both sidebars to share a row */
-    .summary {
+    .summary-wrapper {
         order: 1;
         position: -webkit-sticky;
         position: sticky;
         top: 25px;
     }
 
-    .progress-bar {
+    .progress-bar-wrapper {
         order: 2;
         align-self: stretch;
     }
 
-    .main {
+    .main-wrapper {
         order: 3;
         justify-content: stretch;
         margin-top: 10px;
     }
 
-    .header {
+    .header-wrapper {
         height: var(--nav-height--small);
     }
 }
@@ -107,39 +115,32 @@ ul, ol {
     /* We invert order of first sidebar and main
     * And tell the main element to take twice as much width as the other two sidebars
     */
-    .progress-bar {
+    .progress-bar-wrapper {
         order: 1;
         flex: 1 100%;
     }
 
-    .main {
+    .main-wrapper {
         flex: 2 auto;
         order: 2;
         max-width: 60vw;
         margin-top: 20px;
     }
 
-    .summary {
+    .summary-wrapper {
         flex: 1 auto;
         order: 3;
         padding: 20px;
+    }
+
+    .header-wrapper {
+        height: var(--nav-height--large);
     }
 
     .section {
         width: 40vw;
         min-width: 400px;
     }
-
-    .header {
-        height: var(--nav-height--large);
-    }
-}
-
-.main {
-    display: flex;
-    justify-content: center;
-    height: 100%;
-    overflow-y: auto;
 }
 
 .section__header {
@@ -201,6 +202,21 @@ ul, ol {
     border-radius: 5px;
 }
 
+.group--merged > label:not(:last-child) {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.group--merged > label:last-child {
+    margin-left: -1px;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.group--merged > * {
+    border: 2px solid var(--accent-color);
+}
+
 .button {
     border-radius: 3px;
     padding: 2px 5px;
@@ -219,21 +235,6 @@ ul, ol {
     border: 0px;
 }
 
-.group--merged > label:not(:last-child) {
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
-}
-
-.group--merged > label:last-child {
-    margin-left: -1px;
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-}
-
-.group--merged > * {
-    border: 2px solid var(--accent-color);
-}
-
 .summary > li {
     border-bottom: solid 1px #c8c8c8;
 }
@@ -246,7 +247,8 @@ ul, ol {
 .warning {
     color: red;
 }
-.progress-bar-list {
+
+.progress-bar {
     display: flex;
     flex-direction: row;
     justify-content: center;
