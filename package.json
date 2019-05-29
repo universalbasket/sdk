@@ -4,10 +4,15 @@
   "description": "ubio sdk application bundle (prototype)",
   "module": "build.js",
   "scripts": {
-    "build": "npm run build:rollup && npm run build:build-js && npm run build:clean-up",
+    "start": "npm run build && npm run serve",
+    "serve": "browser-sync start --index 'example/index.html' --server --files 'index.css' 'bundle.js'",
+    "watch": "watch 'npm run build:css' css",
+    "build": "npm run build:rollup && npm run build:js && npm run build:clean-up && npm run build:css",
     "build:rollup": "rollup index.js --format umd --name \"ubio-app-sdk\" --file bundle.js",
-    "build:build-js": "browserify bundle.js -o build.js -t babelify",
-    "build:clean-up": "rm bundle.js"
+    "build:js": "browserify bundle.js -o build.js -t babelify",
+    "build:clean-up": "rm bundle.js",
+    "build:css": "postcss css/index.css -o index.css",
+    "stylelint": "stylelint index.css --fix"
   },
   "keywords": [
     "ubio",
@@ -24,11 +29,18 @@
   },
   "devDependencies": {
     "@babel/core": "^7.4.4",
+    "autoprefixer": "^9.5.1",
     "babelify": "^10.0.0",
     "browserify": "^16.2.3",
     "eslint": "^5.16.0",
     "eslint-config-ub": "^3.0.0",
     "eslint-plugin-lit": "^1.0.0",
-    "rollup": "^1.12.3"
+    "postcss": "^7.0.16",
+    "postcss-cli": "^6.1.2",
+    "postcss-import": "^12.0.1",
+    "rollup": "^1.12.3",
+    "stylelint": "^10.0.1",
+    "stylelint-config-standard": "^18.3.0",
+    "watch": "^1.0.2"
   }
 }

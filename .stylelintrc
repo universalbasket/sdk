@@ -1,0 +1,14 @@
+{
+  "extends": "stylelint-config-standard",
+  "rules": {
+    "max-empty-lines": 2,
+    "max-nesting-depth": 2,
+    "indentation": 4,
+    "number-leading-zero": "never",
+    "comment-empty-line-before": null,
+    "rule-empty-line-before": null,
+    "at-rule-empty-line-before": null,
+    "no-duplicate-selectors": true,
+    "comment-whitespace-inside": null
+  }
+}

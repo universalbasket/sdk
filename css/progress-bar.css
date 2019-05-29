@@ -1,0 +1,35 @@
+.progress-bar {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    margin: 15px;
+}
+
+.progress-bar__step {
+    flex-basis: 6em;
+}
+
+.progress-bar__label {
+    display: none;
+    font-weight: 600;
+}
+
+.progress-bar__step--active .progress-bar__label {
+    display: initial;
+}
+
+.progress-bar__icon {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--step-icon);
+    color: white;
+    width: 35px;
+    height: 35px;
+    border-radius: 20px;
+    margin: 10px;
+}
+
+.progress-bar__step--active .progress-bar__icon {
+    background-color: var(--step-icon--active);
+}
