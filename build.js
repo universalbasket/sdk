@@ -2639,16 +2639,6 @@
     }
 
     init() {
-      if (!sdk.initiated) {
-        try {
-          sdk.retrieve(); //TODO: if it's retrieved, check which input has provided. s
-          // add submitted input to keysSubmitted, and render the next one.
-        } catch (err) {
-          window.location.hash = '/';
-          return;
-        }
-      }
-
       this.renderWrapper();
       this.renderScreens();
     }
@@ -2663,6 +2653,10 @@
     }
 
     addListener(key) {
+      if (!sdk.initiated) {
+        return;
+      }
+
       const submitBtn = document.querySelector(`#submitBtn-${key}`);
 
       if (!submitBtn) {
