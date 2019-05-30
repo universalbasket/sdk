@@ -1,4 +1,4 @@
-import { html, render } from '../../src/lit-html';
+import { html, render } from '../../../src/lit-html';
 const key = 'selected-address';
 
 export default (addresses) => html`

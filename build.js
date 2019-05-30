@@ -738,7 +738,7 @@
     navigate() {
       let request = parseRequestURL(); // Parse the URL and if it has an id part, change it with the string ":id"
 
-      let parsedURL = (request.section ? '/' + request.section : '/') + (request.input ? '/' + request.input : ''); // Get the page from our hash of supported routes.
+      let parsedURL = (request.page ? '/' + request.page : '/') + (request.input ? '/' + request.input : ''); // Get the page from our hash of supported routes.
       // If the parsed URL is not in our list of supported routes, select the 404 page instead
 
       let route = this.routes[parsedURL] ? this.routes[parsedURL] : this.notFoundTemplate;
@@ -752,10 +752,10 @@
     let url = location.hash.slice(1).toLowerCase() || '/';
     let r = url.split("/");
     let request = {
-      section: null,
+      page: null,
       input: null
     };
-    request.section = r[1];
+    request.page = r[1];
     request.input = r[2];
     return request;
   }
@@ -2778,13 +2778,13 @@
     return result;
   }
 
-  var sectionTemplate = () => html`
-    <div class="section">
+  var pageTemplate = () => html`
+    <div class="page">
         <pre id="error"></pre>
-        <div class="section__body" id="target"></div>
+        <div class="page__body" id="target"></div>
 
-        <div class="section__actions">
-            <button type="button" class="button button--right button--primary" id="submitBtn">Select</button>
+        <div class="page__actions">
+            <button type="button" class="button button--right button--primary" id="submit-btn">Continue</button>
         </div>
     </div>
 `;
@@ -2809,11 +2809,21 @@
 
     return source;
   }
+
+  var inlineLoading = () => html`
+<div class="inline-loading">
+    <div class="spinner">
+        <div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
+    </div>
+
+    <span>Please wait a moment</span>
+</div>
+`;
   /** Global */
 
 
-  function get$1(template, asyncFunc) {
-    const awaiting = asyncFunc().then(({
+  function get$1(template, waitForData) {
+    const awaiting = waitForData().then(({
       data,
       skip
     }) => {
@@ -2823,28 +2833,27 @@
 
       return template(data);
     });
-    return html`${until(awaiting, html`<span>Please wait...</span>`)}`;
+    return html`${until(awaiting, inlineLoading())}`;
   }
 
-  class Section {
-    constructor(name, screens = [], selector, onFinish) {
+  class PageRenderer {
+    constructor(name, sections = [], selector, onFinish) {
       this.name = name;
       this.selector = selector;
-      this.screens = screens;
+      this.sections = sections;
       this.onFinish = onFinish;
-      this.screenToSubmit = this.screens.length;
+      this.sectionToSubmit = this.sections.length;
       Promise.resolve(this.init());
     }
 
     init() {
-      this.renderWrapper();
-      this.renderScreens();
+      this.renderWrapper(); //this.renderSections();
     }
 
     renderWrapper() {
-      render(sectionTemplate(), document.querySelector(this.selector));
-      const wrappers = this.screens.map(screen => screen.name).map(name => {
-        return html`<form id="screen-${name}"></form>`;
+      render(pageTemplate(), document.querySelector(this.selector));
+      const wrappers = this.sections.map(section => section.name).map(name => {
+        return html`<form id="section-${name}"></form>`;
       });
       render(html`${wrappers.map(w => w)}`, document.querySelector('#target'));
     }
@@ -2863,7 +2872,7 @@
 
       submitBtn.addEventListener('click', () => {
         // TODO: validate the input (using protocol?)
-        const form = document.querySelector(`#screen-${name}`);
+        const form = document.querySelector(`#section-${name}`);
 
         if (!form.reportValidity()) {
           console.log('invalid form');
@@ -2871,7 +2880,7 @@
         }
 
         submitBtn.setAttribute('disabled', 'true');
-        const inputs = serializeForm(`screen-${name}`); // send input sdk
+        const inputs = serializeForm(`#section-${name}`); // send input sdk
 
         this.submitInputs(inputs);
       });
@@ -2879,13 +2888,13 @@
 
     submitInputs(inputs) {
       sdk.createJobInputs(inputs).then(submittedInputs => {
-        this.screenToSubmit -= 1;
+        this.sectionToSubmit -= 1;
         const event = new CustomEvent('submitinput', {
           detail: submittedInputs
         });
         window.dispatchEvent(event);
 
-        if (this.screenToSubmit === 0) {
+        if (this.sectionToSubmit === 0) {
           render(html``, document.querySelector(this.selector));
           this.onFinish();
         }
@@ -2896,34 +2905,32 @@
       });
     }
 
-    skipScreen() {
-      this.screenToSubmit -= 1;
+    skipSection() {
+      this.sectionToSubmit -= 1;
 
-      if (this.screenToSubmit === 0) {
+      if (this.sectionToSubmit === 0) {
         render(html``, document.querySelector(this.selector));
         this.onFinish();
       }
     }
 
-    renderScreen({
+    renderSection({
       name,
       waitFor,
       template
       /* , submitOn:[button, onComplete] */
 
     }) {
-      const templateTo = get$1(template, getDataForScreen);
-      const selector = document.querySelector(`#screen-${name}`);
+      const templateTo = get$1(template, getDataForSection);
+      const selector = document.querySelector(`#section-${name}`);
 
       if (!templateTo || !selector) {
         throw new Error('Template or selector not found, check the config');
       }
 
-      render(html`
-                ${templateTo}
-            `, selector);
+      render(html`${templateTo} `, selector);
 
-      function getDataForScreen() {
+      function getDataForSection() {
         return new Promise(res => {
           if (!waitFor || waitFor.length === 0) {
             return res({
@@ -2935,10 +2942,9 @@
 
           const [type, sourceKey] = waitFor[0].split('.');
           const data = getSource(type, sourceKey);
-          console.log('data in example', data);
 
           if (data === null) {
-            this.skipScreen();
+            this.skipSection();
             return res({
               data: null,
               skip: true
@@ -2954,7 +2960,7 @@
 
           sdk.waitForJobOutput(sourceKey).then(data => {
             if (data === null) {
-              this.skipScreen();
+              this.skipSection();
               return res({
                 data: null,
                 skip: true
@@ -2970,11 +2976,11 @@
       }
     }
 
-    renderScreens() {
-      this.screens.forEach(screen => {
+    renderSections() {
+      this.sections.forEach(section => {
         try {
-          this.renderScreen(screen);
-          this.addListener(screen.name);
+          this.renderSection(section);
+          this.addListener(section.name);
         } catch (err) {
           console.error(err);
         }
@@ -2984,13 +2990,13 @@
   }
   /**
    * @param {String} name
-   * @param {Array} screens
+   * @param {Array} sections
    * @param {Function} onFinish
    */
 
 
-  function getSection(name, screens, selector, onFinish) {
-    return new Section(name, screens, selector, onFinish);
+  function getPageRenderer(name, sections, selector, onFinish) {
+    return new PageRenderer(name, sections, selector, onFinish);
   }
 
   var NotFound = selector => {};
@@ -3040,7 +3046,7 @@
     return (titles, activeIndex) => render(progressBar(titles, activeIndex), document.querySelector(selector));
   };
   /** TODOS:
-   * [v] need to navigate to awaitingInput's page, when waiting for the output
+   * [v] need to navigate to awaitingInput's pages, when waiting for the output
    * []need to assign all the sub-route so that they can navigate directly there
    * [v] gets output from previous-input-output as well
    * CSS - responsive
@@ -3048,8 +3054,13 @@
    */
 
 
-  function updateSummary(summaryTemplate) {
-    if (!summaryTemplate) {
+  function updateSummary(summary = {}) {
+    const {
+      template,
+      selector
+    } = summary;
+
+    if (!summary) {
       return;
     }
 
@@ -3058,13 +3069,18 @@
       outputs,
       cache
     } = getAll();
-    render(summaryTemplate(inputs, outputs, cache), document.querySelector('#summary'));
+    render(template(inputs, outputs, cache), document.querySelector(selector));
   }
 
-  function createApp(SECTION_CONFIGS = [], CACHE_CONFIGS = [], LAYOUT = [], DATA = {}, callback) {
+  function createApp({
+    pages = [],
+    cache = [],
+    layout = [],
+    data = {}
+  }, callback) {
     //TODO: maybe this core app fetches all domain's meta and store them.
     // config will accept input keys rather than whole met
-    const isValidConfig = SECTION_CONFIGS.length > 0 && SECTION_CONFIGS.every(config => config.name && config.title && config.screens && config.route);
+    const isValidConfig = pages.length > 0 && pages.every(config => config.name && config.title && config.sections && config.route);
 
     if (!isValidConfig) {
       throw new Error('invalid config');
@@ -3072,28 +3088,28 @@
 
     const {
       selector: mainSelector
-    } = LAYOUT.find(_ => _.mainTarget == true) || {};
+    } = layout.find(_ => _.mainTarget == true) || {};
 
     if (!mainSelector) {
-      throw new Error(`main target not found in config`);
+      throw new Error(`main target selector not found in config`);
     }
 
-    const flow = SECTION_CONFIGS.map(con => con.route);
-    const titles = SECTION_CONFIGS.map(con => con.title);
+    const flow = pages.map(con => con.route);
+    const titles = pages.map(con => con.title);
     flow.push('/finish');
     const routes = {
       '/': Loading(mainSelector),
       '/finish': () => callback(null, 'finish')
     };
-    SECTION_CONFIGS.forEach((config, idx) => {
+    pages.forEach((config, idx) => {
       const {
         title,
-        screens,
+        sections,
         route
       } = config;
       const next = flow[idx + 1];
 
-      const render = () => getSection(name, screens, mainSelector, () => setTimeout(() => {
+      const render = () => getPageRenderer(name, sections, mainSelector, () => setTimeout(() => {
         window.location.hash = next;
       }, 1000));
 
@@ -3110,10 +3126,10 @@
           initialInputs: input,
           category,
           serverUrlPath
-        } = DATA;
+        } = data;
         const router = Router(routes, titles, NotFound(mainSelector), ProgressBar('#progress-bar'));
-        LAYOUT.filter(l => !l.mainTarget).forEach(layout => render(layout.template(), document.querySelector(layout.selector)));
-        const Summary = LAYOUT.find(l => l.name === 'summary');
+        layout.filter(l => !l.mainTarget).forEach(l => render(l.template(), document.querySelector(l.selector)));
+        const Summary = layout.find(l => l.name === 'summary');
         window.addEventListener('hashchange', () => {
           router.navigate();
 
@@ -3124,29 +3140,30 @@
               serverUrlPath
             }).then(() => {
               window.location.hash = entryPoint;
-              pollDefault(CACHE_CONFIGS);
+              pollDefault(cache);
             }).catch(err => console.log(err));
           }
 
-          updateSummary(Summary.template);
-        }); // Listen on page load:
+          updateSummary(Summary);
+        }); // Listen on pages load:
 
         window.addEventListener('load', () => {
           router.navigate();
+          updateSummary(Summary);
         }); //custom event when input submitted
 
         window.addEventListener('submitinput', e => {
           //TODO: get cache using output
-          poll(CACHE_CONFIGS, Object.keys(e.detail));
-          updateSummary(Summary.template);
+          poll(cache, Object.keys(e.detail));
+          updateSummary(Summary);
         });
         window.addEventListener('createoutput', () => {
-          updateSummary(Summary.template);
+          updateSummary(Summary);
         });
 
         if (window.location.hash && window.location.hash !== '/') {
           sdk.retrieve().then(() => {
-            pollDefault(CACHE_CONFIGS);
+            pollDefault(caches);
             console.log('job info retrieved');
           }).catch(err => {
             window.location.hash = '';
@@ -3163,79 +3180,6 @@
       }
     };
   }
-  /* const CACHE = [
-      {
-          key: 'priceBreakdown',
-          sourceInputKeys: ['selectedOption1', 'selectedOption2']
-      },
-      {
-          key: 'availableCovers',
-          sourceInputKeys: []
-      },
-      {
-          key: 'availableVetPaymentTerms',
-          sourceInputKeys: ['selectedCover']
-      },
-      {
-          key: 'availablePaymentTerms',
-          sourceInputKeys: []
-      }
-  ];
-   const SECTIONS = [
-      {
-          name: 'aboutYourPet',
-          route: '/about-your-pet',
-          title: 'About Your Pet',
-          screens: [
-              { key: 'petsSelectedBreedType', waitFor: 'data.availableBreedTypes' }
-          ]
-      },
-      {
-          name: 'aboutYou',
-          route: '/about-you',
-          title: 'About You',
-          screens: [
-              { key: 'account', waitFor: null },
-              { key: 'owner', waitFor: null },
-              { key: 'selectedAddress', waitFor: 'output.availableAddresses' }
-          ]
-      },
-      {
-          name: 'yourPolicy',
-          route: '/your-policy',
-          title: 'Your Policy',
-          screens: [
-              { key: 'policyOptions', waitFor: null }, //todo: allowCache config for previous
-              { key: 'selectedCover', waitFor: 'cache.availableCovers' },
-              { key: 'selectedVetPaymentTerm', waitFor: 'output.availableVetPaymentTerms' },
-              { key: 'selectedPaymentTerm', waitFor: 'cache.availablePaymentTerms' },
-              { key: 'selectedCoverType', waitFor: 'output.availableCoverTypes' },
-              { key: 'selectedVoluntaryExcess', waitFor: 'output.availableVoluntaryExcesses' },
-              { key: 'selectedCoverOptions', waitFor: 'output.availableCoverOptions' },
-              { key: 'selectedVetFee', waitFor: 'output.availableVetFees' }
-          ]
-      },
-      {
-          name: 'paymentDetail',
-          route: '/payment',
-          title: 'Payment Details',
-          screens: [
-              { key: 'payment', waitFor: 'output.estimatedPrice' },
-              { key: 'directDebit', waitFor: 'output.estimatedPrice' }
-          ]
-      },
-      {
-          name: 'consentPayment',
-          route: '/consent-payment',
-          title: 'Ready to insure your pet',
-          screens: [
-              { key: 'finalPriceConsent', waitFor: 'finalPrice'},
-          ]
-      }
-  ];
-   var app = createApp(SECTIONS, CACHE, LAYOUT, () => { console.log('finished!')});
-   app.init(); */
-
 
   var CONFIG = {
     cache: [{
@@ -3254,20 +3198,13 @@
       key: 'monthlyCosts',
       sourceInputKeys: ['selectedBroadbandPackage', 'selectedTvPackages', 'selectedPhonePackage']
     }],
-    section: [{
+    pages: [{
       name: 'landline',
       route: '/land-line',
       title: 'Landline Check',
-      screens: [{
-        name: 'landlineCheck'
+      sections: [{
+        name: 'landline'
       }, {
-        name: 'landlineOptions'
-      }]
-    }, {
-      name: 'Confirm Address',
-      route: '/confirm-address',
-      title: 'Select Address',
-      screens: [{
         name: 'selectedAddress',
         waitFor: ['output.availableAddresses']
       }]
@@ -3275,45 +3212,8 @@
       name: 'aboutYou',
       route: '/about-you',
       title: 'About You',
-      screens: [{
-        name: 'contactPerson'
-      }, {
-        name: 'account'
-      }, {
-        name: 'selectedMarketingContactOptions'
-      },
-      /* { name: 'directoryListing' }, */
-      {
-        name: 'installation'
-      }]
-    }, {
-      name: 'package',
-      route: '/package',
-      title: 'Package',
-      screens: [{
-        name: 'yourPackage',
-        waitFor: ['cache.oneOffCosts', 'cache.monthlyCosts']
-      }]
-    }, {
-      name: 'checkout',
-      route: '/checkout',
-      title: 'Set-up and payment',
-      screens: [{
-        name: 'selectedBroadbandSetupDate',
-        waitFor: ['output.availableBroadbandSetupDates']
-      }, {
-        name: 'payment'
-      }]
-    }, {
-      name: 'consentPayment',
-      route: '/consent-payment',
-      title: 'Confirmation',
-      screens: [{
-        name: 'finalPriceConsent',
-        waitFor: ['output.finalPrice']
-      }, {
-        name: 'confirmation',
-        waitFor: ['output.confirmation']
+      sections: [{
+        name: 'aboutYou'
       }]
     }],
     layout: [{
@@ -3330,30 +3230,47 @@
       name: 'footer',
       selector: '#footer'
     }],
-    serverUrlPath: 'https://ubio-application-bundle-dummy-server.glitch.me/create-job/sky',
-    initialInputs: {
-      url: 'https://www.moneysupermarket.com/broadband/goto/?linktrackerid=8307&productname=Sky+Entertainment+%2B+Broadband+Essential+%2B+Talk+Anytime+Extra&bundleid=58&clickout=00000000-0000-0000-0000-000000000003&dtluid=SqADhopj*6Q*eioD&location=',
-      options: {
-        "marketingContact": true,
-        "success": true,
-        "directoryListing": true,
-        "addressSelection": true,
-        "moveInDateSelection": true,
-        "keepLandlineNumber": false,
-        "screenshots": true,
-        "testingFlow": false
+    data: {
+      serverUrlPath: 'https://ubio-application-bundle-dummy-server.glitch.me/create-job/sky',
+      initialInputs: {
+        url: 'https://www.moneysupermarket.com/broadband/goto/?linktrackerid=8307&productname=Sky+Entertainment+%2B+Broadband+Essential+%2B+Talk+Anytime+Extra&bundleid=58&clickout=00000000-0000-0000-0000-000000000003&dtluid=SqADhopj*6Q*eioD&location=',
+        options: {
+          "marketingContact": true,
+          "success": true,
+          "directoryListing": true,
+          "addressSelection": true,
+          "moveInDateSelection": true,
+          "keepLandlineNumber": false,
+          "screenshots": true,
+          "testingFlow": false
+        },
+        selectedBroadbandPackage: {
+          "name": "Sky Broadband Essential"
+        },
+        selectedTvPackages: [{
+          "name": "Sky Entertainment"
+        }],
+        selectedPhonePackage: {
+          "name": "Sky Talk Anytime Extra"
+        }
       },
-      selectedBroadbandPackage: {
-        "name": "Sky Broadband Essential"
-      },
-      selectedTvPackages: [{
-        "name": "Sky Entertainment"
-      }],
-      selectedPhonePackage: {
-        "name": "Sky Talk Anytime Extra"
+      preDefined: {
+        inputs: {
+          landlineOptions: {
+            "justMoved": true,
+            "sharedProperty": false,
+            "restartLine": false,
+            "additionalLine": false
+          }
+        },
+        outputs: {
+          finalPrice: {
+            value: 2000,
+            countryCode: 'gbp'
+          }
+        }
       }
-    },
-    predefinedData: {}
+    }
   };
   /*
   see https://lit-html.polymer-project.org/guide/template-reference#cache
@@ -3380,16 +3297,6 @@
             </div>` : ''}
     </section>
 </div>`;
-  /**
-   *
-   *  insuranceProductInformationDocument
-   * 	essentialInformation
-   * 	policyWording
-   *  eligibilityConditions
-   *  estimatedPrice
-   *
-   */
-
 
   var header = () => html`
 <div class="header">
@@ -3401,7 +3308,7 @@
     <span></span>
 </div>`;
 
-  var Layout =
+  var LayoutTemplates =
   /*#__PURE__*/
   Object.freeze({
     summary: summary,
@@ -3435,39 +3342,149 @@
 </div>
 `;
 
-  var property = {};
-  var selectedTvPackages = {};
-  var selectedBroadbandPackage = {};
-  var selectedPhonePackage = {};
+  var landlineOption = () => html`
+<div name="landline-options">
+    <div class="field field-set">
+        <span class="field__name">Just Moved?</span>
+        <div class="field__inputs group group--merged">
+            <input
+                type="radio"
+                name="landline-options[just-moved-$boolean]"
+                id="landline-options[just-moved-$boolean]-true"
+                value="true"
+                required />
+            <label for="landline-options[just-moved-$boolean]-true" class="button">Yes</label>
+
+            <input
+                type="radio"
+                name="landline-options[just-moved-$boolean]"
+                id="landline-options[just-moved-$boolean]-false"
+                value="false" />
+            <label for="landline-options[just-moved-$boolean]-false" class="button">No</label>
+        </div>
+    </div>
+
+    <div class="field field-set">
+        <span class="field__name">Is shared property?</span>
+        <div class="field__inputs group group--merged">
+            <input
+                type="radio"
+                name="landline-options[is-shared-property-$boolean]"
+                id="landline-options[is-shared-property-$boolean]-true"
+                value="true"
+                required />
+            <label for="landline-options[is-shared-property-$boolean]-true" class="button">Yes</label>
+
+            <input
+                type="radio"
+                name="landline-options[is-shared-property-$boolean]"
+                id="landline-options[is-shared-property-$boolean]-false"
+                value="false" />
+            <label for="landline-options[is-shared-property-$boolean]-false" class="button">No</label>
+        </div>
+    </div>
+
+    <div class="field field-set">
+        <span class="field__name">Restart Line?</span>
+        <div class="field__inputs group group--merged">
+            <input
+                type="radio"
+                name="landline-options[restart-line-$boolean]"
+                id="landline-options[restart-line-$boolean]-true"
+                value="true"
+                required />
+            <label for="landline-options[restart-line-$boolean]-true" class="button">Yes</label>
+
+            <input
+                type="radio"
+                name="landline-options[restart-line-$boolean]"
+                id="landline-options[restart-line-$boolean]-false"
+                value="false" />
+            <label for="landline-options[restart-line-$boolean]-false" class="button">No</label>
+        </div>
+    </div>
+
+    <div class="field field-set">
+        <span class="field__name">Additional Line?</span>
+        <div class="field__inputs group group--merged">
+            <input
+                type="radio"
+                name="landline-options[additional-line-$boolean]"
+                id="landline-options[additional-line-$boolean]-true"
+                value="true"
+                required />
+            <label for="landline-options[additional-line-$boolean]-true" class="button">Yes</label>
+
+            <input
+                type="radio"
+                name="landline-options[additional-line-$boolean]"
+                id="landline-options[additional-line-$boolean]-false"
+                value="false" />
+            <label for="landline-options[additional-line-$boolean]-false" class="button">No</label>
+        </div>
+    </div>
+</div>
+`;
+
+  var landline = (predefinedInputs = {}) => html`
+    ${landlineCheck()}
+    ${predefinedInputs.landlineOption ? hidden(predefinedInputs.landlineOption) : landlineOption()}
+    <button type="button" class="button button--right button--primary" id="submit-landline">Submit</button>
+`;
+
+  const hidden = data => html`<input type="hidden" name="landline-options-$object" value="${JSON.stringify(data)}" />`;
+
+  const key = 'selected-address';
+
+  var selectedAddress = addresses => html`
+    <div class="field field-set">
+        <span class="field__name">Select Your Address</span>
+        <select name="${key}" @change="${onChange}" required>
+            <option>select address...</option>
+            ${addresses.map(address => html`
+                <option value="${address}"> ${address}</option>`)}
+        </select>
+        <div id="clone-address"></div>
+    </div>
+`;
+
+  const cloneAddress = address => html`
+<input type="hidden" name="selected-installation-address" value="${address}" required>
+`;
+
+  const onChange = {
+    // handleEvent method is required.
+    handleEvent(e) {
+      const selectedAddress = e.target.value;
+      render(cloneAddress(selectedAddress), document.querySelector('#clone-address'));
+    }
+
+  };
   const TITLES = ['mr', 'ms', 'mrs', 'miss'];
 
   var Person = (prefix = 'person') => html`
-<div class="section">
-    <div class="section__body">
-        <div name="${prefix}" class="filed-set">
-            <div class="field">
-                <label class="field__name">Title</label>
-                <select name="${prefix}[title]">
-                    ${TITLES.map(t => html`
-                    <option value="${t}"> ${t.toUpperCase()}</option>`)}
-                </select>
-            </div>
+<div name="${prefix}" class="filed-set">
+    <div class="field">
+        <label class="field__name">Title</label>
+        <select name="${prefix}[title]">
+            ${TITLES.map(t => html`
+            <option value="${t}"> ${t.toUpperCase()}</option>`)}
+        </select>
+    </div>
 
-            <div class="field">
-                <label class="field__name" for="${prefix}[first-name]">First Name</label>
-                <input type="text" name="${prefix}[first-name]" placeholder="Jane" required />
-            </div>
+    <div class="field">
+        <label class="field__name" for="${prefix}[first-name]">First Name</label>
+        <input type="text" name="${prefix}[first-name]" placeholder="Jane" required />
+    </div>
 
-            <div class="field">
-                <label class="field__name" for="${prefix}[middle-name]">Middle Name</label>
-                <input type="text" name="${prefix}[middle-name]" placeholder="" />
-            </div>
+    <div class="field">
+        <label class="field__name" for="${prefix}[middle-name]">Middle Name</label>
+        <input type="text" name="${prefix}[middle-name]" placeholder="" />
+    </div>
 
-            <div class="field">
-                <label class="field__name" for="${prefix}[last-name]">Last Name</label>
-                <input type="text" name="${prefix}[last-name]" placeholder="Doe" required />
-            </div>
-        </div>
+    <div class="field">
+        <label class="field__name" for="${prefix}[last-name]">Last Name</label>
+        <input type="text" name="${prefix}[last-name]" placeholder="Doe" required />
     </div>
 </div>
 `;
@@ -3482,7 +3499,7 @@
 </div>
 `;
 
-  var Account = () => html`
+  var account = () => html`
 <div name="account" class="filed-set">
     <div class="field filed-set">
         <label class="field__name" for="account[email]">Email</label>
@@ -3500,20 +3517,6 @@
         <input type="hidden" name="account[is-existing-$boolean]" value="false">
     </div>
 </div>`;
-
-  var payment = {};
-  var directDebit = {};
-  var finalPriceConsent = {};
-  const predefined = {
-    "justMoved": true,
-    "sharedProperty": false,
-    "restartLine": false,
-    "additionalLine": false
-  };
-
-  var landlineOptions = () => html`
-    <input type="hidden" name="landline-options-$object" value="${JSON.stringify(predefined)}" />
-`;
 
   var installation = () => html`
 <div name="installation">
@@ -3558,83 +3561,22 @@
 </div>
 `;
 
-  var monthlyPaymentMethod = {};
-
-  var selectedMarketingContactOptions = () => html`
-    <input type="hidden" name="selected-marketing-contact-options-$object" value="${JSON.stringify(null)}" />
+  var aboutYou = (predefinedInputs = {}) => html`
+    ${contactPerson()}
+    ${account()}
+    ${installation()}
+    <button type="button" class="button button--right button--primary" id="submit-about-you">Continue</button>
 `;
 
-  var selectedTvSetupDate = {};
-  var selectedBroadbandSetupDate = {};
-  var selectedMoveInDate = {};
-  var selectedActiveLandlineOption = {};
-  const key = 'selected-address';
-
-  var selectedAddress = addresses => html`
-    <div class="field field-set">
-        <span class="field__name">Select Your Address</span>
-        <select name="${key}" @change="${onChange}" required>
-            <option>select address...</option>
-            ${addresses.map(address => html`
-                <option value="${address}"> ${address}</option>`)}
-        </select>
-        <div id="clone-address"></div>
-    </div>
-`;
-
-  const cloneAddress = address => html`
-<input type="hidden" name="selected-installation-address" value="${address}" required>
-`;
-
-  const onChange = {
-    // handleEvent method is required.
-    handleEvent(e) {
-      const selectedAddress = e.target.value;
-      render(cloneAddress(selectedAddress), document.querySelector('#clone-address'));
-    }
-
-  };
-  var selectedInstallationAddress = {};
-  var selectedLineInstallationOption = {};
-  var landlineChallenge = {};
-  var directoryListing = {};
-  var alternativeCorrespondence = {};
-  var existingLandline = {};
-  var _package = {};
-  var confirmation = {};
-  var Screen =
+  var SectionTemplates =
   /*#__PURE__*/
   Object.freeze({
-    landlineCheck: landlineCheck,
-    property: property,
-    selectedTvPackages: selectedTvPackages,
-    selectedBroadbandPackage: selectedBroadbandPackage,
-    selectedPhonePackage: selectedPhonePackage,
-    contactPerson: contactPerson,
-    account: Account,
-    payment: payment,
-    directDebit: directDebit,
-    finalPriceConsent: finalPriceConsent,
-    landlineOptions: landlineOptions,
-    installation: installation,
-    monthlyPaymentMethod: monthlyPaymentMethod,
-    selectedMarketingContactOptions: selectedMarketingContactOptions,
-    selectedTvSetupDate: selectedTvSetupDate,
-    selectedBroadbandSetupDate: selectedBroadbandSetupDate,
-    selectedMoveInDate: selectedMoveInDate,
-    selectedActiveLandlineOption: selectedActiveLandlineOption,
+    landline: landline,
     selectedAddress: selectedAddress,
-    selectedInstallationAddress: selectedInstallationAddress,
-    selectedLineInstallationOption: selectedLineInstallationOption,
-    landlineChallenge: landlineChallenge,
-    directoryListing: directoryListing,
-    alternativeCorrespondence: alternativeCorrespondence,
-    existingLandline: existingLandline,
-    yourPackage: _package,
-    confirmation: confirmation
+    aboutYou: aboutYou
   });
-  const LayoutConfig = CONFIG.layout.map(l => {
-    const template = Layout[l.name];
+  const Layout = CONFIG.layout.map(l => {
+    const template = LayoutTemplates[l.name];
 
     if (!template && !l.mainTarget) {
       throw new Error(`Template for Layout ${l.name} is not found`);
@@ -3644,32 +3586,33 @@
       template
     };
   });
-  const SectionConfig = CONFIG.section.map(section => {
+  const Pages = CONFIG.pages.map(page => {
     const {
-      screens = []
-    } = section;
-    const screensWithTemplate = screens.map(s => {
-      const template = Screen[s.name];
+      sections = []
+    } = page;
+    const sectionsWithTemplate = sections.map(s => {
+      const template = SectionTemplates[s.name];
 
       if (!template) {
-        throw new Error(`Template for Section ${s.name} is not found`);
+        throw new Error(`Template for page ${s.name} is not found`);
       }
 
       return { ...s,
         template
       };
     });
-    return { ...section,
+    return { ...page,
       ...{
-        screens: screensWithTemplate
+        sections: sectionsWithTemplate
       }
     };
   });
-  const Data$1 = {
-    initialInputs: CONFIG.initialInputs,
-    severUrlPath: CONFIG.serverUrlPath
-  };
-  var app = createApp(SectionConfig, CONFIG.cache, LayoutConfig, Data$1, () => {
+  var app = createApp({
+    pages: Pages,
+    cache: CONFIG.cache,
+    layout: Layout,
+    data: CONFIG.data
+  }, () => {
     console.log('finished!');
   });
   app.init();

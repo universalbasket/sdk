@@ -14,7 +14,7 @@ class Router {
         let request = parseRequestURL()
 
         // Parse the URL and if it has an id part, change it with the string ":id"
-        let parsedURL = (request.section ? '/' + request.section : '/') + (request.input ? '/' + request.input : '')
+        let parsedURL = (request.page ? '/' + request.page : '/') + (request.input ? '/' + request.input : '')
 
         // Get the page from our hash of supported routes.
         // If the parsed URL is not in our list of supported routes, select the 404 page instead
@@ -29,10 +29,10 @@ function parseRequestURL() {
     let url = location.hash.slice(1).toLowerCase() || '/';
     let r = url.split("/")
     let request = {
-        section    : null,
+        page    : null,
         input      : null
     }
-    request.section    = r[1]
+    request.page    = r[1]
     request.input      = r[2]
 
     return request

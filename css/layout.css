@@ -90,7 +90,7 @@
         height: var(--nav-height--large);
     }
 
-    .section {
+    .page {
         width: 40vw;
         min-width: 400px;
     }
