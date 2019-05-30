@@ -1,5 +1,5 @@
 import sdk from './src/sdk';
-import Router from './router';
+import Router from './src/router';
 import { render } from './src/lit-html';
 
 import * as Storage from './src/input-output';
@@ -18,12 +18,13 @@ import ProgressBar from './src/ProgressBar';
  * (?) Should we give a flexibility of showing some inputs together?
  */
 
-function updateSummary(summaryTemplate) {
-    if (!summaryTemplate) {
+function updateSummary(summary = {}) {
+    const { template, selector } = summary;
+    if (!summary) {
         return;
     }
     const { inputs, outputs, cache } = Storage.getAll();
-    render(summaryTemplate(inputs, outputs, cache), document.querySelector('#summary'));
+    render(template(inputs, outputs, cache), document.querySelector(selector));
 }
 
 function createApp(SECTION_CONFIGS = [], CACHE_CONFIGS = [], LAYOUT = [], DATA = {}, callback) {
@@ -35,10 +36,11 @@ function createApp(SECTION_CONFIGS = [], CACHE_CONFIGS = [], LAYOUT = [], DATA =
     if (!isValidConfig) {
         throw new Error('invalid config');
     }
+
     const { selector: mainSelector } = LAYOUT.find(_ => _.mainTarget == true) || {};
 
     if (!mainSelector) {
-        throw new Error(`main target not found in config`);
+        throw new Error(`main target selector not found in config`);
     }
 
     const flow = SECTION_CONFIGS.map(con => con.route);
@@ -66,7 +68,9 @@ function createApp(SECTION_CONFIGS = [], CACHE_CONFIGS = [], LAYOUT = [], DATA =
             const { initialInputs: input, category, serverUrlPath } = DATA;
             const router = Router(routes, titles, NotFound(mainSelector), ProgressBar('#progress-bar'))
 
-            LAYOUT.filter(l => !l.mainTarget).forEach(layout => render(layout.template(), document.querySelector(layout.selector)));
+            LAYOUT
+                .filter(l => !l.mainTarget)
+                .forEach(l => render(l.template(), document.querySelector(l.selector)));
 
             const Summary = LAYOUT.find(l => l.name === 'summary');
 
@@ -87,6 +91,7 @@ function createApp(SECTION_CONFIGS = [], CACHE_CONFIGS = [], LAYOUT = [], DATA =
             // Listen on page load:
             window.addEventListener('load', () => {
                 router.navigate();
+                updateSummary(Summary.template);
             });
 
             //custom event when input submitted
@@ -122,79 +127,3 @@ function createApp(SECTION_CONFIGS = [], CACHE_CONFIGS = [], LAYOUT = [], DATA =
 }
 
 export { createApp };
-
-/* const CACHE = [
-    {
-        key: 'priceBreakdown',
-        sourceInputKeys: ['selectedOption1', 'selectedOption2']
-    },
-    {
-        key: 'availableCovers',
-        sourceInputKeys: []
-    },
-    {
-        key: 'availableVetPaymentTerms',
-        sourceInputKeys: ['selectedCover']
-    },
-    {
-        key: 'availablePaymentTerms',
-        sourceInputKeys: []
-    }
-];
-
-const SECTIONS = [
-    {
-        name: 'aboutYourPet',
-        route: '/about-your-pet',
-        title: 'About Your Pet',
-        screens: [
-            { key: 'petsSelectedBreedType', waitFor: 'data.availableBreedTypes' }
-        ]
-    },
-    {
-        name: 'aboutYou',
-        route: '/about-you',
-        title: 'About You',
-        screens: [
-            { key: 'account', waitFor: null },
-            { key: 'owner', waitFor: null },
-            { key: 'selectedAddress', waitFor: 'output.availableAddresses' }
-        ]
-    },
-    {
-        name: 'yourPolicy',
-        route: '/your-policy',
-        title: 'Your Policy',
-        screens: [
-            { key: 'policyOptions', waitFor: null }, //todo: allowCache config for previous
-            { key: 'selectedCover', waitFor: 'cache.availableCovers' },
-            { key: 'selectedVetPaymentTerm', waitFor: 'output.availableVetPaymentTerms' },
-            { key: 'selectedPaymentTerm', waitFor: 'cache.availablePaymentTerms' },
-            { key: 'selectedCoverType', waitFor: 'output.availableCoverTypes' },
-            { key: 'selectedVoluntaryExcess', waitFor: 'output.availableVoluntaryExcesses' },
-            { key: 'selectedCoverOptions', waitFor: 'output.availableCoverOptions' },
-            { key: 'selectedVetFee', waitFor: 'output.availableVetFees' }
-        ]
-    },
-    {
-        name: 'paymentDetail',
-        route: '/payment',
-        title: 'Payment Details',
-        screens: [
-            { key: 'payment', waitFor: 'output.estimatedPrice' },
-            { key: 'directDebit', waitFor: 'output.estimatedPrice' }
-        ]
-    },
-    {
-        name: 'consentPayment',
-        route: '/consent-payment',
-        title: 'Ready to insure your pet',
-        screens: [
-            { key: 'finalPriceConsent', waitFor: 'finalPrice'},
-        ]
-    }
-];
-
-var app = createApp(SECTIONS, CACHE, LAYOUT, () => { console.log('finished!')});
-
-app.init(); */
