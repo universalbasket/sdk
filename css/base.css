@@ -1,0 +1,28 @@
+* {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 14px;
+    margin: 0;
+}
+
+label {
+    display: block;
+}
+
+input,
+select {
+    border: 2px solid var(--accent-color);
+    border-radius: var(--input-border-radius);
+    width: 30ch;
+    padding: 1px 2px;
+}
+
+input:focus {
+    border-color: #31aade;
+    outline: none;
+}
+
+ul,
+ol {
+    list-style-type: none;
+    padding: 0;
+}

@@ -1,0 +1,25 @@
+.field {
+    margin: 5px;
+    padding: 5px 5px 15px 5px;
+}
+
+.field-set {
+    border-bottom: solid 1px #d3e0ed;
+}
+
+.field__name {
+    font-size: 14px;
+    font-weight: 700;
+    color: #333;
+    display: block;
+    padding-bottom: 5px;
+}
+
+.field__inputs > input[type="radio"] {
+    display: none;
+}
+
+.field__inputs > input[type="radio"]:checked + label {
+    color: #fff;
+    background: var(--accent-color);
+}

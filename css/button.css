@@ -1,0 +1,17 @@
+.button {
+    border-radius: 3px;
+    padding: 2px 5px;
+    min-width: 8ch;
+    vertical-align: middle;
+    text-align: center;
+}
+
+.button:hover {
+    cursor: pointer;
+}
+
+.button--primary {
+    color: #fff;
+    background: var(--primary-color);
+    border: 0;
+}

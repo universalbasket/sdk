@@ -2982,6 +2982,8 @@
             window.location.hash = entryPoint;
           }).catch(err => console.log(err));
         }
+
+        window.location.hash = entryPoint;
       }
     };
   }
