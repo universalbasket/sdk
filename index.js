@@ -2,12 +2,9 @@ import sdk from './src/sdk';
 import Router from './router';
 import { render } from './src/lit-html';
 
-import * as InputOutput from './src/input-output';
+import * as Storage from './src/input-output';
 import * as Cache from './src/cache';
 
-import Summary from './templates/layout/summary';
-import Header from './templates/layout/header';
-import Footer from './templates/layout/footer';
 import Section from './src/sectionRenderer';
 import NotFound from './src/NotFound';
 import Loading from './templates/loading';
@@ -21,15 +18,15 @@ import ProgressBar from './src/ProgressBar';
  * (?) Should we give a flexibility of showing some inputs together?
  */
 
-const LAYOUT_DEFAULT = [
-    /* { selector: '#progress-bar', template: ProgressBar }, */
-    { selector: '#header', template: Header },
-    { selector: '#summary', template: Summary },
-    { selector: '#main', mainTarget: true },
-    { selector: '#footer', template: Footer }
-]
+function updateSummary(summaryTemplate) {
+    if (!summaryTemplate) {
+        return;
+    }
+    const { inputs, outputs, cache } = Storage.getAll();
+    render(summaryTemplate(inputs, outputs, cache), document.querySelector('#summary'));
+}
 
-function createApp(SECTION_CONFIGS = [], CACHE_CONFIGS = [], LAYOUT = LAYOUT_DEFAULT, callback) {
+function createApp(SECTION_CONFIGS = [], CACHE_CONFIGS = [], LAYOUT = [], DATA = {}, callback) {
         //TODO: maybe this core app fetches all domain's meta and store them.
         // config will accept input keys rather than whole met
 
@@ -66,14 +63,17 @@ function createApp(SECTION_CONFIGS = [], CACHE_CONFIGS = [], LAYOUT = LAYOUT_DEF
 
     return {
         init: () => {
+            const { initialInputs: input, category, serverUrlPath } = DATA;
             const router = Router(routes, titles, NotFound(mainSelector), ProgressBar('#progress-bar'))
 
             LAYOUT.filter(l => !l.mainTarget).forEach(layout => render(layout.template(), document.querySelector(layout.selector)));
 
+            const Summary = LAYOUT.find(l => l.name === 'summary');
+
             window.addEventListener('hashchange', () => {
                 router.navigate();
                 if (!window.location.hash || window.location.hash === '/') {
-                    sdk.create()
+                    sdk.create({ input, category, serverUrlPath})
                         .then(() => {
                             window.location.hash = entryPoint;
                             Cache.pollDefault(CACHE_CONFIGS);
@@ -81,8 +81,7 @@ function createApp(SECTION_CONFIGS = [], CACHE_CONFIGS = [], LAYOUT = LAYOUT_DEF
                         .catch(err => console.log(err));
                 }
 
-                const { inputs, outputs } = InputOutput.getAll();
-                render(Summary(inputs, outputs), document.querySelector('#summary'));
+                updateSummary(Summary.template);
             });
 
             // Listen on page load:
@@ -94,13 +93,11 @@ function createApp(SECTION_CONFIGS = [], CACHE_CONFIGS = [], LAYOUT = LAYOUT_DEF
             window.addEventListener('submitinput', (e) => {
                 //TODO: get cache using output
                 Cache.poll(CACHE_CONFIGS, Object.keys(e.detail));
-                const { inputs, outputs } = InputOutput.getAll();
-                render(Summary(inputs, outputs), document.querySelector('#summary'));
+                updateSummary(Summary.template);
             })
 
             window.addEventListener('createoutput', () => {
-                const { inputs, outputs } = InputOutput.getAll();
-                render(Summary(inputs, outputs), document.querySelector('#summary'));
+                updateSummary(Summary.template);
             })
 
             if (window.location.hash && window.location.hash !== '/') {
@@ -114,13 +111,12 @@ function createApp(SECTION_CONFIGS = [], CACHE_CONFIGS = [], LAYOUT = LAYOUT_DEF
                     });
 
             } else {
-                sdk.create()
+                sdk.create({ input, category, serverUrlPath})
                     .then(() => {
                         window.location.hash = entryPoint;
                     })
                     .catch(err => console.log(err));
             }
-            window.location.hash = entryPoint;
         }
     }
 }

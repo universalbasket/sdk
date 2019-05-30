@@ -23,6 +23,8 @@ import landlineChallenge from './landline-challenge';
 import directoryListing from './directory-listing';
 import alternativeCorrespondence from './alternative-correspondence';
 import existingLandline from './existing-landline';
+import yourPackage from './package';
+import confirmation from './confirmation';
 
 export {
     landlineCheck,
@@ -50,4 +52,6 @@ export {
     directoryListing,
     alternativeCorrespondence,
     existingLandline,
+    yourPackage,
+    confirmation
 }

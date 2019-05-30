@@ -6,6 +6,7 @@ export default () => html`
         <div class="section__body" id="target"></div>
 
         <div class="section__actions">
+            <button type="button" class="button button--right button--primary" id="submitBtn">Select</button>
         </div>
     </div>
 `;

@@ -16,7 +16,7 @@ import payment from './payment';
 import directDebit from './direct-debit';
 import finalPriceConsent from './final-price-consent';
 
-export default {
+export {
     petsSelectedBreedType,
     account,
     owner,

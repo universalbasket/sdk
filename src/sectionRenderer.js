@@ -1,8 +1,9 @@
 import { html, render } from './lit-html';
 import sdk from './sdk';
 import serializeForm from './serialize-form';
-import templates from '../templates/index';
+import sectionTemplate from '../templates/section';
 import getSource from './get-source-with-priority';
+import renderScreen from './renderScreen';
 
 class Section {
     constructor(name, screens = [], selector, onFinish) {
@@ -22,31 +23,29 @@ class Section {
     }
 
     renderWrapper() {
-        render(templates.section(), document.querySelector(this.selector));
-        const wrappers = this.screens.map(screen => screen.key).map(key => {
-            return html`<form id="screen-${key}"></form>`;
+        render(sectionTemplate(), document.querySelector(this.selector));
+        const wrappers = this.screens.map(screen => screen.name).map(name => {
+            return html`<form id="screen-${name}"></form>`;
         });
 
-        render(html`${wrappers.map(w => w)}`, document.querySelector('#target'))
-
-        /* this.addListener(); */
+        render(html`${wrappers.map(w => w)}`, document.querySelector('#target'));
     }
 
-    addListener(key) {
+    addListener(name) {
         if (!sdk.initiated) {
             return;
         }
 
-        const submitBtn = document.querySelector(`#submitBtn-${key}`);
+        const submitBtn = document.querySelector(`#submitBtn`);
 
         if (!submitBtn) {
-            console.warn(`no button #submitBtn-${key} found`);
+            console.warn(`no button #submitBtn found`);
             return;
         }
 
         submitBtn.addEventListener('click', () => {
             // TODO: validate the input (using protocol?)
-            const form = document.querySelector(`#screen-${key}`);
+            const form = document.querySelector(`#screen-${name}`);
             if (!form.reportValidity()) {
                 console.log('invalid form');
                 return;
@@ -54,7 +53,7 @@ class Section {
 
             submitBtn.setAttribute('disabled', 'true');
 
-            const inputs = serializeForm(`screen-${key}`);
+            const inputs = serializeForm(`screen-${name}`);
 
             // send input sdk
             this.submitInputs(inputs);
@@ -89,23 +88,26 @@ class Section {
         }
     }
 
-    renderScreen({ key, waitFor = ''/* , submitOn:[button, onComplete] */}) {
-        const template = templates.get(key, getDataForScreen);
-        const selector = document.querySelector(`#screen-${key}`);
-        const buttonTemplate = html`<button type="button" class="button button--right button--primary" id="submitBtn-${key}">Select</button>`;
+    renderScreen({ name, waitFor, template/* , submitOn:[button, onComplete] */}) {
+        const templateTo = renderScreen(template, getDataForScreen);
+        const selector = document.querySelector(`#screen-${name}`);
 
-        if(!template || !selector) {
+        if(!templateTo || !selector) {
             throw new Error('Template or selector not found, check the config');
         }
 
-        /** build a promise function that applicable for all kind */
+        render(html`
+                ${templateTo}
+            `, selector);
+
         function getDataForScreen() {
             return new Promise((res) => {
-                if (!waitFor) {
+                if (!waitFor || waitFor.length === 0) {
                     return res({ data: null, skip: false });
                 }
 
-                const [type, sourceKey] = waitFor.split('.');
+                //TODO:for now, until making the outputcreatelistner
+                const [type, sourceKey] = waitFor[0].split('.');
                 const data = getSource(type, sourceKey);
 
                 console.log('data in example', data);
@@ -119,7 +121,7 @@ class Section {
                     return res({ data, skip: false });
                 }
 
-                sdk.waitForJobOutput(sourceKey, key)
+                sdk.waitForJobOutput(sourceKey)
                     .then(data => {
                         if (data === null) {
                             this.skipScreen();
@@ -130,57 +132,18 @@ class Section {
                     });
             });
         }
-
-        render(html`
-                ${template}
-                ${buttonTemplate}
-            `, selector);
     }
 
     renderScreens() {
         this.screens.forEach(screen => {
-            this.renderScreen(screen);
-            this.addListener(screen.key);
+            try {
+                this.renderScreen(screen);
+                this.addListener(screen.name);
+            } catch(err) {
+                console.error(err);
+            }
         });
     }
-
-/*
-        //error handling?
-        const template = templates.getInput(screen);
-        // render if the output is here.
-        // when the awaitingInput event has happened, check nextKey and awaitingInputKey.
-        // if it's different, skip this one, and render the awaitingInputKey.
-
-       if (screen.sourceOutputKey != null) {
-            sdk.waitForJobOutput(screen.sourceOutputKey, nextKey)
-                .then(output => {
-                    render(html`${template(screen, output)}`, document.querySelector('#target'));
-
-                    this.keysSubmitted.push(nextKey);
-                })
-                .catch(err => {
-                    if (err.name === 'jobExpectsDifferentInputKey') {
-                        console.log('got jobExpectsDifferentInputKey!', err.details.awaitingInputKey);
-
-                        const input = this.screens.find(im => im.key === err.details.awaitingInputKey);
-                        if (!input) {
-                            // not found in this section! finish
-                            return this.onFinish();
-                        }
-
-                        const idx = this.keysToSubmit.indexOf(input.key);
-                        this.keysToSubmit.splice(idx, 1);
-                        this.keysToSubmit.unshift(...[input.key, nextKey]);
-
-                        return this.renderScreens();
-                    }
-                });
-        } else {
-            render(html`${template(null, cache)}<div id="next-of-${screen.key}"></div>`, document.querySelector('#target'));
-
-            this.keysSubmitted.push(nextKey);
-        } */
-
 }
 
 /**
@@ -188,6 +151,7 @@ class Section {
  * @param {Array} screens
  * @param {Function} onFinish
  */
+
 function getSection(name, screens, selector, onFinish) {
     return new Section(name, screens, selector, onFinish);
 }

@@ -1,5 +1,4 @@
 import { createEndUserSdk } from '@ubio/sdk';
-import { initialInputs } from '../env';
 import * as InputOutput from './input-output';
 
 let jobId = localStorage.getItem('jobId') || null;
@@ -12,7 +11,7 @@ class EndUserSdk {
         this.initiated = false;
     }
 
-    async create(fields = {}) {
+    async create({ input, category, serverUrlPath}) {
         if (jobId && token && serviceId) {
             let previous;
 
@@ -26,7 +25,7 @@ class EndUserSdk {
 
         localStorage.clear();
 
-        const newJob = await createJob(fields);
+        const newJob = await createJob(input, category, serverUrlPath);
 
         jobId = newJob.jobId;
         token = newJob.token;
@@ -65,7 +64,7 @@ class EndUserSdk {
         return await Promise.all(createInputs);
     }
 
-    async waitForJobOutput(outputKey, inputKey) {
+    async waitForJobOutput(outputKey) {
         const outputs = await this.sdk.getJobOutputs(); // TODO: job
         const output = Array.isArray(outputs.data) && outputs.data.find(ou => ou.key === outputKey);
 
@@ -143,11 +142,9 @@ class EndUserSdk {
     }
 }
 
-async function createJob({ input = {}, category = 'test' }) {
-    input = { ...initialInputs, ...input };
-
-    const SERVER_URL = "https://ubio-application-bundle-dummy-server.glitch.me";
-    const res = await fetch(`${SERVER_URL}/create-job`, {
+async function createJob(input = {}, category = 'test', SERVER_URL_PATH) {
+    SERVER_URL_PATH = SERVER_URL_PATH || "https://ubio-application-bundle-dummy-server.glitch.me/create-job/sky";
+    const res = await fetch(SERVER_URL_PATH, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ input, category }),
