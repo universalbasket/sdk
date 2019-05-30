@@ -6,7 +6,6 @@ import selectedPhonePackage from './selected-phone-package';
 import contactPerson from './contact-person';
 import account from './account';
 import payment from './payment';
-import panToken from './pan-token';
 import directDebit from './direct-debit';
 import finalPriceConsent from './final-price-consent';
 import landlineOptions from './landline-options';
@@ -24,3 +23,31 @@ import landlineChallenge from './landline-challenge';
 import directoryListing from './directory-listing';
 import alternativeCorrespondence from './alternative-correspondence';
 import existingLandline from './existing-landline';
+
+export {
+    landlineCheck,
+    property,
+    selectedTvPackages,
+    selectedBroadbandPackage,
+    selectedPhonePackage,
+    contactPerson,
+    account,
+    payment,
+    directDebit,
+    finalPriceConsent,
+    landlineOptions,
+    installation,
+    monthlyPaymentMethod,
+    selectedMarketingContactOptions,
+    selectedTvSetupDate,
+    selectedBroadbandSetupDate,
+    selectedMoveInDate,
+    selectedActiveLandlineOption,
+    selectedAddress,
+    selectedInstallationAddress,
+    selectedLineInstallationOption,
+    landlineChallenge,
+    directoryListing,
+    alternativeCorrespondence,
+    existingLandline,
+}
