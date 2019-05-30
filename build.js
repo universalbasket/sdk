@@ -3364,8 +3364,8 @@
   var summary = (inputs = {}, outputs = {}) => html`
 <div class="summary">
     <div class="summary__header">
-        <b>MoreThan</b>
-        <span class="dimmed">Pet Insurance</span>
+        <b>USwitch</b>
+        <span class="dimmed">Broadband Signup</span>
     </div>
 
     <section class="summary__body">
