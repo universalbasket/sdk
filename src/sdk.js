@@ -1,5 +1,5 @@
 import { createEndUserSdk } from '@ubio/sdk';
-import * as Storage from './input-output';
+import * as Storage from './storage';
 
 let jobId = localStorage.getItem('jobId') || null;
 let token = localStorage.getItem('token') || null;

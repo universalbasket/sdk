@@ -1,10 +1,11 @@
-const TYPES = ['input', 'output', 'cache'];
+const TYPES = ['input', 'output', 'cache', 'local'];
 
 function getAll() {
     const length = localStorage.length;
     const inputs = {};
     const outputs = {};
     const caches = {};
+    const local = {};
 
     for (let i = 0; i < length ; i += 1) {
         const key = localStorage.key(i);
@@ -25,9 +26,15 @@ function getAll() {
             const data = JSON.parse(localStorage.getItem(key));
             caches[trimmed] = data;
         }
+
+        if (key.startsWith('local.')) {
+            const trimmed = key.replace('local.', '');
+            const data = JSON.parse(localStorage.getItem(key));
+            caches[trimmed] = data;
+        }
     }
 
-    return { inputs, outputs, caches };
+    return { inputs, outputs, caches, local };
 }
 
 function objectToArray(inputs) {

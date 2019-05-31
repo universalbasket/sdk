@@ -1,11 +1,11 @@
+import kebabcase from 'lodash.kebabcase';
 import { html, render } from './lit-html';
 import sdk from './sdk';
 import serializeForm from './serialize-form';
-import getSource from './get-source-with-priority';
+import getData from './get-data-with-priority'
 import pageTemplate from './builtin-template/page';
 import inlineLoading from './builtin-template/inline-loading';
-import * as Storage from './input-output';
-import kebabcase from 'lodash.kebabcase';
+import * as Storage from './storage';
 /**
  * @param {String} name
  * @param {Array} sections
@@ -121,7 +121,7 @@ class PageRenderer {
         return new Promise((res) => {
             const results = waitFor.map(_ => {
                 const [type, sourceKey] = _.split('.');
-                const data = getSource(type, sourceKey);
+                const data = getData(type, sourceKey);
 
                 if (data === null) { //skip: true,
                     this.skipSection();

@@ -2,7 +2,7 @@ import resolve from 'rollup-plugin-node-resolve';
 import commonjs from 'rollup-plugin-commonjs';
 
 export default {
-  input: 'example/index.js',
+  input: 'index.js',
   output: {
       file:'bundle.js',
       format: 'umd',

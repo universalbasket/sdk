@@ -13,6 +13,10 @@ export default {
             sourceInputKeys: []
         },
         {
+            key: 'finalPrice',
+            sourceInputKeys: []
+        },
+        {
             key: 'oneOffCosts',
             sourceInputKeys: ['selectedBroadbandPackage', 'selectedTvPackages', 'selectedPhonePackage']
         },
@@ -96,20 +100,16 @@ export default {
                 "name": "Sky Talk Anytime Extra"
             }
         },
-        preDefined: {
-            inputs: {
-                landlineOptions: {
-                    "justMoved": true,
-                    "sharedProperty": false,
-                    "restartLine": false,
-                    "additionalLine": false
-                }
+        local: {
+            landlineOptions: {
+                "justMoved": true,
+                "sharedProperty": false,
+                "restartLine": false,
+                "additionalLine": false
             },
-            outputs: {
-                finalPrice: {
-                    value: 2000,
-                    countryCode: 'gbp'
-                }
+            finalPrice: {
+                value: 2000,
+                countryCode: 'gbp'
             }
         }
     }

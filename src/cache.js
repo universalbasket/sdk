@@ -1,5 +1,5 @@
 import sdk from './sdk';
-import * as Storage from './input-output';
+import * as Storage from './storage';
 
 export {
     poll
