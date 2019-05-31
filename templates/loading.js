@@ -2,13 +2,15 @@ import { html, render } from '../node_modules/lit-html/lit-html.js';
 
 export default (selector = '#app') => {
     return {
-        render: () => {
-            const target = document.querySelector(selector);
-            if (!target) {
-                throw new Error(`loading: selector ${selector} not found`);
-            }
+        renderer: {
+            init: () => {
+                const target = document.querySelector(selector);
+                if (!target) {
+                    throw new Error(`loading: selector ${selector} not found`);
+                }
 
-            render(template, target);
+                render(template, target);
+            }
         }
     }
 }

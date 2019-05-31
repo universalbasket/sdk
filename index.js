@@ -8,7 +8,7 @@ import * as Cache from './src/cache';
 import PageRenderer from './src/pageRenderer';
 import NotFound from './src/NotFound';
 import Loading from './templates/loading';
-import ProgressBar from './src/ProgressBar';
+import ProgressBar from './src/builtin-template/ProgressBar';
 
 /** TODOS:
  * [v] need to navigate to awaitingInput's pages, when waiting for the output
@@ -58,8 +58,8 @@ function createApp({ pages = [], cache = [], layout = [], data = {} }, callback)
         const { title, sections, route } = config;
         const next = flow[idx + 1];
 
-        const render = () => PageRenderer(name, sections, mainSelector, () => setTimeout(() => { window.location.hash = next }, 1000));
-        routes[route] = { render, title, step: idx + 1 };
+        const renderer = PageRenderer(name, sections, mainSelector, () => setTimeout(() => { window.location.hash = next }, 1000));
+        routes[route] = { renderer, title, step: idx + 1 };
     });
 
     const entryPoint = flow[0];
@@ -81,7 +81,7 @@ function createApp({ pages = [], cache = [], layout = [], data = {} }, callback)
                     sdk.create({ input, category, serverUrlPath})
                         .then(() => {
                             window.location.hash = entryPoint;
-                            Cache.pollDefault(cache);
+                            Cache.poll(cache);
                         })
                         .catch(err => console.log(err));
                 }
@@ -98,7 +98,8 @@ function createApp({ pages = [], cache = [], layout = [], data = {} }, callback)
             //custom event when input submitted
             window.addEventListener('submitinput', (e) => {
                 //TODO: get cache using output
-                Cache.poll(cache, Object.keys(e.detail));
+                console.log(e);
+                e.details.forEach(({ key }) => Cache.poll(cache, key));
                 updateSummary(Summary);
             })
 
@@ -109,8 +110,7 @@ function createApp({ pages = [], cache = [], layout = [], data = {} }, callback)
             if (window.location.hash && window.location.hash !== '/') {
                 sdk.retrieve()
                     .then(() => {
-                        Cache.pollDefault(caches);
-                        console.log('job info retrieved');
+                        Cache.poll(cache);
                     })
                     .catch(err => {
                         window.location.hash = '';

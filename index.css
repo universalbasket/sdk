@@ -192,13 +192,7 @@ ol {
 
 /* main */
 
-.page__header {
-    padding: 10px;
-    background-color: #445a70;
-    color: white;
-}
-
-.page__actions {
+.section__actions {
     display: flex;
     justify-content: flex-end;
     margin-bottom: 30px;

@@ -1,5 +1,5 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
-(function (Buffer){
+(function (global,Buffer){
 (function (factory) {
   typeof define === 'function' && define.amd ? define(factory) : factory();
 })(function () {
@@ -371,6 +371,13 @@
         }).then(function (temp) {
           return temp.panToken;
         });
+      },
+      getOtp: function () {
+        return vaultFetch('otp', {
+          method: 'POST'
+        }).then(function (otp) {
+          return otp.id;
+        });
       }
     };
   }
@@ -419,7 +426,7 @@
       cancelJob: function () {
         return apiClient.cancelJob(jobId);
       },
-      resetJob: function (jobId, fromInputKey, preserveInputs) {
+      resetJob: function (fromInputKey, preserveInputs) {
         return apiClient.resetJob(jobId, fromInputKey, preserveInputs);
       },
       createJobInput: function (key, data, stage) {
@@ -544,7 +551,7 @@
     }
 
     async create({
-      input,
+      input = {},
       category,
       serverUrlPath
     }) {
@@ -571,6 +578,7 @@
       localStorage.setItem('jobId', jobId);
       localStorage.setItem('token', token);
       localStorage.setItem('serviceId', serviceId);
+      Object.keys(input).forEach(key => set('input', key, input[key]));
       this.sdk = createEndUserSdk({
         token,
         jobId,
@@ -601,25 +609,19 @@
       const createInputs = keys.map(async key => {
         const data = inputs[key];
         await this.sdk.createJobInput(key, data);
-        set('input', key, data);
         return {
           key,
           data
         };
       });
-      return await Promise.all(createInputs);
-    }
 
-    async waitForJobOutput(outputKey) {
-      const outputs = await this.sdk.getJobOutputs(); // TODO: job
-
-      const output = Array.isArray(outputs.data) && outputs.data.find(ou => ou.key === outputKey);
-
-      if (output) {
-        return output.data;
+      try {
+        const submitted = await Promise.all(createInputs);
+        submitted.forEach(_ => set('input', _.key, _.data));
+      } catch (err) {
+        await this.sdk.resetJob(keys[0]);
+        throw err;
       }
-
-      return await this.trackJobOutput(outputKey);
     }
 
     async getCache({
@@ -654,26 +656,20 @@
       });
     }
 
-    trackJobOutput(outputKey) {
-      return new Promise((res, rej) => {
+    trackJobOutput(callback) {
+      return this.sdk.trackJob((event, error) => {
         let createdOutputProcessing = false;
-        const stopTracking = this.sdk.trackJob((event, error) => {
-          if (event === 'createOutput' && !createdOutputProcessing) {
-            createdOutputProcessing = true;
-            this.sdk.getJobOutputs().then(outputs => {
-              outputs.data.forEach(output => {
-                set('output', output.key, output.data);
-              });
-              createdOutputProcessing = false;
-              const output = outputs.data.find(jo => jo.key === outputKey);
 
-              if (output) {
-                stopTracking();
-                res(output.data);
-              }
+        if (event === 'createOutput' && !createdOutputProcessing) {
+          createdOutputProcessing = true;
+          this.sdk.getJobOutputs().then(outputs => {
+            outputs.data.forEach(output => {
+              set('output', output.key, output.data);
             });
-          }
-        });
+            callback('outputCreate', null);
+            createdOutputProcessing = false;
+          });
+        }
       });
     }
 
@@ -682,6 +678,10 @@
       await this.createJobInputs({
         panToken
       });
+    }
+
+    async resetJob(fromInputKey, preserveInputs) {
+      await this.sdk.resetJob(fromInputKey, preserveInputs);
     }
 
     trackJob(callback) {
@@ -703,7 +703,7 @@
   }
 
   async function createJob(input = {}, category = 'test', SERVER_URL_PATH) {
-    SERVER_URL_PATH = SERVER_URL_PATH || "https://ubio-application-bundle-dummy-server.glitch.me/create-job/sky";
+    SERVER_URL_PATH = SERVER_URL_PATH;
     const res = await fetch(SERVER_URL_PATH, {
       method: 'POST',
       headers: {
@@ -742,7 +742,7 @@
       // If the parsed URL is not in our list of supported routes, select the 404 page instead
 
       let route = this.routes[parsedURL] ? this.routes[parsedURL] : this.notFoundTemplate;
-      route.render();
+      route.renderer.init();
       this.ProgressBarTemplate(this.titles, route.step);
     }
 
@@ -775,33 +775,6 @@
 
 
   const directives = new WeakMap();
-  /**
-   * Brands a function as a directive so that lit-html will call the function
-   * during template rendering, rather than passing as a value.
-   *
-   * @param f The directive factory function. Must be a function that returns a
-   * function of the signature `(part: Part) => void`. The returned function will
-   * be called with the part object
-   *
-   * @example
-   *
-   * ```
-   * import {directive, html} from 'lit-html';
-   *
-   * const immutable = directive((v) => (part) => {
-   *   if (part.value !== v) {
-   *     part.setValue(v)
-   *   }
-   * });
-   * ```
-   */
-  // tslint:disable-next-line:no-any
-
-  const directive = f => (...args) => {
-    const d = f(...args);
-    directives.set(d, true);
-    return d;
-  };
 
   const isDirective = o => {
     return typeof o === 'function' && directives.has(o);
@@ -1968,97 +1941,23 @@
    */
 
 
-  const _state = new WeakMap();
-  /**
-   * Renders one of a series of values, including Promises, to a Part.
-   *
-   * Values are rendered in priority order, with the first argument having the
-   * highest priority and the last argument having the lowest priority. If a
-   * value is a Promise, low-priority values will be rendered until it resolves.
-   *
-   * The priority of values can be used to create placeholder content for async
-   * data. For example, a Promise with pending content can be the first,
-   * highest-priority, argument, and a non_promise loading indicator template can
-   * be used as the second, lower-priority, argument. The loading indicator will
-   * render immediately, and the primary content will render when the Promise
-   * resolves.
-   *
-   * Example:
-   *
-   *     const content = fetch('./content.txt').then(r => r.text());
-   *     html`${until(content, html`<span>Loading...</span>`)}`
-   */
-
-
-  const until = directive((...args) => part => {
-    let state = _state.get(part);
-
-    if (state === undefined) {
-      state = {
-        values: []
-      };
-
-      _state.set(part, state);
-    }
-
-    const previousValues = state.values;
-    state.values = args;
-
-    for (let i = 0; i < args.length; i++) {
-      // If we've rendered a higher-priority value already, stop.
-      if (state.lastRenderedIndex !== undefined && i > state.lastRenderedIndex) {
-        break;
-      }
-
-      const value = args[i]; // Render non-Promise values immediately
-
-      if (isPrimitive(value) || typeof value.then !== 'function') {
-        part.setValue(value);
-        state.lastRenderedIndex = i; // Since a lower-priority value will never overwrite a higher-priority
-        // synchronous value, we can stop processsing now.
-
-        break;
-      } // If this is a Promise we've already handled, skip it.
-
-
-      if (state.lastRenderedIndex !== undefined && typeof value.then === 'function' && value === previousValues[i]) {
-        continue;
-      } // We have a Promise that we haven't seen before, so priorities may have
-      // changed. Forget what we rendered before.
-
-
-      state.lastRenderedIndex = undefined;
-      Promise.resolve(value).then(resolvedValue => {
-        const index = state.values.indexOf(value); // If state.values doesn't contain the value, we've re-rendered without
-        // the value, so don't render it. Then, only render if the value is
-        // higher-priority than what's already been rendered.
-
-        if (index > -1 && (state.lastRenderedIndex === undefined || index < state.lastRenderedIndex)) {
-          state.lastRenderedIndex = index;
-          part.setValue(resolvedValue);
-          part.commit();
-        }
-      });
-    }
-  });
-
   function poll(CACHE_CONFIG, newInputKey) {
     if (!newInputKey) {
       pollDefault(CACHE_CONFIG);
-    } else {
-      const {
-        inputs
-      } = getAll();
-      CACHE_CONFIG.forEach(config => {
-        if (config.sourceInputKeys.includes[newInputKey]) {
-          const readyToFetch = config.sourceInputKeys.every(input => inputs[input]);
-
-          if (readyToFetch) {
-            fetchAndSave(config);
-          }
-        }
-      });
     }
+
+    const {
+      inputs
+    } = getAll();
+    CACHE_CONFIG.forEach(config => {
+      if (config.sourceInputKeys.includes[newInputKey]) {
+        const readyToFetch = config.sourceInputKeys.every(input => inputs[input]);
+
+        if (readyToFetch) {
+          fetchAndSave(config);
+        }
+      }
+    });
   }
 
   function pollDefault(CACHE_CONFIG) {
@@ -2590,13 +2489,12 @@
     return camelCaseConvert(input, options);
   };
   /**
-   * @param {String} formId
+   * @param {String} selector
    * @return {Object}
    */
 
 
-  function serializeForm(formId = '') {
-    const selector = formId ? `#${formId}` : 'form';
+  function serializeForm(selector = 'form') {
     const form = document.querySelector(selector);
 
     if (!form || !(form instanceof HTMLFormElement)) {
@@ -2778,17 +2676,6 @@
     return result;
   }
 
-  var pageTemplate = () => html`
-    <div class="page">
-        <pre id="error"></pre>
-        <div class="page__body" id="target"></div>
-
-        <div class="page__actions">
-            <button type="button" class="button button--right button--primary" id="submit-btn">Continue</button>
-        </div>
-    </div>
-`;
-
   var Data = {
     availableBreedTypes: {
       "cat": ["Pedigree", "Non-Pedigree"],
@@ -2810,6 +2697,16 @@
     return source;
   }
 
+  var pageTemplate = () => html`
+    <div class="page">
+        <pre id="error"></pre>
+        <div class="page__body" id="target"></div>
+
+        <div class="page__actions">
+        </div>
+    </div>
+`;
+
   var inlineLoading = () => html`
 <div class="inline-loading">
     <div class="spinner">
@@ -2819,43 +2716,622 @@
     <span>Please wait a moment</span>
 </div>
 `;
-  /** Global */
 
+  var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
+  /**
+   * lodash (Custom Build) <https://lodash.com/>
+   * Build: `lodash modularize exports="npm" -o ./`
+   * Copyright jQuery Foundation and other contributors <https://jquery.org/>
+   * Released under MIT license <https://lodash.com/license>
+   * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
+   * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+   */
 
-  function get$1(template, waitForData) {
-    const awaiting = waitForData().then(({
-      data,
-      skip
-    }) => {
-      if (skip) {
-        return html``;
-      }
+  /** Used as references for various `Number` constants. */
 
-      return template(data);
-    });
-    return html`${until(awaiting, inlineLoading())}`;
+  var INFINITY = 1 / 0;
+  /** `Object#toString` result references. */
+
+  var symbolTag = '[object Symbol]';
+  /** Used to match words composed of alphanumeric characters. */
+
+  var reAsciiWord = /[^\x00-\x2f\x3a-\x40\x5b-\x60\x7b-\x7f]+/g;
+  /** Used to match Latin Unicode letters (excluding mathematical operators). */
+
+  var reLatin = /[\xc0-\xd6\xd8-\xf6\xf8-\xff\u0100-\u017f]/g;
+  /** Used to compose unicode character classes. */
+
+  var rsAstralRange = '\\ud800-\\udfff',
+      rsComboMarksRange = '\\u0300-\\u036f\\ufe20-\\ufe23',
+      rsComboSymbolsRange = '\\u20d0-\\u20f0',
+      rsDingbatRange = '\\u2700-\\u27bf',
+      rsLowerRange = 'a-z\\xdf-\\xf6\\xf8-\\xff',
+      rsMathOpRange = '\\xac\\xb1\\xd7\\xf7',
+      rsNonCharRange = '\\x00-\\x2f\\x3a-\\x40\\x5b-\\x60\\x7b-\\xbf',
+      rsPunctuationRange = '\\u2000-\\u206f',
+      rsSpaceRange = ' \\t\\x0b\\f\\xa0\\ufeff\\n\\r\\u2028\\u2029\\u1680\\u180e\\u2000\\u2001\\u2002\\u2003\\u2004\\u2005\\u2006\\u2007\\u2008\\u2009\\u200a\\u202f\\u205f\\u3000',
+      rsUpperRange = 'A-Z\\xc0-\\xd6\\xd8-\\xde',
+      rsVarRange = '\\ufe0e\\ufe0f',
+      rsBreakRange = rsMathOpRange + rsNonCharRange + rsPunctuationRange + rsSpaceRange;
+  /** Used to compose unicode capture groups. */
+
+  var rsApos = "['\u2019]",
+      rsBreak = '[' + rsBreakRange + ']',
+      rsCombo = '[' + rsComboMarksRange + rsComboSymbolsRange + ']',
+      rsDigits = '\\d+',
+      rsDingbat = '[' + rsDingbatRange + ']',
+      rsLower = '[' + rsLowerRange + ']',
+      rsMisc = '[^' + rsAstralRange + rsBreakRange + rsDigits + rsDingbatRange + rsLowerRange + rsUpperRange + ']',
+      rsFitz = '\\ud83c[\\udffb-\\udfff]',
+      rsModifier = '(?:' + rsCombo + '|' + rsFitz + ')',
+      rsNonAstral = '[^' + rsAstralRange + ']',
+      rsRegional = '(?:\\ud83c[\\udde6-\\uddff]){2}',
+      rsSurrPair = '[\\ud800-\\udbff][\\udc00-\\udfff]',
+      rsUpper = '[' + rsUpperRange + ']',
+      rsZWJ = '\\u200d';
+  /** Used to compose unicode regexes. */
+
+  var rsLowerMisc = '(?:' + rsLower + '|' + rsMisc + ')',
+      rsUpperMisc = '(?:' + rsUpper + '|' + rsMisc + ')',
+      rsOptLowerContr = '(?:' + rsApos + '(?:d|ll|m|re|s|t|ve))?',
+      rsOptUpperContr = '(?:' + rsApos + '(?:D|LL|M|RE|S|T|VE))?',
+      reOptMod = rsModifier + '?',
+      rsOptVar = '[' + rsVarRange + ']?',
+      rsOptJoin = '(?:' + rsZWJ + '(?:' + [rsNonAstral, rsRegional, rsSurrPair].join('|') + ')' + rsOptVar + reOptMod + ')*',
+      rsSeq = rsOptVar + reOptMod + rsOptJoin,
+      rsEmoji = '(?:' + [rsDingbat, rsRegional, rsSurrPair].join('|') + ')' + rsSeq;
+  /** Used to match apostrophes. */
+
+  var reApos = RegExp(rsApos, 'g');
+  /**
+   * Used to match [combining diacritical marks](https://en.wikipedia.org/wiki/Combining_Diacritical_Marks) and
+   * [combining diacritical marks for symbols](https://en.wikipedia.org/wiki/Combining_Diacritical_Marks_for_Symbols).
+   */
+
+  var reComboMark = RegExp(rsCombo, 'g');
+  /** Used to match complex or compound words. */
+
+  var reUnicodeWord = RegExp([rsUpper + '?' + rsLower + '+' + rsOptLowerContr + '(?=' + [rsBreak, rsUpper, '$'].join('|') + ')', rsUpperMisc + '+' + rsOptUpperContr + '(?=' + [rsBreak, rsUpper + rsLowerMisc, '$'].join('|') + ')', rsUpper + '?' + rsLowerMisc + '+' + rsOptLowerContr, rsUpper + '+' + rsOptUpperContr, rsDigits, rsEmoji].join('|'), 'g');
+  /** Used to detect strings that need a more robust regexp to match words. */
+
+  var reHasUnicodeWord = /[a-z][A-Z]|[A-Z]{2,}[a-z]|[0-9][a-zA-Z]|[a-zA-Z][0-9]|[^a-zA-Z0-9 ]/;
+  /** Used to map Latin Unicode letters to basic Latin letters. */
+
+  var deburredLetters = {
+    // Latin-1 Supplement block.
+    '\xc0': 'A',
+    '\xc1': 'A',
+    '\xc2': 'A',
+    '\xc3': 'A',
+    '\xc4': 'A',
+    '\xc5': 'A',
+    '\xe0': 'a',
+    '\xe1': 'a',
+    '\xe2': 'a',
+    '\xe3': 'a',
+    '\xe4': 'a',
+    '\xe5': 'a',
+    '\xc7': 'C',
+    '\xe7': 'c',
+    '\xd0': 'D',
+    '\xf0': 'd',
+    '\xc8': 'E',
+    '\xc9': 'E',
+    '\xca': 'E',
+    '\xcb': 'E',
+    '\xe8': 'e',
+    '\xe9': 'e',
+    '\xea': 'e',
+    '\xeb': 'e',
+    '\xcc': 'I',
+    '\xcd': 'I',
+    '\xce': 'I',
+    '\xcf': 'I',
+    '\xec': 'i',
+    '\xed': 'i',
+    '\xee': 'i',
+    '\xef': 'i',
+    '\xd1': 'N',
+    '\xf1': 'n',
+    '\xd2': 'O',
+    '\xd3': 'O',
+    '\xd4': 'O',
+    '\xd5': 'O',
+    '\xd6': 'O',
+    '\xd8': 'O',
+    '\xf2': 'o',
+    '\xf3': 'o',
+    '\xf4': 'o',
+    '\xf5': 'o',
+    '\xf6': 'o',
+    '\xf8': 'o',
+    '\xd9': 'U',
+    '\xda': 'U',
+    '\xdb': 'U',
+    '\xdc': 'U',
+    '\xf9': 'u',
+    '\xfa': 'u',
+    '\xfb': 'u',
+    '\xfc': 'u',
+    '\xdd': 'Y',
+    '\xfd': 'y',
+    '\xff': 'y',
+    '\xc6': 'Ae',
+    '\xe6': 'ae',
+    '\xde': 'Th',
+    '\xfe': 'th',
+    '\xdf': 'ss',
+    // Latin Extended-A block.
+    '\u0100': 'A',
+    '\u0102': 'A',
+    '\u0104': 'A',
+    '\u0101': 'a',
+    '\u0103': 'a',
+    '\u0105': 'a',
+    '\u0106': 'C',
+    '\u0108': 'C',
+    '\u010a': 'C',
+    '\u010c': 'C',
+    '\u0107': 'c',
+    '\u0109': 'c',
+    '\u010b': 'c',
+    '\u010d': 'c',
+    '\u010e': 'D',
+    '\u0110': 'D',
+    '\u010f': 'd',
+    '\u0111': 'd',
+    '\u0112': 'E',
+    '\u0114': 'E',
+    '\u0116': 'E',
+    '\u0118': 'E',
+    '\u011a': 'E',
+    '\u0113': 'e',
+    '\u0115': 'e',
+    '\u0117': 'e',
+    '\u0119': 'e',
+    '\u011b': 'e',
+    '\u011c': 'G',
+    '\u011e': 'G',
+    '\u0120': 'G',
+    '\u0122': 'G',
+    '\u011d': 'g',
+    '\u011f': 'g',
+    '\u0121': 'g',
+    '\u0123': 'g',
+    '\u0124': 'H',
+    '\u0126': 'H',
+    '\u0125': 'h',
+    '\u0127': 'h',
+    '\u0128': 'I',
+    '\u012a': 'I',
+    '\u012c': 'I',
+    '\u012e': 'I',
+    '\u0130': 'I',
+    '\u0129': 'i',
+    '\u012b': 'i',
+    '\u012d': 'i',
+    '\u012f': 'i',
+    '\u0131': 'i',
+    '\u0134': 'J',
+    '\u0135': 'j',
+    '\u0136': 'K',
+    '\u0137': 'k',
+    '\u0138': 'k',
+    '\u0139': 'L',
+    '\u013b': 'L',
+    '\u013d': 'L',
+    '\u013f': 'L',
+    '\u0141': 'L',
+    '\u013a': 'l',
+    '\u013c': 'l',
+    '\u013e': 'l',
+    '\u0140': 'l',
+    '\u0142': 'l',
+    '\u0143': 'N',
+    '\u0145': 'N',
+    '\u0147': 'N',
+    '\u014a': 'N',
+    '\u0144': 'n',
+    '\u0146': 'n',
+    '\u0148': 'n',
+    '\u014b': 'n',
+    '\u014c': 'O',
+    '\u014e': 'O',
+    '\u0150': 'O',
+    '\u014d': 'o',
+    '\u014f': 'o',
+    '\u0151': 'o',
+    '\u0154': 'R',
+    '\u0156': 'R',
+    '\u0158': 'R',
+    '\u0155': 'r',
+    '\u0157': 'r',
+    '\u0159': 'r',
+    '\u015a': 'S',
+    '\u015c': 'S',
+    '\u015e': 'S',
+    '\u0160': 'S',
+    '\u015b': 's',
+    '\u015d': 's',
+    '\u015f': 's',
+    '\u0161': 's',
+    '\u0162': 'T',
+    '\u0164': 'T',
+    '\u0166': 'T',
+    '\u0163': 't',
+    '\u0165': 't',
+    '\u0167': 't',
+    '\u0168': 'U',
+    '\u016a': 'U',
+    '\u016c': 'U',
+    '\u016e': 'U',
+    '\u0170': 'U',
+    '\u0172': 'U',
+    '\u0169': 'u',
+    '\u016b': 'u',
+    '\u016d': 'u',
+    '\u016f': 'u',
+    '\u0171': 'u',
+    '\u0173': 'u',
+    '\u0174': 'W',
+    '\u0175': 'w',
+    '\u0176': 'Y',
+    '\u0177': 'y',
+    '\u0178': 'Y',
+    '\u0179': 'Z',
+    '\u017b': 'Z',
+    '\u017d': 'Z',
+    '\u017a': 'z',
+    '\u017c': 'z',
+    '\u017e': 'z',
+    '\u0132': 'IJ',
+    '\u0133': 'ij',
+    '\u0152': 'Oe',
+    '\u0153': 'oe',
+    '\u0149': "'n",
+    '\u017f': 'ss'
+  };
+  /** Detect free variable `global` from Node.js. */
+
+  var freeGlobal = typeof commonjsGlobal == 'object' && commonjsGlobal && commonjsGlobal.Object === Object && commonjsGlobal;
+  /** Detect free variable `self`. */
+
+  var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
+  /** Used as a reference to the global object. */
+
+  var root = freeGlobal || freeSelf || Function('return this')();
+  /**
+   * A specialized version of `_.reduce` for arrays without support for
+   * iteratee shorthands.
+   *
+   * @private
+   * @param {Array} [array] The array to iterate over.
+   * @param {Function} iteratee The function invoked per iteration.
+   * @param {*} [accumulator] The initial value.
+   * @param {boolean} [initAccum] Specify using the first element of `array` as
+   *  the initial value.
+   * @returns {*} Returns the accumulated value.
+   */
+
+  function arrayReduce(array, iteratee, accumulator, initAccum) {
+    var index = -1,
+        length = array ? array.length : 0;
+
+    if (initAccum && length) {
+      accumulator = array[++index];
+    }
+
+    while (++index < length) {
+      accumulator = iteratee(accumulator, array[index], index, array);
+    }
+
+    return accumulator;
   }
+  /**
+   * Splits an ASCII `string` into an array of its words.
+   *
+   * @private
+   * @param {string} The string to inspect.
+   * @returns {Array} Returns the words of `string`.
+   */
+
+
+  function asciiWords(string) {
+    return string.match(reAsciiWord) || [];
+  }
+  /**
+   * The base implementation of `_.propertyOf` without support for deep paths.
+   *
+   * @private
+   * @param {Object} object The object to query.
+   * @returns {Function} Returns the new accessor function.
+   */
+
+
+  function basePropertyOf(object) {
+    return function (key) {
+      return object == null ? undefined : object[key];
+    };
+  }
+  /**
+   * Used by `_.deburr` to convert Latin-1 Supplement and Latin Extended-A
+   * letters to basic Latin letters.
+   *
+   * @private
+   * @param {string} letter The matched letter to deburr.
+   * @returns {string} Returns the deburred letter.
+   */
+
+
+  var deburrLetter = basePropertyOf(deburredLetters);
+  /**
+   * Checks if `string` contains a word composed of Unicode symbols.
+   *
+   * @private
+   * @param {string} string The string to inspect.
+   * @returns {boolean} Returns `true` if a word is found, else `false`.
+   */
+
+  function hasUnicodeWord(string) {
+    return reHasUnicodeWord.test(string);
+  }
+  /**
+   * Splits a Unicode `string` into an array of its words.
+   *
+   * @private
+   * @param {string} The string to inspect.
+   * @returns {Array} Returns the words of `string`.
+   */
+
+
+  function unicodeWords(string) {
+    return string.match(reUnicodeWord) || [];
+  }
+  /** Used for built-in method references. */
+
+
+  var objectProto = Object.prototype;
+  /**
+   * Used to resolve the
+   * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
+   * of values.
+   */
+
+  var objectToString = objectProto.toString;
+  /** Built-in value references. */
+
+  var Symbol$1 = root.Symbol;
+  /** Used to convert symbols to primitives and strings. */
+
+  var symbolProto = Symbol$1 ? Symbol$1.prototype : undefined,
+      symbolToString = symbolProto ? symbolProto.toString : undefined;
+  /**
+   * The base implementation of `_.toString` which doesn't convert nullish
+   * values to empty strings.
+   *
+   * @private
+   * @param {*} value The value to process.
+   * @returns {string} Returns the string.
+   */
+
+  function baseToString(value) {
+    // Exit early for strings to avoid a performance hit in some environments.
+    if (typeof value == 'string') {
+      return value;
+    }
+
+    if (isSymbol(value)) {
+      return symbolToString ? symbolToString.call(value) : '';
+    }
+
+    var result = value + '';
+    return result == '0' && 1 / value == -INFINITY ? '-0' : result;
+  }
+  /**
+   * Creates a function like `_.camelCase`.
+   *
+   * @private
+   * @param {Function} callback The function to combine each word.
+   * @returns {Function} Returns the new compounder function.
+   */
+
+
+  function createCompounder(callback) {
+    return function (string) {
+      return arrayReduce(words(deburr(string).replace(reApos, '')), callback, '');
+    };
+  }
+  /**
+   * Checks if `value` is object-like. A value is object-like if it's not `null`
+   * and has a `typeof` result of "object".
+   *
+   * @static
+   * @memberOf _
+   * @since 4.0.0
+   * @category Lang
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
+   * @example
+   *
+   * _.isObjectLike({});
+   * // => true
+   *
+   * _.isObjectLike([1, 2, 3]);
+   * // => true
+   *
+   * _.isObjectLike(_.noop);
+   * // => false
+   *
+   * _.isObjectLike(null);
+   * // => false
+   */
+
+
+  function isObjectLike(value) {
+    return !!value && typeof value == 'object';
+  }
+  /**
+   * Checks if `value` is classified as a `Symbol` primitive or object.
+   *
+   * @static
+   * @memberOf _
+   * @since 4.0.0
+   * @category Lang
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is a symbol, else `false`.
+   * @example
+   *
+   * _.isSymbol(Symbol.iterator);
+   * // => true
+   *
+   * _.isSymbol('abc');
+   * // => false
+   */
+
+
+  function isSymbol(value) {
+    return typeof value == 'symbol' || isObjectLike(value) && objectToString.call(value) == symbolTag;
+  }
+  /**
+   * Converts `value` to a string. An empty string is returned for `null`
+   * and `undefined` values. The sign of `-0` is preserved.
+   *
+   * @static
+   * @memberOf _
+   * @since 4.0.0
+   * @category Lang
+   * @param {*} value The value to process.
+   * @returns {string} Returns the string.
+   * @example
+   *
+   * _.toString(null);
+   * // => ''
+   *
+   * _.toString(-0);
+   * // => '-0'
+   *
+   * _.toString([1, 2, 3]);
+   * // => '1,2,3'
+   */
+
+
+  function toString(value) {
+    return value == null ? '' : baseToString(value);
+  }
+  /**
+   * Deburrs `string` by converting
+   * [Latin-1 Supplement](https://en.wikipedia.org/wiki/Latin-1_Supplement_(Unicode_block)#Character_table)
+   * and [Latin Extended-A](https://en.wikipedia.org/wiki/Latin_Extended-A)
+   * letters to basic Latin letters and removing
+   * [combining diacritical marks](https://en.wikipedia.org/wiki/Combining_Diacritical_Marks).
+   *
+   * @static
+   * @memberOf _
+   * @since 3.0.0
+   * @category String
+   * @param {string} [string=''] The string to deburr.
+   * @returns {string} Returns the deburred string.
+   * @example
+   *
+   * _.deburr('déjà vu');
+   * // => 'deja vu'
+   */
+
+
+  function deburr(string) {
+    string = toString(string);
+    return string && string.replace(reLatin, deburrLetter).replace(reComboMark, '');
+  }
+  /**
+   * Converts `string` to
+   * [kebab case](https://en.wikipedia.org/wiki/Letter_case#Special_case_styles).
+   *
+   * @static
+   * @memberOf _
+   * @since 3.0.0
+   * @category String
+   * @param {string} [string=''] The string to convert.
+   * @returns {string} Returns the kebab cased string.
+   * @example
+   *
+   * _.kebabCase('Foo Bar');
+   * // => 'foo-bar'
+   *
+   * _.kebabCase('fooBar');
+   * // => 'foo-bar'
+   *
+   * _.kebabCase('__FOO_BAR__');
+   * // => 'foo-bar'
+   */
+
+
+  var kebabCase = createCompounder(function (result, word, index) {
+    return result + (index ? '-' : '') + word.toLowerCase();
+  });
+  /**
+   * Splits `string` into an array of its words.
+   *
+   * @static
+   * @memberOf _
+   * @since 3.0.0
+   * @category String
+   * @param {string} [string=''] The string to inspect.
+   * @param {RegExp|string} [pattern] The pattern to match words.
+   * @param- {Object} [guard] Enables use as an iteratee for methods like `_.map`.
+   * @returns {Array} Returns the words of `string`.
+   * @example
+   *
+   * _.words('fred, barney, & pebbles');
+   * // => ['fred', 'barney', 'pebbles']
+   *
+   * _.words('fred, barney, & pebbles', /[^, ]+/g);
+   * // => ['fred', 'barney', '&', 'pebbles']
+   */
+
+  function words(string, pattern, guard) {
+    string = toString(string);
+    pattern = guard ? undefined : pattern;
+
+    if (pattern === undefined) {
+      return hasUnicodeWord(string) ? unicodeWords(string) : asciiWords(string);
+    }
+
+    return string.match(pattern) || [];
+  }
+
+  var lodash_kebabcase = kebabCase;
+  /**
+   * @param {String} name
+   * @param {Array} sections
+   * @param {String} selector
+   * @param {Function} onFinish
+   */
 
   class PageRenderer {
     constructor(name, sections = [], selector, onFinish) {
       this.name = name;
       this.selector = selector;
-      this.sections = sections;
+      this.sections = [...sections];
       this.onFinish = onFinish;
-      this.sectionToSubmit = this.sections.length;
-      Promise.resolve(this.init());
+      this.sectionsToRender = sections.map(s => s.name); //this.sectionToSubmit = this.sections.length;
     }
 
     init() {
-      this.renderWrapper(); //this.renderSections();
+      this.renderWrapper();
     }
 
     renderWrapper() {
       render(pageTemplate(), document.querySelector(this.selector));
-      const wrappers = this.sections.map(section => section.name).map(name => {
-        return html`<form id="section-${name}"></form>`;
+      const wrappers = this.sections.map(section => lodash_kebabcase(section.name)).map(name => {
+        return html`<form id="section-form-${name}"></form>`;
       });
       render(html`${wrappers.map(w => w)}`, document.querySelector('#target'));
+      this.next();
+    }
+
+    next() {
+      const section = this.sections.shift();
+      this.renderSection(section);
     }
 
     addListener(name) {
@@ -2863,16 +3339,16 @@
         return;
       }
 
-      const submitBtn = document.querySelector(`#submitBtn`);
+      const submitBtn = document.querySelector(`#submit-btn-${name}`);
 
       if (!submitBtn) {
-        console.warn(`no button #submitBtn found`);
+        console.warn(`no button #submit-btn-${name} found`);
         return;
       }
 
       submitBtn.addEventListener('click', () => {
         // TODO: validate the input (using protocol?)
-        const form = document.querySelector(`#section-${name}`);
+        const form = document.querySelector(`#section-form-${name}`);
 
         if (!form.reportValidity()) {
           console.log('invalid form');
@@ -2880,23 +3356,42 @@
         }
 
         submitBtn.setAttribute('disabled', 'true');
-        const inputs = serializeForm(`#section-${name}`); // send input sdk
+        const inputs = serializeForm(`#section-form-${name}`); // send input sdk
 
-        this.submitInputs(inputs);
+        sdk.createJobInputs(inputs).then(submittedInputs => {
+          const event = new CustomEvent('submitinput', {
+            detail: submittedInputs
+          });
+          window.dispatchEvent(event);
+
+          if (this.sections.length === 0) {
+            render(html``, document.querySelector(this.selector));
+            this.onFinish();
+          } else {
+            this.next();
+          }
+        }).catch(err => {
+          if (document.querySelector('#error')) {
+            render(html`${err}`, document.querySelector('#error'));
+          }
+
+          submitBtn.removeAttribute('disabled');
+        });
       });
     }
 
     submitInputs(inputs) {
       sdk.createJobInputs(inputs).then(submittedInputs => {
-        this.sectionToSubmit -= 1;
         const event = new CustomEvent('submitinput', {
           detail: submittedInputs
         });
         window.dispatchEvent(event);
 
-        if (this.sectionToSubmit === 0) {
+        if (this.sections.length === 0) {
           render(html``, document.querySelector(this.selector));
           this.onFinish();
+        } else {
+          this.next();
         }
       }).catch(err => {
         if (document.querySelector('#error')) {
@@ -2906,11 +3401,11 @@
     }
 
     skipSection() {
-      this.sectionToSubmit -= 1;
-
-      if (this.sectionToSubmit === 0) {
+      if (this.sections.length === 0) {
         render(html``, document.querySelector(this.selector));
         this.onFinish();
+      } else {
+        this.next();
       }
     }
 
@@ -2918,82 +3413,87 @@
       name,
       waitFor,
       template
-      /* , submitOn:[button, onComplete] */
-
     }) {
-      const templateTo = get$1(template, getDataForSection);
-      const selector = document.querySelector(`#section-${name}`);
+      const nameForElement = lodash_kebabcase(name);
+      const selector = document.querySelector(`#section-form-${nameForElement}`);
 
-      if (!templateTo || !selector) {
-        throw new Error('Template or selector not found, check the config');
+      if (!waitFor) {
+        render(html`${template(nameForElement)} `, selector);
+        this.addListener(nameForElement);
+        return;
       }
 
-      render(html`${templateTo} `, selector);
+      render(html`${inlineLoading()} `, selector);
+      this.getDataForSection(waitFor).then(res => {
+        render(html`${template(nameForElement, res)} `, selector);
+        this.addListener(nameForElement);
+      });
+    }
 
-      function getDataForSection() {
-        return new Promise(res => {
-          if (!waitFor || waitFor.length === 0) {
-            return res({
-              data: null,
-              skip: false
-            });
-          } //TODO:for now, until making the outputcreatelistner
+    getDataForSection(waitFor) {
+      return new Promise(res => {
+        const results = waitFor.map(_ => {
+          const [type, sourceKey] = _.split('.');
 
-
-          const [type, sourceKey] = waitFor[0].split('.');
           const data = getSource(type, sourceKey);
 
           if (data === null) {
+            //skip: true,
             this.skipSection();
-            return res({
+            return {
               data: null,
-              skip: true
-            });
+              skip: true,
+              sourceKey
+            };
           }
 
           if (data) {
-            return res({
+            return {
               data,
-              skip: false
-            });
+              skip: false,
+              sourceKey
+            };
           }
 
-          sdk.waitForJobOutput(sourceKey).then(data => {
-            if (data === null) {
-              this.skipSection();
-              return res({
-                data: null,
-                skip: true
-              });
-            }
-
-            return res({
-              data,
-              skip: false
-            });
-          });
+          return {
+            data: null,
+            skip: false,
+            sourceKey
+          };
         });
-      }
-    }
+        const keysToWaitFor = results.filter(r => r.data == null && r.skip === false).map(r => r.sourceKey);
 
-    renderSections() {
-      this.sections.forEach(section => {
-        try {
-          this.renderSection(section);
-          this.addListener(section.name);
-        } catch (err) {
-          console.error(err);
+        if (keysToWaitFor.length === 0) {
+          const dataWaitFor = {};
+          results.forEach(result => {
+            dataWaitFor[result.sourceKey] = result.data;
+          });
+          return res(dataWaitFor);
         }
+
+        const dataWaitFor = {};
+        results.forEach(result => {
+          dataWaitFor[result.sourceKey] = result.data;
+        });
+        console.log('keysToWaitFor', keysToWaitFor);
+        const stop = sdk.trackJobOutput(message => {
+          if (message === 'outputCreate') {
+            const {
+              outputs
+            } = getAll();
+            const allAvailable = keysToWaitFor.every(k => outputs[k]);
+
+            if (allAvailable) {
+              keysToWaitFor.forEach(k => dataWaitFor[k] = outputs[k]);
+              stop();
+              res(dataWaitFor);
+            }
+          }
+        });
       });
     }
 
   }
-  /**
-   * @param {String} name
-   * @param {Array} sections
-   * @param {Function} onFinish
-   */
-
 
   function getPageRenderer(name, sections, selector, onFinish) {
     return new PageRenderer(name, sections, selector, onFinish);
@@ -3003,14 +3503,16 @@
 
   var Loading = (selector = '#app') => {
     return {
-      render: () => {
-        const target = document.querySelector(selector);
+      renderer: {
+        init: () => {
+          const target = document.querySelector(selector);
 
-        if (!target) {
-          throw new Error(`loading: selector ${selector} not found`);
+          if (!target) {
+            throw new Error(`loading: selector ${selector} not found`);
+          }
+
+          render(template, target);
         }
-
-        render(template, target);
       }
     };
   };
@@ -3108,13 +3610,11 @@
         route
       } = config;
       const next = flow[idx + 1];
-
-      const render = () => getPageRenderer(name, sections, mainSelector, () => setTimeout(() => {
+      const renderer = getPageRenderer(name, sections, mainSelector, () => setTimeout(() => {
         window.location.hash = next;
       }, 1000));
-
       routes[route] = {
-        render,
+        renderer,
         title,
         step: idx + 1
       };
@@ -3140,7 +3640,7 @@
               serverUrlPath
             }).then(() => {
               window.location.hash = entryPoint;
-              pollDefault(cache);
+              poll(cache);
             }).catch(err => console.log(err));
           }
 
@@ -3154,7 +3654,10 @@
 
         window.addEventListener('submitinput', e => {
           //TODO: get cache using output
-          poll(cache, Object.keys(e.detail));
+          console.log(e);
+          e.details.forEach(({
+            key
+          }) => poll(cache, key));
           updateSummary(Summary);
         });
         window.addEventListener('createoutput', () => {
@@ -3163,8 +3666,7 @@
 
         if (window.location.hash && window.location.hash !== '/') {
           sdk.retrieve().then(() => {
-            pollDefault(caches);
-            console.log('job info retrieved');
+            poll(cache);
           }).catch(err => {
             window.location.hash = '';
           });
@@ -3290,9 +3792,9 @@
             <div id="package-detail" class="summary__block">
                 <h5 class="summary__block-title"> Your Package </h5>
                 <ul>
-                    ${inputs.selectedBroadbandPackage ? html`<li>Broadband: ${inputs.selectedBroadbandPackage}</li>` : ''}
-                    ${inputs.selectedTvPackages ? html`<li> TV : ${inputs.selectedTvPackages}</li>` : ''}
-                    ${inputs.selectedPhonePackage ? html`<li> Phone: ${inputs.selectedPhonePackage}</li>` : ''}
+                    ${inputs.selectedBroadbandPackage ? html`<li>Broadband: ${inputs.selectedBroadbandPackage.name}</li>` : ''}
+                    ${inputs.selectedTvPackages ? html`TV : <li> ${inputs.selectedTvPackages.map(_ => _.name)}</li>` : ''}
+                    ${inputs.selectedPhonePackage ? html`<li> Phone: ${inputs.selectedPhonePackage.name}</li>` : ''}
                 </ul>
             </div>` : ''}
     </section>
@@ -3369,18 +3871,18 @@
         <div class="field__inputs group group--merged">
             <input
                 type="radio"
-                name="landline-options[is-shared-property-$boolean]"
-                id="landline-options[is-shared-property-$boolean]-true"
+                name="landline-options[shared-property-$boolean]"
+                id="landline-options[shared-property-$boolean]-true"
                 value="true"
                 required />
-            <label for="landline-options[is-shared-property-$boolean]-true" class="button">Yes</label>
+            <label for="landline-options[shared-property-$boolean]-true" class="button">Yes</label>
 
             <input
                 type="radio"
-                name="landline-options[is-shared-property-$boolean]"
-                id="landline-options[is-shared-property-$boolean]-false"
+                name="landline-options[shared-property-$boolean]"
+                id="landline-options[shared-property-$boolean]-false"
                 value="false" />
-            <label for="landline-options[is-shared-property-$boolean]-false" class="button">No</label>
+            <label for="landline-options[shared-property-$boolean]-false" class="button">No</label>
         </div>
     </div>
 
@@ -3426,10 +3928,13 @@
 </div>
 `;
 
-  var landline = (predefinedInputs = {}) => html`
+  var landline = (name, data = {}) => html`
     ${landlineCheck()}
-    ${predefinedInputs.landlineOption ? hidden(predefinedInputs.landlineOption) : landlineOption()}
-    <button type="button" class="button button--right button--primary" id="submit-landline">Submit</button>
+    ${data.landlineOption ? hidden(data.landlineOption) : landlineOption()}
+
+    <div class="section__actions">
+        <button type="button" class="button button--right button--primary" id="submit-btn-${name}">Look-up</button>
+    </div>
 `;
 
   const hidden = data => html`<input type="hidden" name="landline-options-$object" value="${JSON.stringify(data)}" />`;
@@ -3453,13 +3958,23 @@
 `;
 
   const onChange = {
-    // handleEvent method is required.
     handleEvent(e) {
       const selectedAddress = e.target.value;
       render(cloneAddress(selectedAddress), document.querySelector('#clone-address'));
     }
 
   };
+
+  var selectedAddress$1 = (name, data) => html`
+    ${selectedAddress(data.availableAddresses)}
+    <div class="section__actions">
+        <button
+            type="button"
+            class="button button--right button--primary"
+            id="submit-btn-${name}">Continue</button>
+    </div>
+`;
+
   const TITLES = ['mr', 'ms', 'mrs', 'miss'];
 
   var Person = (prefix = 'person') => html`
@@ -3520,33 +4035,32 @@
 
   var installation = () => html`
 <div name="installation">
-    <div class="field field-set">
+    <div class="field">
         <span class="field__name">What is you property type? </span>
         <div class="field__inputs group group--merged">
-            <input type="radio" name="installation[property-type]" id="installation[property-type]-flat"
-                value="flat" required checked>
-            <label for="[property-type]-flat" class="button">Flat</label>
+            <input type="radio" name="installation[property-type]" id="installation[property-type]-flat" value="flat"
+                required>
+            <label for="installation[property-type]-flat" class="button">Flat</label>
 
-            <input type="radio" name="installation[property-type]"
-                id="[property-type]-house" value="house">
-            <label for="[property-type]-house" class="button">House</label>
+            <input type="radio" name="installation[property-type]" id="installation[property-type]-house" value="house">
+            <label for="installation[property-type]-house" class="button">House</label>
         </div>
     </div>
 
-    <div class="field field-set">
+    <div class="field">
         <span class="field__name">Is there any access Restriction? </span>
         <div class="field__inputs group group--merged">
             <input type="radio" name="installation[access-restrictions]" id="installation-access-restrictions-yes"
                 value="yes" required>
             <label for="installation-access-restrictions-yes" class="button">Yes</label>
 
-            <input type="radio" name="installation[access-restrictions]" id="installation-access-restrictions-no"
-                value="no" required checked>
+            <input type="radio" name="installation[access-restrictions]" id="installation-access-restrictions-no" value="no"
+                required checked>
             <label for="installation-access-restrictions-no" class="button">No</label>
         </div>
     </div>
 
-    <div class="field field-set">
+    <div class="field">
         <span class="field__name">Has access to communal satellite?</span>
         <div class="field__inputs group group--merged">
             <input type="radio" name="installation[has-access-to-communal-satellite-$boolean]" id="installation-satellite-yes"
@@ -3561,18 +4075,21 @@
 </div>
 `;
 
-  var aboutYou = (predefinedInputs = {}) => html`
+  var aboutYou = (name, data = {}) => html`
     ${contactPerson()}
     ${account()}
     ${installation()}
-    <button type="button" class="button button--right button--primary" id="submit-about-you">Continue</button>
+
+    <div class="section__actions">
+        <button type="button" class="button button--right button--primary" id="submit-btn-${name}">Look-up</button>
+    </div>
 `;
 
   var SectionTemplates =
   /*#__PURE__*/
   Object.freeze({
     landline: landline,
-    selectedAddress: selectedAddress,
+    selectedAddress: selectedAddress$1,
     aboutYou: aboutYou
   });
   const Layout = CONFIG.layout.map(l => {
@@ -3618,7 +4135,7 @@
   app.init();
 });
 
-}).call(this,require("buffer").Buffer)
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
 },{"buffer":3}],2:[function(require,module,exports){
 'use strict'
 

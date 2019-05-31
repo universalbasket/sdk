@@ -1,34 +1,45 @@
 import { html, render } from './lit-html';
 import sdk from './sdk';
 import serializeForm from './serialize-form';
-import pageTemplate from './builtin-template/page';
 import getSource from './get-source-with-priority';
-import renderSection from './renderSection';
-
+import pageTemplate from './builtin-template/page';
+import inlineLoading from './builtin-template/inline-loading';
+import * as Storage from './input-output';
+import kebabcase from 'lodash.kebabcase';
+/**
+ * @param {String} name
+ * @param {Array} sections
+ * @param {String} selector
+ * @param {Function} onFinish
+ */
 class PageRenderer {
     constructor(name, sections = [], selector, onFinish) {
         this.name = name;
         this.selector = selector;
-        this.sections = sections;
+        this.sections = [...sections];
         this.onFinish = onFinish;
 
-        this.sectionToSubmit = this.sections.length;
-
-        Promise.resolve(this.init());
+        this.sectionsToRender = sections.map(s => s.name);
+        //this.sectionToSubmit = this.sections.length;
     }
 
     init() {
         this.renderWrapper();
-        //this.renderSections();
     }
 
     renderWrapper() {
         render(pageTemplate(), document.querySelector(this.selector));
-        const wrappers = this.sections.map(section => section.name).map(name => {
-            return html`<form id="section-${name}"></form>`;
+        const wrappers = this.sections.map(section => kebabcase(section.name)).map(name => {
+            return html`<form id="section-form-${name}"></form>`;
         });
 
         render(html`${wrappers.map(w => w)}`, document.querySelector('#target'));
+        this.next();
+    }
+
+    next() {
+        const section = this.sections.shift();
+        this.renderSection(section);
     }
 
     addListener(name) {
@@ -36,16 +47,16 @@ class PageRenderer {
             return;
         }
 
-        const submitBtn = document.querySelector(`#submitBtn`);
+        const submitBtn = document.querySelector(`#submit-btn-${name}`);
 
         if (!submitBtn) {
-            console.warn(`no button #submitBtn found`);
+            console.warn(`no button #submit-btn-${name} found`);
             return;
         }
 
         submitBtn.addEventListener('click', () => {
             // TODO: validate the input (using protocol?)
-            const form = document.querySelector(`#section-${name}`);
+            const form = document.querySelector(`#section-form-${name}`);
             if (!form.reportValidity()) {
                 console.log('invalid form');
                 return;
@@ -53,23 +64,41 @@ class PageRenderer {
 
             submitBtn.setAttribute('disabled', 'true');
 
-            const inputs = serializeForm(`#section-${name}`);
+            const inputs = serializeForm(`#section-form-${name}`);
 
             // send input sdk
-            this.submitInputs(inputs);
+            sdk.createJobInputs(inputs)
+                .then(submittedInputs => {
+                    const event = new CustomEvent('submitinput', { detail: submittedInputs });
+                    window.dispatchEvent(event);
+
+                    if (this.sections.length === 0) {
+                        render(html``, document.querySelector(this.selector));
+                        this.onFinish();
+                    } else {
+                        this.next();
+                    }
+                })
+                .catch(err => {
+                    if (document.querySelector('#error')) {
+                        render(html`${err}`, document.querySelector('#error'));
+                    }
+                    submitBtn.removeAttribute('disabled');
+                });
         });
     }
 
     submitInputs(inputs) {
         sdk.createJobInputs(inputs)
             .then(submittedInputs => {
-                this.sectionToSubmit -= 1;
                 const event = new CustomEvent('submitinput', { detail: submittedInputs });
                 window.dispatchEvent(event);
 
-                if (this.sectionToSubmit === 0) {
+                if (this.sections.length === 0) {
                     render(html``, document.querySelector(this.selector));
                     this.onFinish();
+                } else {
+                    this.next();
                 }
             })
             .catch(err => {
@@ -80,74 +109,82 @@ class PageRenderer {
     }
 
     skipSection() {
-        this.sectionToSubmit -= 1;
-
-        if (this.sectionToSubmit === 0) {
+        if (this.sections.length === 0) {
             render(html``, document.querySelector(this.selector));
             this.onFinish();
+        } else {
+            this.next();
         }
     }
 
-    renderSection({ name, waitFor, template/* , submitOn:[button, onComplete] */}) {
-        const templateTo = renderSection(template, getDataForSection);
-        const selector = document.querySelector(`#section-${name}`);
-
-        if(!templateTo || !selector) {
-            throw new Error('Template or selector not found, check the config');
+    renderSection({ name, waitFor, template}) {
+        const nameForElement = kebabcase(name);
+        const selector = document.querySelector(`#section-form-${nameForElement}`);
+        if (!waitFor) {
+           render(html`${template(nameForElement)} `, selector);
+           this.addListener(nameForElement);
+           return;
         }
 
-        render(html`${templateTo} `, selector);
+        render(html`${inlineLoading()} `, selector)
 
-        function getDataForSection() {
-            return new Promise((res) => {
-                if (!waitFor || waitFor.length === 0) {
-                    return res({ data: null, skip: false });
-                }
+        this.getDataForSection(waitFor)
+            .then(res => {
+                render(html`${template(nameForElement, res)} `, selector);
+                this.addListener(nameForElement);
+            })
+    }
 
-                //TODO:for now, until making the outputcreatelistner
-                const [type, sourceKey] = waitFor[0].split('.');
+    getDataForSection(waitFor) {
+        return new Promise((res) => {
+            const results = waitFor.map(_ => {
+                const [type, sourceKey] = _.split('.');
                 const data = getSource(type, sourceKey);
 
-
-                if (data === null) {
+                if (data === null) { //skip: true,
                     this.skipSection();
-                    return res({ data: null, skip: true });
+                    return { data: null, skip: true, sourceKey };
                 }
 
                 if (data) {
-                    return res({ data, skip: false });
+                    return { data, skip: false, sourceKey };
                 }
 
-                sdk.waitForJobOutput(sourceKey)
-                    .then(data => {
-                        if (data === null) {
-                            this.skipSection();
-                            return res({ data: null, skip: true });
-                        }
-
-                        return res({ data, skip: false });
-                    });
+                return { data: null, skip: false, sourceKey };
             });
-        }
-    }
 
-    renderSections() {
-        this.sections.forEach(section => {
-            try {
-                this.renderSection(section);
-                this.addListener(section.name);
-            } catch(err) {
-                console.error(err);
+            const keysToWaitFor = results.filter(r => r.data == null && r.skip === false).map(r => r.sourceKey);
+
+            if (keysToWaitFor.length === 0) {
+                const dataWaitFor = {};
+                results.forEach(result => { dataWaitFor[result.sourceKey] = result.data; });
+
+                return res(dataWaitFor);
             }
+
+            const dataWaitFor = {};
+            results.forEach(result => { dataWaitFor[result.sourceKey] = result.data; });
+
+            console.log('keysToWaitFor', keysToWaitFor);
+            const stop = sdk.trackJobOutput((message) => {
+
+                if (message === 'outputCreate') {
+                    const { outputs } = Storage.getAll();
+                    const allAvailable = keysToWaitFor.every(k => outputs[k]);
+
+                    if (allAvailable) {
+                        keysToWaitFor.forEach(k => dataWaitFor[k] = outputs[k]);
+                        stop();
+
+                        res(dataWaitFor);
+                    }
+                }
+            })
         });
     }
 }
 
-/**
- * @param {String} name
- * @param {Array} sections
- * @param {Function} onFinish
- */
+
 
 function getPageRenderer(name, sections, selector, onFinish) {
     return new PageRenderer(name, sections, selector, onFinish);

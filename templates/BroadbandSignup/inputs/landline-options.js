@@ -27,18 +27,18 @@ export default () => html`
         <div class="field__inputs group group--merged">
             <input
                 type="radio"
-                name="landline-options[is-shared-property-$boolean]"
-                id="landline-options[is-shared-property-$boolean]-true"
+                name="landline-options[shared-property-$boolean]"
+                id="landline-options[shared-property-$boolean]-true"
                 value="true"
                 required />
-            <label for="landline-options[is-shared-property-$boolean]-true" class="button">Yes</label>
+            <label for="landline-options[shared-property-$boolean]-true" class="button">Yes</label>
 
             <input
                 type="radio"
-                name="landline-options[is-shared-property-$boolean]"
-                id="landline-options[is-shared-property-$boolean]-false"
+                name="landline-options[shared-property-$boolean]"
+                id="landline-options[shared-property-$boolean]-false"
                 value="false" />
-            <label for="landline-options[is-shared-property-$boolean]-false" class="button">No</label>
+            <label for="landline-options[shared-property-$boolean]-false" class="button">No</label>
         </div>
     </div>
 

@@ -4,9 +4,12 @@ import installation from '../inputs/installation';
 
 import { html } from '../../../src/lit-html';
 
-export default (predefinedInputs = {}) => html`
+export default (name, data = {}) => html`
     ${contactPerson()}
     ${account()}
     ${installation()}
-    <button type="button" class="button button--right button--primary" id="submit-about-you">Continue</button>
+
+    <div class="section__actions">
+        <button type="button" class="button button--right button--primary" id="submit-btn-${name}">Look-up</button>
+    </div>
 `;

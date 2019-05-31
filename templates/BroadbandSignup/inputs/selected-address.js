@@ -19,12 +19,9 @@ const cloneAddress = (address) => html`
 `;
 
 const onChange = {
-    // handleEvent method is required.
     handleEvent(e) {
         const selectedAddress = e.target.value;
         render(cloneAddress(selectedAddress), document.querySelector('#clone-address'));
     },
-// event listener objects can also define zero or more of the event
-// listener options: capture, passive, and once.
 };
 

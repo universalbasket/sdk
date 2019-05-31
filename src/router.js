@@ -20,7 +20,7 @@ class Router {
         // If the parsed URL is not in our list of supported routes, select the 404 page instead
         let route = this.routes[parsedURL] ? this.routes[parsedURL] : this.notFoundTemplate
 
-        route.render();
+        route.renderer.init();
         this.ProgressBarTemplate(this.titles, route.step);
     }
 }

@@ -8,7 +8,7 @@
 @import "./summary.css";
 
 /* main */
-@import "./page.css";
+@import "./section.css";
 @import "./field.css";
 @import "./group.css";
 @import "./button.css";

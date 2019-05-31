@@ -18,9 +18,9 @@ export default (inputs = {}, outputs = {}, cache = {}) => html`
             <div id="package-detail" class="summary__block">
                 <h5 class="summary__block-title"> Your Package </h5>
                 <ul>
-                    ${inputs.selectedBroadbandPackage ? html`<li>Broadband: ${inputs.selectedBroadbandPackage}</li>` : ''}
-                    ${inputs.selectedTvPackages ? html`<li> TV : ${inputs.selectedTvPackages}</li>` : ''}
-                    ${inputs.selectedPhonePackage ? html`<li> Phone: ${inputs.selectedPhonePackage}</li>` : ''}
+                    ${inputs.selectedBroadbandPackage ? html`<li>Broadband: ${inputs.selectedBroadbandPackage.name}</li>` : ''}
+                    ${inputs.selectedTvPackages ? html`TV : <li> ${inputs.selectedTvPackages.map(_ => _.name)}</li>` : ''}
+                    ${inputs.selectedPhonePackage ? html`<li> Phone: ${inputs.selectedPhonePackage.name}</li>` : ''}
                 </ul>
             </div>` : ''}
     </section>

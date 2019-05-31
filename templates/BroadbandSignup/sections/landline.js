@@ -3,10 +3,13 @@ import landlineOption from '../inputs/landline-options';
 
 import { html } from '../../../src/lit-html';
 
-export default (predefinedInputs = {}) => html`
+export default (name, data = {}) => html`
     ${landlineCheck()}
-    ${predefinedInputs.landlineOption ? hidden(predefinedInputs.landlineOption) : landlineOption() }
-    <button type="button" class="button button--right button--primary" id="submit-landline">Submit</button>
+    ${data.landlineOption ? hidden(data.landlineOption) : landlineOption() }
+
+    <div class="section__actions">
+        <button type="button" class="button button--right button--primary" id="submit-btn-${name}">Look-up</button>
+    </div>
 `;
 
 const hidden = (data) => html`<input type="hidden" name="landline-options-$object" value="${JSON.stringify(data)}" />`;
