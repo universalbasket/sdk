@@ -5,3 +5,13 @@
 .warning {
     color: red;
 }
+
+.form--disabled {
+    opacity: 0.5;
+}
+
+.inline-loading {
+    display: flex;
+    justify-content: center;
+    align-content: center;
+}

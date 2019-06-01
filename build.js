@@ -2701,16 +2701,20 @@
     <div class="page">
         <pre id="error"></pre>
         <div class="page__body" id="target"></div>
-
-        <div class="page__actions">
-        </div>
     </div>
 `;
 
   var inlineLoading = () => html`
 <div class="inline-loading">
-    <div class="spinner">
-        <div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
+    <div class="sk-fading-circle">
+        <div class="sk-circle1 sk-circle"></div>
+        <div class="sk-circle2 sk-circle"></div>
+        <div class="sk-circle3 sk-circle"></div>
+        <div class="sk-circle4 sk-circle"></div>
+        <div class="sk-circle5 sk-circle"></div>
+        <div class="sk-circle6 sk-circle"></div>
+        <div class="sk-circle7 sk-circle"></div>
+        <div class="sk-circle8 sk-circle"></div>
     </div>
 
     <span>Please wait a moment</span>
@@ -3368,6 +3372,8 @@
             render(html``, document.querySelector(this.selector));
             this.onFinish();
           } else {
+            form.classList.add('form--disabled');
+            [...form.querySelectorAll('input')].forEach(_ => _.setAttribute('disabled', 'disabled'));
             this.next();
           }
         }).catch(err => {
@@ -3377,26 +3383,6 @@
 
           submitBtn.removeAttribute('disabled');
         });
-      });
-    }
-
-    submitInputs(inputs) {
-      sdk.createJobInputs(inputs).then(submittedInputs => {
-        const event = new CustomEvent('submitinput', {
-          detail: submittedInputs
-        });
-        window.dispatchEvent(event);
-
-        if (this.sections.length === 0) {
-          render(html``, document.querySelector(this.selector));
-          this.onFinish();
-        } else {
-          this.next();
-        }
-      }).catch(err => {
-        if (document.querySelector('#error')) {
-          render(html`${err}`, document.querySelector('#error'));
-        }
       });
     }
 
@@ -3424,6 +3410,8 @@
       }
 
       render(html`${inlineLoading()} `, selector);
+      var page = document.querySelector('#target');
+      page.scrollTop = page.scrollHeight;
       this.getDataForSection(waitFor).then(res => {
         render(html`${template(nameForElement, res)} `, selector);
         this.addListener(nameForElement);

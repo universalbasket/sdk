@@ -76,6 +76,8 @@ class PageRenderer {
                         render(html``, document.querySelector(this.selector));
                         this.onFinish();
                     } else {
+                        form.classList.add('form--disabled');
+                        [...form.querySelectorAll('input')].forEach(_ => _.setAttribute('disabled', 'disabled'));
                         this.next();
                     }
                 })
@@ -86,26 +88,6 @@ class PageRenderer {
                     submitBtn.removeAttribute('disabled');
                 });
         });
-    }
-
-    submitInputs(inputs) {
-        sdk.createJobInputs(inputs)
-            .then(submittedInputs => {
-                const event = new CustomEvent('submitinput', { detail: submittedInputs });
-                window.dispatchEvent(event);
-
-                if (this.sections.length === 0) {
-                    render(html``, document.querySelector(this.selector));
-                    this.onFinish();
-                } else {
-                    this.next();
-                }
-            })
-            .catch(err => {
-                if(document.querySelector('#error')) {
-                    render(html`${err}`, document.querySelector('#error'));
-                }
-            });
     }
 
     skipSection() {

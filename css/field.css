@@ -23,3 +23,8 @@
     color: #fff;
     background: var(--accent-color);
 }
+
+.field__inputs > input[type="radio"]:disabled + label {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
