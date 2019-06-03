@@ -1,6 +1,5 @@
 import { createEndUserSdk } from '@ubio/sdk';
-import { initialInputs } from '../env';
-import * as InputOutput from './input-output';
+import * as Storage from './storage';
 
 let jobId = localStorage.getItem('jobId') || null;
 let token = localStorage.getItem('token') || null;
@@ -12,7 +11,7 @@ class EndUserSdk {
         this.initiated = false;
     }
 
-    async create(fields = {}) {
+    async create({ input = {}, category, serverUrlPath}) {
         if (jobId && token && serviceId) {
             let previous;
 
@@ -26,7 +25,7 @@ class EndUserSdk {
 
         localStorage.clear();
 
-        const newJob = await createJob(fields);
+        const newJob = await createJob(input, category, serverUrlPath);
 
         jobId = newJob.jobId;
         token = newJob.token;
@@ -34,6 +33,8 @@ class EndUserSdk {
         localStorage.setItem('jobId', jobId);
         localStorage.setItem('token', token);
         localStorage.setItem('serviceId', serviceId);
+
+        Object.keys(input).forEach(key => Storage.set('input', key, input[key]));
 
         this.sdk = createEndUserSdk({ token, jobId, serviceId });
         this.initiated = true;
@@ -58,26 +59,21 @@ class EndUserSdk {
             const data = inputs[key];
 
             await this.sdk.createJobInput(key, data);
-            InputOutput.set('input', key, data);
             return { key, data };
         });
 
-        return await Promise.all(createInputs);
-    }
+        try {
+            const submitted = await Promise.all(createInputs);
+            submitted.forEach(_ => Storage.set('input', _.key, _.data));
+        } catch (err) {
+            await this.sdk.resetJob(keys[0]);
 
-    async waitForJobOutput(outputKey, inputKey) {
-        const outputs = await this.sdk.getJobOutputs(); // TODO: job
-        const output = Array.isArray(outputs.data) && outputs.data.find(ou => ou.key === outputKey);
-
-        if (output) {
-            return output.data;
+            throw err;
         }
-
-        return await this.trackJobOutput(outputKey);
     }
 
     async getCache({ key: outputKey, sourceInputKeys }) {
-        const sourceInputs = sourceInputKeys.map(key => { return { key, data: InputOutput.get('input', key) }});
+        const sourceInputs = sourceInputKeys.map(key => { return { key, data: Storage.get('input', key) }});
 
         const { data: caches = null } = await this.sdk.getPreviousJobOutputs(sourceInputs) || {};
 
@@ -94,36 +90,33 @@ class EndUserSdk {
             .map(cache => { return { key: cache.key, data: cache.data }});
     }
 
-    trackJobOutput(outputKey) {
-        return new Promise((res, rej) => {
+    trackJobOutput(callback) {
+        return this.sdk.trackJob((event, error) => {
             let createdOutputProcessing = false;
 
-            const stopTracking = this.sdk.trackJob((event, error) => {
-                if (event === 'createOutput' && !createdOutputProcessing) {
-                    createdOutputProcessing = true;
-                    this.sdk.getJobOutputs()
-                        .then(outputs => {
-                            outputs.data.forEach(output => {
-                                InputOutput.set('output', output.key, output.data);
-                            });
-
-                            createdOutputProcessing = false;
-                            const output = outputs.data.find(jo => jo.key === outputKey)
-
-                            if (output) {
-                                stopTracking();
-                                res(output.data);
-                            }
-
+            if (event === 'createOutput' && !createdOutputProcessing) {
+                createdOutputProcessing = true;
+                this.sdk
+                    .getJobOutputs()
+                    .then(outputs => {
+                        outputs.data.forEach(output => {
+                            Storage.set('output', output.key, output.data);
                         });
+
+                        callback('outputCreate', null);
+                        createdOutputProcessing = false;
+                    });
                 }
             });
-        });
     }
 
     async submitPan(pan) {
         const panToken = await this.sdk.vaultPan(pan);
         await this.createJobInputs({ panToken });
+    }
+
+    async resetJob(fromInputKey, preserveInputs) {
+        await this.sdk.resetJob(fromInputKey, preserveInputs);
     }
 
     trackJob(callback) {
@@ -143,11 +136,9 @@ class EndUserSdk {
     }
 }
 
-async function createJob({ input = {}, category = 'test' }) {
-    input = { ...initialInputs, ...input };
-
-    const SERVER_URL = "https://ubio-application-bundle-dummy-server.glitch.me";
-    const res = await fetch(`${SERVER_URL}/create-job`, {
+async function createJob(input = {}, category = 'test', SERVER_URL_PATH) {
+    SERVER_URL_PATH = SERVER_URL_PATH;
+    const res = await fetch(SERVER_URL_PATH, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ input, category }),

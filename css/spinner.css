@@ -1,0 +1,77 @@
+.spinner {
+  width: 10px;
+  height: 20px;
+  position: relative;
+  margin-right: 10px;
+}
+
+.spinner .spinner__bar {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.spinner .spinner__bar:before {
+  content: '';
+  display: block;
+  margin: 0 auto;
+  width: 25%;
+  height: 30%;
+  border-radius: 10px;
+  background-color: #333;
+  animation: spinnerBarFadeDelay 0.8s infinite ease-in-out both;
+}
+.spinner .spinner__bar2 {
+  transform: rotate(45deg);
+}
+.spinner .spinner__bar3 {
+  transform: rotate(90deg);
+}
+.spinner .spinner__bar4 {
+  transform: rotate(135deg);
+}
+.spinner .spinner__bar5 {
+  transform: rotate(180deg);
+}
+.spinner .spinner__bar6 {
+  transform: rotate(225deg);
+}
+.spinner .spinner__bar7 {
+  transform: rotate(270deg);
+}
+.spinner .spinner__bar8 {
+  transform: rotate(315deg);
+}
+.spinner .spinner__bar2:before {
+  animation-delay: -0.7s;
+}
+.spinner .spinner__bar3:before {
+  animation-delay: -0.6s;
+}
+.spinner .spinner__bar4:before {
+  animation-delay: -0.5s;
+}
+.spinner .spinner__bar5:before {
+  animation-delay: -0.4s;
+}
+.spinner .spinner__bar6:before {
+  animation-delay: -0.3s;
+}
+.spinner .spinner__bar7:before {
+  animation-delay: -0.2s;
+}
+.spinner .spinner__bar8:before {
+  animation-delay: -0.1s;
+}
+
+@-webkit-keyframes spinnerBarFadeDelay {
+  0%, 39%, 100% { opacity: 0; }
+  40% { opacity: 1; }
+}
+
+@keyframes spinnerBarFadeDelay {
+  0%, 39%, 100% { opacity: 0; }
+  40% { opacity: 1; }
+}

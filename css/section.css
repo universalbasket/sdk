@@ -1,13 +1,3 @@
-.section__header {
-    padding: 10px;
-    background-color: #445a70;
-    color: white;
-}
-
-.section__header::after {
-    content: "-";
-}
-
 .section__actions {
     display: flex;
     justify-content: flex-end;

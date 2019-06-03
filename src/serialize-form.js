@@ -2,11 +2,10 @@ import formSerialize from 'form-serialize';
 import camelCaseKeys from 'camelcase-keys';
 
 /**
- * @param {String} formId
+ * @param {String} selector
  * @return {Object}
  */
-export default function serializeForm(formId = '') {
-    const selector = formId ? `#${formId}` : 'form';
+export default function serializeForm(selector = 'form') {
     const form = document.querySelector(selector);
 
     if (!form || !(form instanceof HTMLFormElement)) {

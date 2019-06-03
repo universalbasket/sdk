@@ -1,22 +1,476 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
-(function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('@ubio/sdk'), require('form-serialize'), require('camelcase-keys'), require('lodash.kebabcase')) : typeof define === 'function' && define.amd ? define(['exports', '@ubio/sdk', 'form-serialize', 'camelcase-keys', 'lodash.kebabcase'], factory) : (global = global || self, factory(global['ubio-app-sdk'] = {}, global.sdk$1, global.formSerialize, global.camelCaseKeys, global.lodash_kebabcase));
-})(this, function (exports, sdk$1, formSerialize, camelCaseKeys, lodash_kebabcase) {
+(function (global,Buffer){
+(function (factory) {
+  typeof define === 'function' && define.amd ? define(factory) : factory();
+})(function () {
   'use strict';
 
-  formSerialize = formSerialize && formSerialize.hasOwnProperty('default') ? formSerialize['default'] : formSerialize;
-  camelCaseKeys = camelCaseKeys && camelCaseKeys.hasOwnProperty('default') ? camelCaseKeys['default'] : camelCaseKeys;
-  lodash_kebabcase = lodash_kebabcase && lodash_kebabcase.hasOwnProperty('default') ? lodash_kebabcase['default'] : lodash_kebabcase;
-  const initialInputs = {
-    url: 'https://pet.morethan.com/h5/pet/step-1?path=%2FquoteAndBuy.do%3Fe%3De1s1%26curPage%3DcaptureDetails'
-  };
-  const TYPES = ['input', 'output', 'cache'];
+  var defaultApiUrl = 'https://api.automationcloud.net';
+  var defaultVaultUrl = 'https://vault.automationcloud.net';
+  var defaultFetch = typeof self !== 'undefined' && self.fetch && self.fetch.bind(self);
+  var base64Encode;
+
+  if (typeof btoa === 'function') {
+    base64Encode = function (string) {
+      return btoa(string);
+    };
+  } else if (typeof Buffer === 'function') {
+    base64Encode = function (string) {
+      return Buffer.from(string).toString('base64');
+    };
+  } else {
+    throw new Error('No way to convert to base64.');
+  }
+
+  function assertStringArguments(obj) {
+    Object.keys(obj || {}).forEach(function (key) {
+      if (typeof obj[key] !== 'string') {
+        throw new TypeError('"' + key + '" must be a string.');
+      }
+    });
+  }
+
+  function createSearch(parameters) {
+    if (!parameters) {
+      return '';
+    }
+
+    var query = [];
+    Object.keys(parameters).forEach(function (key) {
+      if (parameters[key] !== void 0) {
+        query.push(encodeURIComponent(key) + '=' + encodeURIComponent(parameters[key]));
+      }
+    });
+    var search = query.join('&');
+    return search.length ? '?' + search : '';
+  }
+
+  function fetchWrapper(url, fetch, token, opts) {
+    var options = opts || {};
+    var method = options.method || 'GET';
+    var query = options.query;
+
+    if (!token) {
+      throw new Error('No token.');
+    }
+
+    var headers = {};
+    Object.keys(options.headers || {}).forEach(function (key) {
+      headers[key] = options.headers[key];
+    });
+    headers['Authorization'] = 'Basic ' + base64Encode(token + ':');
+    var body = options.body === void 0 ? void 0 : JSON.stringify(options.body);
+    var search = createSearch(query);
+
+    if (typeof body === 'string') {
+      headers['Content-Type'] = 'application/json';
+    }
+
+    var fetchOptions = {
+      method: method,
+      headers: headers,
+      body: body,
+      mode: 'cors',
+      credentials: 'omit',
+      cache: 'no-store',
+      redirect: 'follow',
+      referrer: 'client',
+      referrerPolicy: 'origin',
+      keepalive: false
+    };
+    return fetch(url + search, fetchOptions).then(function (response) {
+      if (!response.ok) {
+        return response.json().then(function (body) {
+          // TODO: Better errors from error bodies.
+          const error = new Error(body.message || 'Unexpected response');
+          error.status = response.status;
+          throw error;
+        });
+      }
+
+      if (options.parse !== false) {
+        return response.json();
+      }
+
+      return response;
+    });
+  }
+
+  function makeApiClient(baseUrl, fetch, token) {
+    var canonicalizedBaseiUrl = baseUrl.slice(-1) === '/' ? baseUrl : baseUrl + '/';
+
+    function apiFetch(path, options) {
+      return fetchWrapper(canonicalizedBaseiUrl + path, fetch, token, options);
+    }
+
+    var api = {
+      raw: function (path, options) {
+        assertStringArguments({
+          path: path
+        });
+        return apiFetch(path, options);
+      },
+      getServices: function () {
+        return apiFetch('services');
+      },
+      getService: function (serviceId) {
+        assertStringArguments({
+          serviceId: serviceId
+        });
+        return apiFetch('services/' + serviceId);
+      },
+      getPreviousJobOutputs: function (serviceId, inputs) {
+        assertStringArguments({
+          serviceId: serviceId
+        });
+        const body = {
+          inputs: inputs || []
+        };
+        return apiFetch('services/' + serviceId + '/previous-job-outputs', {
+          method: 'POST',
+          body: body
+        });
+      },
+      getJobs: function (query) {
+        return apiFetch('jobs', {
+          query: query
+        });
+      },
+      createJob: function (fields) {
+        return apiFetch('jobs', {
+          method: 'POST',
+          body: fields
+        });
+      },
+      getJob: function (jobId) {
+        assertStringArguments({
+          jobId: jobId
+        });
+        return apiFetch('jobs/' + jobId);
+      },
+      cancelJob: function (jobId) {
+        assertStringArguments({
+          jobId: jobId
+        });
+        return apiFetch('jobs/' + jobId + '/cancel', {
+          method: 'POST'
+        });
+      },
+      resetJob: function (jobId, fromInputKey, preserveInputs) {
+        assertStringArguments({
+          jobId: jobId
+        });
+        const body = {
+          fromInputKey: fromInputKey,
+          preserveInputs: preserveInputs || []
+        };
+        return apiFetch('jobs/' + jobId + '/reset', {
+          method: 'POST',
+          body: body
+        });
+      },
+      createJobInput: function (jobId, key, data, stage) {
+        assertStringArguments({
+          jobId: jobId,
+          key: key
+        });
+        return apiFetch('jobs/' + jobId + '/inputs', {
+          method: 'POST',
+          body: {
+            key,
+            stage,
+            data
+          }
+        });
+      },
+      getJobOutputs: function (jobId) {
+        assertStringArguments({
+          jobId: jobId
+        });
+        return apiFetch('jobs/' + jobId + '/outputs');
+      },
+      getJobOutput: function (jobId, key, stage) {
+        assertStringArguments({
+          jobId: jobId,
+          key: key
+        });
+        var path = 'jobs/' + jobId + '/outputs/' + key;
+
+        if (stage) {
+          path += '/' + stage;
+        }
+
+        return apiFetch(path);
+      },
+      getJobScreenshots: function (jobId) {
+        assertStringArguments({
+          jobId: jobId
+        });
+        return apiFetch('jobs/' + jobId + '/screenshots');
+      },
+      getJobScreenshot: function (jobIdOrPath, id, ext) {
+        function toBlob(res) {
+          return res.blob();
+        }
+
+        if (jobIdOrPath && jobIdOrPath[0] === '/') {
+          return apiFetch(jobIdOrPath, {
+            parse: false
+          }).then(toBlob);
+        }
+
+        assertStringArguments({
+          jobId: jobIdOrPath,
+          id: id,
+          ext: ext
+        });
+        return apiFetch('jobs/' + jobIdOrPath + '/screenshots/' + id + '.png', {
+          parse: false
+        }).then(toBlob);
+      },
+      getJobMimoLogs: function (jobId) {
+        assertStringArguments({
+          jobId: jobId
+        });
+        return apiFetch('jobs/' + jobId + '/mimo-logs');
+      },
+      getJobEndUser: function (jobId) {
+        assertStringArguments({
+          jobId: jobId
+        });
+        return apiFetch('jobs/' + jobId + '/end-user');
+      },
+      getJobEvents: function (jobId, offset) {
+        assertStringArguments({
+          jobId: jobId
+        });
+
+        if (offset >>> 0 !== offset) {
+          throw new RangeError('offset must be a positive integer.');
+        }
+
+        return apiFetch('jobs/' + jobId + '/events', {
+          query: {
+            offset: offset || 0
+          }
+        });
+      },
+      trackJob: function (jobId, callback) {
+        assertStringArguments({
+          jobId: jobId
+        });
+        return poll(jobId, callback, 1000);
+      }
+    };
+
+    function delay(t) {
+      return new Promise(function (resolve) {
+        setTimeout(resolve, t);
+      });
+    }
+
+    function poll(jobId, callback, dt) {
+      var offset = 0;
+      var backoff = 0;
+      var stopped = false;
+
+      function stop() {
+        if (!stopped) {
+          stopped = true;
+          callback('close');
+        }
+      }
+
+      function run() {
+        return delay(dt).then(function () {
+          if (!stopped) {
+            return api.getJobEvents(jobId, offset).then(function (body) {
+              backoff = 0;
+              return body;
+            }).catch(function (error) {
+              const message = error.stack || error.message; // 4xy errors don't lead to a retry, since the
+              // client must change something before the
+              // request can work.
+
+              if (error.status < 500) {
+                callback('error', error);
+                stop();
+                return;
+              } // 5xy errors lead to retries with backoff.
+
+
+              callback('error', error);
+              backoff += 1;
+              const backoffTime = ((dt + backoff * dt) / 1000).toFixed(1);
+              console.warn('Error contacting API. Retrying in ' + backoffTime + ' s. ', message);
+              return delay(backoff * dt).then(function () {
+                return {
+                  data: []
+                };
+              });
+            });
+          }
+        }).then(function (body) {
+          if (stopped) {
+            return;
+          }
+
+          var events = body.data.slice();
+          offset += events.length;
+          events.sort(function (a, b) {
+            return a.createdAt - b.createdAt;
+          });
+          events.forEach(function (event) {
+            callback(event.name);
+
+            if (event.name === 'success' || event.name === 'fail') {
+              stop();
+            }
+          });
+        }).then(function () {
+          if (!stopped) {
+            return run();
+          }
+        });
+      }
+
+      run();
+      return stop;
+    }
+
+    return api;
+  }
+
+  function makeVaultClient(baseUrl, fetch, token) {
+    var canonicalizedBaseiUrl = baseUrl.slice(-1) === '/' ? baseUrl : baseUrl + '/';
+
+    function vaultFetch(path, options) {
+      return fetchWrapper(canonicalizedBaseiUrl + path, fetch, token, options);
+    }
+
+    return {
+      vaultPan: function (pan) {
+        return vaultFetch('otp', {
+          method: 'POST'
+        }).then(function (otp) {
+          return vaultFetch('pan', {
+            method: 'POST',
+            body: {
+              otp: otp.id,
+              pan: pan
+            }
+          });
+        }).then(function (pan) {
+          return vaultFetch('pan/temporary', {
+            method: 'POST',
+            body: {
+              panId: pan.id,
+              key: pan.key
+            }
+          });
+        }).then(function (temp) {
+          return temp.panToken;
+        });
+      },
+      getOtp: function () {
+        return vaultFetch('otp', {
+          method: 'POST'
+        }).then(function (otp) {
+          return otp.id;
+        });
+      }
+    };
+  }
+  /**
+   * @param {Object} options
+   * @param {string} options.token
+   * @param {string} options.jobId
+   * @param {string} options.serviceId
+   * @param {string} options.apiUrl
+   * @param {string} options.vaultUrl
+   * @param {function} options.fetch
+   */
+
+
+  function createEndUserSdk(options) {
+    if (!options || !options.token) {
+      throw new Error('A token required.');
+    }
+
+    if (!options.jobId) {
+      throw new Error('A jobId is required.');
+    }
+
+    if (!options.serviceId) {
+      throw new Error('A serviceId is required.');
+    }
+
+    var jobId = options.jobId;
+    var serviceId = options.serviceId;
+    var apiUrl = options.apiUrl || defaultApiUrl;
+    var vaultUrl = options.vaultUrl || defaultVaultUrl;
+    var fetch = options.fetch || defaultFetch;
+    var token = options.token;
+    var apiClient = makeApiClient(apiUrl, fetch, token);
+    var vaultClient = makeVaultClient(vaultUrl, fetch, token);
+    return {
+      getService: function () {
+        return apiClient.getService(serviceId);
+      },
+      getPreviousJobOutputs: function (inputs) {
+        return apiClient.getPreviousJobOutputs(serviceId, inputs);
+      },
+      getJob: function () {
+        return apiClient.getJob(jobId);
+      },
+      cancelJob: function () {
+        return apiClient.cancelJob(jobId);
+      },
+      resetJob: function (fromInputKey, preserveInputs) {
+        return apiClient.resetJob(jobId, fromInputKey, preserveInputs);
+      },
+      createJobInput: function (key, data, stage) {
+        return apiClient.createJobInput(jobId, key, data, stage);
+      },
+      getJobOutputs: function () {
+        return apiClient.getJobOutputs(jobId);
+      },
+      getJobOutput: function (key, stage) {
+        return apiClient.getJobOutput(jobId, key, stage);
+      },
+      getJobScreenshots: function () {
+        return apiClient.getJobScreenshots(jobId);
+      },
+      getJobScreenshot: function (idOrPath) {
+        if (idOrPath && idOrPath[0] === '/') {
+          return apiClient.getJobScreenshot(idOrPath);
+        }
+
+        return apiClient.getJobScreenshot(jobId, idOrPath);
+      },
+      getJobMimoLogs: function () {
+        return apiClient.getJobMimoLogs(jobId);
+      },
+      getJobEvents: function (offset) {
+        return apiClient.getJobEvents(jobId, offset);
+      },
+      trackJob: function (callback) {
+        return apiClient.trackJob(jobId, callback);
+      },
+      vaultPan: function (pan) {
+        return vaultClient.vaultPan(pan);
+      }
+    };
+  }
+
+  const TYPES = ['input', 'output', 'cache', 'local'];
 
   function getAll() {
     const length = localStorage.length;
     const inputs = {};
     const outputs = {};
     const caches = {};
+    const local = {};
 
     for (let i = 0; i < length; i += 1) {
       const key = localStorage.key(i);
@@ -38,12 +492,19 @@
         const data = JSON.parse(localStorage.getItem(key));
         caches[trimmed] = data;
       }
+
+      if (key.startsWith('local.')) {
+        const trimmed = key.replace('local.', '');
+        const data = JSON.parse(localStorage.getItem(key));
+        caches[trimmed] = data;
+      }
     }
 
     return {
       inputs,
       outputs,
-      caches
+      caches,
+      local
     };
   }
 
@@ -79,7 +540,7 @@
     localStorage.setItem(`${type}.${key}`, JSON.stringify(data));
   }
 
-  var InputOutput =
+  var Storage =
   /*#__PURE__*/
   Object.freeze({
     getAll: getAll,
@@ -97,12 +558,16 @@
       this.initiated = false;
     }
 
-    async create(fields = {}) {
+    async create({
+      input = {},
+      category,
+      serverUrlPath
+    }) {
       if (jobId && token && serviceId) {
         let previous;
 
         try {
-          previous = sdk$1.createEndUserSdk({
+          previous = createEndUserSdk({
             token,
             jobId,
             serviceId
@@ -114,14 +579,15 @@
       }
 
       localStorage.clear();
-      const newJob = await createJob(fields);
+      const newJob = await createJob(input, category, serverUrlPath);
       jobId = newJob.jobId;
       token = newJob.token;
       serviceId = newJob.serviceId;
       localStorage.setItem('jobId', jobId);
       localStorage.setItem('token', token);
       localStorage.setItem('serviceId', serviceId);
-      this.sdk = sdk$1.createEndUserSdk({
+      Object.keys(input).forEach(key => set('input', key, input[key]));
+      this.sdk = createEndUserSdk({
         token,
         jobId,
         serviceId
@@ -130,7 +596,7 @@
     }
 
     async retrieve() {
-      this.sdk = sdk$1.createEndUserSdk({
+      this.sdk = createEndUserSdk({
         token,
         jobId,
         serviceId
@@ -151,25 +617,19 @@
       const createInputs = keys.map(async key => {
         const data = inputs[key];
         await this.sdk.createJobInput(key, data);
-        set('input', key, data);
         return {
           key,
           data
         };
       });
-      return await Promise.all(createInputs);
-    }
 
-    async waitForJobOutput(outputKey, inputKey) {
-      const outputs = await this.sdk.getJobOutputs(); // TODO: job
-
-      const output = Array.isArray(outputs.data) && outputs.data.find(ou => ou.key === outputKey);
-
-      if (output) {
-        return output.data;
+      try {
+        const submitted = await Promise.all(createInputs);
+        submitted.forEach(_ => set('input', _.key, _.data));
+      } catch (err) {
+        await this.sdk.resetJob(keys[0]);
+        throw err;
       }
-
-      return await this.trackJobOutput(outputKey);
     }
 
     async getCache({
@@ -204,26 +664,20 @@
       });
     }
 
-    trackJobOutput(outputKey) {
-      return new Promise((res, rej) => {
+    trackJobOutput(callback) {
+      return this.sdk.trackJob((event, error) => {
         let createdOutputProcessing = false;
-        const stopTracking = this.sdk.trackJob((event, error) => {
-          if (event === 'createOutput' && !createdOutputProcessing) {
-            createdOutputProcessing = true;
-            this.sdk.getJobOutputs().then(outputs => {
-              outputs.data.forEach(output => {
-                set('output', output.key, output.data);
-              });
-              createdOutputProcessing = false;
-              const output = outputs.data.find(jo => jo.key === outputKey);
 
-              if (output) {
-                stopTracking();
-                res(output.data);
-              }
+        if (event === 'createOutput' && !createdOutputProcessing) {
+          createdOutputProcessing = true;
+          this.sdk.getJobOutputs().then(outputs => {
+            outputs.data.forEach(output => {
+              set('output', output.key, output.data);
             });
-          }
-        });
+            callback('outputCreate', null);
+            createdOutputProcessing = false;
+          });
+        }
       });
     }
 
@@ -232,6 +686,10 @@
       await this.createJobInputs({
         panToken
       });
+    }
+
+    async resetJob(fromInputKey, preserveInputs) {
+      await this.sdk.resetJob(fromInputKey, preserveInputs);
     }
 
     trackJob(callback) {
@@ -252,15 +710,9 @@
 
   }
 
-  async function createJob({
-    input = {},
-    category = 'test'
-  }) {
-    input = { ...initialInputs,
-      ...input
-    };
-    const SERVER_URL = "https://ubio-application-bundle-dummy-server.glitch.me";
-    const res = await fetch(`${SERVER_URL}/create-job`, {
+  async function createJob(input = {}, category = 'test', SERVER_URL_PATH) {
+    SERVER_URL_PATH = SERVER_URL_PATH;
+    const res = await fetch(SERVER_URL_PATH, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -294,11 +746,11 @@
     navigate() {
       let request = parseRequestURL(); // Parse the URL and if it has an id part, change it with the string ":id"
 
-      let parsedURL = (request.section ? '/' + request.section : '/') + (request.input ? '/' + request.input : ''); // Get the page from our hash of supported routes.
+      let parsedURL = (request.page ? '/' + request.page : '/') + (request.input ? '/' + request.input : ''); // Get the page from our hash of supported routes.
       // If the parsed URL is not in our list of supported routes, select the 404 page instead
 
       let route = this.routes[parsedURL] ? this.routes[parsedURL] : this.notFoundTemplate;
-      route.render();
+      route.renderer.init();
       this.ProgressBarTemplate(this.titles, route.step);
     }
 
@@ -308,10 +760,10 @@
     let url = location.hash.slice(1).toLowerCase() || '/';
     let r = url.split("/");
     let request = {
-      section: null,
+      page: null,
       input: null
     };
-    request.section = r[1];
+    request.page = r[1];
     request.input = r[2];
     return request;
   }
@@ -331,33 +783,6 @@
 
 
   const directives = new WeakMap();
-  /**
-   * Brands a function as a directive so that lit-html will call the function
-   * during template rendering, rather than passing as a value.
-   *
-   * @param f The directive factory function. Must be a function that returns a
-   * function of the signature `(part: Part) => void`. The returned function will
-   * be called with the part object
-   *
-   * @example
-   *
-   * ```
-   * import {directive, html} from 'lit-html';
-   *
-   * const immutable = directive((v) => (part) => {
-   *   if (part.value !== v) {
-   *     part.setValue(v)
-   *   }
-   * });
-   * ```
-   */
-  // tslint:disable-next-line:no-any
-
-  const directive = f => (...args) => {
-    const d = f(...args);
-    directives.set(d, true);
-    return d;
-  };
 
   const isDirective = o => {
     return typeof o === 'function' && directives.has(o);
@@ -1524,97 +1949,23 @@
    */
 
 
-  const _state = new WeakMap();
-  /**
-   * Renders one of a series of values, including Promises, to a Part.
-   *
-   * Values are rendered in priority order, with the first argument having the
-   * highest priority and the last argument having the lowest priority. If a
-   * value is a Promise, low-priority values will be rendered until it resolves.
-   *
-   * The priority of values can be used to create placeholder content for async
-   * data. For example, a Promise with pending content can be the first,
-   * highest-priority, argument, and a non_promise loading indicator template can
-   * be used as the second, lower-priority, argument. The loading indicator will
-   * render immediately, and the primary content will render when the Promise
-   * resolves.
-   *
-   * Example:
-   *
-   *     const content = fetch('./content.txt').then(r => r.text());
-   *     html`${until(content, html`<span>Loading...</span>`)}`
-   */
-
-
-  const until = directive((...args) => part => {
-    let state = _state.get(part);
-
-    if (state === undefined) {
-      state = {
-        values: []
-      };
-
-      _state.set(part, state);
-    }
-
-    const previousValues = state.values;
-    state.values = args;
-
-    for (let i = 0; i < args.length; i++) {
-      // If we've rendered a higher-priority value already, stop.
-      if (state.lastRenderedIndex !== undefined && i > state.lastRenderedIndex) {
-        break;
-      }
-
-      const value = args[i]; // Render non-Promise values immediately
-
-      if (isPrimitive(value) || typeof value.then !== 'function') {
-        part.setValue(value);
-        state.lastRenderedIndex = i; // Since a lower-priority value will never overwrite a higher-priority
-        // synchronous value, we can stop processsing now.
-
-        break;
-      } // If this is a Promise we've already handled, skip it.
-
-
-      if (state.lastRenderedIndex !== undefined && typeof value.then === 'function' && value === previousValues[i]) {
-        continue;
-      } // We have a Promise that we haven't seen before, so priorities may have
-      // changed. Forget what we rendered before.
-
-
-      state.lastRenderedIndex = undefined;
-      Promise.resolve(value).then(resolvedValue => {
-        const index = state.values.indexOf(value); // If state.values doesn't contain the value, we've re-rendered without
-        // the value, so don't render it. Then, only render if the value is
-        // higher-priority than what's already been rendered.
-
-        if (index > -1 && (state.lastRenderedIndex === undefined || index < state.lastRenderedIndex)) {
-          state.lastRenderedIndex = index;
-          part.setValue(resolvedValue);
-          part.commit();
-        }
-      });
-    }
-  });
-
   function poll(CACHE_CONFIG, newInputKey) {
     if (!newInputKey) {
       pollDefault(CACHE_CONFIG);
-    } else {
-      const {
-        inputs
-      } = getAll();
-      CACHE_CONFIG.forEach(config => {
-        if (config.sourceInputKeys.includes[newInputKey]) {
-          const readyToFetch = config.sourceInputKeys.every(input => inputs[input]);
-
-          if (readyToFetch) {
-            fetchAndSave(config);
-          }
-        }
-      });
     }
+
+    const {
+      inputs
+    } = getAll();
+    CACHE_CONFIG.forEach(config => {
+      if (config.sourceInputKeys.includes[newInputKey]) {
+        const readyToFetch = config.sourceInputKeys.every(input => inputs[input]);
+
+        if (readyToFetch) {
+          fetchAndSave(config);
+        }
+      }
+    });
   }
 
   function pollDefault(CACHE_CONFIG) {
@@ -1632,132 +1983,1109 @@
       }
     }).catch(err => console.error('failed to fetch cache', err));
   }
-  /*
-  see https://lit-html.polymer-project.org/guide/template-reference#cache
-  for details view and summary view for mobile version.
-  */
-  //get service name & domain
 
-
-  var Summary = (inputs = {}, outputs = {}) => html`
-<div class="summary">
-    <div class="summary__header">
-        <b>MoreThan</b>
-        <span class="dimmed">Pet Insurance</span>
-    </div>
-
-    <section class="summary__body">
-        ${inputs.pets ? html`
-            <div id="pet-detail" class="summary__block">
-                ${pet(inputs.pets[0])}
-            </div>
-            ` : ''}
-
-
-        ${inputs.policyOptions || inputs.selectedCover || inputs.selectedVoluntaryExcess || inputs.selectedPaymentTerm ? html`
-        <div id="policy-detail" class="summary__block">
-            <h5 class="summary__block-title"> Your Policy </h5>
-            <ul>
-                ${inputs.policyOptions && inputs.policyOptions.coverStartDate ? startDate(inputs.policyOptions) : ''}
-                ${inputs.selectedCover ? html`<li>Cover: ${inputs.selectedCover}</li>` : ''}
-                ${inputs.selectedVetPaymentTerm ? html`<li> Vet Payment Term: ${inputs.selectedVetPaymentTerm}</li>` : ''}
-                ${inputs.selectedPaymentTerm ? html`<li>Payment term: ${inputs.selectedPaymentTerm}</li>` : ''}
-                ${inputs.selectedCoverType ? html`<li>Cover type: ${inputs.selectedCoverType.coverName} - ${(inputs.selectedCoverType.price.value * 0.01).toFixed(2)} ${inputs.selectedCoverType.price.currencyCode} </li>` : ''}
-                ${inputs.selectedVetFee ? html`<li>Vet Fee:  - <p>${inputs.selectedVetFee.price.value * 0.01} ${inputs.selectedVetFee.price.currencyCode} </li>` : ''}
-                ${inputs.selectedVoluntaryExcess ? html`<li>Voluntary Excess: ${inputs.selectedVoluntaryExcess.name}</li>` : ''}
-                ${inputs.selectedCoverOptions ? html`<li>Cover options: ${inputs.selectedCoverOptions}</li>` : ''}
-            </ul>
-        </div>` : ''}
-
-        ${outputs.insuranceProductInformationDocument || outputs.essentialInformation || outputs.policyWording || outputs.eligibilityConditions ? html`
-        <div id="policy-info" class="summary__block">
-            <h5 class="summary__block-title"> Your Documents </h5>
-            <ul>
-                ${outputs.insuranceProductInformationDocument ? fileType(outputs.insuranceProductInformationDocument) : ''}
-                ${outputs.essentialInformation ? fileType(outputs.essentialInformation) : ''}
-                ${outputs.policyWording ? fileType(outputs.policyWording) : ''}
-                ${outputs.eligibilityConditions ? htmlType(outputs.eligibilityConditions) : ''}
-            </ul>
-        </div>` : ''}
-
-        ${outputs.estimatedPrice ? html`<div id="price" class="summary__block">
-                ${price(outputs.estimatedPrice)}
-            </div>` : ''}
-
-    </section>
-</div>`;
-
-  const pet = pet => html`
-<h5 class="summary__block-title"> Your ${pet.name} </h5>
-<ul>
-    <li> Breed Name: ${pet.breedName}</li>
-    <li> Date of Birth: ${pet.dateOfBirth}</li>
-    <li> Paid/Donated: £ ${Number(pet.petPrice).toFixed(2)}</li>
-</ul>
-`;
-
-  const startDate = policyOptions => {
-    const {
-      coverStartDate
-    } = policyOptions;
-    return html`
-        <li>
-            Starts on ${coverStartDate}
-        </li>
-    `;
-  };
-
-  const fileType = data => {
-    return html`
-    <div>
-        <h5>${data.name}</h5>
-        <a>${data.filename}</a>
-    </div>
-`;
-  };
-
-  const htmlType = data => {
-    return html`
-    <div>
-        <h5>${data.name}</h5>
-        ${data.html}
-    </div>`;
-  };
-
-  const price = data => {
-    return html`
-        <h5>Price</h5>
-        <span>${(data.price.value * 0.01).toFixed(2)} ${data.price.countryCode}</span>
-    `;
-  };
+  var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
   /**
+   * lodash (Custom Build) <https://lodash.com/>
+   * Build: `lodash modularize exports="npm" -o ./`
+   * Copyright jQuery Foundation and other contributors <https://jquery.org/>
+   * Released under MIT license <https://lodash.com/license>
+   * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
+   * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+   */
+
+  /** Used as references for various `Number` constants. */
+
+  var INFINITY = 1 / 0;
+  /** `Object#toString` result references. */
+
+  var symbolTag = '[object Symbol]';
+  /** Used to match words composed of alphanumeric characters. */
+
+  var reAsciiWord = /[^\x00-\x2f\x3a-\x40\x5b-\x60\x7b-\x7f]+/g;
+  /** Used to match Latin Unicode letters (excluding mathematical operators). */
+
+  var reLatin = /[\xc0-\xd6\xd8-\xf6\xf8-\xff\u0100-\u017f]/g;
+  /** Used to compose unicode character classes. */
+
+  var rsAstralRange = '\\ud800-\\udfff',
+      rsComboMarksRange = '\\u0300-\\u036f\\ufe20-\\ufe23',
+      rsComboSymbolsRange = '\\u20d0-\\u20f0',
+      rsDingbatRange = '\\u2700-\\u27bf',
+      rsLowerRange = 'a-z\\xdf-\\xf6\\xf8-\\xff',
+      rsMathOpRange = '\\xac\\xb1\\xd7\\xf7',
+      rsNonCharRange = '\\x00-\\x2f\\x3a-\\x40\\x5b-\\x60\\x7b-\\xbf',
+      rsPunctuationRange = '\\u2000-\\u206f',
+      rsSpaceRange = ' \\t\\x0b\\f\\xa0\\ufeff\\n\\r\\u2028\\u2029\\u1680\\u180e\\u2000\\u2001\\u2002\\u2003\\u2004\\u2005\\u2006\\u2007\\u2008\\u2009\\u200a\\u202f\\u205f\\u3000',
+      rsUpperRange = 'A-Z\\xc0-\\xd6\\xd8-\\xde',
+      rsVarRange = '\\ufe0e\\ufe0f',
+      rsBreakRange = rsMathOpRange + rsNonCharRange + rsPunctuationRange + rsSpaceRange;
+  /** Used to compose unicode capture groups. */
+
+  var rsApos = "['\u2019]",
+      rsBreak = '[' + rsBreakRange + ']',
+      rsCombo = '[' + rsComboMarksRange + rsComboSymbolsRange + ']',
+      rsDigits = '\\d+',
+      rsDingbat = '[' + rsDingbatRange + ']',
+      rsLower = '[' + rsLowerRange + ']',
+      rsMisc = '[^' + rsAstralRange + rsBreakRange + rsDigits + rsDingbatRange + rsLowerRange + rsUpperRange + ']',
+      rsFitz = '\\ud83c[\\udffb-\\udfff]',
+      rsModifier = '(?:' + rsCombo + '|' + rsFitz + ')',
+      rsNonAstral = '[^' + rsAstralRange + ']',
+      rsRegional = '(?:\\ud83c[\\udde6-\\uddff]){2}',
+      rsSurrPair = '[\\ud800-\\udbff][\\udc00-\\udfff]',
+      rsUpper = '[' + rsUpperRange + ']',
+      rsZWJ = '\\u200d';
+  /** Used to compose unicode regexes. */
+
+  var rsLowerMisc = '(?:' + rsLower + '|' + rsMisc + ')',
+      rsUpperMisc = '(?:' + rsUpper + '|' + rsMisc + ')',
+      rsOptLowerContr = '(?:' + rsApos + '(?:d|ll|m|re|s|t|ve))?',
+      rsOptUpperContr = '(?:' + rsApos + '(?:D|LL|M|RE|S|T|VE))?',
+      reOptMod = rsModifier + '?',
+      rsOptVar = '[' + rsVarRange + ']?',
+      rsOptJoin = '(?:' + rsZWJ + '(?:' + [rsNonAstral, rsRegional, rsSurrPair].join('|') + ')' + rsOptVar + reOptMod + ')*',
+      rsSeq = rsOptVar + reOptMod + rsOptJoin,
+      rsEmoji = '(?:' + [rsDingbat, rsRegional, rsSurrPair].join('|') + ')' + rsSeq;
+  /** Used to match apostrophes. */
+
+  var reApos = RegExp(rsApos, 'g');
+  /**
+   * Used to match [combining diacritical marks](https://en.wikipedia.org/wiki/Combining_Diacritical_Marks) and
+   * [combining diacritical marks for symbols](https://en.wikipedia.org/wiki/Combining_Diacritical_Marks_for_Symbols).
+   */
+
+  var reComboMark = RegExp(rsCombo, 'g');
+  /** Used to match complex or compound words. */
+
+  var reUnicodeWord = RegExp([rsUpper + '?' + rsLower + '+' + rsOptLowerContr + '(?=' + [rsBreak, rsUpper, '$'].join('|') + ')', rsUpperMisc + '+' + rsOptUpperContr + '(?=' + [rsBreak, rsUpper + rsLowerMisc, '$'].join('|') + ')', rsUpper + '?' + rsLowerMisc + '+' + rsOptLowerContr, rsUpper + '+' + rsOptUpperContr, rsDigits, rsEmoji].join('|'), 'g');
+  /** Used to detect strings that need a more robust regexp to match words. */
+
+  var reHasUnicodeWord = /[a-z][A-Z]|[A-Z]{2,}[a-z]|[0-9][a-zA-Z]|[a-zA-Z][0-9]|[^a-zA-Z0-9 ]/;
+  /** Used to map Latin Unicode letters to basic Latin letters. */
+
+  var deburredLetters = {
+    // Latin-1 Supplement block.
+    '\xc0': 'A',
+    '\xc1': 'A',
+    '\xc2': 'A',
+    '\xc3': 'A',
+    '\xc4': 'A',
+    '\xc5': 'A',
+    '\xe0': 'a',
+    '\xe1': 'a',
+    '\xe2': 'a',
+    '\xe3': 'a',
+    '\xe4': 'a',
+    '\xe5': 'a',
+    '\xc7': 'C',
+    '\xe7': 'c',
+    '\xd0': 'D',
+    '\xf0': 'd',
+    '\xc8': 'E',
+    '\xc9': 'E',
+    '\xca': 'E',
+    '\xcb': 'E',
+    '\xe8': 'e',
+    '\xe9': 'e',
+    '\xea': 'e',
+    '\xeb': 'e',
+    '\xcc': 'I',
+    '\xcd': 'I',
+    '\xce': 'I',
+    '\xcf': 'I',
+    '\xec': 'i',
+    '\xed': 'i',
+    '\xee': 'i',
+    '\xef': 'i',
+    '\xd1': 'N',
+    '\xf1': 'n',
+    '\xd2': 'O',
+    '\xd3': 'O',
+    '\xd4': 'O',
+    '\xd5': 'O',
+    '\xd6': 'O',
+    '\xd8': 'O',
+    '\xf2': 'o',
+    '\xf3': 'o',
+    '\xf4': 'o',
+    '\xf5': 'o',
+    '\xf6': 'o',
+    '\xf8': 'o',
+    '\xd9': 'U',
+    '\xda': 'U',
+    '\xdb': 'U',
+    '\xdc': 'U',
+    '\xf9': 'u',
+    '\xfa': 'u',
+    '\xfb': 'u',
+    '\xfc': 'u',
+    '\xdd': 'Y',
+    '\xfd': 'y',
+    '\xff': 'y',
+    '\xc6': 'Ae',
+    '\xe6': 'ae',
+    '\xde': 'Th',
+    '\xfe': 'th',
+    '\xdf': 'ss',
+    // Latin Extended-A block.
+    '\u0100': 'A',
+    '\u0102': 'A',
+    '\u0104': 'A',
+    '\u0101': 'a',
+    '\u0103': 'a',
+    '\u0105': 'a',
+    '\u0106': 'C',
+    '\u0108': 'C',
+    '\u010a': 'C',
+    '\u010c': 'C',
+    '\u0107': 'c',
+    '\u0109': 'c',
+    '\u010b': 'c',
+    '\u010d': 'c',
+    '\u010e': 'D',
+    '\u0110': 'D',
+    '\u010f': 'd',
+    '\u0111': 'd',
+    '\u0112': 'E',
+    '\u0114': 'E',
+    '\u0116': 'E',
+    '\u0118': 'E',
+    '\u011a': 'E',
+    '\u0113': 'e',
+    '\u0115': 'e',
+    '\u0117': 'e',
+    '\u0119': 'e',
+    '\u011b': 'e',
+    '\u011c': 'G',
+    '\u011e': 'G',
+    '\u0120': 'G',
+    '\u0122': 'G',
+    '\u011d': 'g',
+    '\u011f': 'g',
+    '\u0121': 'g',
+    '\u0123': 'g',
+    '\u0124': 'H',
+    '\u0126': 'H',
+    '\u0125': 'h',
+    '\u0127': 'h',
+    '\u0128': 'I',
+    '\u012a': 'I',
+    '\u012c': 'I',
+    '\u012e': 'I',
+    '\u0130': 'I',
+    '\u0129': 'i',
+    '\u012b': 'i',
+    '\u012d': 'i',
+    '\u012f': 'i',
+    '\u0131': 'i',
+    '\u0134': 'J',
+    '\u0135': 'j',
+    '\u0136': 'K',
+    '\u0137': 'k',
+    '\u0138': 'k',
+    '\u0139': 'L',
+    '\u013b': 'L',
+    '\u013d': 'L',
+    '\u013f': 'L',
+    '\u0141': 'L',
+    '\u013a': 'l',
+    '\u013c': 'l',
+    '\u013e': 'l',
+    '\u0140': 'l',
+    '\u0142': 'l',
+    '\u0143': 'N',
+    '\u0145': 'N',
+    '\u0147': 'N',
+    '\u014a': 'N',
+    '\u0144': 'n',
+    '\u0146': 'n',
+    '\u0148': 'n',
+    '\u014b': 'n',
+    '\u014c': 'O',
+    '\u014e': 'O',
+    '\u0150': 'O',
+    '\u014d': 'o',
+    '\u014f': 'o',
+    '\u0151': 'o',
+    '\u0154': 'R',
+    '\u0156': 'R',
+    '\u0158': 'R',
+    '\u0155': 'r',
+    '\u0157': 'r',
+    '\u0159': 'r',
+    '\u015a': 'S',
+    '\u015c': 'S',
+    '\u015e': 'S',
+    '\u0160': 'S',
+    '\u015b': 's',
+    '\u015d': 's',
+    '\u015f': 's',
+    '\u0161': 's',
+    '\u0162': 'T',
+    '\u0164': 'T',
+    '\u0166': 'T',
+    '\u0163': 't',
+    '\u0165': 't',
+    '\u0167': 't',
+    '\u0168': 'U',
+    '\u016a': 'U',
+    '\u016c': 'U',
+    '\u016e': 'U',
+    '\u0170': 'U',
+    '\u0172': 'U',
+    '\u0169': 'u',
+    '\u016b': 'u',
+    '\u016d': 'u',
+    '\u016f': 'u',
+    '\u0171': 'u',
+    '\u0173': 'u',
+    '\u0174': 'W',
+    '\u0175': 'w',
+    '\u0176': 'Y',
+    '\u0177': 'y',
+    '\u0178': 'Y',
+    '\u0179': 'Z',
+    '\u017b': 'Z',
+    '\u017d': 'Z',
+    '\u017a': 'z',
+    '\u017c': 'z',
+    '\u017e': 'z',
+    '\u0132': 'IJ',
+    '\u0133': 'ij',
+    '\u0152': 'Oe',
+    '\u0153': 'oe',
+    '\u0149': "'n",
+    '\u017f': 'ss'
+  };
+  /** Detect free variable `global` from Node.js. */
+
+  var freeGlobal = typeof commonjsGlobal == 'object' && commonjsGlobal && commonjsGlobal.Object === Object && commonjsGlobal;
+  /** Detect free variable `self`. */
+
+  var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
+  /** Used as a reference to the global object. */
+
+  var root = freeGlobal || freeSelf || Function('return this')();
+  /**
+   * A specialized version of `_.reduce` for arrays without support for
+   * iteratee shorthands.
    *
-   *  insuranceProductInformationDocument
-   * 	essentialInformation
-   * 	policyWording
-   *  eligibilityConditions
-   *  estimatedPrice
+   * @private
+   * @param {Array} [array] The array to iterate over.
+   * @param {Function} iteratee The function invoked per iteration.
+   * @param {*} [accumulator] The initial value.
+   * @param {boolean} [initAccum] Specify using the first element of `array` as
+   *  the initial value.
+   * @returns {*} Returns the accumulated value.
+   */
+
+  function arrayReduce(array, iteratee, accumulator, initAccum) {
+    var index = -1,
+        length = array ? array.length : 0;
+
+    if (initAccum && length) {
+      accumulator = array[++index];
+    }
+
+    while (++index < length) {
+      accumulator = iteratee(accumulator, array[index], index, array);
+    }
+
+    return accumulator;
+  }
+  /**
+   * Splits an ASCII `string` into an array of its words.
    *
+   * @private
+   * @param {string} The string to inspect.
+   * @returns {Array} Returns the words of `string`.
    */
 
 
-  var Header = () => html`
-<div class="header">
-    <h2>Here goes brand</h2>
-</div>`;
-
-  var Footer = () => html`
-<div class="footer">
-    <span></span>
-</div>`;
+  function asciiWords(string) {
+    return string.match(reAsciiWord) || [];
+  }
   /**
-   * @param {String} formId
+   * The base implementation of `_.propertyOf` without support for deep paths.
+   *
+   * @private
+   * @param {Object} object The object to query.
+   * @returns {Function} Returns the new accessor function.
+   */
+
+
+  function basePropertyOf(object) {
+    return function (key) {
+      return object == null ? undefined : object[key];
+    };
+  }
+  /**
+   * Used by `_.deburr` to convert Latin-1 Supplement and Latin Extended-A
+   * letters to basic Latin letters.
+   *
+   * @private
+   * @param {string} letter The matched letter to deburr.
+   * @returns {string} Returns the deburred letter.
+   */
+
+
+  var deburrLetter = basePropertyOf(deburredLetters);
+  /**
+   * Checks if `string` contains a word composed of Unicode symbols.
+   *
+   * @private
+   * @param {string} string The string to inspect.
+   * @returns {boolean} Returns `true` if a word is found, else `false`.
+   */
+
+  function hasUnicodeWord(string) {
+    return reHasUnicodeWord.test(string);
+  }
+  /**
+   * Splits a Unicode `string` into an array of its words.
+   *
+   * @private
+   * @param {string} The string to inspect.
+   * @returns {Array} Returns the words of `string`.
+   */
+
+
+  function unicodeWords(string) {
+    return string.match(reUnicodeWord) || [];
+  }
+  /** Used for built-in method references. */
+
+
+  var objectProto = Object.prototype;
+  /**
+   * Used to resolve the
+   * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
+   * of values.
+   */
+
+  var objectToString = objectProto.toString;
+  /** Built-in value references. */
+
+  var Symbol$1 = root.Symbol;
+  /** Used to convert symbols to primitives and strings. */
+
+  var symbolProto = Symbol$1 ? Symbol$1.prototype : undefined,
+      symbolToString = symbolProto ? symbolProto.toString : undefined;
+  /**
+   * The base implementation of `_.toString` which doesn't convert nullish
+   * values to empty strings.
+   *
+   * @private
+   * @param {*} value The value to process.
+   * @returns {string} Returns the string.
+   */
+
+  function baseToString(value) {
+    // Exit early for strings to avoid a performance hit in some environments.
+    if (typeof value == 'string') {
+      return value;
+    }
+
+    if (isSymbol(value)) {
+      return symbolToString ? symbolToString.call(value) : '';
+    }
+
+    var result = value + '';
+    return result == '0' && 1 / value == -INFINITY ? '-0' : result;
+  }
+  /**
+   * Creates a function like `_.camelCase`.
+   *
+   * @private
+   * @param {Function} callback The function to combine each word.
+   * @returns {Function} Returns the new compounder function.
+   */
+
+
+  function createCompounder(callback) {
+    return function (string) {
+      return arrayReduce(words(deburr(string).replace(reApos, '')), callback, '');
+    };
+  }
+  /**
+   * Checks if `value` is object-like. A value is object-like if it's not `null`
+   * and has a `typeof` result of "object".
+   *
+   * @static
+   * @memberOf _
+   * @since 4.0.0
+   * @category Lang
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
+   * @example
+   *
+   * _.isObjectLike({});
+   * // => true
+   *
+   * _.isObjectLike([1, 2, 3]);
+   * // => true
+   *
+   * _.isObjectLike(_.noop);
+   * // => false
+   *
+   * _.isObjectLike(null);
+   * // => false
+   */
+
+
+  function isObjectLike(value) {
+    return !!value && typeof value == 'object';
+  }
+  /**
+   * Checks if `value` is classified as a `Symbol` primitive or object.
+   *
+   * @static
+   * @memberOf _
+   * @since 4.0.0
+   * @category Lang
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if `value` is a symbol, else `false`.
+   * @example
+   *
+   * _.isSymbol(Symbol.iterator);
+   * // => true
+   *
+   * _.isSymbol('abc');
+   * // => false
+   */
+
+
+  function isSymbol(value) {
+    return typeof value == 'symbol' || isObjectLike(value) && objectToString.call(value) == symbolTag;
+  }
+  /**
+   * Converts `value` to a string. An empty string is returned for `null`
+   * and `undefined` values. The sign of `-0` is preserved.
+   *
+   * @static
+   * @memberOf _
+   * @since 4.0.0
+   * @category Lang
+   * @param {*} value The value to process.
+   * @returns {string} Returns the string.
+   * @example
+   *
+   * _.toString(null);
+   * // => ''
+   *
+   * _.toString(-0);
+   * // => '-0'
+   *
+   * _.toString([1, 2, 3]);
+   * // => '1,2,3'
+   */
+
+
+  function toString(value) {
+    return value == null ? '' : baseToString(value);
+  }
+  /**
+   * Deburrs `string` by converting
+   * [Latin-1 Supplement](https://en.wikipedia.org/wiki/Latin-1_Supplement_(Unicode_block)#Character_table)
+   * and [Latin Extended-A](https://en.wikipedia.org/wiki/Latin_Extended-A)
+   * letters to basic Latin letters and removing
+   * [combining diacritical marks](https://en.wikipedia.org/wiki/Combining_Diacritical_Marks).
+   *
+   * @static
+   * @memberOf _
+   * @since 3.0.0
+   * @category String
+   * @param {string} [string=''] The string to deburr.
+   * @returns {string} Returns the deburred string.
+   * @example
+   *
+   * _.deburr('déjà vu');
+   * // => 'deja vu'
+   */
+
+
+  function deburr(string) {
+    string = toString(string);
+    return string && string.replace(reLatin, deburrLetter).replace(reComboMark, '');
+  }
+  /**
+   * Converts `string` to
+   * [kebab case](https://en.wikipedia.org/wiki/Letter_case#Special_case_styles).
+   *
+   * @static
+   * @memberOf _
+   * @since 3.0.0
+   * @category String
+   * @param {string} [string=''] The string to convert.
+   * @returns {string} Returns the kebab cased string.
+   * @example
+   *
+   * _.kebabCase('Foo Bar');
+   * // => 'foo-bar'
+   *
+   * _.kebabCase('fooBar');
+   * // => 'foo-bar'
+   *
+   * _.kebabCase('__FOO_BAR__');
+   * // => 'foo-bar'
+   */
+
+
+  var kebabCase = createCompounder(function (result, word, index) {
+    return result + (index ? '-' : '') + word.toLowerCase();
+  });
+  /**
+   * Splits `string` into an array of its words.
+   *
+   * @static
+   * @memberOf _
+   * @since 3.0.0
+   * @category String
+   * @param {string} [string=''] The string to inspect.
+   * @param {RegExp|string} [pattern] The pattern to match words.
+   * @param- {Object} [guard] Enables use as an iteratee for methods like `_.map`.
+   * @returns {Array} Returns the words of `string`.
+   * @example
+   *
+   * _.words('fred, barney, & pebbles');
+   * // => ['fred', 'barney', 'pebbles']
+   *
+   * _.words('fred, barney, & pebbles', /[^, ]+/g);
+   * // => ['fred', 'barney', '&', 'pebbles']
+   */
+
+  function words(string, pattern, guard) {
+    string = toString(string);
+    pattern = guard ? undefined : pattern;
+
+    if (pattern === undefined) {
+      return hasUnicodeWord(string) ? unicodeWords(string) : asciiWords(string);
+    }
+
+    return string.match(pattern) || [];
+  }
+
+  var lodash_kebabcase = kebabCase; // get successful control from form and assemble into object
+  // http://www.w3.org/TR/html401/interact/forms.html#h-17.13.2
+  // types which indicate a submit action and are not successful controls
+  // these will be ignored
+
+  var k_r_submitter = /^(?:submit|button|image|reset|file)$/i; // node names which could be successful controls
+
+  var k_r_success_contrls = /^(?:input|select|textarea|keygen)/i; // Matches bracket notation.
+
+  var brackets = /(\[[^\[\]]*\])/g; // serializes form fields
+  // @param form MUST be an HTMLForm element
+  // @param options is an optional argument to configure the serialization. Default output
+  // with no options specified is a url encoded string
+  //    - hash: [true | false] Configure the output type. If true, the output will
+  //    be a js object.
+  //    - serializer: [function] Optional serializer function to override the default one.
+  //    The function takes 3 arguments (result, key, value) and should return new result
+  //    hash and url encoded str serializers are provided with this module
+  //    - disabled: [true | false]. If true serialize disabled fields.
+  //    - empty: [true | false]. If true serialize empty fields
+
+  function serialize(form, options) {
+    if (typeof options != 'object') {
+      options = {
+        hash: !!options
+      };
+    } else if (options.hash === undefined) {
+      options.hash = true;
+    }
+
+    var result = options.hash ? {} : '';
+    var serializer = options.serializer || (options.hash ? hash_serializer : str_serialize);
+    var elements = form && form.elements ? form.elements : []; //Object store each radio and set if it's empty or not
+
+    var radio_store = Object.create(null);
+
+    for (var i = 0; i < elements.length; ++i) {
+      var element = elements[i]; // ingore disabled fields
+
+      if (!options.disabled && element.disabled || !element.name) {
+        continue;
+      } // ignore anyhting that is not considered a success field
+
+
+      if (!k_r_success_contrls.test(element.nodeName) || k_r_submitter.test(element.type)) {
+        continue;
+      }
+
+      var key = element.name;
+      var val = element.value; // we can't just use element.value for checkboxes cause some browsers lie to us
+      // they say "on" for value when the box isn't checked
+
+      if ((element.type === 'checkbox' || element.type === 'radio') && !element.checked) {
+        val = undefined;
+      } // If we want empty elements
+
+
+      if (options.empty) {
+        // for checkbox
+        if (element.type === 'checkbox' && !element.checked) {
+          val = '';
+        } // for radio
+
+
+        if (element.type === 'radio') {
+          if (!radio_store[element.name] && !element.checked) {
+            radio_store[element.name] = false;
+          } else if (element.checked) {
+            radio_store[element.name] = true;
+          }
+        } // if options empty is true, continue only if its radio
+
+
+        if (val == undefined && element.type == 'radio') {
+          continue;
+        }
+      } else {
+        // value-less fields are ignored unless options.empty is true
+        if (!val) {
+          continue;
+        }
+      } // multi select boxes
+
+
+      if (element.type === 'select-multiple') {
+        val = [];
+        var selectOptions = element.options;
+        var isSelectedOptions = false;
+
+        for (var j = 0; j < selectOptions.length; ++j) {
+          var option = selectOptions[j];
+          var allowedEmpty = options.empty && !option.value;
+          var hasValue = option.value || allowedEmpty;
+
+          if (option.selected && hasValue) {
+            isSelectedOptions = true; // If using a hash serializer be sure to add the
+            // correct notation for an array in the multi-select
+            // context. Here the name attribute on the select element
+            // might be missing the trailing bracket pair. Both names
+            // "foo" and "foo[]" should be arrays.
+
+            if (options.hash && key.slice(key.length - 2) !== '[]') {
+              result = serializer(result, key + '[]', option.value);
+            } else {
+              result = serializer(result, key, option.value);
+            }
+          }
+        } // Serialize if no selected options and options.empty is true
+
+
+        if (!isSelectedOptions && options.empty) {
+          result = serializer(result, key, '');
+        }
+
+        continue;
+      }
+
+      result = serializer(result, key, val);
+    } // Check for all empty radio buttons and serialize them with key=""
+
+
+    if (options.empty) {
+      for (var key in radio_store) {
+        if (!radio_store[key]) {
+          result = serializer(result, key, '');
+        }
+      }
+    }
+
+    return result;
+  }
+
+  function parse_keys(string) {
+    var keys = [];
+    var prefix = /^([^\[\]]*)/;
+    var children = new RegExp(brackets);
+    var match = prefix.exec(string);
+
+    if (match[1]) {
+      keys.push(match[1]);
+    }
+
+    while ((match = children.exec(string)) !== null) {
+      keys.push(match[1]);
+    }
+
+    return keys;
+  }
+
+  function hash_assign(result, keys, value) {
+    if (keys.length === 0) {
+      result = value;
+      return result;
+    }
+
+    var key = keys.shift();
+    var between = key.match(/^\[(.+?)\]$/);
+
+    if (key === '[]') {
+      result = result || [];
+
+      if (Array.isArray(result)) {
+        result.push(hash_assign(null, keys, value));
+      } else {
+        // This might be the result of bad name attributes like "[][foo]",
+        // in this case the original `result` object will already be
+        // assigned to an object literal. Rather than coerce the object to
+        // an array, or cause an exception the attribute "_values" is
+        // assigned as an array.
+        result._values = result._values || [];
+
+        result._values.push(hash_assign(null, keys, value));
+      }
+
+      return result;
+    } // Key is an attribute name and can be assigned directly.
+
+
+    if (!between) {
+      result[key] = hash_assign(result[key], keys, value);
+    } else {
+      var string = between[1]; // +var converts the variable into a number
+      // better than parseInt because it doesn't truncate away trailing
+      // letters and actually fails if whole thing is not a number
+
+      var index = +string; // If the characters between the brackets is not a number it is an
+      // attribute name and can be assigned directly.
+
+      if (isNaN(index)) {
+        result = result || {};
+        result[string] = hash_assign(result[string], keys, value);
+      } else {
+        result = result || [];
+        result[index] = hash_assign(result[index], keys, value);
+      }
+    }
+
+    return result;
+  } // Object/hash encoding serializer.
+
+
+  function hash_serializer(result, key, value) {
+    var matches = key.match(brackets); // Has brackets? Use the recursive assignment function to walk the keys,
+    // construct any missing objects in the result tree and make the assignment
+    // at the end of the chain.
+
+    if (matches) {
+      var keys = parse_keys(key);
+      hash_assign(result, keys, value);
+    } else {
+      // Non bracket notation can make assignments directly.
+      var existing = result[key]; // If the value has been assigned already (for instance when a radio and
+      // a checkbox have the same name attribute) convert the previous value
+      // into an array before pushing into it.
+      //
+      // NOTE: If this requirement were removed all hash creation and
+      // assignment could go through `hash_assign`.
+
+      if (existing) {
+        if (!Array.isArray(existing)) {
+          result[key] = [existing];
+        }
+
+        result[key].push(value);
+      } else {
+        result[key] = value;
+      }
+    }
+
+    return result;
+  } // urlform encoding serializer
+
+
+  function str_serialize(result, key, value) {
+    // encode newlines as \r\n cause the html spec says so
+    value = value.replace(/(\r)?\n/g, '\r\n');
+    value = encodeURIComponent(value); // spaces should be '+' rather than '%20'.
+
+    value = value.replace(/%20/g, '+');
+    return result + (result ? '&' : '') + encodeURIComponent(key) + '=' + value;
+  }
+
+  var formSerialize = serialize; // Customized for this use-case
+
+  const isObject = value => typeof value === 'object' && value !== null && !(value instanceof RegExp) && !(value instanceof Error) && !(value instanceof Date);
+
+  const mapObject = (object, fn, options, isSeen = new WeakMap()) => {
+    options = Object.assign({
+      deep: false,
+      target: {}
+    }, options);
+
+    if (isSeen.has(object)) {
+      return isSeen.get(object);
+    }
+
+    isSeen.set(object, options.target);
+    const {
+      target
+    } = options;
+    delete options.target;
+
+    const mapArray = array => array.map(x => isObject(x) ? mapObject(x, fn, options, isSeen) : x);
+
+    if (Array.isArray(object)) {
+      return mapArray(object);
+    } /// TODO: Use `Object.entries()` when targeting Node.js 8
+
+
+    for (const key of Object.keys(object)) {
+      const value = object[key];
+      let [newKey, newValue] = fn(key, value, object);
+
+      if (options.deep && isObject(newValue)) {
+        newValue = Array.isArray(newValue) ? mapArray(newValue) : mapObject(newValue, fn, options, isSeen);
+      }
+
+      target[newKey] = newValue;
+    }
+
+    return target;
+  };
+
+  var mapObj = mapObject;
+
+  const preserveCamelCase = string => {
+    let isLastCharLower = false;
+    let isLastCharUpper = false;
+    let isLastLastCharUpper = false;
+
+    for (let i = 0; i < string.length; i++) {
+      const character = string[i];
+
+      if (isLastCharLower && /[a-zA-Z]/.test(character) && character.toUpperCase() === character) {
+        string = string.slice(0, i) + '-' + string.slice(i);
+        isLastCharLower = false;
+        isLastLastCharUpper = isLastCharUpper;
+        isLastCharUpper = true;
+        i++;
+      } else if (isLastCharUpper && isLastLastCharUpper && /[a-zA-Z]/.test(character) && character.toLowerCase() === character) {
+        string = string.slice(0, i - 1) + '-' + string.slice(i - 1);
+        isLastLastCharUpper = isLastCharUpper;
+        isLastCharUpper = false;
+        isLastCharLower = true;
+      } else {
+        isLastCharLower = character.toLowerCase() === character && character.toUpperCase() !== character;
+        isLastLastCharUpper = isLastCharUpper;
+        isLastCharUpper = character.toUpperCase() === character && character.toLowerCase() !== character;
+      }
+    }
+
+    return string;
+  };
+
+  const camelCase = (input, options) => {
+    if (!(typeof input === 'string' || Array.isArray(input))) {
+      throw new TypeError('Expected the input to be `string | string[]`');
+    }
+
+    options = Object.assign({
+      pascalCase: false
+    }, options);
+
+    const postProcess = x => options.pascalCase ? x.charAt(0).toUpperCase() + x.slice(1) : x;
+
+    if (Array.isArray(input)) {
+      input = input.map(x => x.trim()).filter(x => x.length).join('-');
+    } else {
+      input = input.trim();
+    }
+
+    if (input.length === 0) {
+      return '';
+    }
+
+    if (input.length === 1) {
+      return options.pascalCase ? input.toUpperCase() : input.toLowerCase();
+    }
+
+    const hasUpperCase = input !== input.toLowerCase();
+
+    if (hasUpperCase) {
+      input = preserveCamelCase(input);
+    }
+
+    input = input.replace(/^[_.\- ]+/, '').toLowerCase().replace(/[_.\- ]+(\w|$)/g, (_, p1) => p1.toUpperCase()).replace(/\d+(\w|$)/g, m => m.toUpperCase());
+    return postProcess(input);
+  };
+
+  var camelcase = camelCase; // TODO: Remove this for the next major release
+
+  var default_1 = camelCase;
+  camelcase.default = default_1;
+
+  class QuickLRU {
+    constructor(opts) {
+      opts = Object.assign({}, opts);
+
+      if (!(opts.maxSize && opts.maxSize > 0)) {
+        throw new TypeError('`maxSize` must be a number greater than 0');
+      }
+
+      this.maxSize = opts.maxSize;
+      this.cache = new Map();
+      this.oldCache = new Map();
+      this._size = 0;
+    }
+
+    _set(key, value) {
+      this.cache.set(key, value);
+      this._size++;
+
+      if (this._size >= this.maxSize) {
+        this._size = 0;
+        this.oldCache = this.cache;
+        this.cache = new Map();
+      }
+    }
+
+    get(key) {
+      if (this.cache.has(key)) {
+        return this.cache.get(key);
+      }
+
+      if (this.oldCache.has(key)) {
+        const value = this.oldCache.get(key);
+
+        this._set(key, value);
+
+        return value;
+      }
+    }
+
+    set(key, value) {
+      if (this.cache.has(key)) {
+        this.cache.set(key, value);
+      } else {
+        this._set(key, value);
+      }
+
+      return this;
+    }
+
+    has(key) {
+      return this.cache.has(key) || this.oldCache.has(key);
+    }
+
+    peek(key) {
+      if (this.cache.has(key)) {
+        return this.cache.get(key);
+      }
+
+      if (this.oldCache.has(key)) {
+        return this.oldCache.get(key);
+      }
+    }
+
+    delete(key) {
+      if (this.cache.delete(key)) {
+        this._size--;
+      }
+
+      this.oldCache.delete(key);
+    }
+
+    clear() {
+      this.cache.clear();
+      this.oldCache.clear();
+      this._size = 0;
+    }
+
+    *keys() {
+      for (const el of this) {
+        yield el[0];
+      }
+    }
+
+    *values() {
+      for (const el of this) {
+        yield el[1];
+      }
+    }
+
+    *[Symbol.iterator]() {
+      for (const el of this.cache) {
+        yield el;
+      }
+
+      for (const el of this.oldCache) {
+        if (!this.cache.has(el[0])) {
+          yield el;
+        }
+      }
+    }
+
+    get size() {
+      let oldCacheSize = 0;
+
+      for (const el of this.oldCache) {
+        if (!this.cache.has(el[0])) {
+          oldCacheSize++;
+        }
+      }
+
+      return this._size + oldCacheSize;
+    }
+
+  }
+
+  var quickLru = QuickLRU;
+
+  const has = (array, key) => array.some(x => typeof x === 'string' ? x === key : x.test(key));
+
+  const cache = new quickLru({
+    maxSize: 100000
+  });
+
+  const camelCaseConvert = (input, options) => {
+    options = Object.assign({
+      deep: false
+    }, options);
+    const {
+      exclude
+    } = options;
+    return mapObj(input, (key, value) => {
+      if (!(exclude && has(exclude, key))) {
+        if (cache.has(key)) {
+          key = cache.get(key);
+        } else {
+          const ret = camelcase(key);
+
+          if (key.length < 100) {
+            // Prevent abuse
+            cache.set(key, ret);
+          }
+
+          key = ret;
+        }
+      }
+
+      return [key, value];
+    }, {
+      deep: options.deep
+    });
+  };
+
+  var camelcaseKeys = (input, options) => {
+    if (Array.isArray(input)) {
+      return Object.keys(input).map(key => camelCaseConvert(input[key], options));
+    }
+
+    return camelCaseConvert(input, options);
+  };
+  /**
+   * @param {String} selector
    * @return {Object}
    */
 
 
-  function serializeForm(formId = '') {
-    const selector = formId ? `#${formId}` : 'form';
+  function serializeForm(selector = 'form') {
     const form = document.querySelector(selector);
 
     if (!form || !(form instanceof HTMLFormElement)) {
@@ -1766,9 +3094,9 @@
 
     const serialized = formSerialize(form, {
       empty: false,
-      serializer: hash_serializer
+      serializer: hash_serializer$1
     });
-    return camelCaseKeys(serialized, {
+    return camelcaseKeys(serialized, {
       deep: true
     });
   }
@@ -1779,16 +3107,16 @@
    */
 
 
-  var brackets = /(\[[^\[\]]*\])/g;
+  var brackets$1 = /(\[[^\[\]]*\])/g;
 
-  function hash_serializer(result, key, value) {
-    var matches = key.match(brackets); // Has brackets? Use the recursive assignment function to walk the keys,
+  function hash_serializer$1(result, key, value) {
+    var matches = key.match(brackets$1); // Has brackets? Use the recursive assignment function to walk the keys,
     // construct any missing objects in the result tree and make the assignment
     // at the end of the chain.
 
     if (matches) {
-      var keys = parse_keys(key);
-      hash_assign(result, keys, value);
+      var keys = parse_keys$1(key);
+      hash_assign$1(result, keys, value);
     } else {
       // Non bracket notation can make assignments directly.
       console.log('[pre]key,value', key, value);
@@ -1817,10 +3145,10 @@
     return result;
   }
 
-  function parse_keys(string) {
+  function parse_keys$1(string) {
     var keys = [];
     var prefix = /^([^\[\]]*)/;
-    var children = new RegExp(brackets);
+    var children = new RegExp(brackets$1);
     var match = prefix.exec(string);
 
     if (match[1]) {
@@ -1864,7 +3192,7 @@
     };
   }
 
-  function hash_assign(result, keys, value) {
+  function hash_assign$1(result, keys, value) {
     if (keys.length === 0) {
       result = value;
       return result;
@@ -1901,7 +3229,7 @@
       result = result || [];
 
       if (Array.isArray(result)) {
-        result.push(hash_assign(null, keys, value));
+        result.push(hash_assign$1(null, keys, value));
       } else {
         // This might be the result of bad name attributes like "[][foo]",
         // in this case the original `result` object will already be
@@ -1910,7 +3238,7 @@
         // assigned as an array.
         result._values = result._values || [];
 
-        result._values.push(hash_assign(null, keys, value));
+        result._values.push(hash_assign$1(null, keys, value));
       }
 
       return result;
@@ -1918,7 +3246,7 @@
 
 
     if (!between) {
-      result[key] = hash_assign(result[key], keys, value);
+      result[key] = hash_assign$1(result[key], keys, value);
     } else {
       var string = between[1]; // +var converts the variable into a number
       // better than parseInt because it doesn't truncate away trailing
@@ -1929,26 +3257,249 @@
 
       if (isNaN(index)) {
         result = result || {};
-        result[string] = hash_assign(result[string], keys, value);
+        result[string] = hash_assign$1(result[string], keys, value);
       } else {
         result = result || [];
-        result[index] = hash_assign(result[index], keys, value);
+        result[index] = hash_assign$1(result[index], keys, value);
       }
     }
 
     return result;
   }
 
-  var Loading = (selector = '#app') => {
-    return {
-      render: () => {
-        const target = document.querySelector(selector);
+  function getSource(maxType = 'local', key) {
+    let source = get('output', key);
 
-        if (!target) {
-          throw new Error(`loading: selector ${selector} not found`);
+    if (!source && ['cache', 'local'].includes(maxType)) {
+      source = get('cache', key);
+    }
+
+    if (!source && maxType === 'local') {
+      source = get('local', key);
+    }
+
+    return source;
+  }
+
+  var pageWrapper = () => html`
+    <div class="page">
+        <pre id="error"></pre>
+        <div class="page__body" id="target"></div>
+    </div>
+`;
+
+  var inlineLoading = () => html`
+<div class="inline-loading">
+    <div class="spinner">
+        <div class="spinner__bar1 spinner__bar"></div>
+        <div class="spinner__bar2 spinner__bar"></div>
+        <div class="spinner__bar3 spinner__bar"></div>
+        <div class="spinner__bar4 spinner__bar"></div>
+        <div class="spinner__bar5 spinner__bar"></div>
+        <div class="spinner__bar6 spinner__bar"></div>
+        <div class="spinner__bar7 spinner__bar"></div>
+        <div class="spinner__bar8 spinner__bar"></div>
+    </div>
+
+    <span>Please wait a moment</span>
+</div>
+`;
+  /**
+   * @param {String} name
+   * @param {Array} sections
+   * @param {String} selector
+   * @param {Function} onFinish
+   */
+
+
+  class PageRenderer {
+    constructor(name, sections = [], selector, onFinish) {
+      this.name = name;
+      this.selector = selector;
+      this.sections = [...sections];
+      this.onFinish = onFinish;
+      this.sectionsToRender = sections.map(s => s.name); //this.sectionToSubmit = this.sections.length;
+    }
+
+    init() {
+      this.renderWrapper();
+    }
+
+    renderWrapper() {
+      render(pageWrapper(), document.querySelector(this.selector));
+      const wrappers = this.sections.map(section => lodash_kebabcase(section.name)).map(name => {
+        return html`<form id="section-form-${name}"></form>`;
+      });
+      render(html`${wrappers.map(w => w)}`, document.querySelector('#target'));
+      this.next();
+    }
+
+    next() {
+      const section = this.sections.shift();
+      this.renderSection(section);
+    }
+
+    addListener(name) {
+      if (!sdk.initiated) {
+        return;
+      }
+
+      const submitBtn = document.querySelector(`#submit-btn-${name}`);
+
+      if (!submitBtn) {
+        console.warn(`no button #submit-btn-${name} found`);
+        return;
+      }
+
+      submitBtn.addEventListener('click', () => {
+        // TODO: validate the input (using protocol?)
+        const form = document.querySelector(`#section-form-${name}`);
+
+        if (!form.reportValidity()) {
+          console.log('invalid form');
+          return;
         }
 
-        render(template, target);
+        submitBtn.setAttribute('disabled', 'true');
+        const inputs = serializeForm(`#section-form-${name}`); // send input sdk
+
+        sdk.createJobInputs(inputs).then(submittedInputs => {
+          const event = new CustomEvent('submitinput', {
+            detail: submittedInputs
+          });
+          window.dispatchEvent(event);
+
+          if (this.sections.length === 0) {
+            render(html``, document.querySelector(this.selector));
+            this.onFinish();
+          } else {
+            form.classList.add('form--disabled');
+            [...form.querySelectorAll('input')].forEach(_ => _.setAttribute('disabled', 'disabled'));
+            this.next();
+          }
+        }).catch(err => {
+          if (document.querySelector('#error')) {
+            render(html`${err}`, document.querySelector('#error'));
+          }
+
+          submitBtn.removeAttribute('disabled');
+        });
+      });
+    }
+
+    skipSection() {
+      if (this.sections.length === 0) {
+        render(html``, document.querySelector(this.selector));
+        this.onFinish();
+      } else {
+        this.next();
+      }
+    }
+
+    renderSection({
+      name,
+      waitFor,
+      template
+    }) {
+      const nameForElement = lodash_kebabcase(name);
+      const selector = document.querySelector(`#section-form-${nameForElement}`);
+
+      if (!waitFor) {
+        render(html`${template(nameForElement)} `, selector);
+        this.addListener(nameForElement);
+        return;
+      }
+
+      render(html`${inlineLoading()} `, selector);
+      this.getDataForSection(waitFor).then(res => {
+        render(html`${template(nameForElement, res)} `, selector);
+        this.addListener(nameForElement);
+      });
+    }
+
+    getDataForSection(waitFor) {
+      return new Promise(res => {
+        const results = waitFor.map(_ => {
+          const [type, sourceKey] = _.split('.');
+
+          const data = getSource(type, sourceKey);
+
+          if (data === null) {
+            //skip: true,
+            this.skipSection();
+            return {
+              data: null,
+              skip: true,
+              sourceKey
+            };
+          }
+
+          if (data) {
+            return {
+              data,
+              skip: false,
+              sourceKey
+            };
+          }
+
+          return {
+            data: null,
+            skip: false,
+            sourceKey
+          };
+        });
+        const keysToWaitFor = results.filter(r => r.data == null && r.skip === false).map(r => r.sourceKey);
+
+        if (keysToWaitFor.length === 0) {
+          const dataWaitFor = {};
+          results.forEach(result => {
+            dataWaitFor[result.sourceKey] = result.data;
+          });
+          return res(dataWaitFor);
+        }
+
+        const dataWaitFor = {};
+        results.forEach(result => {
+          dataWaitFor[result.sourceKey] = result.data;
+        });
+        console.log('keysToWaitFor', keysToWaitFor);
+        const stop = sdk.trackJobOutput(message => {
+          if (message === 'outputCreate') {
+            const {
+              outputs
+            } = getAll();
+            const allAvailable = keysToWaitFor.every(k => outputs[k]);
+
+            if (allAvailable) {
+              keysToWaitFor.forEach(k => dataWaitFor[k] = outputs[k]);
+              stop();
+              res(dataWaitFor);
+            }
+          }
+        });
+      });
+    }
+
+  }
+
+  function getPageRenderer(name, sections, selector, onFinish) {
+    return new PageRenderer(name, sections, selector, onFinish);
+  }
+
+  var NotFound = selector => {};
+
+  var Loading = (selector = '#app') => {
+    return {
+      renderer: {
+        init: () => {
+          const target = document.querySelector(selector);
+
+          if (!target) {
+            throw new Error(`loading: selector ${selector} not found`);
+          }
+
+          render(template, target);
+        }
       }
     };
   };
@@ -1961,190 +3512,535 @@
 </div>
 `;
 
-  var section = () => html`
-    <div class="section">
-        <pre id="error"></pre>
-        <div class="section__body" id="target"></div>
-
-        <div class="section__actions">
+  const stepTemplate = (title, index, activeIndex) => html`
+    <li class="progress-bar__step ${activeIndex != null && index === activeIndex ? 'progress-bar__step--active' : ''}">
+        <div class="progress-bar__icon-container">
+            <div class="progress-bar__icon">
+                <span class="progress-bar__step-index">${index}</span>
+            </div>
         </div>
+        <div class="progress-bar__label">${title}</div>
+    </li>`;
+
+  var progressBar = (titles, activeIndex) => {
+    return html`
+<ol class="progress-bar">
+    ${titles.map((title, index) => stepTemplate(title, index + 1, activeIndex))}
+</ol>
+`;
+  };
+
+  var ProgressBar = selector => {
+    return (titles, activeIndex) => render(progressBar(titles, activeIndex), document.querySelector(selector));
+  };
+
+  var summaryWrapper = (serviceName, domain) => html`
+<div class="summary">
+    <div class="summary__header">
+        <b>${serviceName}</b>
+        <span class="dimmed">${domain}</span>
     </div>
+
+    <section class="summary__body" id="summary-body"></section>
+</div>`;
+
+  let bodyTemplate = null;
+  let initiated = false;
+  var Summary = {
+    init: ({
+      template,
+      selector = '#summary'
+    }) => {
+      if (!template || typeof template !== 'function') {
+        throw new Error(`renderSummary: invalid template`);
+      }
+
+      const wrapper = document.querySelector(selector);
+
+      if (!wrapper) {
+        throw new Error(`renderSummary: element ${selector} not found`);
+      }
+
+      bodyTemplate = template;
+      render(summaryWrapper(), wrapper);
+      initiated = true;
+    },
+    update: () => {
+      if (!initiated || !bodyTemplate) {
+        throw new Error('renderSummary: not initiated');
+      }
+
+      const {
+        inputs,
+        outputs,
+        cache,
+        local
+      } = getAll();
+      render(bodyTemplate(inputs, outputs, cache, local), document.querySelector('#summary-body'));
+    }
+  };
+
+  var Confirmation = (selector = '#app') => {
+    return {
+      init: () => {
+        const target = document.querySelector(selector);
+
+        if (!target) {
+          throw new Error(`loading: selector ${selector} not found`);
+        }
+
+        render(template$1, target);
+      }
+    };
+  };
+
+  const template$1 = html`
+<div class="page">
+    <h2> Purchase complete. Thank you. </h2>
+    <p> You’ll receive an email confirmation shortly.</p>
+</div>
 `;
 
-  let availableBreedTypes = {};
+  function createApp({
+    pages = [],
+    cache = [],
+    layout = [],
+    data = {}
+  }, callback) {
+    //TODO: maybe this core app fetches all domain's meta and store them.
+    // config will accept input keys rather than whole met
+    const isValidConfig = pages.length > 0 && pages.every(config => config.name && config.title && config.sections && config.route);
 
-  var petsSelectedBreedType = data => {
-    availableBreedTypes = data;
-    return html`
-<div class="job-input">
-    <div class="pet" name="pets[0]">
-        <div class="field field-set">
-            <label class="field__name" for="pets[0][name]">Pet Name</label>
-            <input type="text" name="pets[0][name]" placeholder="Rex" value="Rex" required />
-        </div>
+    if (!isValidConfig) {
+      throw new Error('invalid config');
+    }
 
-        <div class="field field-set">
-            <span class="field__name">Pet type</span>
-            <div class="field__inputs group group--merged">
-                <input type="radio" name="pets[0][animal-type]" id="pets[0][animal-type]-dog" value="dog" @change="${breedTypeHandler}"
-                    required />
-                <label for="pets[0][animal-type]-dog" class="button">Dog</label>
+    const {
+      selector: mainSelector
+    } = layout.find(_ => _.mainTarget == true) || {};
 
-                <input type="radio" name="pets[0][animal-type]" id="pets[0][animal-type]-cat" value="cat" @change="${breedTypeHandler}" />
-                <label for="pets[0][animal-type]-cat" class="button">Cat</label>
-            </div>
-        </div>
+    if (!mainSelector) {
+      throw new Error(`main target selector not found in config`);
+    } //setup router
 
-        <div class="field field-set">
-        <span class="field__name">Breed Type</span>
-            <select name="selected-breed-type" id="selected-breed-type" required>
-                <option>Please select pet type</option>
-            </select>
-        </div>
 
-        <div class="field field-set">
-            <span class="field__name">Gender</span>
-            <div class="field__inputs group group--merged">
-                <input type="radio" name="pets[0][gender]" value="male" id="pets[0][gender]-male" required checked>
-                <label for="pets[0][gender]-male" class="button">Male</label>
+    const flow = pages.map(con => con.route);
+    const titles = pages.map(con => con.title);
+    flow.push('/confirmation');
+    const routes = {
+      '/': Loading(mainSelector),
+      '/confirmation': {
+        renderer: Confirmation(mainSelector),
+        title: null,
+        step: null // TODO: define final step
 
-                <input type="radio" name="pets[0][gender]" id="pets[0][gender]-female" value="female">
-                <label for="pets[0][gender]-female" class="button">Female</label>
-            </div>
-        </div>
+      }
+    };
+    pages.forEach((config, idx) => {
+      const {
+        title,
+        sections,
+        route
+      } = config;
+      const next = flow[idx + 1];
+      const renderer = getPageRenderer(name, sections, mainSelector, () => setTimeout(() => {
+        window.location.hash = next;
+      }, 1000));
+      routes[route] = {
+        renderer,
+        title,
+        step: idx + 1
+      };
+    });
+    const entryPoint = flow[0];
 
-        <div class="field field-set">
-            <label class="field__name" for="pets[0][breed-name]">Breed Name</label>
-            <input type="text" name="pets[0][breed-name]" value="Afghan Hound" required>
-        </div>
+    if (data.local) {
+      Object.keys(data.local).forEach(key => set('local', key, data.local[key]));
+    }
 
-        <div class="field field-set">
-            <label class="field__name" for="pets[0][date-of-birth]">Date Of Birth</label>
-            <input type="date" name="pets[0][date-of-birth]" value="2019-01-02" minDate="${new Date()}" required>
-        </div>
+    return {
+      init: () => {
+        const {
+          initialInputs: input,
+          category,
+          serverUrlPath
+        } = data;
+        const router = Router(routes, titles, NotFound(mainSelector), ProgressBar('#progress-bar'));
+        layout.filter(l => !l.mainTarget).forEach(l => render(l.template(), document.querySelector(l.selector)));
+        const summaryConfig = layout.find(l => l.name === 'summary');
+        Summary.init(summaryConfig);
+        window.addEventListener('hashchange', () => {
+          router.navigate();
 
-        <div class="field field-set">
-            <label class="field__name" for="pets[0][pet-price]">How much did you pay or donate</label>
-            <input type="number" name="pets[0][pet-price]" value="0" min="0">
-        </div>
+          if (!window.location.hash || window.location.hash === '/') {
+            sdk.create({
+              input,
+              category,
+              serverUrlPath
+            }).then(() => {
+              window.location.hash = entryPoint;
+              poll(cache);
+            }).catch(err => console.log(err));
+          }
 
-        <div class="pet-related-questions">
-            <div class="field field-set">
-                <span class="field__name">Is your pet spayed or neutered?</span>
-                <div class="field__inputs group group--merged">
-                    <input type="radio" name="pets[0][related-questions][is-spayed-or-neutered-$boolean]" id="pets[0]-neutered-yes"
-                        value="true" required checked>
-                    <label for="pets[0]-neutered-yes" class="button">Yes</label>
+          Summary.update();
+        }); // Listen on pages load:
 
-                    <input type="radio" class="button" name="pets[0][related-questions][is-spayed-or-neutered-$boolean]"
-                        id="pets[0]-neutered-no" value="false">
-                    <label for="pets[0]-neutered-no" class="button">No</label>
-                </div>
-            </div>
+        window.addEventListener('load', () => {
+          router.navigate();
+          Summary.update();
+        }); //custom event when input submitted
 
-            <div class="field field-set">
-                <span class="field__name">Has your pet had any behaviour complains?</span>
-                <div class="field__inputs group group--merged">
-                    <input type="radio" name="pets[0][related-questions][has-behaviour-complains-$boolean]" id="pets[0]-behaviour-complains-yes"
-                        value="true" required>
-                    <label for="pets[0]-behaviour-complains-yes" class="button">Yes</label>
+        window.addEventListener('submitinput', e => {
+          //TODO: get cache using output
+          console.log(e);
+          e.detail.forEach(({
+            key
+          }) => poll(cache, key));
+          Summary.update();
+        });
+        window.addEventListener('createoutput', () => {
+          Summary.update();
+        });
 
-                    <input type="radio" name="pets[0][related-questions][has-behaviour-complains-$boolean]" id="pets[0]-behaviour-complains-no"
-                        value="false" required checked>
-                    <label for="pets[0]-behaviour-complains-no" class="button">No</label>
-                </div>
-            </div>
+        if (window.location.hash && window.location.hash !== '/') {
+          sdk.retrieve().then(() => {
+            poll(cache);
+          }).catch(err => {
+            window.location.hash = '';
+          });
+        } else {
+          sdk.create({
+            input,
+            category,
+            serverUrlPath
+          }).then(() => {
+            window.location.hash = entryPoint;
+          }).catch(err => console.log(err));
+        }
+      }
+    };
+  }
 
-            <div class="field field-set">
-                <span class="field__name">Does your pet have chip or tag?</span>
-                <div class="field__inputs group group--merged">
-                    <input type="radio" name="pets[0][related-questions][has-chip-or-tag-$boolean]" id="pets[0]-has-chip-yes"
-                        value="true" required checked>
-                    <label for="pets[0]-has-chip-yes" class="button">Yes</label>
+  var CONFIG = {
+    cache: [{
+      key: 'availableTvPackages',
+      sourceInputKeys: []
+    }, {
+      key: 'availableBroadbandPackages',
+      sourceInputKeys: []
+    }, {
+      key: 'availablePhonePackages',
+      sourceInputKeys: []
+    }, {
+      key: 'finalPrice',
+      sourceInputKeys: []
+    }, {
+      key: 'oneOffCosts',
+      sourceInputKeys: ['selectedBroadbandPackage', 'selectedTvPackages', 'selectedPhonePackage']
+    }, {
+      key: 'monthlyCosts',
+      sourceInputKeys: ['selectedBroadbandPackage', 'selectedTvPackages', 'selectedPhonePackage']
+    }],
+    pages: [{
+      name: 'landline',
+      route: '/land-line',
+      title: 'Landline Check',
+      sections: [{
+        name: 'landline'
+      }, {
+        name: 'selectedAddress',
+        waitFor: ['output.availableAddresses']
+      }]
+    }, {
+      name: 'aboutYou',
+      route: '/about-you',
+      title: 'About You',
+      sections: [{
+        name: 'aboutYou'
+      }]
+    }],
+    layout: [{
+      name: 'header',
+      selector: '#header'
+    }, {
+      name: 'summary',
+      selector: '#summary'
+    }, {
+      name: 'main',
+      selector: '#main',
+      mainTarget: true
+    }, {
+      name: 'footer',
+      selector: '#footer'
+    }],
+    data: {
+      serverUrlPath: 'https://ubio-application-bundle-dummy-server.glitch.me/create-job/sky',
+      initialInputs: {
+        url: 'https://www.moneysupermarket.com/broadband/goto/?linktrackerid=8307&productname=Sky+Entertainment+%2B+Broadband+Essential+%2B+Talk+Anytime+Extra&bundleid=58&clickout=00000000-0000-0000-0000-000000000003&dtluid=SqADhopj*6Q*eioD&location=',
+        options: {
+          "marketingContact": true,
+          "success": true,
+          "directoryListing": true,
+          "addressSelection": true,
+          "moveInDateSelection": true,
+          "keepLandlineNumber": false,
+          "screenshots": true,
+          "testingFlow": false
+        },
+        selectedBroadbandPackage: {
+          "name": "Sky Broadband Essential"
+        },
+        selectedTvPackages: [{
+          "name": "Sky Entertainment"
+        }],
+        selectedPhonePackage: {
+          "name": "Sky Talk Anytime Extra"
+        }
+      },
+      local: {
+        landlineOptions: {
+          "justMoved": true,
+          "sharedProperty": false,
+          "restartLine": false,
+          "additionalLine": false
+        },
+        finalPrice: {
+          value: 2000,
+          countryCode: 'gbp'
+        }
+      }
+    }
+  }; //get service name & domain
 
-                    <input type="radio" name="pets[0][related-questions][has-chip-or-tag-$boolean]" id="pets[0]-has-chip-no"
-                        value="false" required>
-                    <label for="pets[0]-has-chip-no" class="button">No</label>
-                </div>
-            </div>
+  var summary = (inputs = {}, outputs = {}, cache = {}, local = {}) => html`
+<div>
+    ${inputs.selectedBroadbandPackage || inputs.selectedTvPackages || inputs.selectedPhonePackage ? html`
+        <div id="package-detail" class="summary__block">
+            <h5 class="summary__block-title"> Your Package </h5>
+            <ul>
+                ${inputs.selectedBroadbandPackage ? html`<li>Broadband: ${inputs.selectedBroadbandPackage.name}</li>` : ''}
+                ${inputs.selectedTvPackages ? html`TV : <li> ${inputs.selectedTvPackages.map(_ => _.name)}</li>` : ''}
+                ${inputs.selectedPhonePackage ? html`<li> Phone: ${inputs.selectedPhonePackage.name}</li>` : ''}
+            </ul>
+        </div>` : ''}
+</div>`;
 
-            <div class="field field-set">
-                <span class="field__name">Is your pet kept at your address?</span>
-                <div class="field__inputs group group--merged">
-                    <input type="radio" name="pets[0][related-questions][is-kept-at-your-address-$boolean]" id="pets[0]-kept-at-yours-yes"
-                        value="true" required checked>
-                    <label for="pets[0]-kept-at-yours-yes" class="button">Yes</label>
+  var header = () => html`
+<div class="header">
+    <h2>Here goes brand</h2>
+</div>`;
 
-                    <input type="radio" name="pets[0][related-questions][is-kept-at-your-address-$boolean]" id="pets[0]-kept-at-yours-no"
-                        value="false" required>
-                    <label for="pets[0]-kept-at-yours-no" class="button">No</label>
-                </div>
-            </div>
+  var footer = () => html`
+<div class="footer">
+    <span></span>
+</div>`;
 
-            <div class="field field-set">
-                <span class="field__name">Is your pet kept indoor?</span>
-                <div class="field__inputs group group--merged">
-                    <input type="radio" name="pets[0][related-questions][is-indoor-$boolean]" id="pets[0]-indoor-yes"
-                        value="true" required checked>
-                    <label for="pets[0]-indoor-yes" class="button">Yes</label>
+  var LayoutTemplates =
+  /*#__PURE__*/
+  Object.freeze({
+    summary: summary,
+    header: header,
+    footer: footer
+  });
 
-                    <input type="radio" name="pets[0][related-questions][is-indoor-$boolean]" id="pets[0]-indoor-no"
-                        value="false" required>
-                    <label for="pets[0]-indoor-no" class="button">No</label>
-                </div>
-            </div>
+  var landlineCheck = () => html`
+<div name="landline-check">
+    <div class="field field-set">
+        <label class="field__name" for="landline-check[postcode]">Post Code</label>
+        <input type="text" name="landline-check[postcode]" placeholder="EC1R 0AT" required />
+    </div>
 
-            <div class="field field-set">
-                <span class="field__name">Is your pet in good health, and not showing any sign of illness, injury or
-                    other medical conditions?</span>
-                <div class="field__inputs group group--merged">
-                    <input type="radio" name="pets[0][related-questions][is-your-pet-healthy-$boolean]" id="pets[0]-healthy-yes"
-                        value="true" required checked>
-                    <label for="pets[0]-healthy-yes" class="button">Yes</label>
+    <div class="field field-set">
+        <span class="field__name">Land line</span>
+        <input type="text" name="landline-check[landline]" placeholder="01413231231" pattern="^0[0-9]{8,10}"/>
+    </div>
 
-                    <input type="radio" name="pets[0][related-questions][is-your-pet-healthy-$boolean]" id="pets[0]-healthy-no"
-                        value="false" required>
-                    <label for="pets[0]-healthy-no" class="button">No</label>
-                </div>
-            </div>
+    <div class="field field-set">
+        <span class="field__name">Are you a bill payer?</span>
+        <div class="field__inputs group group--merged">
+            <input type="radio" value="true" name="landline-check[billpayer-$boolean]" id="landline-check[billpayer]-yes"/>
+            <label for="landline-check[billpayer]-yes" class="button">Yes</label>
 
-            <div class="field field-set">
-                <span class="field__name">Has there been legal action resulting from an incident involving your pet?</span>
-                <div class="field__inputs group group--merged">
-                    <input type="radio" name="pets[0][related-questions][has-legal-action-$boolean]" id="pets[0]-legal-yes"
-                        value="true" required checked>
-                    <label for="pets[0]-legal-yes" class="button">Yes</label>
-
-                    <input type="radio" name="pets[0][related-questions][has-legal-action-$boolean]" id="pets[0]-legal-no"
-                        value="false" required checked>
-                    <label for="pets[0]-legal-no" class="button">No</label>
-                </div>
-            </div>
+            <input type="radio" value="false" name="landline-check[billpayer-$boolean]" id="landline-check[billpayer]-no">
+            <label for="landline-check[billpayer]-no" class="button">No</label>
         </div>
     </div>
 </div>
 `;
-  };
 
-  const breedTypeOptions = options => html`
-    ${options.map(o => html`
-        <option value="${o}"> ${o}</option>`)}`;
+  var landlineOption = () => html`
+<div name="landline-options">
+    <div class="field field-set">
+        <span class="field__name">Just Moved?</span>
+        <div class="field__inputs group group--merged">
+            <input
+                type="radio"
+                name="landline-options[just-moved-$boolean]"
+                id="landline-options[just-moved-$boolean]-true"
+                value="true"
+                required />
+            <label for="landline-options[just-moved-$boolean]-true" class="button">Yes</label>
 
-  const breedTypeHandler = {
-    // handleEvent method is required.
+            <input
+                type="radio"
+                name="landline-options[just-moved-$boolean]"
+                id="landline-options[just-moved-$boolean]-false"
+                value="false" />
+            <label for="landline-options[just-moved-$boolean]-false" class="button">No</label>
+        </div>
+    </div>
+
+    <div class="field field-set">
+        <span class="field__name">Is shared property?</span>
+        <div class="field__inputs group group--merged">
+            <input
+                type="radio"
+                name="landline-options[shared-property-$boolean]"
+                id="landline-options[shared-property-$boolean]-true"
+                value="true"
+                required />
+            <label for="landline-options[shared-property-$boolean]-true" class="button">Yes</label>
+
+            <input
+                type="radio"
+                name="landline-options[shared-property-$boolean]"
+                id="landline-options[shared-property-$boolean]-false"
+                value="false" />
+            <label for="landline-options[shared-property-$boolean]-false" class="button">No</label>
+        </div>
+    </div>
+
+    <div class="field field-set">
+        <span class="field__name">Restart Line?</span>
+        <div class="field__inputs group group--merged">
+            <input
+                type="radio"
+                name="landline-options[restart-line-$boolean]"
+                id="landline-options[restart-line-$boolean]-true"
+                value="true"
+                required />
+            <label for="landline-options[restart-line-$boolean]-true" class="button">Yes</label>
+
+            <input
+                type="radio"
+                name="landline-options[restart-line-$boolean]"
+                id="landline-options[restart-line-$boolean]-false"
+                value="false" />
+            <label for="landline-options[restart-line-$boolean]-false" class="button">No</label>
+        </div>
+    </div>
+
+    <div class="field field-set">
+        <span class="field__name">Additional Line?</span>
+        <div class="field__inputs group group--merged">
+            <input
+                type="radio"
+                name="landline-options[additional-line-$boolean]"
+                id="landline-options[additional-line-$boolean]-true"
+                value="true"
+                required />
+            <label for="landline-options[additional-line-$boolean]-true" class="button">Yes</label>
+
+            <input
+                type="radio"
+                name="landline-options[additional-line-$boolean]"
+                id="landline-options[additional-line-$boolean]-false"
+                value="false" />
+            <label for="landline-options[additional-line-$boolean]-false" class="button">No</label>
+        </div>
+    </div>
+</div>
+`;
+
+  var landline = (name, data = {}) => html`
+    ${landlineCheck()}
+    ${data.landlineOption ? hidden(data.landlineOption) : landlineOption()}
+
+    <div class="section__actions">
+        <button type="button" class="button button--right button--primary" id="submit-btn-${name}">Look-up</button>
+    </div>
+`;
+
+  const hidden = data => html`<input type="hidden" name="landline-options-$object" value="${JSON.stringify(data)}" />`;
+
+  const key = 'selected-address';
+
+  var selectedAddress = addresses => html`
+    <div class="field field-set">
+        <span class="field__name">Select Your Address</span>
+        <select name="${key}" @change="${onChange}" required>
+            <option>select address...</option>
+            ${addresses.map(address => html`
+                <option value="${address}"> ${address}</option>`)}
+        </select>
+        <div id="clone-address"></div>
+    </div>
+`;
+
+  const cloneAddress = address => html`
+<input type="hidden" name="selected-installation-address" value="${address}" required>
+`;
+
+  const onChange = {
     handleEvent(e) {
-      console.log('e.target.value', e.target.value);
-      const animalType = e.target.value;
-      const options = availableBreedTypes[animalType] || [];
-      console.log('options', options);
-      render(breedTypeOptions(options), document.querySelector('#selected-breed-type'));
+      const selectedAddress = e.target.value;
+      render(cloneAddress(selectedAddress), document.querySelector('#clone-address'));
     }
 
   };
 
+  var selectedAddress$1 = (name, data) => html`
+    ${selectedAddress(data.availableAddresses)}
+    <div class="section__actions">
+        <button
+            type="button"
+            class="button button--right button--primary"
+            id="submit-btn-${name}">Continue</button>
+    </div>
+`;
+
+  const TITLES = ['mr', 'ms', 'mrs', 'miss'];
+
+  var Person = (prefix = 'person') => html`
+<div name="${prefix}" class="filed-set">
+    <div class="field">
+        <label class="field__name">Title</label>
+        <select name="${prefix}[title]">
+            ${TITLES.map(t => html`
+            <option value="${t}"> ${t.toUpperCase()}</option>`)}
+        </select>
+    </div>
+
+    <div class="field">
+        <label class="field__name" for="${prefix}[first-name]">First Name</label>
+        <input type="text" name="${prefix}[first-name]" placeholder="Jane" required />
+    </div>
+
+    <div class="field">
+        <label class="field__name" for="${prefix}[middle-name]">Middle Name</label>
+        <input type="text" name="${prefix}[middle-name]" placeholder="" />
+    </div>
+
+    <div class="field">
+        <label class="field__name" for="${prefix}[last-name]">Last Name</label>
+        <input type="text" name="${prefix}[last-name]" placeholder="Doe" required />
+    </div>
+</div>
+`;
+
+  var contactPerson = () => html`
+<div name="contact-person">
+    ${Person('contact-person')}
+    <div class="field">
+        <label class="field__name" for="contact-person[date-of-birth]">Date Of Birth</label>
+        <input type="date" name="contact-person[date-of-birth]" value="1990-04-02" required>
+    </div>
+</div>
+`;
+
   var account = () => html`
 <div name="account" class="filed-set">
-    Contact
     <div class="field filed-set">
         <label class="field__name" for="account[email]">Email</label>
         <input type="email" name="account[email]" placeholder="example@example.com" value="example@example.com" required>
@@ -2162,1394 +4058,111 @@
     </div>
 </div>`;
 
-  const TITLES = ['mr', 'ms', 'mrs', 'miss'];
-  const MARITAL_STATUS = ["Civil Partner", "Cohabiting", "Divorced", "Married", "Separated", "Single", "Widowed"];
-
-  var owner = () => html`
-    <div name="owner">
-        <div name="owner[person]" class="filed-set">
-            <div class="field">
-                <label class="field__name">Title</label>
-                <select name="owner[person][title]">
-                    ${TITLES.map(t => html`
-                    <option value="${t}" /> ${t.toUpperCase()}</option>`)}
-                </select>
-            </div>
-
-            <div class="field">
-                <label class="field__name" for="owner[person][first-name]">First Name</label>
-                <input type="text" name="owner[person][first-name]" placeholder="Jane" required />
-            </div>
-
-            <div class="field">
-                <label class="field__name" for="owner[person][middle-name]">Middle Name</label>
-                <input type="text" name="owner[person][middle-name]" placeholder="" />
-            </div>
-
-            <div class="field">
-                <label class="field__name" for="owner[person][last-name]">Last Name</label>
-                <input type="text" name="owner[person][last-name]" placeholder="Doe" />
-            </div>
-
-            <div class="field">
-                <label class="field__name" for="owner[person][date-of-birth]">Date Of Birth</label>
-                <input type="date" name="owner[person][date-of-birth]" value="1990-04-02" required>
-            </div>
-
-            <div class="field">
-                <label class="field__name" for="owner[person][marital-status]">Marital Status</label>
-                <select name="owner[person][marital-status]">
-                    ${MARITAL_STATUS.map(ms => html`
-                        <option value="${ms}"> ${ms}</option>`)}
-                </select>
-            </div>
-        </div>
-
-        <div name="owner[address]" class="filed-set">
-            <div class="field">
-                <label for="owner[address][property-number]" class="field__name">Number of Property</label>
-                <input type="text" name="owner[address][property-number]" id="owner[address][property-number]" value="12" required />
-            </div>
-
-            <div class="field">
-                <label for="owner[address][postcode]" class="field__name">Postcode</label>
-                <input type="text" name="owner[address][postcode]" id="owner[address][postcode]" value="HP4 2PE" required />
-            </div>
-        </div>
-    </div>
-`;
-
-  const key$1 = 'selected-address';
-
-  var selectedAddress = output => html`
-    <div class="field field-set">
-        <span class="field__name">Address</span>
-        <select name="${key$1}">
-            ${output.map(o => html`
-                <option value="${o}"> ${o}</option>`)}
-        </select>
-    </div>
-`;
-
-  var policyOptions = () => html`
-<div name="policy-options" class="filed-set">
+  var installation = () => html`
+<div name="installation">
     <div class="field">
-        <label class="field__name" for="policy-options[cover-start-date]">Cover start date</label>
-        <input type="date" name="policy-options[cover-start-date]" value="2019-06-01" minDate="${new Date()}" required>
+        <span class="field__name">What is you property type? </span>
+        <div class="field__inputs group group--merged">
+            <input type="radio" name="installation[property-type]" id="installation[property-type]-flat" value="flat"
+                required checked>
+            <label for="installation[property-type]-flat" class="button">Flat</label>
+
+            <input type="radio" name="installation[property-type]" id="installation[property-type]-house" value="house">
+            <label for="installation[property-type]-house" class="button">House</label>
+        </div>
     </div>
 
     <div class="field">
-        <label class="field__name" for="policy-options[number-of-pets-owned-$number]">How Many cats and dogs are in your household?</label>
-        <input type="tel" name="policy-options[number-of-pets-owned-$number]" value="1" required />
-    </div>
-</div>`;
-
-  var selectedCover = covers => html`
-    <div class="field field-set">
-        <span class="field__name">Select Cover</span>
+        <span class="field__name">Is there any access Restriction? </span>
         <div class="field__inputs group group--merged">
-        ${covers.map(cover => html`
-            <input
-                type="radio"
-                name="selected-cover"
-                value="${cover}"
-                id="selected-cover-${cover}"
-                required>
-            <label for="selected-cover-${cover}" class="button">${cover}</label>
-            `)}
+            <input type="radio" name="installation[access-restrictions]" id="installation-access-restrictions-yes"
+                value="yes" required>
+            <label for="installation-access-restrictions-yes" class="button">Yes</label>
+
+            <input type="radio" name="installation[access-restrictions]" id="installation-access-restrictions-no" value="no"
+                required checked>
+            <label for="installation-access-restrictions-no" class="button">No</label>
         </div>
     </div>
-`;
 
-  const key$2 = 'selected-vet-payment-term';
-
-  var selectedVetPaymentTerm = output => {
-    return html`
-    <div class="field field-set">
-        <span class="field__name">Select Vet Payment Term </span>
-        <select name="${key$2}">
-            ${output.map(o => html`<option value="${o}"> ${o}</option>`)}
-        </select>
-    </div>
-`;
-  };
-
-  var selectedCoverType = outputs => html`
-    <div class="field field-set">
-        <span class="field__name">Available Cover Type</span>
-        ${outputs.map(optionObj => html`
-            <input
-                type="radio"
-                id="${key}-${optionObj.coverName}"
-                name="${key}-$object"
-                value="${JSON.stringify(optionObj)}">
-
-            <label for="${key}-${optionObj.coverName}" class="button">
-                <div><b>${optionObj.coverName}</b> <p>${(optionObj.price.value * 0.01).toFixed(2)} ${optionObj.price.currencyCode}</p></div>
-            </label>`)}
-    </div>
-`;
-
-  var selectedPaymentTerm = terms => html`
-    <div class="field field-set">
-        <span class="field__name">Select Payment term</span>
+    <div class="field">
+        <span class="field__name">Has access to communal satellite?</span>
         <div class="field__inputs group group--merged">
-        ${terms.map(term => html`
-            <input
-                type="radio"
-                name="selected-payment-term"
-                value="${term}"
-                id="selected-payment-term-${term}"
-                required>
-            <label for="selected-payment-term-${term}" class="button">${term}</label>
-            `)}
-        </div>
-    </div>
-`;
+            <input type="radio" name="installation[has-access-to-communal-satellite-$boolean]" id="installation-satellite-yes"
+                value="true" required checked>
+            <label for="installation-satellite-yes" class="button">Yes</label>
 
-  const key$3 = 'selected-vet-fee';
-
-  var selectedVetFee = output => {
-    return html`
-    <div class="field field-set">
-        <span class="field__name">Vet Fee</span>
-        <div class="field__inputs group group--merged">
-            ${output.map(optionObj => html`
-                <input
-                    type="radio"
-                    id="${key$3}-${optionObj.price.value}"
-                    name="${key$3}-$object"
-                    value="${JSON.stringify(optionObj)}">
-                <label
-                    for="${key$3}-${optionObj.price.value}"
-                    class="button">
-                    <div><b>${optionObj.text}</b> <p>${optionObj.price.value * 0.01} ${optionObj.price.currencyCode}</p></div>
-                </label>`)}
-            </div>
-    </div>
-`;
-  };
-
-  const key$4 = 'selected-voluntary-excess';
-
-  var selectedVoluntaryExcess = output => {
-    return html`
-    <div class="field field-set">
-        <span class="field__name">Select voluntary excess </span>
-        <div class="field__inputs group group--merged">
-        ${output.map(optionObj => html`
-        <div>
-            <input
-                type="radio"
-                id="${key$4}-${optionObj.priceLine}"
-                name="${key$4}-$object"
-                value="${JSON.stringify(optionObj)}">
-
-            <label for="${key$4}-${optionObj.priceLine}" class="button">
-                <div>
-                    <b>${optionObj.name}</b>
-                    <pre>${optionObj.details}</pre>
-                </div>
-            </label>
-            <p>${optionObj.priceLine}</p>
-        </div>
-            `)}
-        </div>
-    </div>
-`;
-  };
-
-  const key$5 = 'selected-cover-options';
-
-  var selectedCoverOptions = output => {
-    return html`
-    <div id="${key$5}">
-        <div class="field field-set">
-            <span class="field__name">Select Covers</span>
-            ${output.map(o => html`
-            <input type="checkbox" value="${JSON.stringify(o)}" name="${key$5}-$object[]" id="${key$5}-${o.name}"/>
-            <label for="${key$5}-${o.name}" class="button">
-                <div>
-                    <b>${o.name}</b>
-                    <pre>${o.detail}</pre>
-                    <p>${(o.price.value * 0.01).toFixed(2)} ${o.price.currencyCode}</p>
-                </div>
-            </label>`)}
-        </div>
-    </div>
-`;
-  };
-
-  const TITLES$1 = ['mr', 'ms', 'mrs', 'miss'];
-
-  var Person = (prefix = 'person') => html`
-<div class="section">
-    <div class="section__body">
-        <div name="${prefix}" class="filed-set">
-            <div class="field">
-                <label class="field__name">Title</label>
-                <select name="${prefix}[title]">
-                    ${TITLES$1.map(t => html`
-                    <option value="${t}"> ${t.toUpperCase()}</option>`)}
-                </select>
-            </div>
-
-            <div class="field">
-                <label class="field__name" for="${prefix}[first-name]">First Name</label>
-                <input type="text" name="${prefix}[first-name]" placeholder="Jane" required />
-            </div>
-
-            <div class="field">
-                <label class="field__name" for="${prefix}[middle-name]">Middle Name</label>
-                <input type="text" name="${prefix}[middle-name]" placeholder="" />
-            </div>
-
-            <div class="field">
-                <label class="field__name" for="${prefix}[last-name]">Last Name</label>
-                <input type="text" name="${prefix}[last-name]" placeholder="Doe" required />
-            </div>
+            <input type="radio" name="installation[has-access-to-communal-satellite-$boolean]" id="installation-satellite-no"
+                value="false" required>
+            <label for="installation-satellite-no" class="button">No</label>
         </div>
     </div>
 </div>
 `;
 
-  var Address = (prefix = 'address') => html`
-<div name="${prefix}" class="filed-set">
-    <div class="field">
-        <label for="${prefix}[line1]" class="field__name">Line 1</label>
-        <input type="text" name="${prefix}[line1]" id="${prefix}[line1]" value="587" required />
-    </div>
+  var aboutYou = (name, data = {}) => html`
+    ${contactPerson()}
+    ${account()}
+    ${installation()}
 
-    <div class="field">
-        <label for="${prefix}[line2]" class="field__name">Line 2</label>
-        <input type="text" name="${prefix}[line2]" id="${prefix}[line2]" value="high road" />
-    </div>
-
-    <div class="field">
-        <label for="${prefix}[city]" class="field__name">City</label>
-        <input type="text" name="${prefix}[city]" id="${prefix}[city]" value="london" required />
-    </div>
-
-    <div class="field">
-        <label for="${prefix}[country-subdivision]" class="field__name">County</label>
-        <input type="text" name="${prefix}[country-subdivision]" id="${prefix}[country-subdivision]" value="London" required/>
-    </div>
-
-    <div class="field">
-    <!-- select -->
-        <label for="${prefix}[country-code]" class="field__name">Country Code</label>
-        <input type="text" name="${prefix}[country-code]" id="${prefix}[country-code]" value="gb" required />
-    </div>
-
-    <div class="field">
-        <label for="${prefix}[postcode]" class="field__name">Postcode</label>
-        <input type="text" name="${prefix}[postcode]" id="${prefix}[postcode]" value="E11 4PB" required />
-    </div>
-</div>
-`;
-
-  const CARD_BRANDS = ['visa', 'mastercard', 'amex', 'discover'];
-
-  var Payment = (prefix = 'payment') => html`
-<div class="filed-set">
-    ${Person(`${prefix}[person]`)}
-
-    <div name="${prefix}[card]" class="filed-set">
-        <div class="field">
-            <span class="field__name">Type</span>
-            <div class="field__inputs group group--merged">
-                <input type="radio" name="${prefix}[card][type]" id="${prefix}[card][type]-debit" value="debit"/>
-                <label for="${prefix}[card][type]-debit" class="button">debit</label>
-
-                <input type="radio" name="${prefix}[card][type]" id="${prefix}[card][type]-credit" value="credit"/>
-                <label for="${prefix}[card][type]-credit" class="button">credit</label>
-            </div>
-        </div>
-
-        <div class="field">
-            <label class="field__name">brand</label>
-            <select name="${prefix}[card][brand]">
-                ${CARD_BRANDS.map(c => html`
-                <option value="${c}"> ${c}</option>`)}
-            </select>
-        </div>
-
-        <div class="field">
-            <label class="field__name" for="pan">Card Number</label>
-            <input type="text"
-                name="pan"
-                id= "pan",
-                maxlength="19"
-                placeholder="XXXX XXXX XXXX XXXX"
-                required />
-        </div>
-
-        <div class="field">
-            <label class="field__name" for="${prefix}[card][expiration-date]">Expiry Date</label>
-            <input type="text"
-                name="${prefix}[card][expiration-date]"
-                id= "expiry-year",
-                maxlength="8"
-                placeholder="YYYY-MM"
-                value="2020-10"
-                required />
-        </div>
-
-        <div class="field">
-            <label class="field__name" for="${prefix}[card][name]">name</label>
-            <input type="text"
-                name="${prefix}[card][name]"
-                placeholder="Jane Doe"
-                value="Jane Doe"
-                required />
-        </div>
-
-        <div class="field">
-            <label class="field__name" for="${prefix}[card][cvv]">cvv</label>
-            <input type="tel"
-                name="${prefix}[card][cvv]"
-                placeholder="000"
-                maxlength="4"
-                value="123"
-                required />
-        </div>
-    </div>
-
-    ${Address(`${prefix}[address]`)}
-</div>
-`;
-
-  var payment = () => Payment('payment');
-
-  var directDebit = () => html`
-<div class="section">
-    <div class="section__body">
-        <div name="direct-debit" class="filed-set">
-            <div class="field">
-                <label class="field__name" for="direct-debit[sort-code]">Sort Code</label>
-                <input type="text" name="direct-debit[sort-code]" placeholder="56-00-29" required />
-            </div>
-
-            <div class="field">
-                <label class="field__name" for="direct-debit[account-number]">Account Number</label>
-                <input type="text" name="direct-debit[account-number]" placeholder="26207729" required/>
-            </div>
-
-            ${Person('direct-debit[account-holder]')}
-
-            ${Address('direct-debit[account-holder-address]')}
-
-            <div class="field">
-                <label class="field__name" for="direct-debit[selected-payment-day]">Selected Payment Day</label>
-                <input type="text" name="direct-debit[selected-payment-day]" placeholder="10" />
-            </div>
-        </div>
-    </div>
-</div>
-`;
-
-  const key$6 = 'final-price-consent';
-
-  var finalPriceConsent = priceConsent => {
-    return html`
-    <div class="field field-set">
-        <span class="field__name"></span>
-        <h4 class="warning">By clicking continue, we are going to process your payment</h4>
-        <input type="radio" name="${key$6}-$object" value="${JSON.stringify(priceConsent)}" required>
-        <b>${priceConsent.price.value} ${priceConsent.price.currencyCode}</b>
+    <div class="section__actions">
+        <button type="button" class="button button--right button--primary" id="submit-btn-${name}">Continue</button>
     </div>
 `;
-  };
 
-  var templates = {
-    petsSelectedBreedType,
-    account,
-    owner,
-    selectedAddress,
-    policyOptions,
-    selectedCover,
-    selectedPaymentTerm,
-    selectedVetPaymentTerm,
-    selectedCoverType,
-    selectedVetFee,
-    selectedVoluntaryExcess,
-    selectedCoverOptions,
-    payment,
-    directDebit,
-    finalPriceConsent
-  };
-  /** Global */
-  //TODO-test: run this function for all given inputMetas;
+  var SectionTemplates =
+  /*#__PURE__*/
+  Object.freeze({
+    landline: landline,
+    selectedAddress: selectedAddress$1,
+    aboutYou: aboutYou
+  }); // confirmation, 404, error page will be added
 
-  var templates$1 = {
-    loading: Loading,
-    section,
-    get: get$1
-  };
+  const Layout = CONFIG.layout.map(l => {
+    const template = LayoutTemplates[l.name];
 
-  function get$1(screen, asyncFunc) {
-    let templateFunc = templates[screen];
-
-    if (!templateFunc) {
-      throw new Error('No template found for give screen');
+    if (!template && !l.mainTarget) {
+      throw new Error(`Template for Layout ${l.name} is not found`);
     }
 
-    const awaiting = asyncFunc().then(({
-      data,
-      skip
-    }) => {
-      if (skip) {
-        return html``;
-      }
-
-      return templateFunc(data);
-    });
-    return html`${until(awaiting, html`<span>Loading....</span>`)}`;
-  }
-
-  var Data = {
-    availableBreedTypes: {
-      "cat": ["Pedigree", "Non-Pedigree"],
-      "dog": ["Cross Breed", "Pedigree", "Small mixed breed (up to 10kg)", "Medium mixed breed (10 - 20kg)", "Large mixed breed (above 20kg)"]
-    }
-  };
-
-  function getSource(maxType = 'data', key) {
-    let source = get('output', key);
-
-    if (!source && ['cache', 'data'].includes(maxType)) {
-      source = get('cache', key);
-    }
-
-    if (!source && maxType === 'data') {
-      source = Data[key] || null;
-    }
-
-    return source;
-  }
-
-  class Section {
-    constructor(name, screens = [], selector, onFinish) {
-      this.name = name;
-      this.selector = selector;
-      this.screens = screens;
-      this.onFinish = onFinish;
-      this.screenToSubmit = this.screens.length;
-      Promise.resolve(this.init());
-    }
-
-    init() {
-      this.renderWrapper();
-      this.renderScreens();
-    }
-
-    renderWrapper() {
-      render(templates$1.section(), document.querySelector(this.selector));
-      const wrappers = this.screens.map(screen => screen.key).map(key => {
-        return html`<form id="screen-${key}"></form>`;
-      });
-      render(html`${wrappers.map(w => w)}`, document.querySelector('#target'));
-      /* this.addListener(); */
-    }
-
-    addListener(key) {
-      if (!sdk.initiated) {
-        return;
-      }
-
-      const submitBtn = document.querySelector(`#submitBtn-${key}`);
-
-      if (!submitBtn) {
-        console.warn(`no button #submitBtn-${key} found`);
-        return;
-      }
-
-      submitBtn.addEventListener('click', () => {
-        // TODO: validate the input (using protocol?)
-        const form = document.querySelector(`#screen-${key}`);
-
-        if (!form.reportValidity()) {
-          console.log('invalid form');
-          return;
-        }
-
-        submitBtn.setAttribute('disabled', 'true');
-        const inputs = serializeForm(`screen-${key}`); // send input sdk
-
-        this.submitInputs(inputs);
-      });
-    }
-
-    submitInputs(inputs) {
-      sdk.createJobInputs(inputs).then(submittedInputs => {
-        this.screenToSubmit -= 1;
-        const event = new CustomEvent('submitinput', {
-          detail: submittedInputs
-        });
-        window.dispatchEvent(event);
-
-        if (this.screenToSubmit === 0) {
-          render(html``, document.querySelector(this.selector));
-          this.onFinish();
-        }
-      }).catch(err => {
-        if (document.querySelector('#error')) {
-          render(html`${err}`, document.querySelector('#error'));
-        }
-      });
-    }
-
-    skipScreen() {
-      this.screenToSubmit -= 1;
-
-      if (this.screenToSubmit === 0) {
-        render(html``, document.querySelector(this.selector));
-        this.onFinish();
-      }
-    }
-
-    renderScreen({
-      key,
-      waitFor = ''
-      /* , submitOn:[button, onComplete] */
-
-    }) {
-      const template = templates$1.get(key, getDataForScreen);
-      const selector = document.querySelector(`#screen-${key}`);
-      const buttonTemplate = html`<button type="button" class="button button--right button--primary" id="submitBtn-${key}">Select</button>`;
-
-      if (!template || !selector) {
-        throw new Error('Template or selector not found, check the config');
-      }
-      /** build a promise function that applicable for all kind */
-
-
-      function getDataForScreen() {
-        return new Promise(res => {
-          if (!waitFor) {
-            return res({
-              data: null,
-              skip: false
-            });
-          }
-
-          const [type, sourceKey] = waitFor.split('.');
-          const data = getSource(type, sourceKey);
-          console.log('data in example', data);
-
-          if (data === null) {
-            this.skipScreen();
-            return res({
-              data: null,
-              skip: true
-            });
-          }
-
-          if (data) {
-            return res({
-              data,
-              skip: false
-            });
-          }
-
-          sdk.waitForJobOutput(sourceKey, key).then(data => {
-            if (data === null) {
-              this.skipScreen();
-              return res({
-                data: null,
-                skip: true
-              });
-            }
-
-            return res({
-              data,
-              skip: false
-            });
-          });
-        });
-      }
-
-      render(html`
-                ${template}
-                ${buttonTemplate}
-            `, selector);
-    }
-
-    renderScreens() {
-      this.screens.forEach(screen => {
-        this.renderScreen(screen);
-        this.addListener(screen.key);
-      });
-    }
-    /*
-            //error handling?
-            const template = templates.getInput(screen);
-            // render if the output is here.
-            // when the awaitingInput event has happened, check nextKey and awaitingInputKey.
-            // if it's different, skip this one, and render the awaitingInputKey.
-            if (screen.sourceOutputKey != null) {
-                sdk.waitForJobOutput(screen.sourceOutputKey, nextKey)
-                    .then(output => {
-                        render(html`${template(screen, output)}`, document.querySelector('#target'));
-                         this.keysSubmitted.push(nextKey);
-                    })
-                    .catch(err => {
-                        if (err.name === 'jobExpectsDifferentInputKey') {
-                            console.log('got jobExpectsDifferentInputKey!', err.details.awaitingInputKey);
-                             const input = this.screens.find(im => im.key === err.details.awaitingInputKey);
-                            if (!input) {
-                                // not found in this section! finish
-                                return this.onFinish();
-                            }
-                             const idx = this.keysToSubmit.indexOf(input.key);
-                            this.keysToSubmit.splice(idx, 1);
-                            this.keysToSubmit.unshift(...[input.key, nextKey]);
-                             return this.renderScreens();
-                        }
-                    });
-            } else {
-                render(html`${template(null, cache)}<div id="next-of-${screen.key}"></div>`, document.querySelector('#target'));
-                 this.keysSubmitted.push(nextKey);
-            } */
-
-
-  }
-  /**
-   * @param {String} name
-   * @param {Array} screens
-   * @param {Function} onFinish
-   */
-
-
-  function getSection(name, screens, selector, onFinish) {
-    return new Section(name, screens, selector, onFinish);
-  }
-
-  var NotFound = selector => {};
-
-  const stepTemplate = (title, index, activeIndex) => html`
-    <li class="progress-bar__step ${index === activeIndex ? 'progress-bar__step--active' : ''}">
-        <div class="progress-bar__icon-container">
-            <div class="progress-bar__icon">
-                <span class="progress-bar__step-index">${index}</span>
-            </div>
-        </div>
-        <div class="progress-bar__label">${title}</div>
-    </li>`;
-
-  var progressBar = (titles, activeIndex) => {
-    console.log(titles, activeIndex);
-    return html`
-<ol class="progress-bar">
-    ${titles.map((title, index) => stepTemplate(title, index + 1, activeIndex))}
-</ol>
-`;
-  };
-
-  var ProgressBar = selector => {
-    return (titles, activeIndex) => render(progressBar(titles, activeIndex), document.querySelector(selector));
-  };
-  /** TODOS:
-   * [v] need to navigate to awaitingInput's page, when waiting for the output
-   * []need to assign all the sub-route so that they can navigate directly there
-   * [v] gets output from previous-input-output as well
-   * CSS - responsive
-   * (?) Should we give a flexibility of showing some inputs together?
-   */
-
-
-  function createSection(config = {}, selector, callback) {
-    //TODO: make config validator
-    const {
-      name,
-      title,
-      screens
-    } = config;
-
-    if (!name) {
-      throw new Error('name is needed for section');
-    }
-
-    if (!title) {
-      throw new Error('title is needed for section');
-    }
-
-    if (!Array.isArray(screens)) {
-      throw new Error('screens needed for section');
-    }
-
-    return {
-      init: () => {
-        sdk.create().then(() => getSection(name, screens, selector, callback)).catch(err => console.log(err));
-      }
+    return { ...l,
+      template
     };
-  }
-
-  function createApp(SECTION_CONFIGS = [], CACHE_CONFIGS = [], LAYOUT = [], callback) {
-    //TODO: maybe this core app fetches all domain's meta and store them.
-    // config will accept input keys rather than whole met
-    const isValidConfig = SECTION_CONFIGS.length > 0 && SECTION_CONFIGS.every(config => config.name && config.title && config.screens && config.route);
-
-    if (!isValidConfig) {
-      throw new Error('invalid config');
-    }
-
+  });
+  const Pages = CONFIG.pages.map(page => {
     const {
-      selector: mainSelector
-    } = LAYOUT.find(_ => _.mainTarget == true) || {};
+      sections = []
+    } = page;
+    const sectionsWithTemplate = sections.map(s => {
+      const template = SectionTemplates[s.name];
 
-    if (!mainSelector) {
-      throw new Error(`main target not found in config`);
-    }
+      if (!template) {
+        throw new Error(`Template for page ${s.name} is not found`);
+      }
 
-    const flow = SECTION_CONFIGS.map(con => con.route);
-    const titles = SECTION_CONFIGS.map(con => con.title);
-    flow.push('/finish');
-    const routes = {
-      '/': Loading(mainSelector),
-      '/finish': () => callback(null, 'finish')
-    };
-    SECTION_CONFIGS.forEach((config, idx) => {
-      const {
-        title,
-        screens,
-        route
-      } = config;
-      const next = flow[idx + 1];
-
-      const render = () => getSection(name, screens, mainSelector, () => setTimeout(() => {
-        window.location.hash = next;
-      }, 1000));
-
-      routes[route] = {
-        render,
-        title,
-        step: idx + 1
+      return { ...s,
+        template
       };
     });
-    const entryPoint = flow[0];
-    return {
-      init: () => {
-        const router = Router(routes, titles, NotFound(mainSelector), ProgressBar('#progress-bar'));
-        LAYOUT.filter(l => !l.mainTarget).forEach(layout => render(layout.template(), document.querySelector(layout.selector)));
-        window.addEventListener('hashchange', () => {
-          router.navigate();
-
-          if (!window.location.hash || window.location.hash === '/') {
-            sdk.create().then(() => {
-              window.location.hash = entryPoint;
-              pollDefault(CACHE_CONFIGS);
-            }).catch(err => console.log(err));
-          }
-
-          const {
-            inputs,
-            outputs
-          } = getAll();
-          render(Summary(inputs, outputs), document.querySelector('#summary'));
-        }); // Listen on page load:
-
-        window.addEventListener('load', () => {
-          router.navigate();
-        }); //custom event when input submitted
-
-        window.addEventListener('submitinput', e => {
-          //TODO: get cache using output
-          poll(CACHE_CONFIGS, Object.keys(e.detail));
-          const {
-            inputs,
-            outputs
-          } = getAll();
-          render(Summary(inputs, outputs), document.querySelector('#summary'));
-        });
-        window.addEventListener('createoutput', () => {
-          const {
-            inputs,
-            outputs
-          } = getAll();
-          render(Summary(inputs, outputs), document.querySelector('#summary'));
-        });
-
-        if (window.location.hash && window.location.hash !== '/') {
-          sdk.retrieve().then(() => {
-            pollDefault(CACHE_CONFIGS);
-            console.log('job info retrieved');
-          }).catch(err => {
-            window.location.hash = '';
-          });
-        } else {
-          sdk.create().then(() => {
-            window.location.hash = entryPoint;
-          }).catch(err => console.log(err));
-        }
-
-        window.location.hash = entryPoint;
+    return { ...page,
+      ...{
+        sections: sectionsWithTemplate
       }
     };
-  }
-
-  const CACHE = [{
-    key: 'priceBreakdown',
-    sourceInputKeys: ['selectedOption1', 'selectedOption2']
-  }, {
-    key: 'availableCovers',
-    sourceInputKeys: []
-  }, {
-    key: 'availableVetPaymentTerms',
-    sourceInputKeys: ['selectedCover']
-  }, {
-    key: 'availablePaymentTerms',
-    sourceInputKeys: []
-  }];
-  const SECTIONS = [{
-    name: 'aboutYourPet',
-    route: '/about-your-pet',
-    title: 'About Your Pet',
-    screens: [{
-      key: 'petsSelectedBreedType',
-      waitFor: 'data.availableBreedTypes'
-    }]
-  }, {
-    name: 'aboutYou',
-    route: '/about-you',
-    title: 'About You',
-    screens: [{
-      key: 'account',
-      waitFor: null
-    }, {
-      key: 'owner',
-      waitFor: null
-    }, {
-      key: 'selectedAddress',
-      waitFor: 'output.availableAddresses'
-    }]
-  }, {
-    name: 'yourPolicy',
-    route: '/your-policy',
-    title: 'Your Policy',
-    screens: [{
-      key: 'policyOptions',
-      waitFor: null
-    }, //todo: allowCache config for previous
-    {
-      key: 'selectedCover',
-      waitFor: 'cache.availableCovers'
-    }, {
-      key: 'selectedVetPaymentTerm',
-      waitFor: 'output.availableVetPaymentTerms'
-    }, {
-      key: 'selectedPaymentTerm',
-      waitFor: 'cache.availablePaymentTerms'
-    }, {
-      key: 'selectedCoverType',
-      waitFor: 'output.availableCoverTypes'
-    }, {
-      key: 'selectedVoluntaryExcess',
-      waitFor: 'output.availableVoluntaryExcesses'
-    }, {
-      key: 'selectedCoverOptions',
-      waitFor: 'output.availableCoverOptions'
-    }, {
-      key: 'selectedVetFee',
-      waitFor: 'output.availableVetFees'
-    }]
-  }, {
-    name: 'paymentDetail',
-    route: '/payment',
-    title: 'Payment Details',
-    screens: [{
-      key: 'payment',
-      waitFor: 'output.estimatedPrice'
-    }, {
-      key: 'directDebit',
-      waitFor: 'output.estimatedPrice'
-    }]
-  }, {
-    name: 'consentPayment',
-    route: '/consent-payment',
-    title: 'Ready to insure your pet',
-    screens: [{
-      key: 'finalPriceConsent',
-      waitFor: 'finalPrice'
-    }]
-  }];
-  const LAYOUT = [
-  /* { selector: '#progress-bar', template: ProgressBar }, */
-  {
-    selector: '#header',
-    template: Header
-  }, {
-    selector: '#summary',
-    template: Summary
-  }, {
-    selector: '#main',
-    mainTarget: true
-  }, {
-    selector: '#footer',
-    template: Footer
-  }];
-  var app = createApp(SECTIONS, CACHE, LAYOUT, () => {
+  });
+  var app = createApp({
+    pages: Pages,
+    cache: CONFIG.cache,
+    layout: Layout,
+    data: CONFIG.data
+  }, () => {
     console.log('finished!');
   });
   app.init();
-  exports.createApp = createApp;
-  exports.createSection = createSection;
-  Object.defineProperty(exports, '__esModule', {
-    value: true
-  });
 });
 
-},{"@ubio/sdk":2,"camelcase-keys":5,"form-serialize":7,"lodash.kebabcase":9}],2:[function(require,module,exports){
-(function (Buffer){
-(function (global, factory) {
-    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
-    typeof define === 'function' && define.amd ? define(['exports'], factory) :
-    (global = global || self, factory(global.ubioSdk = {}));
-}(this, function (exports) { 'use strict';
-
-    var defaultApiUrl = 'https://api.automationcloud.net';
-    var defaultVaultUrl = 'https://vault.automationcloud.net';
-    var defaultFetch = typeof self !== 'undefined' && self.fetch && self.fetch.bind(self);
-    var base64Encode;
-
-    if (typeof btoa === 'function') {
-        base64Encode = function(string) {
-            return btoa(string);
-        };
-    } else if (typeof Buffer === 'function') {
-        base64Encode = function(string) {
-            return Buffer.from(string).toString('base64');
-        };
-    } else {
-        throw new Error('No way to convert to base64.');
-    }
-
-    function assertStringArguments(obj) {
-        Object.keys(obj || {}).forEach(function(key) {
-            if (typeof obj[key] !== 'string') {
-                throw new TypeError('"' + key + '" must be a string.');
-            }
-        });
-    }
-
-    function createSearch(parameters) {
-        if (!parameters) {
-            return '';
-        }
-
-        var query = [];
-
-        Object.keys(parameters).forEach(function(key) {
-            if (parameters[key] !== void 0) {
-                query.push(encodeURIComponent(key) + '=' + encodeURIComponent(parameters[key]));
-            }
-        });
-
-        var search = query.join('&');
-
-        return search.length ? '?' + search : '';
-    }
-
-
-    function fetchWrapper(url, fetch, token, opts) {
-        var options = opts || {};
-        var method = options.method || 'GET';
-        var query = options.query;
-
-        if (!token) {
-            throw new Error('No token.');
-        }
-
-        var headers = {};
-
-        Object.keys(options.headers || {}).forEach(function(key) {
-            headers[key] = options.headers[key];
-        });
-
-        headers['Authorization'] = 'Basic ' + base64Encode(token + ':');
-
-        var body = options.body === void 0 ? void 0 : JSON.stringify(options.body);
-        var search = createSearch(query);
-
-        if (typeof body === 'string') {
-            headers['Content-Type'] = 'application/json';
-        }
-
-        var fetchOptions = {
-            method: method,
-            headers: headers,
-            body: body,
-            mode: 'cors',
-            credentials: 'omit',
-            cache: 'no-store',
-            redirect: 'follow',
-            referrer: 'client',
-            referrerPolicy: 'origin',
-            keepalive: false
-        };
-
-        return fetch(url + search, fetchOptions)
-            .then(function(response) {
-                if (!response.ok) {
-                    return response.json()
-                        .then(function(body) {
-                            // TODO: Better errors from error bodies.
-                            const error = new Error(body.message || 'Unexpected response');
-                            error.status = response.status;
-                            throw error;
-                        });
-                }
-
-                if (options.parse !== false) {
-                    return response.json();
-                }
-
-                return response;
-            });
-    }
-
-    function makeApiClient(baseUrl, fetch, token) {
-        var canonicalizedBaseiUrl = baseUrl.slice(-1) === '/' ? baseUrl : (baseUrl + '/');
-
-        function apiFetch(path, options) {
-            return fetchWrapper(canonicalizedBaseiUrl + path, fetch, token, options);
-        }
-
-        var api = {
-            raw: function(path, options) {
-                assertStringArguments({ path: path });
-                return apiFetch(path, options);
-            },
-            getServices: function() {
-                return apiFetch('services');
-            },
-            getService: function(serviceId) {
-                assertStringArguments({ serviceId: serviceId });
-                return apiFetch('services/' + serviceId);
-            },
-            getPreviousJobOutputs: function(serviceId, inputs) {
-                assertStringArguments({ serviceId: serviceId });
-                const body = { inputs: inputs || [] };
-
-                return apiFetch('services/' + serviceId + '/previous-job-outputs', { method: 'POST', body: body });
-            },
-            getJobs: function(query) {
-                return apiFetch('jobs', { query: query });
-            },
-            createJob: function(fields) {
-                return apiFetch('jobs', { method: 'POST', body: fields });
-            },
-            getJob: function(jobId) {
-                assertStringArguments({ jobId: jobId });
-                return apiFetch('jobs/' + jobId);
-            },
-            cancelJob: function(jobId) {
-                assertStringArguments({ jobId: jobId });
-                return apiFetch('jobs/' + jobId + '/cancel', { method: 'POST' });
-            },
-            resetJob: function(jobId, fromInputKey, preserveInputs) {
-                assertStringArguments({ jobId: jobId });
-                const body = { fromInputKey: fromInputKey, preserveInputs: preserveInputs || [] };
-
-                return apiFetch('jobs/' + jobId + '/reset', { method: 'POST', body: body });
-            },
-            createJobInput: function(jobId, key, data, stage) {
-                assertStringArguments({ jobId: jobId, key: key });
-                return apiFetch('jobs/' + jobId + '/inputs', { method: 'POST', body: { key, stage, data } });
-            },
-            getJobOutputs: function(jobId) {
-                assertStringArguments({ jobId: jobId });
-                return apiFetch('jobs/' + jobId + '/outputs');
-            },
-            getJobOutput: function(jobId, key, stage) {
-                assertStringArguments({ jobId: jobId, key: key });
-
-                var path = 'jobs/' + jobId + '/outputs/' + key;
-
-                if (stage) {
-                    path += '/' + stage;
-                }
-
-                return apiFetch(path);
-            },
-            getJobScreenshots: function(jobId) {
-                assertStringArguments({ jobId: jobId });
-                return apiFetch('jobs/' + jobId + '/screenshots');
-            },
-            getJobScreenshot: function(jobIdOrPath, id, ext) {
-                function toBlob(res) {
-                    return res.blob();
-                }
-
-                if (jobIdOrPath && jobIdOrPath[0] === '/') {
-                    return apiFetch(jobIdOrPath, { parse: false })
-                        .then(toBlob);
-                }
-
-                assertStringArguments({ jobId: jobIdOrPath, id: id, ext: ext });
-
-                return apiFetch('jobs/' + jobIdOrPath + '/screenshots/' + id + '.png', { parse: false })
-                    .then(toBlob);
-            },
-            getJobMimoLogs: function(jobId) {
-                assertStringArguments({ jobId: jobId });
-                return apiFetch('jobs/' + jobId + '/mimo-logs');
-            },
-            getJobEndUser: function(jobId) {
-                assertStringArguments({ jobId: jobId });
-                return apiFetch('jobs/' + jobId + '/end-user');
-            },
-            getJobEvents: function(jobId, offset) {
-                assertStringArguments({ jobId: jobId });
-
-                if (offset >>> 0 !== offset) {
-                    throw new RangeError('offset must be a positive integer.');
-                }
-
-                return apiFetch('jobs/' + jobId + '/events', { query: { offset: offset || 0 } });
-            },
-            trackJob: function(jobId, callback) {
-                assertStringArguments({ jobId: jobId });
-
-                return poll(jobId, callback, 1000);
-            }
-        };
-
-        function delay(t) {
-            return new Promise(function(resolve) {
-                setTimeout(resolve, t);
-            });
-        }
-
-        function poll(jobId, callback, dt) {
-            var offset = 0;
-            var backoff = 0;
-            var stopped = false;
-
-            function stop() {
-                if (!stopped) {
-                    stopped = true;
-                    callback('close');
-                }
-            }
-
-            function run() {
-                return delay(dt)
-                    .then(function() {
-                        if (!stopped) {
-                            return api.getJobEvents(jobId, offset)
-                                .then(function(body) {
-                                    backoff = 0;
-                                    return body;
-                                })
-                                .catch(function(error) {
-                                    const message = error.stack || error.message;
-
-                                    // 4xy errors don't lead to a retry, since the
-                                    // client must change something before the
-                                    // request can work.
-                                    if (error.status < 500) {
-                                        callback('error', error);
-                                        stop();
-                                        return;
-                                    }
-
-                                    // 5xy errors lead to retries with backoff.
-                                    callback('error', error);
-
-                                    backoff += 1;
-
-                                    const backoffTime = ((dt + backoff * dt) / 1000).toFixed(1);
-
-                                    console.warn('Error contacting API. Retrying in ' + backoffTime + ' s. ', message);
-
-                                    return delay(backoff * dt)
-                                        .then(function() {
-                                            return { data: [] };
-                                        });
-                                });
-                        }
-                    })
-                    .then(function(body) {
-                        if (stopped) {
-                            return;
-                        }
-
-                        var events = body.data.slice();
-
-                        offset += events.length;
-
-                        events.sort(function(a, b) {
-                            return a.createdAt - b.createdAt;
-                        });
-
-                        events.forEach(function(event) {
-                            callback(event.name);
-
-                            if (event.name === 'success' || event.name === 'fail') {
-                                stop();
-                            }
-                        });
-                    })
-                    .then(function() {
-                        if (!stopped) {
-                            return run();
-                        }
-                    });
-            }
-
-            run();
-
-            return stop;
-        }
-
-        return api;
-    }
-
-    function makeVaultClient(baseUrl, fetch, token) {
-        var canonicalizedBaseiUrl = baseUrl.slice(-1) === '/' ? baseUrl : (baseUrl + '/');
-
-        function vaultFetch(path, options) {
-            return fetchWrapper(canonicalizedBaseiUrl + path, fetch, token, options);
-        }
-
-        return {
-            vaultPan: function(pan) {
-                return vaultFetch('otp', { method: 'POST' })
-                    .then(function(otp) {
-                        return vaultFetch('pan', {
-                            method: 'POST',
-                            body: {
-                                otp: otp.id,
-                                pan: pan
-                            }
-                        });
-                    })
-                    .then(function(pan) {
-                        return vaultFetch('pan/temporary', {
-                            method: 'POST',
-                            body: {
-                                panId: pan.id,
-                                key: pan.key
-                            }
-                        });
-                    })
-                    .then(function(temp) {
-                        return temp.panToken;
-                    });
-            }
-        };
-    }
-
-    /**
-     * @param {Object} options
-     * @param {string} options.token
-     * @param {string} options.apiUrl
-     * @param {function} options.fetch
-     */
-    function createClientSdk(options) {
-        if (!options || !options.token) {
-            throw new Error('Token required.');
-        }
-
-        var apiUrl = options.apiUrl || defaultApiUrl;
-        var fetch = options.fetch || defaultFetch;
-        var token = options.token;
-
-        return makeApiClient(apiUrl, fetch, token);
-    }
-
-    /**
-     * @param {Object} options
-     * @param {string} options.token
-     * @param {string} options.jobId
-     * @param {string} options.serviceId
-     * @param {string} options.apiUrl
-     * @param {string} options.vaultUrl
-     * @param {function} options.fetch
-     */
-    function createEndUserSdk(options) {
-        if (!options || !options.token) {
-            throw new Error('A token required.');
-        }
-
-        if (!options.jobId) {
-            throw new Error('A jobId is required.');
-        }
-
-        if (!options.serviceId) {
-            throw new Error('A serviceId is required.');
-        }
-
-        var jobId = options.jobId;
-        var serviceId = options.serviceId;
-        var apiUrl = options.apiUrl || defaultApiUrl;
-        var vaultUrl = options.vaultUrl || defaultVaultUrl;
-        var fetch = options.fetch || defaultFetch;
-        var token = options.token;
-
-        var apiClient = makeApiClient(apiUrl, fetch, token);
-        var vaultClient = makeVaultClient(vaultUrl, fetch, token);
-
-        return {
-            getService: function() {
-                return apiClient.getService(serviceId);
-            },
-            getPreviousJobOutputs: function(inputs) {
-                return apiClient.getPreviousJobOutputs(serviceId, inputs);
-            },
-            getJob: function() {
-                return apiClient.getJob(jobId);
-            },
-            cancelJob: function() {
-                return apiClient.cancelJob(jobId);
-            },
-            resetJob: function(jobId, fromInputKey, preserveInputs) {
-                return apiClient.resetJob(jobId, fromInputKey, preserveInputs);
-            },
-            createJobInput: function(key, data, stage) {
-                return apiClient.createJobInput(jobId, key, data, stage);
-            },
-            getJobOutputs: function() {
-                return apiClient.getJobOutputs(jobId);
-            },
-            getJobOutput: function(key, stage) {
-                return apiClient.getJobOutput(jobId, key, stage);
-            },
-            getJobScreenshots: function() {
-                return apiClient.getJobScreenshots(jobId);
-            },
-            getJobScreenshot: function(idOrPath) {
-                if (idOrPath && idOrPath[0] === '/') {
-                    return apiClient.getJobScreenshot(idOrPath);
-                }
-
-                return apiClient.getJobScreenshot(jobId, idOrPath);
-            },
-            getJobMimoLogs: function() {
-                return apiClient.getJobMimoLogs(jobId);
-            },
-            getJobEvents: function(offset) {
-                return apiClient.getJobEvents(jobId, offset);
-            },
-            trackJob: function(callback) {
-                return apiClient.trackJob(jobId, callback);
-            },
-            vaultPan: function(pan) {
-                return vaultClient.vaultPan(pan);
-            }
-        };
-    }
-
-    exports.createClientSdk = createClientSdk;
-    exports.createEndUserSdk = createEndUserSdk;
-
-    Object.defineProperty(exports, '__esModule', { value: true });
-
-}));
-
-}).call(this,require("buffer").Buffer)
-},{"buffer":4}],3:[function(require,module,exports){
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
+},{"buffer":3}],2:[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -3702,7 +4315,7 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],4:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 (function (Buffer){
 /*!
  * The buffer module from node.js, for the browser.
@@ -5483,391 +6096,7 @@ function numberIsNaN (obj) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"base64-js":3,"buffer":4,"ieee754":8}],5:[function(require,module,exports){
-'use strict';
-const mapObj = require('map-obj');
-const camelCase = require('camelcase');
-const QuickLru = require('quick-lru');
-
-const has = (array, key) => array.some(x => typeof x === 'string' ? x === key : x.test(key));
-const cache = new QuickLru({maxSize: 100000});
-
-const camelCaseConvert = (input, options) => {
-	options = Object.assign({
-		deep: false
-	}, options);
-
-	const {exclude} = options;
-
-	return mapObj(input, (key, value) => {
-		if (!(exclude && has(exclude, key))) {
-			if (cache.has(key)) {
-				key = cache.get(key);
-			} else {
-				const ret = camelCase(key);
-
-				if (key.length < 100) { // Prevent abuse
-					cache.set(key, ret);
-				}
-
-				key = ret;
-			}
-		}
-
-		return [key, value];
-	}, {deep: options.deep});
-};
-
-module.exports = (input, options) => {
-	if (Array.isArray(input)) {
-		return Object.keys(input).map(key => camelCaseConvert(input[key], options));
-	}
-
-	return camelCaseConvert(input, options);
-};
-
-
-},{"camelcase":6,"map-obj":10,"quick-lru":11}],6:[function(require,module,exports){
-'use strict';
-
-const preserveCamelCase = string => {
-	let isLastCharLower = false;
-	let isLastCharUpper = false;
-	let isLastLastCharUpper = false;
-
-	for (let i = 0; i < string.length; i++) {
-		const character = string[i];
-
-		if (isLastCharLower && /[a-zA-Z]/.test(character) && character.toUpperCase() === character) {
-			string = string.slice(0, i) + '-' + string.slice(i);
-			isLastCharLower = false;
-			isLastLastCharUpper = isLastCharUpper;
-			isLastCharUpper = true;
-			i++;
-		} else if (isLastCharUpper && isLastLastCharUpper && /[a-zA-Z]/.test(character) && character.toLowerCase() === character) {
-			string = string.slice(0, i - 1) + '-' + string.slice(i - 1);
-			isLastLastCharUpper = isLastCharUpper;
-			isLastCharUpper = false;
-			isLastCharLower = true;
-		} else {
-			isLastCharLower = character.toLowerCase() === character && character.toUpperCase() !== character;
-			isLastLastCharUpper = isLastCharUpper;
-			isLastCharUpper = character.toUpperCase() === character && character.toLowerCase() !== character;
-		}
-	}
-
-	return string;
-};
-
-const camelCase = (input, options) => {
-	if (!(typeof input === 'string' || Array.isArray(input))) {
-		throw new TypeError('Expected the input to be `string | string[]`');
-	}
-
-	options = Object.assign({
-		pascalCase: false
-	}, options);
-
-	const postProcess = x => options.pascalCase ? x.charAt(0).toUpperCase() + x.slice(1) : x;
-
-	if (Array.isArray(input)) {
-		input = input.map(x => x.trim())
-			.filter(x => x.length)
-			.join('-');
-	} else {
-		input = input.trim();
-	}
-
-	if (input.length === 0) {
-		return '';
-	}
-
-	if (input.length === 1) {
-		return options.pascalCase ? input.toUpperCase() : input.toLowerCase();
-	}
-
-	const hasUpperCase = input !== input.toLowerCase();
-
-	if (hasUpperCase) {
-		input = preserveCamelCase(input);
-	}
-
-	input = input
-		.replace(/^[_.\- ]+/, '')
-		.toLowerCase()
-		.replace(/[_.\- ]+(\w|$)/g, (_, p1) => p1.toUpperCase())
-		.replace(/\d+(\w|$)/g, m => m.toUpperCase());
-
-	return postProcess(input);
-};
-
-module.exports = camelCase;
-// TODO: Remove this for the next major release
-module.exports.default = camelCase;
-
-},{}],7:[function(require,module,exports){
-// get successful control from form and assemble into object
-// http://www.w3.org/TR/html401/interact/forms.html#h-17.13.2
-
-// types which indicate a submit action and are not successful controls
-// these will be ignored
-var k_r_submitter = /^(?:submit|button|image|reset|file)$/i;
-
-// node names which could be successful controls
-var k_r_success_contrls = /^(?:input|select|textarea|keygen)/i;
-
-// Matches bracket notation.
-var brackets = /(\[[^\[\]]*\])/g;
-
-// serializes form fields
-// @param form MUST be an HTMLForm element
-// @param options is an optional argument to configure the serialization. Default output
-// with no options specified is a url encoded string
-//    - hash: [true | false] Configure the output type. If true, the output will
-//    be a js object.
-//    - serializer: [function] Optional serializer function to override the default one.
-//    The function takes 3 arguments (result, key, value) and should return new result
-//    hash and url encoded str serializers are provided with this module
-//    - disabled: [true | false]. If true serialize disabled fields.
-//    - empty: [true | false]. If true serialize empty fields
-function serialize(form, options) {
-    if (typeof options != 'object') {
-        options = { hash: !!options };
-    }
-    else if (options.hash === undefined) {
-        options.hash = true;
-    }
-
-    var result = (options.hash) ? {} : '';
-    var serializer = options.serializer || ((options.hash) ? hash_serializer : str_serialize);
-
-    var elements = form && form.elements ? form.elements : [];
-
-    //Object store each radio and set if it's empty or not
-    var radio_store = Object.create(null);
-
-    for (var i=0 ; i<elements.length ; ++i) {
-        var element = elements[i];
-
-        // ingore disabled fields
-        if ((!options.disabled && element.disabled) || !element.name) {
-            continue;
-        }
-        // ignore anyhting that is not considered a success field
-        if (!k_r_success_contrls.test(element.nodeName) ||
-            k_r_submitter.test(element.type)) {
-            continue;
-        }
-
-        var key = element.name;
-        var val = element.value;
-
-        // we can't just use element.value for checkboxes cause some browsers lie to us
-        // they say "on" for value when the box isn't checked
-        if ((element.type === 'checkbox' || element.type === 'radio') && !element.checked) {
-            val = undefined;
-        }
-
-        // If we want empty elements
-        if (options.empty) {
-            // for checkbox
-            if (element.type === 'checkbox' && !element.checked) {
-                val = '';
-            }
-
-            // for radio
-            if (element.type === 'radio') {
-                if (!radio_store[element.name] && !element.checked) {
-                    radio_store[element.name] = false;
-                }
-                else if (element.checked) {
-                    radio_store[element.name] = true;
-                }
-            }
-
-            // if options empty is true, continue only if its radio
-            if (val == undefined && element.type == 'radio') {
-                continue;
-            }
-        }
-        else {
-            // value-less fields are ignored unless options.empty is true
-            if (!val) {
-                continue;
-            }
-        }
-
-        // multi select boxes
-        if (element.type === 'select-multiple') {
-            val = [];
-
-            var selectOptions = element.options;
-            var isSelectedOptions = false;
-            for (var j=0 ; j<selectOptions.length ; ++j) {
-                var option = selectOptions[j];
-                var allowedEmpty = options.empty && !option.value;
-                var hasValue = (option.value || allowedEmpty);
-                if (option.selected && hasValue) {
-                    isSelectedOptions = true;
-
-                    // If using a hash serializer be sure to add the
-                    // correct notation for an array in the multi-select
-                    // context. Here the name attribute on the select element
-                    // might be missing the trailing bracket pair. Both names
-                    // "foo" and "foo[]" should be arrays.
-                    if (options.hash && key.slice(key.length - 2) !== '[]') {
-                        result = serializer(result, key + '[]', option.value);
-                    }
-                    else {
-                        result = serializer(result, key, option.value);
-                    }
-                }
-            }
-
-            // Serialize if no selected options and options.empty is true
-            if (!isSelectedOptions && options.empty) {
-                result = serializer(result, key, '');
-            }
-
-            continue;
-        }
-
-        result = serializer(result, key, val);
-    }
-
-    // Check for all empty radio buttons and serialize them with key=""
-    if (options.empty) {
-        for (var key in radio_store) {
-            if (!radio_store[key]) {
-                result = serializer(result, key, '');
-            }
-        }
-    }
-
-    return result;
-}
-
-function parse_keys(string) {
-    var keys = [];
-    var prefix = /^([^\[\]]*)/;
-    var children = new RegExp(brackets);
-    var match = prefix.exec(string);
-
-    if (match[1]) {
-        keys.push(match[1]);
-    }
-
-    while ((match = children.exec(string)) !== null) {
-        keys.push(match[1]);
-    }
-
-    return keys;
-}
-
-function hash_assign(result, keys, value) {
-    if (keys.length === 0) {
-        result = value;
-        return result;
-    }
-
-    var key = keys.shift();
-    var between = key.match(/^\[(.+?)\]$/);
-
-    if (key === '[]') {
-        result = result || [];
-
-        if (Array.isArray(result)) {
-            result.push(hash_assign(null, keys, value));
-        }
-        else {
-            // This might be the result of bad name attributes like "[][foo]",
-            // in this case the original `result` object will already be
-            // assigned to an object literal. Rather than coerce the object to
-            // an array, or cause an exception the attribute "_values" is
-            // assigned as an array.
-            result._values = result._values || [];
-            result._values.push(hash_assign(null, keys, value));
-        }
-
-        return result;
-    }
-
-    // Key is an attribute name and can be assigned directly.
-    if (!between) {
-        result[key] = hash_assign(result[key], keys, value);
-    }
-    else {
-        var string = between[1];
-        // +var converts the variable into a number
-        // better than parseInt because it doesn't truncate away trailing
-        // letters and actually fails if whole thing is not a number
-        var index = +string;
-
-        // If the characters between the brackets is not a number it is an
-        // attribute name and can be assigned directly.
-        if (isNaN(index)) {
-            result = result || {};
-            result[string] = hash_assign(result[string], keys, value);
-        }
-        else {
-            result = result || [];
-            result[index] = hash_assign(result[index], keys, value);
-        }
-    }
-
-    return result;
-}
-
-// Object/hash encoding serializer.
-function hash_serializer(result, key, value) {
-    var matches = key.match(brackets);
-
-    // Has brackets? Use the recursive assignment function to walk the keys,
-    // construct any missing objects in the result tree and make the assignment
-    // at the end of the chain.
-    if (matches) {
-        var keys = parse_keys(key);
-        hash_assign(result, keys, value);
-    }
-    else {
-        // Non bracket notation can make assignments directly.
-        var existing = result[key];
-
-        // If the value has been assigned already (for instance when a radio and
-        // a checkbox have the same name attribute) convert the previous value
-        // into an array before pushing into it.
-        //
-        // NOTE: If this requirement were removed all hash creation and
-        // assignment could go through `hash_assign`.
-        if (existing) {
-            if (!Array.isArray(existing)) {
-                result[key] = [ existing ];
-            }
-
-            result[key].push(value);
-        }
-        else {
-            result[key] = value;
-        }
-    }
-
-    return result;
-}
-
-// urlform encoding serializer
-function str_serialize(result, key, value) {
-    // encode newlines as \r\n cause the html spec says so
-    value = value.replace(/(\r)?\n/g, '\r\n');
-    value = encodeURIComponent(value);
-
-    // spaces should be '+' rather than '%20'.
-    value = value.replace(/%20/g, '+');
-    return result + (result ? '&' : '') + encodeURIComponent(key) + '=' + value;
-}
-
-module.exports = serialize;
-
-},{}],8:[function(require,module,exports){
+},{"base64-js":2,"buffer":3,"ieee754":4}],4:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = (nBytes * 8) - mLen - 1
@@ -5952,610 +6181,5 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 
   buffer[offset + i - d] |= s * 128
 }
-
-},{}],9:[function(require,module,exports){
-(function (global){
-/**
- * lodash (Custom Build) <https://lodash.com/>
- * Build: `lodash modularize exports="npm" -o ./`
- * Copyright jQuery Foundation and other contributors <https://jquery.org/>
- * Released under MIT license <https://lodash.com/license>
- * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
- * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
- */
-
-/** Used as references for various `Number` constants. */
-var INFINITY = 1 / 0;
-
-/** `Object#toString` result references. */
-var symbolTag = '[object Symbol]';
-
-/** Used to match words composed of alphanumeric characters. */
-var reAsciiWord = /[^\x00-\x2f\x3a-\x40\x5b-\x60\x7b-\x7f]+/g;
-
-/** Used to match Latin Unicode letters (excluding mathematical operators). */
-var reLatin = /[\xc0-\xd6\xd8-\xf6\xf8-\xff\u0100-\u017f]/g;
-
-/** Used to compose unicode character classes. */
-var rsAstralRange = '\\ud800-\\udfff',
-    rsComboMarksRange = '\\u0300-\\u036f\\ufe20-\\ufe23',
-    rsComboSymbolsRange = '\\u20d0-\\u20f0',
-    rsDingbatRange = '\\u2700-\\u27bf',
-    rsLowerRange = 'a-z\\xdf-\\xf6\\xf8-\\xff',
-    rsMathOpRange = '\\xac\\xb1\\xd7\\xf7',
-    rsNonCharRange = '\\x00-\\x2f\\x3a-\\x40\\x5b-\\x60\\x7b-\\xbf',
-    rsPunctuationRange = '\\u2000-\\u206f',
-    rsSpaceRange = ' \\t\\x0b\\f\\xa0\\ufeff\\n\\r\\u2028\\u2029\\u1680\\u180e\\u2000\\u2001\\u2002\\u2003\\u2004\\u2005\\u2006\\u2007\\u2008\\u2009\\u200a\\u202f\\u205f\\u3000',
-    rsUpperRange = 'A-Z\\xc0-\\xd6\\xd8-\\xde',
-    rsVarRange = '\\ufe0e\\ufe0f',
-    rsBreakRange = rsMathOpRange + rsNonCharRange + rsPunctuationRange + rsSpaceRange;
-
-/** Used to compose unicode capture groups. */
-var rsApos = "['\u2019]",
-    rsBreak = '[' + rsBreakRange + ']',
-    rsCombo = '[' + rsComboMarksRange + rsComboSymbolsRange + ']',
-    rsDigits = '\\d+',
-    rsDingbat = '[' + rsDingbatRange + ']',
-    rsLower = '[' + rsLowerRange + ']',
-    rsMisc = '[^' + rsAstralRange + rsBreakRange + rsDigits + rsDingbatRange + rsLowerRange + rsUpperRange + ']',
-    rsFitz = '\\ud83c[\\udffb-\\udfff]',
-    rsModifier = '(?:' + rsCombo + '|' + rsFitz + ')',
-    rsNonAstral = '[^' + rsAstralRange + ']',
-    rsRegional = '(?:\\ud83c[\\udde6-\\uddff]){2}',
-    rsSurrPair = '[\\ud800-\\udbff][\\udc00-\\udfff]',
-    rsUpper = '[' + rsUpperRange + ']',
-    rsZWJ = '\\u200d';
-
-/** Used to compose unicode regexes. */
-var rsLowerMisc = '(?:' + rsLower + '|' + rsMisc + ')',
-    rsUpperMisc = '(?:' + rsUpper + '|' + rsMisc + ')',
-    rsOptLowerContr = '(?:' + rsApos + '(?:d|ll|m|re|s|t|ve))?',
-    rsOptUpperContr = '(?:' + rsApos + '(?:D|LL|M|RE|S|T|VE))?',
-    reOptMod = rsModifier + '?',
-    rsOptVar = '[' + rsVarRange + ']?',
-    rsOptJoin = '(?:' + rsZWJ + '(?:' + [rsNonAstral, rsRegional, rsSurrPair].join('|') + ')' + rsOptVar + reOptMod + ')*',
-    rsSeq = rsOptVar + reOptMod + rsOptJoin,
-    rsEmoji = '(?:' + [rsDingbat, rsRegional, rsSurrPair].join('|') + ')' + rsSeq;
-
-/** Used to match apostrophes. */
-var reApos = RegExp(rsApos, 'g');
-
-/**
- * Used to match [combining diacritical marks](https://en.wikipedia.org/wiki/Combining_Diacritical_Marks) and
- * [combining diacritical marks for symbols](https://en.wikipedia.org/wiki/Combining_Diacritical_Marks_for_Symbols).
- */
-var reComboMark = RegExp(rsCombo, 'g');
-
-/** Used to match complex or compound words. */
-var reUnicodeWord = RegExp([
-  rsUpper + '?' + rsLower + '+' + rsOptLowerContr + '(?=' + [rsBreak, rsUpper, '$'].join('|') + ')',
-  rsUpperMisc + '+' + rsOptUpperContr + '(?=' + [rsBreak, rsUpper + rsLowerMisc, '$'].join('|') + ')',
-  rsUpper + '?' + rsLowerMisc + '+' + rsOptLowerContr,
-  rsUpper + '+' + rsOptUpperContr,
-  rsDigits,
-  rsEmoji
-].join('|'), 'g');
-
-/** Used to detect strings that need a more robust regexp to match words. */
-var reHasUnicodeWord = /[a-z][A-Z]|[A-Z]{2,}[a-z]|[0-9][a-zA-Z]|[a-zA-Z][0-9]|[^a-zA-Z0-9 ]/;
-
-/** Used to map Latin Unicode letters to basic Latin letters. */
-var deburredLetters = {
-  // Latin-1 Supplement block.
-  '\xc0': 'A',  '\xc1': 'A', '\xc2': 'A', '\xc3': 'A', '\xc4': 'A', '\xc5': 'A',
-  '\xe0': 'a',  '\xe1': 'a', '\xe2': 'a', '\xe3': 'a', '\xe4': 'a', '\xe5': 'a',
-  '\xc7': 'C',  '\xe7': 'c',
-  '\xd0': 'D',  '\xf0': 'd',
-  '\xc8': 'E',  '\xc9': 'E', '\xca': 'E', '\xcb': 'E',
-  '\xe8': 'e',  '\xe9': 'e', '\xea': 'e', '\xeb': 'e',
-  '\xcc': 'I',  '\xcd': 'I', '\xce': 'I', '\xcf': 'I',
-  '\xec': 'i',  '\xed': 'i', '\xee': 'i', '\xef': 'i',
-  '\xd1': 'N',  '\xf1': 'n',
-  '\xd2': 'O',  '\xd3': 'O', '\xd4': 'O', '\xd5': 'O', '\xd6': 'O', '\xd8': 'O',
-  '\xf2': 'o',  '\xf3': 'o', '\xf4': 'o', '\xf5': 'o', '\xf6': 'o', '\xf8': 'o',
-  '\xd9': 'U',  '\xda': 'U', '\xdb': 'U', '\xdc': 'U',
-  '\xf9': 'u',  '\xfa': 'u', '\xfb': 'u', '\xfc': 'u',
-  '\xdd': 'Y',  '\xfd': 'y', '\xff': 'y',
-  '\xc6': 'Ae', '\xe6': 'ae',
-  '\xde': 'Th', '\xfe': 'th',
-  '\xdf': 'ss',
-  // Latin Extended-A block.
-  '\u0100': 'A',  '\u0102': 'A', '\u0104': 'A',
-  '\u0101': 'a',  '\u0103': 'a', '\u0105': 'a',
-  '\u0106': 'C',  '\u0108': 'C', '\u010a': 'C', '\u010c': 'C',
-  '\u0107': 'c',  '\u0109': 'c', '\u010b': 'c', '\u010d': 'c',
-  '\u010e': 'D',  '\u0110': 'D', '\u010f': 'd', '\u0111': 'd',
-  '\u0112': 'E',  '\u0114': 'E', '\u0116': 'E', '\u0118': 'E', '\u011a': 'E',
-  '\u0113': 'e',  '\u0115': 'e', '\u0117': 'e', '\u0119': 'e', '\u011b': 'e',
-  '\u011c': 'G',  '\u011e': 'G', '\u0120': 'G', '\u0122': 'G',
-  '\u011d': 'g',  '\u011f': 'g', '\u0121': 'g', '\u0123': 'g',
-  '\u0124': 'H',  '\u0126': 'H', '\u0125': 'h', '\u0127': 'h',
-  '\u0128': 'I',  '\u012a': 'I', '\u012c': 'I', '\u012e': 'I', '\u0130': 'I',
-  '\u0129': 'i',  '\u012b': 'i', '\u012d': 'i', '\u012f': 'i', '\u0131': 'i',
-  '\u0134': 'J',  '\u0135': 'j',
-  '\u0136': 'K',  '\u0137': 'k', '\u0138': 'k',
-  '\u0139': 'L',  '\u013b': 'L', '\u013d': 'L', '\u013f': 'L', '\u0141': 'L',
-  '\u013a': 'l',  '\u013c': 'l', '\u013e': 'l', '\u0140': 'l', '\u0142': 'l',
-  '\u0143': 'N',  '\u0145': 'N', '\u0147': 'N', '\u014a': 'N',
-  '\u0144': 'n',  '\u0146': 'n', '\u0148': 'n', '\u014b': 'n',
-  '\u014c': 'O',  '\u014e': 'O', '\u0150': 'O',
-  '\u014d': 'o',  '\u014f': 'o', '\u0151': 'o',
-  '\u0154': 'R',  '\u0156': 'R', '\u0158': 'R',
-  '\u0155': 'r',  '\u0157': 'r', '\u0159': 'r',
-  '\u015a': 'S',  '\u015c': 'S', '\u015e': 'S', '\u0160': 'S',
-  '\u015b': 's',  '\u015d': 's', '\u015f': 's', '\u0161': 's',
-  '\u0162': 'T',  '\u0164': 'T', '\u0166': 'T',
-  '\u0163': 't',  '\u0165': 't', '\u0167': 't',
-  '\u0168': 'U',  '\u016a': 'U', '\u016c': 'U', '\u016e': 'U', '\u0170': 'U', '\u0172': 'U',
-  '\u0169': 'u',  '\u016b': 'u', '\u016d': 'u', '\u016f': 'u', '\u0171': 'u', '\u0173': 'u',
-  '\u0174': 'W',  '\u0175': 'w',
-  '\u0176': 'Y',  '\u0177': 'y', '\u0178': 'Y',
-  '\u0179': 'Z',  '\u017b': 'Z', '\u017d': 'Z',
-  '\u017a': 'z',  '\u017c': 'z', '\u017e': 'z',
-  '\u0132': 'IJ', '\u0133': 'ij',
-  '\u0152': 'Oe', '\u0153': 'oe',
-  '\u0149': "'n", '\u017f': 'ss'
-};
-
-/** Detect free variable `global` from Node.js. */
-var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
-
-/** Detect free variable `self`. */
-var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
-
-/** Used as a reference to the global object. */
-var root = freeGlobal || freeSelf || Function('return this')();
-
-/**
- * A specialized version of `_.reduce` for arrays without support for
- * iteratee shorthands.
- *
- * @private
- * @param {Array} [array] The array to iterate over.
- * @param {Function} iteratee The function invoked per iteration.
- * @param {*} [accumulator] The initial value.
- * @param {boolean} [initAccum] Specify using the first element of `array` as
- *  the initial value.
- * @returns {*} Returns the accumulated value.
- */
-function arrayReduce(array, iteratee, accumulator, initAccum) {
-  var index = -1,
-      length = array ? array.length : 0;
-
-  if (initAccum && length) {
-    accumulator = array[++index];
-  }
-  while (++index < length) {
-    accumulator = iteratee(accumulator, array[index], index, array);
-  }
-  return accumulator;
-}
-
-/**
- * Splits an ASCII `string` into an array of its words.
- *
- * @private
- * @param {string} The string to inspect.
- * @returns {Array} Returns the words of `string`.
- */
-function asciiWords(string) {
-  return string.match(reAsciiWord) || [];
-}
-
-/**
- * The base implementation of `_.propertyOf` without support for deep paths.
- *
- * @private
- * @param {Object} object The object to query.
- * @returns {Function} Returns the new accessor function.
- */
-function basePropertyOf(object) {
-  return function(key) {
-    return object == null ? undefined : object[key];
-  };
-}
-
-/**
- * Used by `_.deburr` to convert Latin-1 Supplement and Latin Extended-A
- * letters to basic Latin letters.
- *
- * @private
- * @param {string} letter The matched letter to deburr.
- * @returns {string} Returns the deburred letter.
- */
-var deburrLetter = basePropertyOf(deburredLetters);
-
-/**
- * Checks if `string` contains a word composed of Unicode symbols.
- *
- * @private
- * @param {string} string The string to inspect.
- * @returns {boolean} Returns `true` if a word is found, else `false`.
- */
-function hasUnicodeWord(string) {
-  return reHasUnicodeWord.test(string);
-}
-
-/**
- * Splits a Unicode `string` into an array of its words.
- *
- * @private
- * @param {string} The string to inspect.
- * @returns {Array} Returns the words of `string`.
- */
-function unicodeWords(string) {
-  return string.match(reUnicodeWord) || [];
-}
-
-/** Used for built-in method references. */
-var objectProto = Object.prototype;
-
-/**
- * Used to resolve the
- * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
- * of values.
- */
-var objectToString = objectProto.toString;
-
-/** Built-in value references. */
-var Symbol = root.Symbol;
-
-/** Used to convert symbols to primitives and strings. */
-var symbolProto = Symbol ? Symbol.prototype : undefined,
-    symbolToString = symbolProto ? symbolProto.toString : undefined;
-
-/**
- * The base implementation of `_.toString` which doesn't convert nullish
- * values to empty strings.
- *
- * @private
- * @param {*} value The value to process.
- * @returns {string} Returns the string.
- */
-function baseToString(value) {
-  // Exit early for strings to avoid a performance hit in some environments.
-  if (typeof value == 'string') {
-    return value;
-  }
-  if (isSymbol(value)) {
-    return symbolToString ? symbolToString.call(value) : '';
-  }
-  var result = (value + '');
-  return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
-}
-
-/**
- * Creates a function like `_.camelCase`.
- *
- * @private
- * @param {Function} callback The function to combine each word.
- * @returns {Function} Returns the new compounder function.
- */
-function createCompounder(callback) {
-  return function(string) {
-    return arrayReduce(words(deburr(string).replace(reApos, '')), callback, '');
-  };
-}
-
-/**
- * Checks if `value` is object-like. A value is object-like if it's not `null`
- * and has a `typeof` result of "object".
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
- * @example
- *
- * _.isObjectLike({});
- * // => true
- *
- * _.isObjectLike([1, 2, 3]);
- * // => true
- *
- * _.isObjectLike(_.noop);
- * // => false
- *
- * _.isObjectLike(null);
- * // => false
- */
-function isObjectLike(value) {
-  return !!value && typeof value == 'object';
-}
-
-/**
- * Checks if `value` is classified as a `Symbol` primitive or object.
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a symbol, else `false`.
- * @example
- *
- * _.isSymbol(Symbol.iterator);
- * // => true
- *
- * _.isSymbol('abc');
- * // => false
- */
-function isSymbol(value) {
-  return typeof value == 'symbol' ||
-    (isObjectLike(value) && objectToString.call(value) == symbolTag);
-}
-
-/**
- * Converts `value` to a string. An empty string is returned for `null`
- * and `undefined` values. The sign of `-0` is preserved.
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to process.
- * @returns {string} Returns the string.
- * @example
- *
- * _.toString(null);
- * // => ''
- *
- * _.toString(-0);
- * // => '-0'
- *
- * _.toString([1, 2, 3]);
- * // => '1,2,3'
- */
-function toString(value) {
-  return value == null ? '' : baseToString(value);
-}
-
-/**
- * Deburrs `string` by converting
- * [Latin-1 Supplement](https://en.wikipedia.org/wiki/Latin-1_Supplement_(Unicode_block)#Character_table)
- * and [Latin Extended-A](https://en.wikipedia.org/wiki/Latin_Extended-A)
- * letters to basic Latin letters and removing
- * [combining diacritical marks](https://en.wikipedia.org/wiki/Combining_Diacritical_Marks).
- *
- * @static
- * @memberOf _
- * @since 3.0.0
- * @category String
- * @param {string} [string=''] The string to deburr.
- * @returns {string} Returns the deburred string.
- * @example
- *
- * _.deburr('déjà vu');
- * // => 'deja vu'
- */
-function deburr(string) {
-  string = toString(string);
-  return string && string.replace(reLatin, deburrLetter).replace(reComboMark, '');
-}
-
-/**
- * Converts `string` to
- * [kebab case](https://en.wikipedia.org/wiki/Letter_case#Special_case_styles).
- *
- * @static
- * @memberOf _
- * @since 3.0.0
- * @category String
- * @param {string} [string=''] The string to convert.
- * @returns {string} Returns the kebab cased string.
- * @example
- *
- * _.kebabCase('Foo Bar');
- * // => 'foo-bar'
- *
- * _.kebabCase('fooBar');
- * // => 'foo-bar'
- *
- * _.kebabCase('__FOO_BAR__');
- * // => 'foo-bar'
- */
-var kebabCase = createCompounder(function(result, word, index) {
-  return result + (index ? '-' : '') + word.toLowerCase();
-});
-
-/**
- * Splits `string` into an array of its words.
- *
- * @static
- * @memberOf _
- * @since 3.0.0
- * @category String
- * @param {string} [string=''] The string to inspect.
- * @param {RegExp|string} [pattern] The pattern to match words.
- * @param- {Object} [guard] Enables use as an iteratee for methods like `_.map`.
- * @returns {Array} Returns the words of `string`.
- * @example
- *
- * _.words('fred, barney, & pebbles');
- * // => ['fred', 'barney', 'pebbles']
- *
- * _.words('fred, barney, & pebbles', /[^, ]+/g);
- * // => ['fred', 'barney', '&', 'pebbles']
- */
-function words(string, pattern, guard) {
-  string = toString(string);
-  pattern = guard ? undefined : pattern;
-
-  if (pattern === undefined) {
-    return hasUnicodeWord(string) ? unicodeWords(string) : asciiWords(string);
-  }
-  return string.match(pattern) || [];
-}
-
-module.exports = kebabCase;
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],10:[function(require,module,exports){
-'use strict';
-
-// Customized for this use-case
-const isObject = value =>
-	typeof value === 'object' &&
-	value !== null &&
-	!(value instanceof RegExp) &&
-	!(value instanceof Error) &&
-	!(value instanceof Date);
-
-const mapObject = (object, fn, options, isSeen = new WeakMap()) => {
-	options = Object.assign({
-		deep: false,
-		target: {}
-	}, options);
-
-	if (isSeen.has(object)) {
-		return isSeen.get(object);
-	}
-
-	isSeen.set(object, options.target);
-
-	const {target} = options;
-	delete options.target;
-
-	const mapArray = array => array.map(x => isObject(x) ? mapObject(x, fn, options, isSeen) : x);
-	if (Array.isArray(object)) {
-		return mapArray(object);
-	}
-
-	/// TODO: Use `Object.entries()` when targeting Node.js 8
-	for (const key of Object.keys(object)) {
-		const value = object[key];
-		let [newKey, newValue] = fn(key, value, object);
-
-		if (options.deep && isObject(newValue)) {
-			newValue = Array.isArray(newValue) ?
-				mapArray(newValue) :
-				mapObject(newValue, fn, options, isSeen);
-		}
-
-		target[newKey] = newValue;
-	}
-
-	return target;
-};
-
-module.exports = mapObject;
-
-},{}],11:[function(require,module,exports){
-'use strict';
-
-class QuickLRU {
-	constructor(opts) {
-		opts = Object.assign({}, opts);
-
-		if (!(opts.maxSize && opts.maxSize > 0)) {
-			throw new TypeError('`maxSize` must be a number greater than 0');
-		}
-
-		this.maxSize = opts.maxSize;
-		this.cache = new Map();
-		this.oldCache = new Map();
-		this._size = 0;
-	}
-
-	_set(key, value) {
-		this.cache.set(key, value);
-		this._size++;
-
-		if (this._size >= this.maxSize) {
-			this._size = 0;
-			this.oldCache = this.cache;
-			this.cache = new Map();
-		}
-	}
-
-	get(key) {
-		if (this.cache.has(key)) {
-			return this.cache.get(key);
-		}
-
-		if (this.oldCache.has(key)) {
-			const value = this.oldCache.get(key);
-			this._set(key, value);
-			return value;
-		}
-	}
-
-	set(key, value) {
-		if (this.cache.has(key)) {
-			this.cache.set(key, value);
-		} else {
-			this._set(key, value);
-		}
-
-		return this;
-	}
-
-	has(key) {
-		return this.cache.has(key) || this.oldCache.has(key);
-	}
-
-	peek(key) {
-		if (this.cache.has(key)) {
-			return this.cache.get(key);
-		}
-
-		if (this.oldCache.has(key)) {
-			return this.oldCache.get(key);
-		}
-	}
-
-	delete(key) {
-		if (this.cache.delete(key)) {
-			this._size--;
-		}
-
-		this.oldCache.delete(key);
-	}
-
-	clear() {
-		this.cache.clear();
-		this.oldCache.clear();
-		this._size = 0;
-	}
-
-	* keys() {
-		for (const el of this) {
-			yield el[0];
-		}
-	}
-
-	* values() {
-		for (const el of this) {
-			yield el[1];
-		}
-	}
-
-	* [Symbol.iterator]() {
-		for (const el of this.cache) {
-			yield el;
-		}
-
-		for (const el of this.oldCache) {
-			if (!this.cache.has(el[0])) {
-				yield el;
-			}
-		}
-	}
-
-	get size() {
-		let oldCacheSize = 0;
-		for (const el of this.oldCache) {
-			if (!this.cache.has(el[0])) {
-				oldCacheSize++;
-			}
-		}
-
-		return this._size + oldCacheSize;
-	}
-}
-
-module.exports = QuickLRU;
 
 },{}]},{},[1]);

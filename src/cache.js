@@ -1,25 +1,24 @@
 import sdk from './sdk';
-import * as Storage from './input-output';
+import * as Storage from './storage';
 
 export {
-    pollDefault,
     poll
 };
 
 function poll(CACHE_CONFIG, newInputKey) {
     if (!newInputKey) {
         pollDefault(CACHE_CONFIG);
-    } else {
-        const { inputs } = Storage.getAll();
-        CACHE_CONFIG.forEach(config => {
-            if (config.sourceInputKeys.includes[newInputKey]) {
-                const readyToFetch = config.sourceInputKeys.every(input => inputs[input]);
-                if (readyToFetch) {
-                    fetchAndSave(config);
-                }
-            }
-        });
     }
+
+    const { inputs } = Storage.getAll();
+    CACHE_CONFIG.forEach(config => {
+        if (config.sourceInputKeys.includes[newInputKey]) {
+            const readyToFetch = config.sourceInputKeys.every(input => inputs[input]);
+            if (readyToFetch) {
+                fetchAndSave(config);
+            }
+        }
+    });
 }
 
 function pollDefault(CACHE_CONFIG) {
