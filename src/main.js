@@ -9,6 +9,7 @@ import PageRenderer from './pageRenderer';
 import NotFound from './NotFound';
 import Loading from './builtin-template/loading';
 import ProgressBar from './builtin-template/ProgressBar';
+import Confirmation from './builtin-template/confirmation';
 
 function createApp({ pages = [], cache = [], layout = [], data = {} }, callback) {
         //TODO: maybe this core app fetches all domain's meta and store them.
@@ -33,7 +34,7 @@ function createApp({ pages = [], cache = [], layout = [], data = {} }, callback)
 
     const routes = {
         '/': Loading(mainSelector),
-        '/confirmation': () => callback(null, 'finish') // TODO: defined final step
+        '/confirmation': { renderer: Confirmation(mainSelector), title: null, step: null } // TODO: define final step
     };
 
     pages.forEach((config, idx) => {

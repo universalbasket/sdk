@@ -1,4 +1,4 @@
-import { html } from '../src/lit-html.js';
+import { html } from 'lit-html';
 
 export default () => {
     return html`

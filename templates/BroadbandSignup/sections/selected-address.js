@@ -1,5 +1,5 @@
 import selectedAddress from '../inputs/selected-address';
-import { html } from '../../../src/lit-html';
+import { html } from 'lit-html';
 
 export default (name, data) => html`
     ${selectedAddress(data.availableAddresses)}

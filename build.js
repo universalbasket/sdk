@@ -3285,16 +3285,20 @@
     <div class="page">
         <pre id="error"></pre>
         <div class="page__body" id="target"></div>
-
-        <div class="page__actions">
-        </div>
     </div>
 `;
 
   var inlineLoading = () => html`
 <div class="inline-loading">
-    <div class="spinner">
-        <div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
+    <div class="sk-fading-circle">
+        <div class="sk-circle1 sk-circle"></div>
+        <div class="sk-circle2 sk-circle"></div>
+        <div class="sk-circle3 sk-circle"></div>
+        <div class="sk-circle4 sk-circle"></div>
+        <div class="sk-circle5 sk-circle"></div>
+        <div class="sk-circle6 sk-circle"></div>
+        <div class="sk-circle7 sk-circle"></div>
+        <div class="sk-circle8 sk-circle"></div>
     </div>
 
     <span>Please wait a moment</span>
@@ -3407,8 +3411,6 @@
       }
 
       render(html`${inlineLoading()} `, selector);
-      var page = document.querySelector('#target');
-      page.scrollTop = page.scrollHeight;
       this.getDataForSection(waitFor).then(res => {
         render(html`${template(nameForElement, res)} `, selector);
         this.addListener(nameForElement);
@@ -3511,7 +3513,7 @@
 `;
 
   const stepTemplate = (title, index, activeIndex) => html`
-    <li class="progress-bar__step ${index === activeIndex ? 'progress-bar__step--active' : ''}">
+    <li class="progress-bar__step ${activeIndex != null && index === activeIndex ? 'progress-bar__step--active' : ''}">
         <div class="progress-bar__icon-container">
             <div class="progress-bar__icon">
                 <span class="progress-bar__step-index">${index}</span>
@@ -3521,7 +3523,6 @@
     </li>`;
 
   var progressBar = (titles, activeIndex) => {
-    console.log(titles, activeIndex);
     return html`
 <ol class="progress-bar">
     ${titles.map((title, index) => stepTemplate(title, index + 1, activeIndex))}
@@ -3532,6 +3533,27 @@
   var ProgressBar = selector => {
     return (titles, activeIndex) => render(progressBar(titles, activeIndex), document.querySelector(selector));
   };
+
+  var Confirmation = (selector = '#app') => {
+    return {
+      init: () => {
+        const target = document.querySelector(selector);
+
+        if (!target) {
+          throw new Error(`loading: selector ${selector} not found`);
+        }
+
+        render(template$1, target);
+      }
+    };
+  };
+
+  const template$1 = html`
+<div class="page">
+    <h2> Purchase complete. Thank you. </h2>
+    <p> You’ll receive an email confirmation shortly.</p>
+</div>
+`;
 
   function createApp({
     pages = [],
@@ -3561,8 +3583,12 @@
     flow.push('/confirmation');
     const routes = {
       '/': Loading(mainSelector),
-      '/confirmation': () => callback(null, 'finish') // TODO: defined final step
+      '/confirmation': {
+        renderer: Confirmation(mainSelector),
+        title: null,
+        step: null // TODO: define final step
 
+      }
     };
     pages.forEach((config, idx) => {
       const {
@@ -4023,7 +4049,7 @@
         <span class="field__name">What is you property type? </span>
         <div class="field__inputs group group--merged">
             <input type="radio" name="installation[property-type]" id="installation[property-type]-flat" value="flat"
-                required>
+                required checked>
             <label for="installation[property-type]-flat" class="button">Flat</label>
 
             <input type="radio" name="installation[property-type]" id="installation[property-type]-house" value="house">
@@ -4065,7 +4091,7 @@
     ${installation()}
 
     <div class="section__actions">
-        <button type="button" class="button button--right button--primary" id="submit-btn-${name}">Look-up</button>
+        <button type="button" class="button button--right button--primary" id="submit-btn-${name}">Continue</button>
     </div>
 `;
 

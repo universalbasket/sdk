@@ -1,4 +1,4 @@
-import { html } from '../../src/lit-html';
+import { html } from 'lit-html';
 import Person from '../Generic/Person';
 import Address from '../Generic/Address';
 

@@ -1,4 +1,4 @@
-import { html } from '../../src/lit-html';
+import { html } from 'lit-html';
 
 const TITLES = ['mr', 'ms', 'mrs', 'miss'];
 

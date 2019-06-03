@@ -1,4 +1,4 @@
-import { html, render } from '../../src/lit-html';
+import { html, render } from 'lit-html';
 
 let availableBreedTypes = {};
 

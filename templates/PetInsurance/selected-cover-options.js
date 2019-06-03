@@ -1,4 +1,4 @@
-import { html } from '../../src/lit-html';
+import { html } from 'lit-html';
 const key = 'selected-cover-options';
 
 export default (output) => {

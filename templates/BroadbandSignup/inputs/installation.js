@@ -1,4 +1,4 @@
-import { html } from '../../../src/lit-html';
+import { html } from 'lit-html';
 
 export default () => html`
 <div name="installation">
@@ -6,7 +6,7 @@ export default () => html`
         <span class="field__name">What is you property type? </span>
         <div class="field__inputs group group--merged">
             <input type="radio" name="installation[property-type]" id="installation[property-type]-flat" value="flat"
-                required>
+                required checked>
             <label for="installation[property-type]-flat" class="button">Flat</label>
 
             <input type="radio" name="installation[property-type]" id="installation[property-type]-house" value="house">

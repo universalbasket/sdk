@@ -1,4 +1,4 @@
-import { html } from '../../src/lit-html';
+import { html } from 'lit-html';
 
 export default (terms) => html`
     <div class="field field-set">
