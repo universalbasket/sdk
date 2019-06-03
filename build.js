@@ -3281,7 +3281,7 @@
     return source;
   }
 
-  var pageTemplate = () => html`
+  var pageWrapper = () => html`
     <div class="page">
         <pre id="error"></pre>
         <div class="page__body" id="target"></div>
@@ -3326,7 +3326,7 @@
     }
 
     renderWrapper() {
-      render(pageTemplate(), document.querySelector(this.selector));
+      render(pageWrapper(), document.querySelector(this.selector));
       const wrappers = this.sections.map(section => lodash_kebabcase(section.name)).map(name => {
         return html`<form id="section-form-${name}"></form>`;
       });
@@ -3534,6 +3534,52 @@
     return (titles, activeIndex) => render(progressBar(titles, activeIndex), document.querySelector(selector));
   };
 
+  var summaryWrapper = (serviceName, domain) => html`
+<div class="summary">
+    <div class="summary__header">
+        <b>${serviceName}</b>
+        <span class="dimmed">${domain}</span>
+    </div>
+
+    <section class="summary__body" id="summary-body"></section>
+</div>`;
+
+  let bodyTemplate = null;
+  let initiated = false;
+  var Summary = {
+    init: ({
+      template,
+      selector = '#summary'
+    }) => {
+      if (!template || typeof template !== 'function') {
+        throw new Error(`renderSummary: invalid template`);
+      }
+
+      const wrapper = document.querySelector(selector);
+
+      if (!wrapper) {
+        throw new Error(`renderSummary: element ${selector} not found`);
+      }
+
+      bodyTemplate = template;
+      render(summaryWrapper(), wrapper);
+      initiated = true;
+    },
+    update: () => {
+      if (!initiated || !bodyTemplate) {
+        throw new Error('renderSummary: not initiated');
+      }
+
+      const {
+        inputs,
+        outputs,
+        cache,
+        local
+      } = getAll();
+      render(bodyTemplate(inputs, outputs, cache, local), document.querySelector('#summary-body'));
+    }
+  };
+
   var Confirmation = (selector = '#app') => {
     return {
       init: () => {
@@ -3621,7 +3667,8 @@
         } = data;
         const router = Router(routes, titles, NotFound(mainSelector), ProgressBar('#progress-bar'));
         layout.filter(l => !l.mainTarget).forEach(l => render(l.template(), document.querySelector(l.selector)));
-        const Summary = layout.find(l => l.name === 'summary');
+        const summaryConfig = layout.find(l => l.name === 'summary');
+        Summary.init(summaryConfig);
         window.addEventListener('hashchange', () => {
           router.navigate();
 
@@ -3636,12 +3683,12 @@
             }).catch(err => console.log(err));
           }
 
-          updateSummary(Summary);
+          Summary.update();
         }); // Listen on pages load:
 
         window.addEventListener('load', () => {
           router.navigate();
-          updateSummary(Summary);
+          Summary.update();
         }); //custom event when input submitted
 
         window.addEventListener('submitinput', e => {
@@ -3650,10 +3697,10 @@
           e.detail.forEach(({
             key
           }) => poll(cache, key));
-          updateSummary(Summary);
+          Summary.update();
         });
         window.addEventListener('createoutput', () => {
-          updateSummary(Summary);
+          Summary.update();
         });
 
         if (window.location.hash && window.location.hash !== '/') {
@@ -3673,25 +3720,6 @@
         }
       }
     };
-  }
-
-  function updateSummary(summary = {}) {
-    const {
-      template,
-      selector
-    } = summary;
-
-    if (!summary) {
-      return;
-    }
-
-    const {
-      inputs,
-      outputs,
-      cache,
-      local
-    } = getAll();
-    render(template(inputs, outputs, cache, local), document.querySelector(selector));
   }
 
   var CONFIG = {
@@ -3783,31 +3811,19 @@
         }
       }
     }
-  };
-  /*
-  see https://lit-html.polymer-project.org/guide/template-reference#cache
-  for details view and summary view for mobile version.
-  */
-  //get service name & domain
+  }; //get service name & domain
 
-  var summary = (inputs = {}, outputs = {}, cache = {}) => html`
-<div class="summary">
-    <div class="summary__header">
-        <b>USwitch</b>
-        <span class="dimmed">Broadband Signup</span>
-    </div>
-
-    <section class="summary__body">
-        ${inputs.selectedBroadbandPackage || inputs.selectedTvPackages || inputs.selectedPhonePackage ? html`
-            <div id="package-detail" class="summary__block">
-                <h5 class="summary__block-title"> Your Package </h5>
-                <ul>
-                    ${inputs.selectedBroadbandPackage ? html`<li>Broadband: ${inputs.selectedBroadbandPackage.name}</li>` : ''}
-                    ${inputs.selectedTvPackages ? html`TV : <li> ${inputs.selectedTvPackages.map(_ => _.name)}</li>` : ''}
-                    ${inputs.selectedPhonePackage ? html`<li> Phone: ${inputs.selectedPhonePackage.name}</li>` : ''}
-                </ul>
-            </div>` : ''}
-    </section>
+  var summary = (inputs = {}, outputs = {}, cache = {}, local = {}) => html`
+<div>
+    ${inputs.selectedBroadbandPackage || inputs.selectedTvPackages || inputs.selectedPhonePackage ? html`
+        <div id="package-detail" class="summary__block">
+            <h5 class="summary__block-title"> Your Package </h5>
+            <ul>
+                ${inputs.selectedBroadbandPackage ? html`<li>Broadband: ${inputs.selectedBroadbandPackage.name}</li>` : ''}
+                ${inputs.selectedTvPackages ? html`TV : <li> ${inputs.selectedTvPackages.map(_ => _.name)}</li>` : ''}
+                ${inputs.selectedPhonePackage ? html`<li> Phone: ${inputs.selectedPhonePackage.name}</li>` : ''}
+            </ul>
+        </div>` : ''}
 </div>`;
 
   var header = () => html`
@@ -3825,8 +3841,7 @@
   Object.freeze({
     summary: summary,
     header: header,
-    footer: footer,
-    progressBar: progressBar
+    footer: footer
   });
 
   var landlineCheck = () => html`

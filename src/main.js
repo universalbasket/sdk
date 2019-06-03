@@ -5,11 +5,12 @@ import { render } from './lit-html';
 import * as Storage from './storage';
 import * as Cache from './cache';
 
-import PageRenderer from './pageRenderer';
-import NotFound from './NotFound';
-import Loading from './builtin-template/loading';
-import ProgressBar from './builtin-template/ProgressBar';
-import Confirmation from './builtin-template/confirmation';
+import PageRenderer from './page-renderer';
+import NotFound from './render-not-found';
+import Loading from './builtin-templates/loading';
+import ProgressBar from './render-progress-bar';
+import Summary from './render-summary';
+import Confirmation from './builtin-templates/confirmation';
 
 function createApp({ pages = [], cache = [], layout = [], data = {} }, callback) {
         //TODO: maybe this core app fetches all domain's meta and store them.
@@ -51,6 +52,7 @@ function createApp({ pages = [], cache = [], layout = [], data = {} }, callback)
         Object.keys(data.local).forEach(key => Storage.set('local', key, data.local[key]));
     }
 
+
     return {
         init: () => {
             const { initialInputs: input, category, serverUrlPath } = data;
@@ -60,7 +62,8 @@ function createApp({ pages = [], cache = [], layout = [], data = {} }, callback)
                 .filter(l => !l.mainTarget)
                 .forEach(l => render(l.template(), document.querySelector(l.selector)));
 
-            const Summary = layout.find(l => l.name === 'summary');
+            const summaryConfig = layout.find(l => l.name === 'summary');
+            Summary.init(summaryConfig);
 
             window.addEventListener('hashchange', () => {
                 router.navigate();
@@ -73,13 +76,13 @@ function createApp({ pages = [], cache = [], layout = [], data = {} }, callback)
                         .catch(err => console.log(err));
                 }
 
-                updateSummary(Summary);
+                Summary.update();
             });
 
             // Listen on pages load:
             window.addEventListener('load', () => {
                 router.navigate();
-                updateSummary(Summary);
+                Summary.update();
             });
 
             //custom event when input submitted
@@ -87,11 +90,11 @@ function createApp({ pages = [], cache = [], layout = [], data = {} }, callback)
                 //TODO: get cache using output
                 console.log(e);
                 e.detail.forEach(({ key }) => Cache.poll(cache, key));
-                updateSummary(Summary);
+                Summary.update();
             })
 
             window.addEventListener('createoutput', () => {
-                updateSummary(Summary);
+                Summary.update();
             })
 
             if (window.location.hash && window.location.hash !== '/') {
@@ -112,16 +115,6 @@ function createApp({ pages = [], cache = [], layout = [], data = {} }, callback)
             }
         }
     }
-}
-
-function updateSummary(summary = {}) {
-    const { template, selector } = summary;
-    if (!summary) {
-        return;
-    }
-
-    const { inputs, outputs, cache, local } = Storage.getAll();
-    render(template(inputs, outputs, cache, local), document.querySelector(selector));
 }
 
 export { createApp };

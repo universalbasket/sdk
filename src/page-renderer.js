@@ -3,8 +3,8 @@ import { html, render } from './lit-html';
 import sdk from './sdk';
 import serializeForm from './serialize-form';
 import getData from './get-data-with-priority'
-import pageTemplate from './builtin-template/page';
-import inlineLoading from './builtin-template/inline-loading';
+import pageWrapper from './builtin-templates/page-wrapper';
+import inlineLoading from './builtin-templates/inline-loading';
 import * as Storage from './storage';
 /**
  * @param {String} name
@@ -12,6 +12,7 @@ import * as Storage from './storage';
  * @param {String} selector
  * @param {Function} onFinish
  */
+
 class PageRenderer {
     constructor(name, sections = [], selector, onFinish) {
         this.name = name;
@@ -28,7 +29,7 @@ class PageRenderer {
     }
 
     renderWrapper() {
-        render(pageTemplate(), document.querySelector(this.selector));
+        render(pageWrapper(), document.querySelector(this.selector));
         const wrappers = this.sections.map(section => kebabcase(section.name)).map(name => {
             return html`<form id="section-form-${name}"></form>`;
         });

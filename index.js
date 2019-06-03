@@ -7,7 +7,7 @@ import CONFIG from './ubio.config';
 
 // TODO: ideally the directory is will be written in the config
 // or we designate the directory like below and force them to add the templates under the directory
-import * as LayoutTemplates from './templates/layout/index';
+import * as LayoutTemplates from './templates/BroadbandSignup/layout/index';
 import * as SectionTemplates from './templates/BroadbandSignup/sections/index';
 // confirmation, 404, error page will be added
 
