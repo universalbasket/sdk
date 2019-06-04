@@ -28,7 +28,8 @@
     "camelcase-keys": "^5.2.0",
     "form-serialize": "^0.7.2",
     "lit-html": "^1.1.0",
-    "lodash.kebabcase": "^4.1.1"
+    "lodash.kebabcase": "^4.1.1",
+    "rollup-plugin-alias": "^1.5.2"
   },
   "devDependencies": {
     "@babel/core": "^7.4.5",
@@ -51,7 +52,7 @@
     "watch": "^1.0.2"
   },
   "@pika/web": {
-    "webDependencies": [
+    "c": [
       "lit-html",
       "@ubio/sdk"
     ]

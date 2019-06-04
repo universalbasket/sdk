@@ -1,15 +1,20 @@
-import resolve from 'rollup-plugin-node-resolve';
-import commonjs from 'rollup-plugin-commonjs';
+const alias = require('rollup-plugin-alias');
+const p = require('./package');
+const { join } = require('path');
+const aliases = {};
 
-export default {
-  input: 'index.js',
-  output: {
-      file:'bundle.js',
-      format: 'umd',
-      name: 'UBIO_BUNDLE'
-  },
-  plugins: [
-    resolve(),
-    commonjs(),
-  ]
+for (const m of [...p['@pika/web'].webDependencies, ...p['hack-wrap']]) {
+    aliases[`/web_modules/${m}.js`] = join(__dirname, 'web_modules', `${m}.js`);
 }
+
+module.exports = {
+    input: 'index.js',
+    output: {
+        file:'bundle.js',
+        format: 'umd',
+        name: 'UBIO_BUNDLE'
+    },
+    plugins: [
+        alias(aliases)
+    ]
+};
