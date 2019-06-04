@@ -22,15 +22,15 @@
   "author": "ubio",
   "license": "ISC",
   "dependencies": {
-    "@ubio/sdk": "^0.4.4",
+    "@ubio/sdk": "^0.5.0",
     "camelcase-keys": "^5.2.0",
     "form-serialize": "^0.7.2",
-    "lit-html": "^1.0.0",
+    "lit-html": "^1.1.0",
     "lodash.kebabcase": "^4.1.1"
   },
   "devDependencies": {
-    "@babel/core": "^7.4.4",
-    "autoprefixer": "^9.5.1",
+    "@babel/core": "^7.4.5",
+    "autoprefixer": "^9.6.0",
     "babelify": "^10.0.0",
     "browser-sync": "^2.26.5",
     "browserify": "^16.2.3",
@@ -40,10 +40,10 @@
     "postcss": "^7.0.16",
     "postcss-cli": "^6.1.2",
     "postcss-import": "^12.0.1",
-    "rollup": "^1.12.3",
+    "rollup": "^1.13.1",
     "rollup-plugin-babel": "^4.3.2",
     "rollup-plugin-commonjs": "^10.0.0",
-    "rollup-plugin-node-resolve": "^5.0.0",
+    "rollup-plugin-node-resolve": "^5.0.1",
     "stylelint": "^10.0.1",
     "stylelint-config-standard": "^18.3.0",
     "watch": "^1.0.2"
