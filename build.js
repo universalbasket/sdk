@@ -348,19 +348,24 @@
       return fetchWrapper(canonicalizedBaseiUrl + path, fetch, token, options);
     }
 
-    return {
-      vaultPan: function (pan) {
+    var api = {
+      createOtp: function () {
         return vaultFetch('otp', {
           method: 'POST'
-        }).then(function (otp) {
+        }).then(function unwrapOtp(otp) {
+          return otp.id;
+        });
+      },
+      vaultPan: function (pan) {
+        return api.createOtp().then(function envaultPan(otp) {
           return vaultFetch('pan', {
             method: 'POST',
             body: {
-              otp: otp.id,
+              otp: otp,
               pan: pan
             }
           });
-        }).then(function (pan) {
+        }).then(function getPanToken(pan) {
           return vaultFetch('pan/temporary', {
             method: 'POST',
             body: {
@@ -368,18 +373,12 @@
               key: pan.key
             }
           });
-        }).then(function (temp) {
+        }).then(function unwrapPanToken(temp) {
           return temp.panToken;
-        });
-      },
-      getOtp: function () {
-        return vaultFetch('otp', {
-          method: 'POST'
-        }).then(function (otp) {
-          return otp.id;
         });
       }
     };
+    return api;
   }
   /**
    * @param {Object} options
@@ -456,6 +455,9 @@
       },
       trackJob: function (callback) {
         return apiClient.trackJob(jobId, callback);
+      },
+      createOtp: function () {
+        return vaultClient.createOtp();
       },
       vaultPan: function (pan) {
         return vaultClient.vaultPan(pan);
@@ -783,6 +785,52 @@
 
 
   const directives = new WeakMap();
+  /**
+   * Brands a function as a directive factory function so that lit-html will call
+   * the function during template rendering, rather than passing as a value.
+   *
+   * A _directive_ is a function that takes a Part as an argument. It has the
+   * signature: `(part: Part) => void`.
+   *
+   * A directive _factory_ is a function that takes arguments for data and
+   * configuration and returns a directive. Users of directive usually refer to
+   * the directive factory as the directive. For example, "The repeat directive".
+   *
+   * Usually a template author will invoke a directive factory in their template
+   * with relevant arguments, which will then return a directive function.
+   *
+   * Here's an example of using the `repeat()` directive factory that takes an
+   * array and a function to render an item:
+   *
+   * ```js
+   * html`<ul><${repeat(items, (item) => html`<li>${item}</li>`)}</ul>`
+   * ```
+   *
+   * When `repeat` is invoked, it returns a directive function that closes over
+   * `items` and the template function. When the outer template is rendered, the
+   * return directive function is called with the Part for the expression.
+   * `repeat` then performs it's custom logic to render multiple items.
+   *
+   * @param f The directive factory function. Must be a function that returns a
+   * function of the signature `(part: Part) => void`. The returned function will
+   * be called with the part object.
+   *
+   * @example
+   *
+   * import {directive, html} from 'lit-html';
+   *
+   * const immutable = directive((v) => (part) => {
+   *   if (part.value !== v) {
+   *     part.setValue(v)
+   *   }
+   * });
+   */
+
+  const directive = f => (...args) => {
+    const d = f(...args);
+    directives.set(d, true);
+    return d;
+  };
 
   const isDirective = o => {
     return typeof o === 'function' && directives.has(o);
@@ -808,17 +856,15 @@
 
   const isCEPolyfill = window.customElements !== undefined && window.customElements.polyfillWrapFlushCallback !== undefined;
   /**
-   * Removes nodes, starting from `startNode` (inclusive) to `endNode`
-   * (exclusive), from `container`.
+   * Removes nodes, starting from `start` (inclusive) to `end` (exclusive), from
+   * `container`.
    */
 
-  const removeNodes = (container, startNode, endNode = null) => {
-    let node = startNode;
-
-    while (node !== endNode) {
-      const n = node.nextSibling;
-      container.removeChild(node);
-      node = n;
+  const removeNodes = (container, start, end = null) => {
+    while (start !== end) {
+      const n = start.nextSibling;
+      container.removeChild(start);
+      start = n;
     }
   };
   /**
@@ -887,151 +933,181 @@
     constructor(result, element) {
       this.parts = [];
       this.element = element;
+      const nodesToRemove = [];
+      const stack = []; // Edge needs all 4 parameters present; IE11 needs 3rd parameter to be null
+
+      const walker = document.createTreeWalker(element.content, 133
+      /* NodeFilter.SHOW_{ELEMENT|COMMENT|TEXT} */
+      , null, false); // Keeps track of the last index associated with a part. We try to delete
+      // unnecessary nodes, but we never want to associate two different parts
+      // to the same index. They must have a constant node between.
+
+      let lastPartIndex = 0;
       let index = -1;
       let partIndex = 0;
-      const nodesToRemove = [];
+      const {
+        strings,
+        values: {
+          length
+        }
+      } = result;
 
-      const _prepareTemplate = template => {
-        const content = template.content; // Edge needs all 4 parameters present; IE11 needs 3rd parameter to be
-        // null
+      while (partIndex < length) {
+        const node = walker.nextNode();
 
-        const walker = document.createTreeWalker(content, 133
-        /* NodeFilter.SHOW_{ELEMENT|COMMENT|TEXT} */
-        , null, false); // Keeps track of the last index associated with a part. We try to delete
-        // unnecessary nodes, but we never want to associate two different parts
-        // to the same index. They must have a constant node between.
+        if (node === null) {
+          // We've exhausted the content inside a nested template element.
+          // Because we still have parts (the outer for-loop), we know:
+          // - There is a template in the stack
+          // - The walker will find a nextNode outside the template
+          walker.currentNode = stack.pop();
+          continue;
+        }
 
-        let lastPartIndex = 0;
+        index++;
 
-        while (walker.nextNode()) {
-          index++;
-          const node = walker.currentNode;
+        if (node.nodeType === 1
+        /* Node.ELEMENT_NODE */
+        ) {
+            if (node.hasAttributes()) {
+              const attributes = node.attributes;
+              const {
+                length
+              } = attributes; // Per
+              // https://developer.mozilla.org/en-US/docs/Web/API/NamedNodeMap,
+              // attributes are not guaranteed to be returned in document order.
+              // In particular, Edge/IE can return them out of order, so we cannot
+              // assume a correspondence between part index and attribute index.
 
-          if (node.nodeType === 1
-          /* Node.ELEMENT_NODE */
-          ) {
-              if (node.hasAttributes()) {
-                const attributes = node.attributes; // Per
-                // https://developer.mozilla.org/en-US/docs/Web/API/NamedNodeMap,
-                // attributes are not guaranteed to be returned in document order.
-                // In particular, Edge/IE can return them out of order, so we cannot
-                // assume a correspondance between part index and attribute index.
+              let count = 0;
 
-                let count = 0;
-
-                for (let i = 0; i < attributes.length; i++) {
-                  if (attributes[i].value.indexOf(marker) >= 0) {
-                    count++;
-                  }
-                }
-
-                while (count-- > 0) {
-                  // Get the template literal section leading up to the first
-                  // expression in this attribute
-                  const stringForPart = result.strings[partIndex]; // Find the attribute name
-
-                  const name = lastAttributeNameRegex.exec(stringForPart)[2]; // Find the corresponding attribute
-                  // All bound attributes have had a suffix added in
-                  // TemplateResult#getHTML to opt out of special attribute
-                  // handling. To look up the attribute value we also need to add
-                  // the suffix.
-
-                  const attributeLookupName = name.toLowerCase() + boundAttributeSuffix;
-                  const attributeValue = node.getAttribute(attributeLookupName);
-                  const strings = attributeValue.split(markerRegex);
-                  this.parts.push({
-                    type: 'attribute',
-                    index,
-                    name,
-                    strings
-                  });
-                  node.removeAttribute(attributeLookupName);
-                  partIndex += strings.length - 1;
+              for (let i = 0; i < length; i++) {
+                if (endsWith(attributes[i].name, boundAttributeSuffix)) {
+                  count++;
                 }
               }
 
-              if (node.tagName === 'TEMPLATE') {
-                _prepareTemplate(node);
-              }
-            } else if (node.nodeType === 3
-          /* Node.TEXT_NODE */
-          ) {
-              const data = node.data;
+              while (count-- > 0) {
+                // Get the template literal section leading up to the first
+                // expression in this attribute
+                const stringForPart = strings[partIndex]; // Find the attribute name
 
-              if (data.indexOf(marker) >= 0) {
-                const parent = node.parentNode;
-                const strings = data.split(markerRegex);
-                const lastIndex = strings.length - 1; // Generate a new text node for each literal section
-                // These nodes are also used as the markers for node parts
+                const name = lastAttributeNameRegex.exec(stringForPart)[2]; // Find the corresponding attribute
+                // All bound attributes have had a suffix added in
+                // TemplateResult#getHTML to opt out of special attribute
+                // handling. To look up the attribute value we also need to add
+                // the suffix.
 
-                for (let i = 0; i < lastIndex; i++) {
-                  parent.insertBefore(strings[i] === '' ? createMarker() : document.createTextNode(strings[i]), node);
-                  this.parts.push({
-                    type: 'node',
-                    index: ++index
-                  });
-                } // If there's no text, we must insert a comment to mark our place.
-                // Else, we can trust it will stick around after cloning.
-
-
-                if (strings[lastIndex] === '') {
-                  parent.insertBefore(createMarker(), node);
-                  nodesToRemove.push(node);
-                } else {
-                  node.data = strings[lastIndex];
-                } // We have a part for each match found
-
-
-                partIndex += lastIndex;
-              }
-            } else if (node.nodeType === 8
-          /* Node.COMMENT_NODE */
-          ) {
-              if (node.data === marker) {
-                const parent = node.parentNode; // Add a new marker node to be the startNode of the Part if any of
-                // the following are true:
-                //  * We don't have a previousSibling
-                //  * The previousSibling is already the start of a previous part
-
-                if (node.previousSibling === null || index === lastPartIndex) {
-                  index++;
-                  parent.insertBefore(createMarker(), node);
-                }
-
-                lastPartIndex = index;
+                const attributeLookupName = name.toLowerCase() + boundAttributeSuffix;
+                const attributeValue = node.getAttribute(attributeLookupName);
+                node.removeAttribute(attributeLookupName);
+                const statics = attributeValue.split(markerRegex);
                 this.parts.push({
-                  type: 'node',
-                  index
-                }); // If we don't have a nextSibling, keep this node so we have an end.
-                // Else, we can remove it to save future costs.
-
-                if (node.nextSibling === null) {
-                  node.data = '';
-                } else {
-                  nodesToRemove.push(node);
-                  index--;
-                }
-
-                partIndex++;
-              } else {
-                let i = -1;
-
-                while ((i = node.data.indexOf(marker, i + 1)) !== -1) {
-                  // Comment node has a binding marker inside, make an inactive part
-                  // The binding won't work, but subsequent bindings will
-                  // TODO (justinfagnani): consider whether it's even worth it to
-                  // make bindings in comments work
-                  this.parts.push({
-                    type: 'node',
-                    index: -1
-                  });
-                }
+                  type: 'attribute',
+                  index,
+                  name,
+                  strings: statics
+                });
+                partIndex += statics.length - 1;
               }
             }
-        }
-      };
 
-      _prepareTemplate(element); // Remove text binding nodes after the walk to not disturb the TreeWalker
+            if (node.tagName === 'TEMPLATE') {
+              stack.push(node);
+              walker.currentNode = node.content;
+            }
+          } else if (node.nodeType === 3
+        /* Node.TEXT_NODE */
+        ) {
+            const data = node.data;
+
+            if (data.indexOf(marker) >= 0) {
+              const parent = node.parentNode;
+              const strings = data.split(markerRegex);
+              const lastIndex = strings.length - 1; // Generate a new text node for each literal section
+              // These nodes are also used as the markers for node parts
+
+              for (let i = 0; i < lastIndex; i++) {
+                let insert;
+                let s = strings[i];
+
+                if (s === '') {
+                  insert = createMarker();
+                } else {
+                  const match = lastAttributeNameRegex.exec(s);
+
+                  if (match !== null && endsWith(match[2], boundAttributeSuffix)) {
+                    s = s.slice(0, match.index) + match[1] + match[2].slice(0, -boundAttributeSuffix.length) + match[3];
+                  }
+
+                  insert = document.createTextNode(s);
+                }
+
+                parent.insertBefore(insert, node);
+                this.parts.push({
+                  type: 'node',
+                  index: ++index
+                });
+              } // If there's no text, we must insert a comment to mark our place.
+              // Else, we can trust it will stick around after cloning.
+
+
+              if (strings[lastIndex] === '') {
+                parent.insertBefore(createMarker(), node);
+                nodesToRemove.push(node);
+              } else {
+                node.data = strings[lastIndex];
+              } // We have a part for each match found
+
+
+              partIndex += lastIndex;
+            }
+          } else if (node.nodeType === 8
+        /* Node.COMMENT_NODE */
+        ) {
+            if (node.data === marker) {
+              const parent = node.parentNode; // Add a new marker node to be the startNode of the Part if any of
+              // the following are true:
+              //  * We don't have a previousSibling
+              //  * The previousSibling is already the start of a previous part
+
+              if (node.previousSibling === null || index === lastPartIndex) {
+                index++;
+                parent.insertBefore(createMarker(), node);
+              }
+
+              lastPartIndex = index;
+              this.parts.push({
+                type: 'node',
+                index
+              }); // If we don't have a nextSibling, keep this node so we have an end.
+              // Else, we can remove it to save future costs.
+
+              if (node.nextSibling === null) {
+                node.data = '';
+              } else {
+                nodesToRemove.push(node);
+                index--;
+              }
+
+              partIndex++;
+            } else {
+              let i = -1;
+
+              while ((i = node.data.indexOf(marker, i + 1)) !== -1) {
+                // Comment node has a binding marker inside, make an inactive part
+                // The binding won't work, but subsequent bindings will
+                // TODO (justinfagnani): consider whether it's even worth it to
+                // make bindings in comments work
+                this.parts.push({
+                  type: 'node',
+                  index: -1
+                });
+                partIndex++;
+              }
+            }
+          }
+      } // Remove text binding nodes after the walk to not disturb the TreeWalker
 
 
       for (const n of nodesToRemove) {
@@ -1040,6 +1116,11 @@
     }
 
   }
+
+  const endsWith = (str, suffix) => {
+    const index = str.length - suffix.length;
+    return index >= 0 && str.slice(index) === suffix;
+  };
 
   const isTemplatePartActive = part => part.index !== -1; // Allows `document.createComment('')` to be renamed for a
   // small manual size-savings.
@@ -1053,12 +1134,13 @@
    * the expression is in an attribute-value position.
    *
    * See attributes in the HTML spec:
-   * https://www.w3.org/TR/html5/syntax.html#attributes-0
-   *
-   * "\0-\x1F\x7F-\x9F" are Unicode control characters
+   * https://www.w3.org/TR/html5/syntax.html#elements-attributes
    *
    * " \x09\x0a\x0c\x0d" are HTML space characters:
-   * https://www.w3.org/TR/html5/infrastructure.html#space-character
+   * https://www.w3.org/TR/html5/infrastructure.html#space-characters
+   *
+   * "\0-\x1F\x7F-\x9F" are Unicode control characters, which includes every
+   * space character except " ".
    *
    * So an attribute is:
    *  * The name: any character except a control character, space character, ('),
@@ -1073,7 +1155,7 @@
    */
 
 
-  const lastAttributeNameRegex = /([ \x09\x0a\x0c\x0d])([^\0-\x1F\x7F-\x9F \x09\x0a\x0c\x0d"'>=/]+)([ \x09\x0a\x0c\x0d]*=[ \x09\x0a\x0c\x0d]*(?:[^ \x09\x0a\x0c\x0d"'`<>=]*|"[^"]*|'[^']*))$/;
+  const lastAttributeNameRegex = /([ \x09\x0a\x0c\x0d])([^\0-\x1F\x7F-\x9F "'>=/]+)([ \x09\x0a\x0c\x0d]*=[ \x09\x0a\x0c\x0d]*(?:[^ \x09\x0a\x0c\x0d"'`<>=]*|"[^"]*|'[^']*))$/;
   /**
    * @license
    * Copyright (c) 2017 The Polymer Project Authors. All rights reserved.
@@ -1095,7 +1177,7 @@
 
   class TemplateInstance {
     constructor(template, processor, options) {
-      this._parts = [];
+      this.__parts = [];
       this.template = template;
       this.processor = processor;
       this.options = options;
@@ -1104,7 +1186,7 @@
     update(values) {
       let i = 0;
 
-      for (const part of this._parts) {
+      for (const part of this.__parts) {
         if (part !== undefined) {
           part.setValue(values[i]);
         }
@@ -1112,7 +1194,7 @@
         i++;
       }
 
-      for (const part of this._parts) {
+      for (const part of this.__parts) {
         if (part !== undefined) {
           part.commit();
         }
@@ -1120,60 +1202,98 @@
     }
 
     _clone() {
-      // When using the Custom Elements polyfill, clone the node, rather than
-      // importing it, to keep the fragment in the template's document. This
-      // leaves the fragment inert so custom elements won't upgrade and
-      // potentially modify their contents by creating a polyfilled ShadowRoot
-      // while we traverse the tree.
+      // There are a number of steps in the lifecycle of a template instance's
+      // DOM fragment:
+      //  1. Clone - create the instance fragment
+      //  2. Adopt - adopt into the main document
+      //  3. Process - find part markers and create parts
+      //  4. Upgrade - upgrade custom elements
+      //  5. Update - set node, attribute, property, etc., values
+      //  6. Connect - connect to the document. Optional and outside of this
+      //     method.
+      //
+      // We have a few constraints on the ordering of these steps:
+      //  * We need to upgrade before updating, so that property values will pass
+      //    through any property setters.
+      //  * We would like to process before upgrading so that we're sure that the
+      //    cloned fragment is inert and not disturbed by self-modifying DOM.
+      //  * We want custom elements to upgrade even in disconnected fragments.
+      //
+      // Given these constraints, with full custom elements support we would
+      // prefer the order: Clone, Process, Adopt, Upgrade, Update, Connect
+      //
+      // But Safari dooes not implement CustomElementRegistry#upgrade, so we
+      // can not implement that order and still have upgrade-before-update and
+      // upgrade disconnected fragments. So we instead sacrifice the
+      // process-before-upgrade constraint, since in Custom Elements v1 elements
+      // must not modify their light DOM in the constructor. We still have issues
+      // when co-existing with CEv0 elements like Polymer 1, and with polyfills
+      // that don't strictly adhere to the no-modification rule because shadow
+      // DOM, which may be created in the constructor, is emulated by being placed
+      // in the light DOM.
+      //
+      // The resulting order is on native is: Clone, Adopt, Upgrade, Process,
+      // Update, Connect. document.importNode() performs Clone, Adopt, and Upgrade
+      // in one step.
+      //
+      // The Custom Elements v1 polyfill supports upgrade(), so the order when
+      // polyfilled is the more ideal: Clone, Process, Adopt, Upgrade, Update,
+      // Connect.
       const fragment = isCEPolyfill ? this.template.element.content.cloneNode(true) : document.importNode(this.template.element.content, true);
-      const parts = this.template.parts;
+      const stack = [];
+      const parts = this.template.parts; // Edge needs all 4 parameters present; IE11 needs 3rd parameter to be null
+
+      const walker = document.createTreeWalker(fragment, 133
+      /* NodeFilter.SHOW_{ELEMENT|COMMENT|TEXT} */
+      , null, false);
       let partIndex = 0;
       let nodeIndex = 0;
+      let part;
+      let node = walker.nextNode(); // Loop through all the nodes and parts of a template
 
-      const _prepareInstance = fragment => {
-        // Edge needs all 4 parameters present; IE11 needs 3rd parameter to be
-        // null
-        const walker = document.createTreeWalker(fragment, 133
-        /* NodeFilter.SHOW_{ELEMENT|COMMENT|TEXT} */
-        , null, false);
-        let node = walker.nextNode(); // Loop through all the nodes and parts of a template
+      while (partIndex < parts.length) {
+        part = parts[partIndex];
 
-        while (partIndex < parts.length && node !== null) {
-          const part = parts[partIndex]; // Consecutive Parts may have the same node index, in the case of
-          // multiple bound attributes on an element. So each iteration we either
-          // increment the nodeIndex, if we aren't on a node with a part, or the
-          // partIndex if we are. By not incrementing the nodeIndex when we find a
-          // part, we allow for the next part to be associated with the current
-          // node if neccessasry.
+        if (!isTemplatePartActive(part)) {
+          this.__parts.push(undefined);
 
-          if (!isTemplatePartActive(part)) {
-            this._parts.push(undefined);
+          partIndex++;
+          continue;
+        } // Progress the tree walker until we find our next part's node.
+        // Note that multiple parts may share the same node (attribute parts
+        // on a single element), so this loop may not run at all.
 
-            partIndex++;
-          } else if (nodeIndex === part.index) {
-            if (part.type === 'node') {
-              const part = this.processor.handleTextExpression(this.options);
-              part.insertAfterNode(node.previousSibling);
 
-              this._parts.push(part);
-            } else {
-              this._parts.push(...this.processor.handleAttributeExpressions(node, part.name, part.strings, this.options));
-            }
+        while (nodeIndex < part.index) {
+          nodeIndex++;
 
-            partIndex++;
-          } else {
-            nodeIndex++;
+          if (node.nodeName === 'TEMPLATE') {
+            stack.push(node);
+            walker.currentNode = node.content;
+          }
 
-            if (node.nodeName === 'TEMPLATE') {
-              _prepareInstance(node.content);
-            }
-
+          if ((node = walker.nextNode()) === null) {
+            // We've exhausted the content inside a nested template element.
+            // Because we still have parts (the outer for-loop), we know:
+            // - There is a template in the stack
+            // - The walker will find a nextNode outside the template
+            walker.currentNode = stack.pop();
             node = walker.nextNode();
           }
-        }
-      };
+        } // We've arrived at our part's node.
 
-      _prepareInstance(fragment);
+
+        if (part.type === 'node') {
+          const part = this.processor.handleTextExpression(this.options);
+          part.insertAfterNode(node.previousSibling);
+
+          this.__parts.push(part);
+        } else {
+          this.__parts.push(...this.processor.handleAttributeExpressions(node, part.name, part.strings, this.options));
+        }
+
+        partIndex++;
+      }
 
       if (isCEPolyfill) {
         document.adoptNode(fragment);
@@ -1217,35 +1337,56 @@
 
 
     getHTML() {
-      const endIndex = this.strings.length - 1;
+      const l = this.strings.length - 1;
       let html = '';
+      let isCommentBinding = false;
 
-      for (let i = 0; i < endIndex; i++) {
-        const s = this.strings[i]; // This exec() call does two things:
-        // 1) Appends a suffix to the bound attribute name to opt out of special
-        // attribute value parsing that IE11 and Edge do, like for style and
-        // many SVG attributes. The Template class also appends the same suffix
-        // when looking up attributes to create Parts.
-        // 2) Adds an unquoted-attribute-safe marker for the first expression in
-        // an attribute. Subsequent attribute expressions will use node markers,
-        // and this is safe since attributes with multiple expressions are
-        // guaranteed to be quoted.
+      for (let i = 0; i < l; i++) {
+        const s = this.strings[i]; // For each binding we want to determine the kind of marker to insert
+        // into the template source before it's parsed by the browser's HTML
+        // parser. The marker type is based on whether the expression is in an
+        // attribute, text, or comment poisition.
+        //   * For node-position bindings we insert a comment with the marker
+        //     sentinel as its text content, like <!--{{lit-guid}}-->.
+        //   * For attribute bindings we insert just the marker sentinel for the
+        //     first binding, so that we support unquoted attribute bindings.
+        //     Subsequent bindings can use a comment marker because multi-binding
+        //     attributes must be quoted.
+        //   * For comment bindings we insert just the marker sentinel so we don't
+        //     close the comment.
+        //
+        // The following code scans the template source, but is *not* an HTML
+        // parser. We don't need to track the tree structure of the HTML, only
+        // whether a binding is inside a comment, and if not, if it appears to be
+        // the first binding in an attribute.
 
-        const match = lastAttributeNameRegex.exec(s);
+        const commentOpen = s.lastIndexOf('<!--'); // We're in comment position if we have a comment open with no following
+        // comment close. Because <-- can appear in an attribute value there can
+        // be false positives.
 
-        if (match) {
-          // We're starting a new bound attribute.
-          // Add the safe attribute suffix, and use unquoted-attribute-safe
-          // marker.
-          html += s.substr(0, match.index) + match[1] + match[2] + boundAttributeSuffix + match[3] + marker;
+        isCommentBinding = (commentOpen > -1 || isCommentBinding) && s.indexOf('-->', commentOpen + 1) === -1; // Check to see if we have an attribute-like sequence preceeding the
+        // expression. This can match "name=value" like structures in text,
+        // comments, and attribute values, so there can be false-positives.
+
+        const attributeMatch = lastAttributeNameRegex.exec(s);
+
+        if (attributeMatch === null) {
+          // We're only in this branch if we don't have a attribute-like
+          // preceeding sequence. For comments, this guards against unusual
+          // attribute values like <div foo="<!--${'bar'}">. Cases like
+          // <!-- foo=${'bar'}--> are handled correctly in the attribute branch
+          // below.
+          html += s + (isCommentBinding ? marker : nodeMarker);
         } else {
-          // We're either in a bound node, or trailing bound attribute.
-          // Either way, nodeMarker is safe to use.
-          html += s + nodeMarker;
+          // For attributes we use just a marker sentinel, and also append a
+          // $lit$ suffix to the name to opt-out of attribute-specific parsing
+          // that IE and Edge do for style and certain SVG attributes.
+          html += s.substr(0, attributeMatch.index) + attributeMatch[1] + attributeMatch[2] + boundAttributeSuffix + attributeMatch[3] + marker;
         }
       }
 
-      return html + this.strings[endIndex];
+      html += this.strings[l];
+      return html;
     }
 
     getTemplateElement() {
@@ -1273,9 +1414,15 @@
   const isPrimitive = value => {
     return value === null || !(typeof value === 'object' || typeof value === 'function');
   };
+
+  const isIterable = value => {
+    return Array.isArray(value) || // tslint:disable-next-line:no-any
+    !!(value && value[Symbol.iterator]);
+  };
   /**
-   * Sets attribute values for AttributeParts, so that the value is only set once
-   * even if there are multiple parts for an attribute.
+   * Writes attribute values to the DOM for a group of AttributeParts bound to a
+   * single attibute. The value is only set once even if there are multiple parts
+   * for an attribute.
    */
 
 
@@ -1312,13 +1459,12 @@
         if (part !== undefined) {
           const v = part.value;
 
-          if (v != null && (Array.isArray(v) || // tslint:disable-next-line:no-any
-          typeof v !== 'string' && v[Symbol.iterator])) {
+          if (isPrimitive(v) || !isIterable(v)) {
+            text += typeof v === 'string' ? v : String(v);
+          } else {
             for (const t of v) {
               text += typeof t === 'string' ? t : String(t);
             }
-          } else {
-            text += typeof v === 'string' ? v : String(v);
           }
         }
       }
@@ -1335,11 +1481,15 @@
     }
 
   }
+  /**
+   * A Part that controls all or part of an attribute value.
+   */
+
 
   class AttributePart {
-    constructor(comitter) {
+    constructor(committer) {
       this.value = undefined;
-      this.committer = comitter;
+      this.committer = committer;
     }
 
     setValue(value) {
@@ -1369,15 +1519,24 @@
     }
 
   }
+  /**
+   * A Part that controls a location within a Node tree. Like a Range, NodePart
+   * has start and end locations and can set and update the Nodes between those
+   * locations.
+   *
+   * NodeParts support several value types: primitives, Nodes, TemplateResults,
+   * as well as arrays and iterables of those types.
+   */
+
 
   class NodePart {
     constructor(options) {
       this.value = undefined;
-      this._pendingValue = undefined;
+      this.__pendingValue = undefined;
       this.options = options;
     }
     /**
-     * Inserts this part into a container.
+     * Appends this part into a container.
      *
      * This part must be empty, as its contents are not automatically moved.
      */
@@ -1388,9 +1547,9 @@
       this.endNode = container.appendChild(createMarker());
     }
     /**
-     * Inserts this part between `ref` and `ref`'s next sibling. Both `ref` and
-     * its next sibling must be static, unchanging nodes such as those that appear
-     * in a literal section of a template.
+     * Inserts this part after the `ref` node (between `ref` and `ref`'s next
+     * sibling). Both `ref` and its next sibling must be static, unchanging nodes
+     * such as those that appear in a literal section of a template.
      *
      * This part must be empty, as its contents are not automatically moved.
      */
@@ -1408,36 +1567,36 @@
 
 
     appendIntoPart(part) {
-      part._insert(this.startNode = createMarker());
+      part.__insert(this.startNode = createMarker());
 
-      part._insert(this.endNode = createMarker());
+      part.__insert(this.endNode = createMarker());
     }
     /**
-     * Appends this part after `ref`
+     * Inserts this part after the `ref` part.
      *
      * This part must be empty, as its contents are not automatically moved.
      */
 
 
     insertAfterPart(ref) {
-      ref._insert(this.startNode = createMarker());
+      ref.__insert(this.startNode = createMarker());
 
       this.endNode = ref.endNode;
       ref.endNode = this.startNode;
     }
 
     setValue(value) {
-      this._pendingValue = value;
+      this.__pendingValue = value;
     }
 
     commit() {
-      while (isDirective(this._pendingValue)) {
-        const directive = this._pendingValue;
-        this._pendingValue = noChange;
+      while (isDirective(this.__pendingValue)) {
+        const directive = this.__pendingValue;
+        this.__pendingValue = noChange;
         directive(this);
       }
 
-      const value = this._pendingValue;
+      const value = this.__pendingValue;
 
       if (value === noChange) {
         return;
@@ -1445,41 +1604,40 @@
 
       if (isPrimitive(value)) {
         if (value !== this.value) {
-          this._commitText(value);
+          this.__commitText(value);
         }
       } else if (value instanceof TemplateResult) {
-        this._commitTemplateResult(value);
+        this.__commitTemplateResult(value);
       } else if (value instanceof Node) {
-        this._commitNode(value);
-      } else if (Array.isArray(value) || // tslint:disable-next-line:no-any
-      value[Symbol.iterator]) {
-        this._commitIterable(value);
+        this.__commitNode(value);
+      } else if (isIterable(value)) {
+        this.__commitIterable(value);
       } else if (value === nothing) {
         this.value = nothing;
         this.clear();
       } else {
         // Fallback, will render the string representation
-        this._commitText(value);
+        this.__commitText(value);
       }
     }
 
-    _insert(node) {
+    __insert(node) {
       this.endNode.parentNode.insertBefore(node, this.endNode);
     }
 
-    _commitNode(value) {
+    __commitNode(value) {
       if (this.value === value) {
         return;
       }
 
       this.clear();
 
-      this._insert(value);
+      this.__insert(value);
 
       this.value = value;
     }
 
-    _commitText(value) {
+    __commitText(value) {
       const node = this.startNode.nextSibling;
       value = value == null ? '' : value;
 
@@ -1491,13 +1649,13 @@
           // TODO(justinfagnani): Can we just check if this.value is primitive?
           node.data = value;
         } else {
-        this._commitNode(document.createTextNode(typeof value === 'string' ? value : String(value)));
+        this.__commitNode(document.createTextNode(typeof value === 'string' ? value : String(value)));
       }
 
       this.value = value;
     }
 
-    _commitTemplateResult(value) {
+    __commitTemplateResult(value) {
       const template = this.options.templateFactory(value);
 
       if (this.value instanceof TemplateInstance && this.value.template === template) {
@@ -1513,13 +1671,13 @@
 
         instance.update(value.values);
 
-        this._commitNode(fragment);
+        this.__commitNode(fragment);
 
         this.value = instance;
       }
     }
 
-    _commitIterable(value) {
+    __commitIterable(value) {
       // For an Iterable, we create a new InstancePart per item, then set its
       // value to the item. This is a little bit of overhead for every item in
       // an Iterable, but it lets us recurse easily and efficiently update Arrays
@@ -1584,7 +1742,7 @@
   class BooleanAttributePart {
     constructor(element, name, strings) {
       this.value = undefined;
-      this._pendingValue = undefined;
+      this.__pendingValue = undefined;
 
       if (strings.length !== 2 || strings[0] !== '' || strings[1] !== '') {
         throw new Error('Boolean attributes can only contain a single expression');
@@ -1596,21 +1754,21 @@
     }
 
     setValue(value) {
-      this._pendingValue = value;
+      this.__pendingValue = value;
     }
 
     commit() {
-      while (isDirective(this._pendingValue)) {
-        const directive = this._pendingValue;
-        this._pendingValue = noChange;
+      while (isDirective(this.__pendingValue)) {
+        const directive = this.__pendingValue;
+        this.__pendingValue = noChange;
         directive(this);
       }
 
-      if (this._pendingValue === noChange) {
+      if (this.__pendingValue === noChange) {
         return;
       }
 
-      const value = !!this._pendingValue;
+      const value = !!this.__pendingValue;
 
       if (this.value !== value) {
         if (value) {
@@ -1618,10 +1776,11 @@
         } else {
           this.element.removeAttribute(this.name);
         }
+
+        this.value = value;
       }
 
-      this.value = value;
-      this._pendingValue = noChange;
+      this.__pendingValue = noChange;
     }
 
   }
@@ -1689,45 +1848,45 @@
   class EventPart {
     constructor(element, eventName, eventContext) {
       this.value = undefined;
-      this._pendingValue = undefined;
+      this.__pendingValue = undefined;
       this.element = element;
       this.eventName = eventName;
       this.eventContext = eventContext;
 
-      this._boundHandleEvent = e => this.handleEvent(e);
+      this.__boundHandleEvent = e => this.handleEvent(e);
     }
 
     setValue(value) {
-      this._pendingValue = value;
+      this.__pendingValue = value;
     }
 
     commit() {
-      while (isDirective(this._pendingValue)) {
-        const directive = this._pendingValue;
-        this._pendingValue = noChange;
+      while (isDirective(this.__pendingValue)) {
+        const directive = this.__pendingValue;
+        this.__pendingValue = noChange;
         directive(this);
       }
 
-      if (this._pendingValue === noChange) {
+      if (this.__pendingValue === noChange) {
         return;
       }
 
-      const newListener = this._pendingValue;
+      const newListener = this.__pendingValue;
       const oldListener = this.value;
       const shouldRemoveListener = newListener == null || oldListener != null && (newListener.capture !== oldListener.capture || newListener.once !== oldListener.once || newListener.passive !== oldListener.passive);
       const shouldAddListener = newListener != null && (oldListener == null || shouldRemoveListener);
 
       if (shouldRemoveListener) {
-        this.element.removeEventListener(this.eventName, this._boundHandleEvent, this._options);
+        this.element.removeEventListener(this.eventName, this.__boundHandleEvent, this.__options);
       }
 
       if (shouldAddListener) {
-        this._options = getOptions(newListener);
-        this.element.addEventListener(this.eventName, this._boundHandleEvent, this._options);
+        this.__options = getOptions(newListener);
+        this.element.addEventListener(this.eventName, this.__boundHandleEvent, this.__options);
       }
 
       this.value = newListener;
-      this._pendingValue = noChange;
+      this.__pendingValue = noChange;
     }
 
     handleEvent(event) {
@@ -1781,8 +1940,8 @@
       const prefix = name[0];
 
       if (prefix === '.') {
-        const comitter = new PropertyCommitter(element, name.slice(1), strings);
-        return comitter.parts;
+        const committer = new PropertyCommitter(element, name.slice(1), strings);
+        return committer.parts;
       }
 
       if (prefix === '@') {
@@ -1793,8 +1952,8 @@
         return [new BooleanAttributePart(element, name.slice(1), strings)];
       }
 
-      const comitter = new AttributeCommitter(element, name, strings);
-      return comitter.parts;
+      const committer = new AttributeCommitter(element, name, strings);
+      return committer.parts;
     }
     /**
      * Create parts for a text-position binding.
@@ -3533,19 +3692,193 @@
   var ProgressBar = selector => {
     return (titles, activeIndex) => render(progressBar(titles, activeIndex), document.querySelector(selector));
   };
+  /**
+   * @license
+   * Copyright (c) 2018 The Polymer Project Authors. All rights reserved.
+   * This code may only be used under the BSD style license found at
+   * http://polymer.github.io/LICENSE.txt
+   * The complete set of authors may be found at
+   * http://polymer.github.io/AUTHORS.txt
+   * The complete set of contributors may be found at
+   * http://polymer.github.io/CONTRIBUTORS.txt
+   * Code distributed by Google as part of the polymer project is also
+   * subject to an additional IP rights grant found at
+   * http://polymer.github.io/PATENTS.txt
+   */
 
-  var summaryWrapper = (serviceName, domain) => html`
-<div class="summary">
+  /**
+   * Stores the ClassInfo object applied to a given AttributePart.
+   * Used to unset existing values when a new ClassInfo object is applied.
+   */
+
+
+  const classMapCache = new WeakMap();
+  /**
+   * A directive that applies CSS classes. This must be used in the `class`
+   * attribute and must be the only part used in the attribute. It takes each
+   * property in the `classInfo` argument and adds the property name to the
+   * element's `classList` if the property value is truthy; if the property value
+   * is falsey, the property name is removed from the element's `classList`. For
+   * example
+   * `{foo: bar}` applies the class `foo` if the value of `bar` is truthy.
+   * @param classInfo {ClassInfo}
+   */
+
+  const classMap = directive(classInfo => part => {
+    if (!(part instanceof AttributePart) || part instanceof PropertyPart || part.committer.name !== 'class' || part.committer.parts.length > 1) {
+      throw new Error('The `classMap` directive must be used in the `class` attribute ' + 'and must be the only part in the attribute.');
+    }
+
+    const {
+      committer
+    } = part;
+    const {
+      element
+    } = committer; // handle static classes
+
+    if (!classMapCache.has(part)) {
+      element.className = committer.strings.join(' ');
+    }
+
+    const {
+      classList
+    } = element; // remove old classes that no longer apply
+
+    const oldInfo = classMapCache.get(part);
+
+    for (const name in oldInfo) {
+      if (!(name in classInfo)) {
+        classList.remove(name);
+      }
+    } // add new classes
+
+
+    for (const name in classInfo) {
+      const value = classInfo[name];
+
+      if (!oldInfo || value !== oldInfo[name]) {
+        // We explicitly want a loose truthy check here because
+        // it seems more convenient that '' and 0 are skipped.
+        const method = value ? 'add' : 'remove';
+        classList[method](name);
+      }
+    }
+
+    classMapCache.set(part, classInfo);
+  });
+  const toggleEvent = new CustomEvent('toggle');
+
+  var summaryWrapper = ({
+    isExpanded,
+    isMobile,
+    inputs,
+    outputs,
+    cache,
+    local,
+    serviceName = 'Your Package',
+    domain = ''
+  }) => isMobile ? html`
+            ${SummaryMobile({
+    isExpanded,
+    inputs,
+    outputs,
+    serviceName,
+    domain
+  })}
+            ${isExpanded ? html`<div class="summary-wrapper__overlay"></div>` : ''}` : SummaryDesktop({
+    serviceName,
+    domain
+  });
+
+  const SummaryBodyTemplate = () => html`
+    <section class="summary__body" id="summary-body"></section>`;
+
+  const SummaryHeaderInitial = (serviceName, domain) => html`
     <div class="summary__header">
         <b>${serviceName}</b>
         <span class="dimmed">${domain}</span>
     </div>
+`;
 
-    <section class="summary__body" id="summary-body"></section>
-</div>`;
+  const SummaryHeaderPartial = ({
+    inputs,
+    outputs
+  }) => html`
+    <b class="highlight">£14.99</b> a summary
+`;
 
-  let bodyTemplate = null;
+  const SummaryDesktop = ({
+    serviceName,
+    domain
+  }) => html`
+    <div class="summary"
+        ${SummaryHeaderInitial(serviceName, domain)}
+        ${SummaryBodyTemplate()}
+    </div>
+`;
+
+  const ToggableWrapper = (isExpanded, template) => html`
+    <div class="toggable"
+        class=${classMap({
+    'toggable-up': isExpanded,
+    'toggable-down': !isExpanded
+  })}
+        @click=${() => window.dispatchEvent(toggleEvent)}>
+        ${template}
+    </div>
+`;
+
+  const SummaryMobile = ({
+    isExpanded,
+    inputs,
+    outputs,
+    serviceName,
+    domain
+  }) => inputs || outputs ? html`
+            <div class="summary">
+                ${isExpanded ? html`
+                        ${ToggableWrapper(isExpanded, SummaryHeaderInitial(serviceName, domain))}
+                        ${SummaryBodyTemplate()}
+                    ` : ToggableWrapper(isExpanded, SummaryHeaderPartial({
+    inputs,
+    outputs
+  }))}
+            </div>` : html`<div class="summary">
+            ${SummaryHeaderInitial(serviceName, domain)}
+        </div>`;
+  /**
+  @license
+  Copyright (c) 2018 The Polymer Project Authors. All rights reserved.
+  This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+  The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+  The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+  Code distributed by Google as part of the polymer project is also
+  subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+  */
+
+  /**
+    Utility method that calls a callback whenever a media-query matches in response
+    to the viewport size changing. The callback should take a boolean parameter
+    (with `true` meaning the media query is matched).
+     Example:
+         import { installMediaQueryWatcher } from 'pwa-helpers/media-query.js';
+         installMediaQueryWatcher(`(min-width: 600px)`, (matches) => {
+          console.log(matches ? 'wide screen' : 'narrow sreen');
+        });
+  */
+
+
+  const installMediaQueryWatcher = (mediaQuery, layoutChangedCallback) => {
+    let mql = window.matchMedia(mediaQuery);
+    mql.addListener(e => layoutChangedCallback(e.matches));
+    layoutChangedCallback(mql.matches);
+  };
+
+  let BodyTemplate = null;
+  let wrapper = null;
   let initiated = false;
+  let isExpanded = true;
+  let isMobile = false;
   var Summary = {
     init: ({
       template,
@@ -3555,18 +3888,24 @@
         throw new Error(`renderSummary: invalid template`);
       }
 
-      const wrapper = document.querySelector(selector);
+      wrapper = document.querySelector(selector);
 
       if (!wrapper) {
         throw new Error(`renderSummary: element ${selector} not found`);
       }
 
-      bodyTemplate = template;
-      render(summaryWrapper(), wrapper);
+      BodyTemplate = template;
+      const data = getAll();
+      render(summaryWrapper({
+        isExpanded,
+        isMobile,
+        ...data
+      }), wrapper);
+      window.addEventListener('toggle', () => toggle(wrapper));
       initiated = true;
     },
     update: () => {
-      if (!initiated || !bodyTemplate) {
+      if (!initiated || !BodyTemplate) {
         throw new Error('renderSummary: not initiated');
       }
 
@@ -3576,9 +3915,51 @@
         cache,
         local
       } = getAll();
-      render(bodyTemplate(inputs, outputs, cache, local), document.querySelector('#summary-body'));
+
+      _updateDetails(inputs, outputs, cache, local);
     }
   };
+
+  function _updateDetails(inputs, outputs, cache, local) {
+    const el = document.querySelector('#summary-body');
+    el && render(BodyTemplate(inputs, outputs, cache, local), el);
+  }
+
+  function _updateUI() {
+    if (!initiated) {
+      return;
+    }
+
+    const {
+      inputs,
+      outputs,
+      cache,
+      local
+    } = getAll();
+    render(summaryWrapper({
+      isExpanded,
+      isMobile,
+      inputs,
+      outputs,
+      cache,
+      local
+    }), wrapper);
+
+    _updateDetails(inputs, outputs, cache, local);
+  }
+
+  installMediaQueryWatcher('(max-width: 650px)', match => {
+    isExpanded = !match;
+    isMobile = match;
+
+    _updateUI();
+  });
+
+  function toggle(wrapper) {
+    isExpanded = !isExpanded;
+
+    _updateUI();
+  }
 
   var Confirmation = (selector = '#app') => {
     return {
@@ -3694,7 +4075,7 @@
         window.addEventListener('submitinput', e => {
           //TODO: get cache using output
           console.log(e);
-          e.detail.forEach(({
+          e.detail && e.detail.forEach(({
             key
           }) => poll(cache, key));
           Summary.update();
@@ -3815,15 +4196,16 @@
 
   var summary = (inputs = {}, outputs = {}, cache = {}, local = {}) => html`
 <div>
+    ${console.info(inputs)}
     ${inputs.selectedBroadbandPackage || inputs.selectedTvPackages || inputs.selectedPhonePackage ? html`
         <div id="package-detail" class="summary__block">
-            <h5 class="summary__block-title"> Your Package </h5>
             <ul>
                 ${inputs.selectedBroadbandPackage ? html`<li>Broadband: ${inputs.selectedBroadbandPackage.name}</li>` : ''}
-                ${inputs.selectedTvPackages ? html`TV : <li> ${inputs.selectedTvPackages.map(_ => _.name)}</li>` : ''}
+                ${inputs.selectedTvPackages ? html`<li> TV: ${inputs.selectedTvPackages.map(_ => _.name).join(', ')}</li>` : ''}
                 ${inputs.selectedPhonePackage ? html`<li> Phone: ${inputs.selectedPhonePackage.name}</li>` : ''}
             </ul>
         </div>` : ''}
+    <b class="highlight">£14.99</b>
 </div>`;
 
   var header = () => html`

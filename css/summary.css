@@ -1,5 +1,10 @@
 .summary {
     position: sticky;
+    z-index: 2;
+
+    background-color: var(--summary-background-color);
+    padding: 15px 10px;
+    align-self: stretch;
 }
 
 .summary > li {

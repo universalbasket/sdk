@@ -9,4 +9,6 @@
     --input-border-radius: 2px;
     --nav-height--large: 60px;
     --nav-height--small: 45px;
+    --highlight--bg: #FFEC84;
+    --overlay-bg: rgba(0,0,0,.5);
 }

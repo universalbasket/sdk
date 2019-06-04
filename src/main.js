@@ -89,7 +89,7 @@ function createApp({ pages = [], cache = [], layout = [], data = {} }, callback)
             window.addEventListener('submitinput', (e) => {
                 //TODO: get cache using output
                 console.log(e);
-                e.detail.forEach(({ key }) => Cache.poll(cache, key));
+                e.detail && e.detail.forEach(({ key }) => Cache.poll(cache, key));
                 Summary.update();
             })
 
