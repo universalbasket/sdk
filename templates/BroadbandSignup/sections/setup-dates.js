@@ -3,7 +3,6 @@ import { selectedBroadbandSetupDate, selectedTvSetupDate } from '../inputs/index
 
 export default (name, data) => html`
     ${data.availableBroadbandSetupDates ? selectedBroadbandSetupDate(data.availableBroadbandSetupDates) : '' }
-    ${data.availableTvSetupDate ? selectedTvSetupDate(data.availableTvSetupDate) : '' }
 
     <div class="section__actions">
         <button

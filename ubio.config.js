@@ -53,7 +53,7 @@ export default {
             route: '/setup-dates',
             title: 'Setup dates for your packages',
             sections: [
-                { name: 'setupDates', waitFor: ['output.availableBroadbandSetupDates', 'output.availableTvSetupDates'] }
+                { name: 'setupDates', waitFor: ['output.availableBroadbandSetupDates'] }
             ]
         },
         {

@@ -5,8 +5,8 @@ export default (availableDates) => html`
         <span class="field__name">When do you want your broadband set up?</span>
         <select name="selected-broadband-setup-date" required>
             <option>select date...</option>
-            ${ availableDates.map(date => html`
-                <option value="${date}"> ${date}</option>`
+            ${ availableDates.map(data => html`
+                <option value="${JSON.stringify(data)}"> ${data.date}</option>`
             )}
         </select>
     </div>
