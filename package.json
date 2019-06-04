@@ -7,13 +7,13 @@
     "start": "npm run build && npm run serve",
     "serve": "browser-sync start --index 'index.html' --server --files 'index.css' 'build.js'",
     "watch:css": "watch 'npm run build:css' css",
-    "watch:js": "watch 'npm run build:rollup && npm run build:js && npm run build:clean-up' templates ",
+    "watch:js": "watch 'npm run build:rollup && npm run build:js && npm run build:clean-up' 'src' 'templates'",
     "build": "npm run build:rollup && npm run build:js && npm run build:clean-up && npm run build:css",
     "build:rollup": "rollup --config",
     "build:js": "browserify bundle.js -o build.js -t babelify",
     "build:clean-up": "rm bundle.js",
     "build:css": "postcss css/index.css -o index.css",
-    "stylelint": "stylelint index.css --fix"
+    "stylelint": "stylelint css/**/* index.css --fix"
   },
   "keywords": [
     "ubio",

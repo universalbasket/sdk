@@ -1,6 +1,7 @@
-import { render } from 'lit-html';
+import { html, render } from 'lit-html';
 import summaryWrapper from './builtin-templates/summary-wrapper'
-import { installMediaQueryWatcher } from 'pwa-helpers/media-query.js'
+import modal from './builtin-templates/modal'
+import { installMediaQueryWatcher } from '../node_modules/pwa-helpers/media-query.js'
 import * as Storage from './storage';
 
 let BodyTemplate = null;
@@ -9,6 +10,8 @@ let wrapper = null;
 let initiated = false;
 let isExpanded = true;
 let isMobile = false;
+const serviceName = localStorage.getItem('serviceName');
+const domain = localStorage.getItem('domain');
 
 export default {
     init: ({ template, selector = '#summary' }) => {
@@ -24,9 +27,10 @@ export default {
         BodyTemplate = template;
 
         const data = Storage.getAll();
-        render(summaryWrapper({ isExpanded, isMobile, ...data }), wrapper);
+        render(summaryWrapper({ isExpanded, isMobile, serviceName, domain, ...data }), wrapper);
 
-        window.addEventListener('toggle', () => toggle(wrapper));
+        window.addEventListener('toggle-summary', () => toggleSummary(wrapper));
+        window.addEventListener('show-modal', showModal);
         initiated = true;
     },
 
@@ -52,7 +56,7 @@ function _updateUI() {
     }
 
     const { inputs, outputs, cache, local } = Storage.getAll();
-    render(summaryWrapper({ isExpanded, isMobile, inputs, outputs, cache, local }), wrapper);
+    render(summaryWrapper({ isExpanded, isMobile, serviceName, domain, inputs, outputs, cache, local }), wrapper);
     _updateDetails(inputs, outputs, cache, local);
 }
 
@@ -65,7 +69,12 @@ installMediaQueryWatcher(
   }
 );
 
-function toggle(wrapper) {
+function toggleSummary(wrapper) {
     isExpanded = !isExpanded;
     _updateUI();
+}
+
+function showModal({ detail }) {
+    const { title, content } = detail;
+    render(modal({ title, content }), document.querySelector('#modal'));
 }

@@ -553,6 +553,8 @@
   let jobId = localStorage.getItem('jobId') || null;
   let token = localStorage.getItem('token') || null;
   let serviceId = localStorage.getItem('serviceId') || null;
+  let serviceName = localStorage.getItem('serviceName');
+  let domain = localStorage.getItem('domain');
 
   class EndUserSdk {
     constructor() {
@@ -588,6 +590,8 @@
       localStorage.setItem('jobId', jobId);
       localStorage.setItem('token', token);
       localStorage.setItem('serviceId', serviceId);
+      localStorage.setItem('serviceName', newJob.serviceName);
+      localStorage.setItem('domain', newJob.domain);
       Object.keys(input).forEach(key => set('input', key, input[key]));
       this.sdk = createEndUserSdk({
         token,
@@ -3766,7 +3770,7 @@
 
     classMapCache.set(part, classInfo);
   });
-  const toggleEvent = new CustomEvent('toggle');
+  const toggleSummary = new CustomEvent('toggle-summary');
 
   var summaryWrapper = ({
     isExpanded,
@@ -3775,8 +3779,8 @@
     outputs,
     cache,
     local,
-    serviceName = 'Your Package',
-    domain = ''
+    serviceName,
+    domain
   }) => isMobile ? html`
             ${SummaryMobile({
     isExpanded,
@@ -3785,7 +3789,9 @@
     serviceName,
     domain
   })}
-            ${isExpanded ? html`<div class="summary-wrapper__overlay"></div>` : ''}` : SummaryDesktop({
+            ${isExpanded ? html`<div
+                    class="summary-wrapper__overlay"
+                    @click=${() => window.dispatchEvent(toggleSummary)}></div>` : ''}` : SummaryDesktop({
     serviceName,
     domain
   });
@@ -3794,17 +3800,35 @@
     <section class="summary__body" id="summary-body"></section>`;
 
   const SummaryHeaderInitial = (serviceName, domain) => html`
-    <div class="summary__header">
-        <b>${serviceName}</b>
-        <span class="dimmed">${domain}</span>
-    </div>
+    <b class="large">${serviceName || 'Your Package'}</b>
+    <span class="faint large">${domain}</span>
 `;
 
   const SummaryHeaderPartial = ({
     inputs,
     outputs
   }) => html`
-    <b class="highlight">£14.99</b> a summary
+    <b class="large summary__preview-price">£14.99</b>
+    <span class="faint summary__preview-info">
+        ${Object.values(outputs).slice(4).join(', ')}
+        Starts 11/06/2019, Accidents only, 10% Vet fee
+    </span>
+`;
+
+  const ToggableHeaderWrapper = (isExpanded, template) => html`
+    <header class=${classMap({
+    'summary__header': true,
+    'summary__header--toggable': true,
+    'summary__header--toggled-up': !isExpanded,
+    'summary__header--toggled-down': isExpanded
+  })}
+        @click=${() => window.dispatchEvent(toggleSummary)}>
+        <div class="summary__preview">${template}</div>
+    </header>
+`;
+
+  const StaticHeaderWrapper = template => html`
+    <header class="summary__header">${template}</header>
 `;
 
   const SummaryDesktop = ({
@@ -3817,17 +3841,6 @@
     </div>
 `;
 
-  const ToggableWrapper = (isExpanded, template) => html`
-    <div class=${classMap({
-    'toggable': true,
-    'toggable-up': !isExpanded,
-    'toggable-down': isExpanded
-  })}
-        @click=${() => window.dispatchEvent(toggleEvent)}>
-        ${template}
-    </div>
-`;
-
   const SummaryMobile = ({
     isExpanded,
     inputs,
@@ -3837,15 +3850,40 @@
   }) => inputs || outputs ? html`
             <div class="summary">
                 ${isExpanded ? html`
-                        ${ToggableWrapper(isExpanded, SummaryHeaderInitial(serviceName, domain))}
+                        ${ToggableHeaderWrapper(isExpanded, SummaryHeaderInitial(serviceName, domain))}
                         ${SummaryBodyTemplate()}
-                    ` : ToggableWrapper(isExpanded, SummaryHeaderPartial({
+                    ` : ToggableHeaderWrapper(isExpanded, SummaryHeaderPartial({
     inputs,
     outputs
   }))}
             </div>` : html`<div class="summary">
-            ${SummaryHeaderInitial(serviceName, domain)}
+            ${StaticHeaderWrapper(SummaryHeaderInitial(serviceName, domain))}
         </div>`;
+
+  const template$1 = ({
+    title,
+    content
+  }) => html`
+<div class="modal-wrapper">
+    <div class="modal">
+        <div class="modal__header">
+            <h2 class="large">${title}</h2>
+        </div>
+        <div class="modal__body">${content}</div>
+        <span
+            class="modal__close"
+            @click="${close}">
+        </span>
+    </div>
+    <div
+        class="modal-wrapper__overlay"
+        @click=${close}></div>
+</div>
+`;
+
+  function close() {
+    render('', document.querySelector('#modal'));
+  }
   /**
   @license
   Copyright (c) 2018 The Polymer Project Authors. All rights reserved.
@@ -3879,6 +3917,8 @@
   let initiated = false;
   let isExpanded = true;
   let isMobile = false;
+  const serviceName$1 = localStorage.getItem('serviceName');
+  const domain$1 = localStorage.getItem('domain');
   var Summary = {
     init: ({
       template,
@@ -3899,9 +3939,12 @@
       render(summaryWrapper({
         isExpanded,
         isMobile,
+        serviceName: serviceName$1,
+        domain: domain$1,
         ...data
       }), wrapper);
-      window.addEventListener('toggle', () => toggle(wrapper));
+      window.addEventListener('toggle-summary', () => toggleSummary$1(wrapper));
+      window.addEventListener('show-modal', showModal);
       initiated = true;
     },
     update: () => {
@@ -3939,6 +3982,8 @@
     render(summaryWrapper({
       isExpanded,
       isMobile,
+      serviceName: serviceName$1,
+      domain: domain$1,
       inputs,
       outputs,
       cache,
@@ -3955,10 +4000,23 @@
     _updateUI();
   });
 
-  function toggle(wrapper) {
+  function toggleSummary$1(wrapper) {
     isExpanded = !isExpanded;
 
     _updateUI();
+  }
+
+  function showModal({
+    detail
+  }) {
+    const {
+      title,
+      content
+    } = detail;
+    render(template$1({
+      title,
+      content
+    }), document.querySelector('#modal'));
   }
 
   var Confirmation = (selector = '#app') => {
@@ -3970,12 +4028,12 @@
           throw new Error(`loading: selector ${selector} not found`);
         }
 
-        render(template$1, target);
+        render(template$2, target);
       }
     };
   };
 
-  const template$1 = html`
+  const template$2 = html`
 <div class="page">
     <h2> Purchase complete. Thank you. </h2>
     <p> You’ll receive an email confirmation shortly.</p>
@@ -4192,20 +4250,54 @@
         }
       }
     }
-  }; //get service name & domain
+  };
+
+  const showModal$1 = ({
+    title,
+    content
+  }) => new CustomEvent('show-modal', {
+    detail: {
+      title,
+      content
+    }
+  }); //get service name & domain
+
 
   var summary = (inputs = {}, outputs = {}, cache = {}, local = {}) => html`
 <div>
     ${console.info(inputs)}
     ${inputs.selectedBroadbandPackage || inputs.selectedTvPackages || inputs.selectedPhonePackage ? html`
-        <div id="package-detail" class="summary__block">
-            <ul>
+        <div id="package-detail" class="summary__block summary__block--list">
+            <ul class="dim">
                 ${inputs.selectedBroadbandPackage ? html`<li>Broadband: ${inputs.selectedBroadbandPackage.name}</li>` : ''}
                 ${inputs.selectedTvPackages ? html`<li> TV: ${inputs.selectedTvPackages.map(_ => _.name).join(', ')}</li>` : ''}
                 ${inputs.selectedPhonePackage ? html`<li> Phone: ${inputs.selectedPhonePackage.name}</li>` : ''}
+                <li>
+                    <span
+                        class="clickable"
+                        @click=${() => window.dispatchEvent(showModal$1({
+    title: '10% Vet fee excess',
+    content: html`
+                                <p class="dim">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce posuere erat elit, sed tincidunt velit venenatis ac. Vivamus vel nulla orci. Etiam mattis, mauris eget tristique blandit, arcu tellus condimentum nisl, eget dictum libero dolor in erat. Quisque placerat mattis maximus. Cras et fringilla lorem. Vivamus sed rutrum neque. Aliquam pulvinar sem eros, accumsan eleifend est finibus in. Ut et nisl vitae est condimentum faucibus. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Ut at ex at lacus varius aliquam.</p>
+                                <p class="dim">Morbi orci metus, commodo sit amet suscipit ac, pharetra eu mauris. Morbi sagittis lacus vel lacus finibus mollis. Phasellus arcu velit, viverra a eros ac, semper fringilla lectus. Sed varius sodales sapien nec auctor. Nam eget ornare lectus. Proin vehicula, urna nec congue rutrum, nunc odio pharetra nibh, eu dictum justo ante ut risus. Ut vulputate rhoncus dolor, id pharetra nisl semper quis. Nam tristique molestie lacinia. Aliquam vestibulum gravida ex id consequat. Suspendisse quis porta libero, cursus ultrices enim.</p>
+                            `
+  }))}>
+                        10% Vet fee excess
+                    </span>
+                </li>
             </ul>
         </div>` : ''}
-    <b class="highlight">£14.99</b>
+        <div class="summary__block">
+            <b class="large highlight">£14.99</b>
+        </div>
+        <div class="summary__block summary__block--docs">
+            <p><b>Documents</b></p>
+            <ul class="dim">
+                <li class="file">Insurance product information</li>
+                <li class="file">Essential information</li>
+                <li class="file">Policy wording</li>
+            </dim>
+        </div>
 </div>`;
 
   var header = () => html`
