@@ -34,17 +34,17 @@ const SummaryHeaderPartial = ({ inputs, outputs }) => html`
 `
 
 const SummaryDesktop = ({ serviceName, domain }) =>html`
-    <div class="summary"
+    <div class="summary">
         ${SummaryHeaderInitial(serviceName, domain)}
         ${SummaryBodyTemplate()}
     </div>
 `
 
 const ToggableWrapper = (isExpanded, template) => html`
-    <div class="toggable"
-        class=${classMap({
-            'toggable-up': isExpanded,
-            'toggable-down': !isExpanded
+    <div class=${classMap({
+            'toggable': true,
+            'toggable-up': !isExpanded,
+            'toggable-down': isExpanded
         })}
         @click=${ () => window.dispatchEvent(toggleEvent) }>
         ${template}
