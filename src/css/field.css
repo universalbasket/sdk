@@ -21,7 +21,7 @@
 
 .field__inputs > input[type="radio"]:checked + label {
     color: #fff;
-    background: var(--accent-color);
+    background: var(--color--accent);
 }
 
 .field__inputs > input[type="radio"]:disabled + label {
