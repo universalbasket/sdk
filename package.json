@@ -4,8 +4,9 @@
   "description": "ubio sdk application bundle (prototype)",
   "module": "build.js",
   "scripts": {
+    "install": "pika-web && node hack-wrap.js",
     "start": "npm run build && npm run serve",
-    "serve": "browser-sync start --index 'index.html' --server --files 'index.css' 'build.js'",
+    "serve": "browser-sync start --index 'index.html' --server --files 'index.css' 'index.js' 'templates' 'web_modules' 'src/' 'ubio.config.js'",
     "watch:css": "watch 'npm run build:css' css",
     "watch:js": "watch 'npm run build:rollup && npm run build:js && npm run build:clean-up' templates",
     "build": "npm run build:rollup && npm run build:js && npm run build:clean-up && npm run build:css",
@@ -22,6 +23,7 @@
   "author": "ubio",
   "license": "ISC",
   "dependencies": {
+    "@pika/web": "^0.4.2",
     "@ubio/sdk": "^0.5.0",
     "camelcase-keys": "^5.2.0",
     "form-serialize": "^0.7.2",
@@ -47,5 +49,16 @@
     "stylelint": "^10.0.1",
     "stylelint-config-standard": "^18.3.0",
     "watch": "^1.0.2"
-  }
+  },
+  "@pika/web": {
+    "webDependencies": [
+      "lit-html",
+      "@ubio/sdk"
+    ]
+  },
+  "hack-wrap": [
+    "form-serialize",
+    "camelcase-keys",
+    "lodash.kebabcase"
+  ]
 }
