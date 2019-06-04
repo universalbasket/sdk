@@ -12,7 +12,7 @@ export default (name, data) => html`
             <label for="monthly-payment-method-card" class="button">Card</label>
 
             <input type="radio" name="monthly-payment-method" id="monthly-payment-method-directdebit"
-                value="directdebit" @click="${onChange}"required>
+                value="directdebit" @click="${onChange}" required>
             <label for="monthly-payment-method-directdebit" class="button">Direct Debit</label>
         </div>
     </div>
