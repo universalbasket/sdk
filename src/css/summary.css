@@ -1,7 +1,6 @@
 .summary {
     position: sticky;
     z-index: 2;
-
     background-color: var(--summary-background-color);
     padding: 15px 10px;
     align-self: stretch;
@@ -32,7 +31,6 @@
     line-height: 1.5em;
     margin-right: 30px;
     white-space: nowrap;
-    white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
 }
@@ -41,8 +39,6 @@
     margin-right: 10px;
     display: inline-block;
 }
-
-.summary__preview-info {}
 
 .summary__block {
     padding: 10px 0;
