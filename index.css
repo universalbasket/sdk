@@ -141,7 +141,7 @@ ol {
 }
 
 button:disabled {
-    opacity: 0.5;
+    opacity: .5;
 }
 
 .progress-bar {
@@ -229,7 +229,7 @@ button:disabled {
 }
 
 .field__inputs > input[type="radio"]:disabled + label {
-    opacity: 0.5;
+    opacity: .5;
     cursor: not-allowed;
 }
 
@@ -280,110 +280,114 @@ button:disabled {
 }
 
 .spinner {
-  width: 10px;
-  height: 20px;
-  position: relative;
-  margin-right: 10px;
+    width: 10px;
+    height: 20px;
+    position: relative;
+    margin-right: 10px;
 }
 
 .spinner .spinner__bar {
-  width: 100%;
-  height: 100%;
-  position: absolute;
-  left: 0;
-  top: 0;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    left: 0;
+    top: 0;
 }
 
-.spinner .spinner__bar:before {
-  content: '';
-  display: block;
-  margin: 0 auto;
-  width: 25%;
-  height: 30%;
-  border-radius: 10px;
-  background-color: #333;
-  -webkit-animation: spinnerBarFadeDelay 0.8s infinite ease-in-out both;
-          animation: spinnerBarFadeDelay 0.8s infinite ease-in-out both;
+.spinner .spinner__bar::before {
+    content: '';
+    display: block;
+    margin: 0 auto;
+    width: 25%;
+    height: 30%;
+    border-radius: 10px;
+    background-color: #333;
+    -webkit-animation: spinnerBarFadeDelay .8s infinite ease-in-out both;
+    animation: spinnerBarFadeDelay .8s infinite ease-in-out both;
 }
 
 .spinner .spinner__bar2 {
-  -webkit-transform: rotate(45deg);
-          transform: rotate(45deg);
+    -webkit-transform: rotate(45deg);
+    transform: rotate(45deg);
 }
 
 .spinner .spinner__bar3 {
-  -webkit-transform: rotate(90deg);
-          transform: rotate(90deg);
+    -webkit-transform: rotate(90deg);
+    transform: rotate(90deg);
 }
 
 .spinner .spinner__bar4 {
-  -webkit-transform: rotate(135deg);
-          transform: rotate(135deg);
+    -webkit-transform: rotate(135deg);
+    transform: rotate(135deg);
 }
 
 .spinner .spinner__bar5 {
-  -webkit-transform: rotate(180deg);
-          transform: rotate(180deg);
+    -webkit-transform: rotate(180deg);
+    transform: rotate(180deg);
 }
 
 .spinner .spinner__bar6 {
-  -webkit-transform: rotate(225deg);
-          transform: rotate(225deg);
+    -webkit-transform: rotate(225deg);
+    transform: rotate(225deg);
 }
 
 .spinner .spinner__bar7 {
-  -webkit-transform: rotate(270deg);
-          transform: rotate(270deg);
+    -webkit-transform: rotate(270deg);
+    transform: rotate(270deg);
 }
 
 .spinner .spinner__bar8 {
-  -webkit-transform: rotate(315deg);
-          transform: rotate(315deg);
+    -webkit-transform: rotate(315deg);
+    transform: rotate(315deg);
 }
 
-.spinner .spinner__bar2:before {
-  -webkit-animation-delay: -0.7s;
-          animation-delay: -0.7s;
+.spinner .spinner__bar2::before {
+    -webkit-animation-delay: -.7s;
+    animation-delay: -.7s;
 }
 
-.spinner .spinner__bar3:before {
-  -webkit-animation-delay: -0.6s;
-          animation-delay: -0.6s;
+.spinner .spinner__bar3::before {
+    -webkit-animation-delay: -.6s;
+    animation-delay: -.6s;
 }
 
-.spinner .spinner__bar4:before {
-  -webkit-animation-delay: -0.5s;
-          animation-delay: -0.5s;
+.spinner .spinner__bar4::before {
+    -webkit-animation-delay: -.5s;
+    animation-delay: -.5s;
 }
 
-.spinner .spinner__bar5:before {
-  -webkit-animation-delay: -0.4s;
-          animation-delay: -0.4s;
+.spinner .spinner__bar5::before {
+    -webkit-animation-delay: -.4s;
+    animation-delay: -.4s;
 }
 
-.spinner .spinner__bar6:before {
-  -webkit-animation-delay: -0.3s;
-          animation-delay: -0.3s;
+.spinner .spinner__bar6::before {
+    -webkit-animation-delay: -.3s;
+    animation-delay: -.3s;
 }
 
-.spinner .spinner__bar7:before {
-  -webkit-animation-delay: -0.2s;
-          animation-delay: -0.2s;
+.spinner .spinner__bar7::before {
+    -webkit-animation-delay: -.2s;
+    animation-delay: -.2s;
 }
 
-.spinner .spinner__bar8:before {
-  -webkit-animation-delay: -0.1s;
-          animation-delay: -0.1s;
+.spinner .spinner__bar8::before {
+    -webkit-animation-delay: -.1s;
+    animation-delay: -.1s;
 }
 
 @-webkit-keyframes spinnerBarFadeDelay {
-  0%, 39%, 100% { opacity: 0; }
-  40% { opacity: 1; }
+    0%,
+    39%,
+    100% { opacity: 0; }
+    40% { opacity: 1; }
 }
 
 @keyframes spinnerBarFadeDelay {
-  0%, 39%, 100% { opacity: 0; }
-  40% { opacity: 1; }
+    0%,
+    39%,
+    100% { opacity: 0; }
+    40% { opacity: 1; }
 }
 
 /* wrappers */
@@ -497,7 +501,7 @@ button:disabled {
 }
 
 .form--disabled {
-    opacity: 0.5;
+    opacity: .5;
 }
 
 .inline-loading {
