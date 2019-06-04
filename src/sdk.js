@@ -38,11 +38,23 @@ class EndUserSdk {
 
         this.sdk = createEndUserSdk({ token, jobId, serviceId });
         this.initiated = true;
+
+        const job = await this.sdk.getJob();
+        const otp = await this.sdk.createOtp();
+
+        Storage.set('_', 'serviceName', job.serviceName);
+        Storage.set('_', 'otp', otp);
     }
 
     async retrieve() {
         this.sdk = createEndUserSdk({ token, jobId, serviceId });
         this.initiated = true;
+
+        const job = await this.sdk.getJob();
+        const otp = await this.sdk.createOtp();
+
+        Storage.set('_', 'serviceName', job.serviceName);
+        Storage.set('_', 'otp', otp);
     }
 
     async createJobInputs(inputs) {
@@ -66,7 +78,7 @@ class EndUserSdk {
             const submitted = await Promise.all(createInputs);
             submitted.forEach(_ => Storage.set('input', _.key, _.data));
         } catch (err) {
-            await this.sdk.resetJob(keys[0]);
+            //await this.sdk.resetJob(keys[0]);
 
             throw err;
         }

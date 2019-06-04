@@ -42,24 +42,47 @@ class PageRenderer {
         this.renderSection(section);
     }
 
+    waitVaultOutput() {
+        return new Promise((resolve, reject) => {
+            window.addEventListener("message", receiveOutput);
+            function receiveOutput({ data: message }) {
+                // Consider security concerns: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#Security_concerns
+                if (message.name === 'vault.output') {
+                    window.removeEventListener('message', this);;
+                    return resolve(message.data);
+                }
+
+                if (message.name === 'vault.validationError' || message.name === 'vault.error') {
+                    window.removeEventListener('message', this);;
+                    return reject(message.name)
+                }
+            }
+        });
+    }
+
+
     addListener(name) {
         if (!sdk.initiated) {
             return;
         }
 
         const submitBtn = document.querySelector(`#submit-btn-${name}`);
-
-        if (!submitBtn) {
-            console.warn(`no button #submit-btn-${name} found`);
-            return;
-        }
+        const hostedForm = document.querySelector('#vault-iframe');
 
         submitBtn.addEventListener('click', () => {
             // TODO: validate the input (using protocol?)
             const form = document.querySelector(`#section-form-${name}`);
+
             if (!form.reportValidity()) {
                 console.log('invalid form');
                 return;
+            }
+
+            if (hostedForm) {
+                hostedForm.contentWindow.postMessage('vault.submit', '*');
+                this.waitVaultOutput().then(() => {
+
+                });
             }
 
             submitBtn.setAttribute('disabled', 'true');
@@ -67,27 +90,31 @@ class PageRenderer {
             const inputs = serializeForm(`#section-form-${name}`);
 
             // send input sdk
-            sdk.createJobInputs(inputs)
-                .then(submittedInputs => {
-                    const event = new CustomEvent('submitinput', { detail: submittedInputs });
-                    window.dispatchEvent(event);
-
-                    if (this.sections.length === 0) {
-                        render(html``, document.querySelector(this.selector));
-                        this.onFinish();
-                    } else {
-                        form.classList.add('form--disabled');
-                        [...form.querySelectorAll('input')].forEach(_ => _.setAttribute('disabled', 'disabled'));
-                        this.next();
-                    }
-                })
-                .catch(err => {
-                    if (document.querySelector('#error')) {
-                        render(html`${err}`, document.querySelector('#error'));
-                    }
-                    submitBtn.removeAttribute('disabled');
-                });
+            this.submitInputs(inputs);
         });
+    }
+
+    submitInputs(inputs) {
+        sdk.createJobInputs(inputs)
+            .then(submittedInputs => {
+                const event = new CustomEvent('submitinput', { detail: submittedInputs });
+                window.dispatchEvent(event);
+
+                if (this.sections.length === 0) {
+                    render(html``, document.querySelector(this.selector));
+                    this.onFinish();
+                } else {
+                    form.classList.add('form--disabled');
+                    [...form.querySelectorAll('input')].forEach(_ => _.setAttribute('disabled', 'disabled'));
+                    this.next();
+                }
+            })
+            .catch(err => {
+                if (document.querySelector('#error')) {
+                    render(html`${err}`, document.querySelector('#error'));
+                }
+                submitBtn.removeAttribute('disabled');
+            });
     }
 
     skipSection() {

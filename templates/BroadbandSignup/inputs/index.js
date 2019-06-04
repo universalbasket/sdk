@@ -21,7 +21,6 @@ import selectedInstallationAddress from './selected-installation-address.js';
 import selectedLineInstallationOption from './selected-line-installation-option.js';
 import landlineChallenge from './landline-challenge.js';
 import directoryListing from './directory-listing.js';
-import alternativeCorrespondence from './alternative-correspondence.js';
 import existingLandline from './existing-landline.js';
 import yourPackage from './package.js';
 import confirmation from './confirmation.js';
@@ -50,7 +49,6 @@ export {
     selectedLineInstallationOption,
     landlineChallenge,
     directoryListing,
-    alternativeCorrespondence,
     existingLandline,
     yourPackage,
     confirmation

@@ -61,7 +61,7 @@ export default {
             route: '/checkout',
             title: 'Payment details',
             sections: [
-                { name: 'checkout' }
+                { name: 'checkout', waitFor: ['_.otp'] }
             ]
         },
 /*         {

@@ -2,7 +2,7 @@ import { html, render } from 'lit-html';
 import { payment, directDebit } from '../inputs/index';
 
 export default (name, data) => html`
-    ${payment()}
+    ${payment(data.otp)}
 
     <div class="field">
         <span class="field__name">How do you want to pay monthly payment?</span>
@@ -18,7 +18,6 @@ export default (name, data) => html`
     </div>
 
     <div id="direct-debit-wrapper"></div>
-
 
     <div class="section__actions">
         <button
