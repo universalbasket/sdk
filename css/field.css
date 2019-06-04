@@ -25,6 +25,6 @@
 }
 
 .field__inputs > input[type="radio"]:disabled + label {
-    opacity: 0.5;
+    opacity: .5;
     cursor: not-allowed;
 }
