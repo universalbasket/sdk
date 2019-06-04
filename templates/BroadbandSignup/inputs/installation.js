@@ -1,31 +1,11 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
 
-export default () => html`
+export default (installationOptions = {}) => html`
 <div name="installation">
-    <div class="field">
-        <span class="field__name">What is you property type? </span>
-        <div class="field__inputs group group--merged">
-            <input type="radio" name="installation[property-type]" id="installation[property-type]-flat" value="flat"
-                required checked>
-            <label for="installation[property-type]-flat" class="button">Flat</label>
-
-            <input type="radio" name="installation[property-type]" id="installation[property-type]-house" value="house">
-            <label for="installation[property-type]-house" class="button">House</label>
-        </div>
-    </div>
-
-    <div class="field">
-        <span class="field__name">Is there any access Restriction? </span>
-        <div class="field__inputs group group--merged">
-            <input type="radio" name="installation[access-restrictions]" id="installation-access-restrictions-yes"
-                value="yes" required>
-            <label for="installation-access-restrictions-yes" class="button">Yes</label>
-
-            <input type="radio" name="installation[access-restrictions]" id="installation-access-restrictions-no" value="no"
-                required checked>
-            <label for="installation-access-restrictions-no" class="button">No</label>
-        </div>
-    </div>
+    ${propertyType(installationOptions.propertyTypes)}
+    ${selectFields(installationOptions.storeySelection, 'What floor do you live on?', 'installation[storey-selection]')}
+    ${selectFields(installationOptions.accessRestrictions, 'Are there any access restrictions?', 'installation[access-restrictions]')}
+    ${selectFields(installationOptions.parkingRestrictions, 'Are there any parking restrictions?', 'installation[parking-restrictions]')}
 
     <div class="field">
         <span class="field__name">Has access to communal satellite?</span>
@@ -41,3 +21,36 @@ export default () => html`
     </div>
 </div>
 `;
+
+const propertyType = (propertyTypes) => {
+    if (!propertyTypes || propertyTypes.length === 0) {
+        return ''
+    }
+
+    return html`
+    <div class="field">
+        <span class="field__name">What is you property type? </span>
+        <div class="field__inputs group group--merged">
+            ${propertyTypes.map(type => html`
+                <input type="radio" name="installation[property-type]" id="installation[property-type]-${type}" value="${type}" required>
+                <label for="installation[property-type]-${type}" class="button">${type}</label>`
+            )}
+        </div>
+    </div>`
+}
+
+const selectFields = (data, label, name) => {
+    if (!data || data.length === 0) {
+        return '';
+    }
+    return html`
+        <div class="field">
+            <span class="field__name">${label}</span>
+                <select name="${name}" required>
+                    ${ data.map(d => html`
+                        <option value="${d}">${d}</option>`
+                    )}
+                </select>
+            </div>
+        </div>`
+}

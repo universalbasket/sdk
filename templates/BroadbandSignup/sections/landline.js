@@ -5,7 +5,7 @@ import { html } from '/web_modules/lit-html/lit-html.js';
 
 export default (name, data = {}) => html`
     ${landlineCheck()}
-    ${data.landlineOption ? hidden(data.landlineOption) : landlineOption() }
+    ${data.landlineOptions ? hidden(data.landlineOptions) : landlineOption() }
 
     <div class="section__actions">
         <button type="button" class="button button--right button--primary" id="submit-btn-${name}">Look-up</button>

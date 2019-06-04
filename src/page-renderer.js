@@ -12,7 +12,6 @@ import * as Storage from './storage.js';
  * @param {String} selector
  * @param {Function} onFinish
  */
-
 class PageRenderer {
     constructor(name, sections = [], selector, onFinish) {
         this.name = name;
@@ -125,7 +124,6 @@ class PageRenderer {
                 const data = getData(type, sourceKey);
 
                 if (data === null) { //skip: true,
-                    this.skipSection();
                     return { data: null, skip: true, sourceKey };
                 }
 
@@ -148,9 +146,7 @@ class PageRenderer {
             const dataWaitFor = {};
             results.forEach(result => { dataWaitFor[result.sourceKey] = result.data; });
 
-            console.log('keysToWaitFor', keysToWaitFor);
             const stop = sdk.trackJobOutput((message) => {
-
                 if (message === 'outputCreate') {
                     const { outputs } = Storage.getAll();
                     const allAvailable = keysToWaitFor.every(k => outputs[k]);
