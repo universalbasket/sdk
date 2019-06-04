@@ -1,0 +1,507 @@
+@import "https://fonts.googleapis.com/css?family=Libre+Franklin:100,200,300,400,500,600,700";
+
+:root {
+    --header-background-color: #333;
+    --summary-background-color: #fff;
+    --progress-bar-background-color: #f1f1f1;
+    --primary-color: #2a3c4f;
+    --accent-color: #333;
+    --step-icon: #c7c7c7;
+    --step-icon--active: #606060;
+    --input-border-radius: 2px;
+    --nav-height--large: 60px;
+    --nav-height--small: 45px;
+}
+
+/* http://meyerweb.com/eric/tools/css/reset/
+   v2.0 | 20110126
+   License: none (public domain)
+*/
+
+html,
+body,
+div,
+span,
+applet,
+object,
+iframe,
+img,
+ins,
+kbd,
+q,
+s,
+samp,
+tt,
+var,
+fieldset,
+form,
+table,
+caption,
+tbody,
+tfoot,
+thead,
+tr,
+th,
+td,
+article,
+aside,
+canvas,
+details,
+embed,
+figure,
+figcaption,
+footer,
+header,
+hgroup,
+menu,
+nav,
+output,
+section,
+summary,
+time,
+mark,
+audio,
+video {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    vertical-align: baseline;
+    box-sizing: border-box;
+}
+
+article,
+aside,
+footer,
+header,
+section {
+    display: block;
+}
+
+input,
+textarea,
+button,
+select {
+    font: inherit;
+}
+
+article,
+aside,
+details,
+figcaption,
+figure,
+footer,
+header,
+hgroup,
+menu,
+nav,
+section {
+    display: block;
+}
+
+blockquote,
+q {
+    quotes: none;
+}
+
+blockquote::before,
+blockquote::after,
+q::before,
+q::after {
+    content: '';
+    content: none;
+}
+
+* {
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 14px;
+    margin: 0;
+}
+
+label {
+    display: block;
+}
+
+input,
+select {
+    border: 2px solid var(--accent-color);
+    border-radius: var(--input-border-radius);
+    width: 30ch;
+    padding: 1px 2px;
+}
+
+input:focus {
+    border-color: #31aade;
+    outline: none;
+}
+
+ul,
+ol {
+    list-style-type: none;
+    padding: 0;
+}
+
+button:disabled {
+    opacity: 0.5;
+}
+
+.progress-bar {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    margin: 15px;
+}
+
+.progress-bar__step {
+    flex-basis: 6em;
+}
+
+.progress-bar__label {
+    display: none;
+    font-weight: 600;
+}
+
+.progress-bar__step--active .progress-bar__label {
+    display: initial;
+}
+
+.progress-bar__icon {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--step-icon);
+    color: white;
+    width: 35px;
+    height: 35px;
+    border-radius: 20px;
+    margin: 10px;
+}
+
+.progress-bar__step--active .progress-bar__icon {
+    background-color: var(--step-icon--active);
+}
+
+.summary {
+    position: -webkit-sticky;
+    position: sticky;
+}
+
+.summary > li {
+    border-bottom: solid 1px #c8c8c8;
+}
+
+.summary__block {
+    padding: 5px 0;
+    border-bottom: dotted gray 1px;
+}
+
+/* main */
+
+.section__actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 30px;
+}
+
+.field {
+    margin: 5px;
+    padding: 5px 5px 15px 5px;
+}
+
+.field-set {
+    border-bottom: solid 1px #d3e0ed;
+}
+
+.field__name {
+    font-size: 14px;
+    font-weight: 700;
+    color: #333;
+    display: block;
+    padding-bottom: 5px;
+}
+
+.field__inputs > input[type="radio"] {
+    display: none;
+}
+
+.field__inputs > input[type="radio"]:checked + label {
+    color: #fff;
+    background: var(--accent-color);
+}
+
+.field__inputs > input[type="radio"]:disabled + label {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.group--merged > label:not(:last-child) {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.group--merged > label:last-child {
+    margin-left: -1px;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.group {
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
+}
+
+.group--merged {
+    flex-wrap: nowrap;
+    align-items: stretch;
+    white-space: nowrap;
+    border-radius: 5px;
+}
+
+.group--merged > * {
+    border: 2px solid var(--accent-color);
+}
+
+.button {
+    border-radius: 3px;
+    padding: 2px 5px;
+    min-width: 8ch;
+    vertical-align: middle;
+    text-align: center;
+}
+
+.button:hover {
+    cursor: pointer;
+}
+
+.button--primary {
+    color: #fff;
+    background: var(--primary-color);
+    border: 0;
+}
+
+.spinner {
+  width: 10px;
+  height: 20px;
+  position: relative;
+  margin-right: 10px;
+}
+
+.spinner .spinner__bar {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.spinner .spinner__bar:before {
+  content: '';
+  display: block;
+  margin: 0 auto;
+  width: 25%;
+  height: 30%;
+  border-radius: 10px;
+  background-color: #333;
+  -webkit-animation: spinnerBarFadeDelay 0.8s infinite ease-in-out both;
+          animation: spinnerBarFadeDelay 0.8s infinite ease-in-out both;
+}
+
+.spinner .spinner__bar2 {
+  -webkit-transform: rotate(45deg);
+          transform: rotate(45deg);
+}
+
+.spinner .spinner__bar3 {
+  -webkit-transform: rotate(90deg);
+          transform: rotate(90deg);
+}
+
+.spinner .spinner__bar4 {
+  -webkit-transform: rotate(135deg);
+          transform: rotate(135deg);
+}
+
+.spinner .spinner__bar5 {
+  -webkit-transform: rotate(180deg);
+          transform: rotate(180deg);
+}
+
+.spinner .spinner__bar6 {
+  -webkit-transform: rotate(225deg);
+          transform: rotate(225deg);
+}
+
+.spinner .spinner__bar7 {
+  -webkit-transform: rotate(270deg);
+          transform: rotate(270deg);
+}
+
+.spinner .spinner__bar8 {
+  -webkit-transform: rotate(315deg);
+          transform: rotate(315deg);
+}
+
+.spinner .spinner__bar2:before {
+  -webkit-animation-delay: -0.7s;
+          animation-delay: -0.7s;
+}
+
+.spinner .spinner__bar3:before {
+  -webkit-animation-delay: -0.6s;
+          animation-delay: -0.6s;
+}
+
+.spinner .spinner__bar4:before {
+  -webkit-animation-delay: -0.5s;
+          animation-delay: -0.5s;
+}
+
+.spinner .spinner__bar5:before {
+  -webkit-animation-delay: -0.4s;
+          animation-delay: -0.4s;
+}
+
+.spinner .spinner__bar6:before {
+  -webkit-animation-delay: -0.3s;
+          animation-delay: -0.3s;
+}
+
+.spinner .spinner__bar7:before {
+  -webkit-animation-delay: -0.2s;
+          animation-delay: -0.2s;
+}
+
+.spinner .spinner__bar8:before {
+  -webkit-animation-delay: -0.1s;
+          animation-delay: -0.1s;
+}
+
+@-webkit-keyframes spinnerBarFadeDelay {
+  0%, 39%, 100% { opacity: 0; }
+  40% { opacity: 1; }
+}
+
+@keyframes spinnerBarFadeDelay {
+  0%, 39%, 100% { opacity: 0; }
+  40% { opacity: 1; }
+}
+
+/* wrappers */
+
+.header-wrapper {
+    background-color: var(--header-background-color);
+    color: white;
+    width: 100%;
+    position: fixed;
+    top: 0;
+    padding: 10px;
+}
+
+.container {
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: space-evenly;
+    align-items: flex-start;
+    margin-top: 65px;
+    height: 90%;
+}
+
+.progress-bar-wrapper {
+    background-color: var(--progress-bar-background-color);
+}
+
+.summary-wrapper {
+    background-color: var(--summary-background-color);
+    padding: 15px 10px;
+    align-self: stretch;
+    border-bottom: 2px solid #ccc;
+}
+
+.main-wrapper {
+    display: flex;
+    justify-content: center;
+    height: 100%;
+    overflow-y: auto;
+}
+
+@media all and (max-width: 650px) {
+    .container {
+        margin-top: 40px;
+        flex-flow: column nowrap;
+        justify-content: flex-start;
+    }
+    /* We tell both sidebars to share a row */
+    .summary-wrapper {
+        order: 1;
+        position: -webkit-sticky;
+        position: sticky;
+        top: 25px;
+    }
+
+    .progress-bar-wrapper {
+        order: 2;
+        align-self: stretch;
+    }
+
+    .main-wrapper {
+        order: 3;
+        justify-content: stretch;
+        margin-top: 10px;
+    }
+
+    .header-wrapper {
+        height: var(--nav-height--small);
+    }
+}
+
+/* Large screens */
+
+@media all and (min-width: 650px) {
+    /* We invert order of first sidebar and main
+    * And tell the main element to take twice as much width as the other two sidebars
+    */
+    .progress-bar-wrapper {
+        order: 1;
+        flex: 1 100%;
+    }
+
+    .main-wrapper {
+        flex: 2 auto;
+        order: 2;
+        max-width: 60vw;
+        margin-top: 20px;
+    }
+
+    .summary-wrapper {
+        flex: 1 auto;
+        order: 3;
+        padding: 20px;
+    }
+
+    .header-wrapper {
+        height: var(--nav-height--large);
+    }
+
+    .page {
+        width: 40vw;
+        min-width: 400px;
+    }
+}
+
+.dimmed {
+    color: #919191;
+}
+
+.warning {
+    color: red;
+}
+
+.form--disabled {
+    opacity: 0.5;
+}
+
+.inline-loading {
+    display: flex;
+    justify-content: center;
+    align-content: center;
+}

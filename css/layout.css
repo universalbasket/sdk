@@ -1,0 +1,97 @@
+.header-wrapper {
+    background-color: var(--header-background-color);
+    color: white;
+    width: 100%;
+    position: fixed;
+    top: 0;
+    padding: 10px;
+}
+
+.container {
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: space-evenly;
+    align-items: flex-start;
+    margin-top: 65px;
+    height: 90%;
+}
+
+.progress-bar-wrapper {
+    background-color: var(--progress-bar-background-color);
+}
+
+.summary-wrapper {
+    background-color: var(--summary-background-color);
+    padding: 15px 10px;
+    align-self: stretch;
+    border-bottom: 2px solid #ccc;
+}
+
+.main-wrapper {
+    display: flex;
+    justify-content: center;
+    height: 100%;
+    overflow-y: auto;
+}
+
+@media all and (max-width: 650px) {
+    .container {
+        margin-top: 40px;
+        flex-flow: column nowrap;
+        justify-content: flex-start;
+    }
+    /* We tell both sidebars to share a row */
+    .summary-wrapper {
+        order: 1;
+        position: sticky;
+        top: 25px;
+    }
+
+    .progress-bar-wrapper {
+        order: 2;
+        align-self: stretch;
+    }
+
+    .main-wrapper {
+        order: 3;
+        justify-content: stretch;
+        margin-top: 10px;
+    }
+
+    .header-wrapper {
+        height: var(--nav-height--small);
+    }
+}
+
+/* Large screens */
+@media all and (min-width: 650px) {
+    /* We invert order of first sidebar and main
+    * And tell the main element to take twice as much width as the other two sidebars
+    */
+    .progress-bar-wrapper {
+        order: 1;
+        flex: 1 100%;
+    }
+
+    .main-wrapper {
+        flex: 2 auto;
+        order: 2;
+        max-width: 60vw;
+        margin-top: 20px;
+    }
+
+    .summary-wrapper {
+        flex: 1 auto;
+        order: 3;
+        padding: 20px;
+    }
+
+    .header-wrapper {
+        height: var(--nav-height--large);
+    }
+
+    .page {
+        width: 40vw;
+        min-width: 400px;
+    }
+}
