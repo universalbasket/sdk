@@ -12,7 +12,7 @@
     flex-flow: row wrap;
 /*    justify-content: space-evenly;
     align-items: flex-start;*/
-    margin-top: 60px;
+    margin-top: var(--header-height--large);
     height: 90%;
 }
 
@@ -31,7 +31,7 @@
 
 @media all and (max-width: 650px) {
     .container {
-        margin-top: 45px;
+        margin-top: var(--header-height--small);
         flex-flow: column nowrap;
         justify-content: flex-start;
     }
@@ -53,7 +53,7 @@
         top: 0;
         left: 0;
         right: 0;
-        background: var(--overlay-bg);
+        background: var(--overlay);
     }
 
     .progress-bar-wrapper {
@@ -68,7 +68,7 @@
     }
 
     .header-wrapper {
-        height: var(--nav-height--small);
+        height: var(--header-height--small);
         z-index: 2;
     }
 }
@@ -97,7 +97,7 @@
     }
 
     .header-wrapper {
-        height: var(--nav-height--large);
+        height: var(--header-height--large);
     }
 
     .page {
