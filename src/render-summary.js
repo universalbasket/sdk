@@ -1,6 +1,6 @@
 import { render } from 'lit-html';
 import summaryWrapper from './builtin-templates/summary-wrapper'
-import { installMediaQueryWatcher } from '../node_modules/pwa-helpers/media-query.js'
+import { installMediaQueryWatcher } from 'pwa-helpers/media-query.js'
 import * as Storage from './storage';
 
 let BodyTemplate = null;
