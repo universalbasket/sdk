@@ -23,9 +23,7 @@ export default (prefix = 'payment') => html`
         <div class="field">
             <label class="field__name">brand</label>
             <select name="${prefix}[card][brand]">
-                ${ CARD_BRANDS.map(c => html`
-                <option value="${c}"> ${ c }</option>`
-                ) }
+                ${CARD_BRANDS.map(c => html`<option value="${c}">${c}</option>`)}
             </select>
         </div>
 
@@ -43,7 +41,7 @@ export default (prefix = 'payment') => html`
             <label class="field__name" for="${prefix}[card][expiration-date]">Expiry Date</label>
             <input type="text"
                 name="${prefix}[card][expiration-date]"
-                id= "expiry-year",
+                id="expiry-year",
                 maxlength="8"
                 placeholder="YYYY-MM"
                 value="2020-10"

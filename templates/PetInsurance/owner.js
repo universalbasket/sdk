@@ -10,7 +10,7 @@ export default () => html`
                 <label class="field__name">Title</label>
                 <select name="owner[person][title]">
                     ${ TITLES.map(t => html`
-                    <option value="${t}" /> ${ t.toUpperCase() }</option>`
+                    <option value="${t}">${ t.toUpperCase() }</option>`
                     ) }
                 </select>
             </div>
