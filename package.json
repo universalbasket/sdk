@@ -5,7 +5,7 @@
   "module": "build.js",
   "scripts": {
     "install": "pika-web && node hack-wrap.js",
-    "start": "npm run build && npm run serve",
+    "start": "npm run serve",
     "serve": "browser-sync start --index 'index.html' --server --files 'index.css' 'index.js' 'templates' 'web_modules' 'src/' 'ubio.config.js'",
     "watch:css": "watch 'npm run build:css' css",
     "watch:js": "watch 'npm run build:rollup && npm run build:js && npm run build:clean-up' templates",
@@ -52,7 +52,7 @@
     "watch": "^1.0.2"
   },
   "@pika/web": {
-    "c": [
+    "webDependencies": [
       "lit-html",
       "@ubio/sdk"
     ]
