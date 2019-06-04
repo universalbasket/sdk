@@ -1,7 +1,7 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
 import { classMap } from '/web_modules/lit-html/directives/class-map.js';
 
-const toggleEvent = new CustomEvent('toggle');
+const toggleSummary = new CustomEvent('toggle-summary');
 
 export default ({
     isExpanded,
@@ -10,27 +10,49 @@ export default ({
     outputs,
     cache,
     local,
-    serviceName = 'Your Package',
-    domain = ''
+    serviceName,
+    domain
 }) =>
     isMobile ?
         html`
             ${SummaryMobile({ isExpanded, inputs, outputs, serviceName, domain })}
-            ${ isExpanded ? html`<div class="summary-wrapper__overlay"></div>` : ''}`:
+            ${ isExpanded ?
+                html`<div
+                    class="summary-wrapper__overlay"
+                    @click=${ () => window.dispatchEvent(toggleSummary) }></div>` :
+                ''}`:
         SummaryDesktop({ serviceName, domain });
 
 const SummaryBodyTemplate = () => html`
     <section class="summary__body" id="summary-body"></section>`
 
 const SummaryHeaderInitial = (serviceName, domain) => html`
-    <div class="summary__header">
-        <b>${serviceName}</b>
-        <span class="dimmed">${domain}</span>
-    </div>
+    <b class="large">${serviceName || 'Your Package'}</b>
+    <span class="faint large">${domain}</span>
 `
 
 const SummaryHeaderPartial = ({ inputs, outputs }) => html`
-    <b class="highlight">£14.99</b> a summary
+    <b class="large summary__preview-price">£14.99</b>
+    <span class="faint summary__preview-info">
+        ${Object.values(outputs).slice(4).join(', ')}
+        Starts 11/06/2019, Accidents only, 10% Vet fee
+    </span>
+`
+
+const ToggableHeaderWrapper = (isExpanded, template) => html`
+    <header class=${classMap({
+            'summary__header': true,
+            'summary__header--toggable': true,
+            'summary__header--toggled-up': !isExpanded,
+            'summary__header--toggled-down': isExpanded
+        })}
+        @click=${ () => window.dispatchEvent(toggleSummary) }>
+        <div class="summary__preview">${template}</div>
+    </header>
+`
+
+const StaticHeaderWrapper = (template) => html`
+    <header class="summary__header">${template}</header>
 `
 
 const SummaryDesktop = ({ serviceName, domain }) =>html`
@@ -40,31 +62,20 @@ const SummaryDesktop = ({ serviceName, domain }) =>html`
     </div>
 `
 
-const ToggableWrapper = (isExpanded, template) => html`
-    <div class=${classMap({
-            'toggable': true,
-            'toggable-up': !isExpanded,
-            'toggable-down': isExpanded
-        })}
-        @click=${ () => window.dispatchEvent(toggleEvent) }>
-        ${template}
-    </div>
-`
-
 const SummaryMobile = ({ isExpanded, inputs, outputs, serviceName, domain }) =>
     (inputs || outputs) ?
         html`
             <div class="summary">
                 ${isExpanded ?
                     html`
-                        ${ToggableWrapper(isExpanded, SummaryHeaderInitial(serviceName, domain))}
+                        ${ToggableHeaderWrapper(isExpanded, SummaryHeaderInitial(serviceName, domain))}
                         ${SummaryBodyTemplate()}
                     ` :
-                    ToggableWrapper(isExpanded, SummaryHeaderPartial({ inputs, outputs }))
+                    ToggableHeaderWrapper(isExpanded, SummaryHeaderPartial({ inputs, outputs }))
                 }
             </div>` :
         html`<div class="summary">
-            ${SummaryHeaderInitial(serviceName, domain)}
+            ${StaticHeaderWrapper(SummaryHeaderInitial(serviceName, domain))}
         </div>`
 
 

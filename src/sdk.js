@@ -5,6 +5,9 @@ let jobId = localStorage.getItem('jobId') || null;
 let token = localStorage.getItem('token') || null;
 let serviceId = localStorage.getItem('serviceId') || null;
 
+let serviceName = localStorage.getItem('serviceName');
+let domain = localStorage.getItem('domain');
+
 class EndUserSdk {
     constructor() {
         this.sdk = null;
@@ -33,6 +36,9 @@ class EndUserSdk {
         localStorage.setItem('jobId', jobId);
         localStorage.setItem('token', token);
         localStorage.setItem('serviceId', serviceId);
+
+        localStorage.setItem('serviceName', newJob.serviceName);
+        localStorage.setItem('domain', newJob.domain);
 
         Object.keys(input).forEach(key => Storage.set('input', key, input[key]));
 
