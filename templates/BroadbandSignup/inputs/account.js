@@ -1,3 +1,3 @@
-import Account from '../../Generic/Account';
+import Account from '../../Generic/Account.js';
 
 export default Account;

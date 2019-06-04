@@ -1,20 +1,20 @@
-import petsSelectedBreedType from './pets_selected-breed-type';
-import account from './account';
-import owner from './owner';
-import selectedAddress from './selected-address';
+import petsSelectedBreedType from './pets_selected-breed-type.js';
+import account from './account.js';
+import owner from './owner.js';
+import selectedAddress from './selected-address.js';
 
-import policyOptions from './policy-options';
-import selectedCover from './selected-cover';
-import selectedVetPaymentTerm from './selected-vet-payment-term';
-import selectedCoverType from './selected-cover-type';
-import selectedPaymentTerm from './selected-payment-term';
-import selectedVetFee from './selected-vet-fee';
-import selectedVoluntaryExcess from './selected-voluntary-excess';
-import selectedCoverOptions from './selected-cover-options';
+import policyOptions from './policy-options.js';
+import selectedCover from './selected-cover.js';
+import selectedVetPaymentTerm from './selected-vet-payment-term.js';
+import selectedCoverType from './selected-cover-type.js';
+import selectedPaymentTerm from './selected-payment-term.js';
+import selectedVetFee from './selected-vet-fee.js';
+import selectedVoluntaryExcess from './selected-voluntary-excess.js';
+import selectedCoverOptions from './selected-cover-options.js';
 
-import payment from './payment';
-import directDebit from './direct-debit';
-import finalPriceConsent from './final-price-consent';
+import payment from './payment.js';
+import directDebit from './direct-debit.js';
+import finalPriceConsent from './final-price-consent.js';
 
 export {
     petsSelectedBreedType,

@@ -1,6 +1,6 @@
-import landline from './landline';
-import selectedAddress from './selected-address';
-import aboutYou from './about-you';
+import landline from './landline.js';
+import selectedAddress from './selected-address.js';
+import aboutYou from './about-you.js';
 
 export {
     landline,

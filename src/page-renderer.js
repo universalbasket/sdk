@@ -1,11 +1,11 @@
-import kebabcase from 'lodash.kebabcase';
-import { html, render } from './lit-html';
-import sdk from './sdk';
-import serializeForm from './serialize-form';
-import getData from './get-data-with-priority'
-import pageWrapper from './builtin-templates/page-wrapper';
-import inlineLoading from './builtin-templates/inline-loading';
-import * as Storage from './storage';
+import kebabcase from '/web_modules/lodash.kebabcase.js';
+import { html, render } from '/web_modules/lit-html.js';
+import sdk from './sdk.js';
+import serializeForm from './serialize-form.js';
+import getData from './get-data-with-priority.js'
+import pageWrapper from './builtin-templates/page-wrapper.js';
+import inlineLoading from './builtin-templates/inline-loading.js';
+import * as Storage from './storage.js';
 /**
  * @param {String} name
  * @param {Array} sections

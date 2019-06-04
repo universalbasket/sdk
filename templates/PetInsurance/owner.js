@@ -1,4 +1,4 @@
-import { html } from 'lit-html';
+import { html } from '/web_modules/lit-html.js';
 
 const TITLES = ['mr', 'ms', 'mrs', 'miss'];
 const MARITAL_STATUS = ["Civil Partner", "Cohabiting", "Divorced", "Married", "Separated", "Single", "Widowed"];

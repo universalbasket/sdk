@@ -1,5 +1,5 @@
-import sdk from './sdk';
-import * as Storage from './storage';
+import sdk from './sdk.js';
+import * as Storage from './storage.js';
 
 export {
     poll
