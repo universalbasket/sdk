@@ -41,7 +41,7 @@ function createApp({ pages = [], cache = [], layout = [], data = {} }, callback)
         const { title, sections, route } = config;
         const nextRoute = flow[idx + 1];
 
-        const renderer = PageRenderer(name, sections, mainSelector, () => setTimeout(() => { window.location.hash = nextRoute }, 1000));
+        const renderer = PageRenderer(name, sections, mainSelector, () => setTimeout(() => { window.location.hash = nextRoute }, 500));
         routes[route] = { renderer, title, step: idx + 1 };
     });
 
