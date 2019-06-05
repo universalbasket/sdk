@@ -9,8 +9,8 @@
 
 /* main */
 @import "./section.css";
-@import "./field.css";
 @import "./group.css";
+@import "./field.css";
 @import "./button.css";
 @import "./spinner.css";
 /* wrappers */
