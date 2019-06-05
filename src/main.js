@@ -10,7 +10,6 @@ import NotFound from './render-not-found.js';
 import Loading from './builtin-templates/loading.js';
 import ProgressBar from './render-progress-bar.js';
 import Summary from './render-summary.js';
-import Confirmation from './builtin-templates/confirmation.js';
 import ErrorTemplate from './builtin-templates/error.js';
 
 function createApp({ pages = [], cache = [], layout = [], data = {} }, callback) {
@@ -29,19 +28,23 @@ function createApp({ pages = [], cache = [], layout = [], data = {} }, callback)
     const flow = pages.map(page => page.route);
     const titles = pages.map(page => page.title);
 
-    flow.push('/confirmation');
-
     const routes = {
         '/': Loading(mainSelector),
-        '/confirmation': { renderer: Confirmation(mainSelector), title: null, step: null },
         '/error': { renderer: ErrorTemplate(mainSelector), title: null, step: null }
     };
 
     pages.forEach((config, idx) => {
         const { title, sections, route } = config;
-        const nextRoute = flow[idx + 1];
+        let onFinish = null;
 
-        const renderer = PageRenderer(name, sections, mainSelector, () => setTimeout(() => { window.location.hash = nextRoute }, 500));
+        if (flow.length > idx + 1) {
+            const nextRoute = flow[idx + 1];
+            onFinish = () => setTimeout(() => { window.location.hash = nextRoute }, 500);
+        } else {
+            onFinish = callback;
+        }
+
+        const renderer = PageRenderer(name, sections, mainSelector, onFinish);
         routes[route] = { renderer, title, step: idx + 1 };
     });
 
@@ -106,7 +109,7 @@ function createApp({ pages = [], cache = [], layout = [], data = {} }, callback)
                         afterSdkCreated();
                     })
                     .catch(err => {
-                        console.log(err);
+                        console.error(err);
                         window.location.hash = '/error';
                     });
             }

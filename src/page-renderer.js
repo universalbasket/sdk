@@ -81,7 +81,6 @@ class PageRenderer {
             hostedForm.contentWindow.postMessage('vault.submit', '*');
             this.waitForVaultOutput()
                 .then(({ cardToken, panToken }) => {
-                    console.log('tokens issued:', cardToken, panToken );
                     submitBtn.setAttribute('disabled', 'true');
                     const inputs = serializeForm(`#section-form-${name}`);
 

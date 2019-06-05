@@ -5,6 +5,7 @@ import installation from './installation.js';
 import setupDates from './setup-dates.js';
 import checkout from './checkout.js';
 import finalPriceConsent from './final-price-consent.js';
+import confirmation from './confirmation.js';
 
 export {
     landline,
@@ -13,5 +14,6 @@ export {
     installation,
     setupDates,
     checkout,
-    finalPriceConsent
+    finalPriceConsent,
+    confirmation
 };

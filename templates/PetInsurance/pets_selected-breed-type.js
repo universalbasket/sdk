@@ -163,11 +163,9 @@ const breedTypeOptions = (options) => html`
 const breedTypeHandler = {
     // handleEvent method is required.
     handleEvent(e) {
-        console.log('e.target.value', e.target.value);
         const animalType = e.target.value;
         const options = availableBreedTypes[animalType] || [];
 
-        console.log('options', options);
         render(breedTypeOptions(options), document.querySelector('#selected-breed-type'));
     },
 // event listener objects can also define zero or more of the event

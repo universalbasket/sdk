@@ -10,7 +10,7 @@ function getAll() {
 
     for (let i = 0; i < length ; i += 1) {
         const key = localStorage.key(i);
-        console.log(key, localStorage.getItem(key));
+
         if (key.startsWith('input.')) {
             const trimmed = key.replace('input.', '');
             const data = JSON.parse(localStorage.getItem(key));
@@ -42,7 +42,6 @@ function getAll() {
         }
     }
 
-    console.log('_', _);
     return { inputs, outputs, caches, local, _ };
 }
 

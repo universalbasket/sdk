@@ -134,7 +134,6 @@ class EndUserSdk {
     trackJob(callback) {
         const stopTracking = this.sdk.trackJob((event, error) => {
             console.log(`event ${event}`);
-            console.log(event);
 
             if (event) {
                 callback(event, null);

@@ -61,15 +61,16 @@ export default {
             route: '/checkout',
             title: 'Payment details',
             sections: [
-                { name: 'checkout', waitFor: ['_.otp'] }
+                { name: 'checkout', waitFor: ['_.otp'] },
+                { name: 'finalPriceConsent', waitFor: ['output.oneOffCosts', 'output.finalPrice'] },
             ]
         },
         {
-            name: 'consentPayment',
-            route: '/consent-payment',
-            title: 'Price has changed',
+            name: 'confirmation',
+            route: '/confirmation',
+            title: 'Confirmation',
             sections: [
-                { name: 'finalPriceConsent', waitFor: ['output.oneOffCosts', 'output.finalPrice'] },
+                { name: 'confirmation', waitFor: ['outputs.confirmation'] }
             ]
         }
     ],
