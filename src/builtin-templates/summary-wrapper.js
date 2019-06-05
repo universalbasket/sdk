@@ -1,8 +1,5 @@
 import { html } from '/web_modules/lit-html.js';
-<<<<<<< HEAD
 import { classMap } from '/web_modules/lit-html/directives/class-map.js';
-=======
->>>>>>> master
 
 const toggleSummary = new CustomEvent('toggle-summary');
 
