@@ -1,6 +1,6 @@
 workflow "Append build.js to release." {
   on = "release"
-  resolves = ["https://github.com/JasonEtco/upload-to-release"]
+  resolves = ["upload to release"]
 }
 
 action "GitHub Action for npm" {
@@ -8,8 +8,8 @@ action "GitHub Action for npm" {
   runs = "npm run build"
 }
 
-action "https://github.com/JasonEtco/upload-to-release" {
-  uses = "JasonEtco/upload-to-release@f6be505"
+action "upload to release" {
+  uses = "JasonEtco/upload-to-release@f6be50515ab654bbbe5265afcf9acd97385b694c"
   needs = ["GitHub Action for npm"]
   args = "build.js text/javascript"
 }
