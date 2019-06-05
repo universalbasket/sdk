@@ -15,7 +15,7 @@ action "npm run build" {
 
 action "upload to release" {
   uses = "JasonEtco/upload-to-release@f6be50515ab654bbbe5265afcf9acd97385b694c"
-  needs = ["GitHub Action for npm"]
+  needs = ["npm run build"]
   args = "build.js text/javascript"
   secrets = ["GITHUB_TOKEN"]
 }
