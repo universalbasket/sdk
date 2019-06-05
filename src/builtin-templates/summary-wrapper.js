@@ -40,12 +40,9 @@ const SummaryHeaderPartial = ({ inputs, outputs }) => html`
 `
 
 const ToggableHeaderWrapper = (isExpanded, template) => html`
-    <header class=${classMap({
-            'summary__header': true,
-            'summary__header--toggable': true,
-            'summary__header--toggled-up': !isExpanded,
-            'summary__header--toggled-down': isExpanded
-        })}
+    <header class="summary__header summary__header--toggable ${isExpanded ?
+        'summary__header--toggled-down' :
+        'summary__header--toggled-up'}"
         @click=${ () => window.dispatchEvent(toggleSummary) }>
         <div class="summary__preview">${template}</div>
     </header>

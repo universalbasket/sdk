@@ -79,6 +79,112 @@ function getTermsAndConditions() {
     }
 }
 
+function getOneOffCosts() {
+    return {
+        "contents": [
+            {
+                "type": "NamedPrice",
+                "name": "Sky Q 1TB box Install Fee",
+                "price": {
+                    "value": 2000,
+                    "currencyCode": "gbp"
+                }
+            },
+            {
+                "type": "NamedPrice",
+                "name": "Broadband Hardware Delivery Charge",
+                "price": {
+                    "value": 995,
+                    "currencyCode": "gbp"
+                }
+            },
+            {
+                "type": "NamedPrice",
+                "name": "Broadband Activation Fee",
+                "price": {
+                    "value": 1000,
+                    "currencyCode": "gbp"
+                }
+            },
+            {
+                "price": {
+                    "value": 2000,
+                    "currencyCode": "gbp"
+                },
+                "name": "Pay now",
+                "type": "NamedPrice"
+            },
+            {
+                "price": {
+                    "value": 1995,
+                    "currencyCode": "gbp"
+                },
+                "name": "Added to next bill",
+                "type": "NamedPrice"
+            }
+        ],
+        "name": "One off costs",
+        "type": "StructuredText"
+    }
+}
+
+function getMonthlyCosts() {
+    return {
+        "type": "StructuredText",
+        "name": "Monthly costs",
+        "contents": [
+            {
+                "type": "NamedPrice",
+                "name": "Sky Entertainment",
+                "price": {
+                    "value": 2200,
+                    "currencyCode": "gbp"
+                }
+            },
+            {
+                "type": "NamedPrice",
+                "name": "Sky Broadband Essential",
+                "price": {
+                    "value": 2000,
+                    "currencyCode": "gbp"
+                }
+            },
+            {
+                "type": "NamedPrice",
+                "name": "Sky Broadband Boost",
+                "price": {
+                    "value": 250,
+                    "currencyCode": "gbp"
+                }
+            },
+            {
+                "type": "NamedPrice",
+                "name": "Sky Talk Line Rental",
+                "price": {
+                    "value": 0,
+                    "currencyCode": "gbp"
+                }
+            },
+            {
+                "type": "NamedPrice",
+                "name": "Sky Talk Anytime Extra",
+                "price": {
+                    "value": 500,
+                    "currencyCode": "gbp"
+                }
+            },
+            {
+                "type": "NamedPrice",
+                "name": "Smart Connectivity",
+                "price": {
+                    "value": 0,
+                    "currencyCode": "gbp"
+                }
+            }
+        ]
+    }
+}
+
 const showModal = (detail) => new CustomEvent('show-modal', {detail});
 
 export default (inputs = {}, outputs = {}, cache = {}, local = {}) => html`
@@ -92,7 +198,7 @@ export default (inputs = {}, outputs = {}, cache = {}, local = {}) => html`
                 ${inputs.selectedPhonePackage ? html`<li> Phone: ${inputs.selectedPhonePackage.name}</li>` : ''}
                 <li>
                     <span
-                        class="clickable"
+                        class="popup-icon"
                         @click=${() => window.dispatchEvent(showModal({
                             name: '10% Vet fee excess',
                             contents: html`
@@ -100,15 +206,7 @@ export default (inputs = {}, outputs = {}, cache = {}, local = {}) => html`
                                 <p class="dim">Morbi orci metus, commodo sit amet suscipit ac, pharetra eu mauris. Morbi sagittis lacus vel lacus finibus mollis. Phasellus arcu velit, viverra a eros ac, semper fringilla lectus. Sed varius sodales sapien nec auctor. Nam eget ornare lectus. Proin vehicula, urna nec congue rutrum, nunc odio pharetra nibh, eu dictum justo ante ut risus. Ut vulputate rhoncus dolor, id pharetra nisl semper quis. Nam tristique molestie lacinia. Aliquam vestibulum gravida ex id consequat. Suspendisse quis porta libero, cursus ultrices enim.</p>
                             `})
                         )}>
-                        10% Vet fee excess
-                    </span>
-                </li>
-                <li>
-                    <span
-                        class="clickable"
-                        @click=${() => window.dispatchEvent(showModal(getTermsAndConditions())
-                        )}>
-                        Here's the legal bit
+                        <span class="clickable">10% Vet fee excess</span>
                     </span>
                 </li>
             </ul>
@@ -119,34 +217,56 @@ export default (inputs = {}, outputs = {}, cache = {}, local = {}) => html`
         <b class="large highlight">£14.99</b>
     </div>
 
-    ${outputs.serviceTermsAndConditions ? html`
+    <div class="summary__block summary__block--docs">
+        <p><b>Documents</b></p>
+        <ul class="dim">
+            <li class="file-icon">Insurance product information</li>
+            <li class="file-icon">Essential information</li>
+            <li class="file-icon">Policy wording</li>
+        </dim>
+    </div>
+
+
+    ${true ? html`
         <div class="summary__block summary__block--docs">
-            <p><b>Reference</b></p>
+            <p><b>Other information</b></p>
             <ul class="dim">
-                ${outputs.serviceTermsAndConditions.type === 'StructuredText' ?
-                    html`
-                    <li>
-                        <span
-                            class="clickable"
-                            @click=${() =>
-                                window.dispatchEvent(showModal(outputs.serviceTermsAndConditions))
-                            }>
-                            ${outputs.serviceTermsAndConditions.name}
-                        </span>
-                    </li>` :
-                    ''
+                <li>
+                    <span
+                        class="popup-icon"
+                        @click=${() => window.dispatchEvent(showModal(getTermsAndConditions()))}>
+                        <span class="clickable">Here's the legal bit</span>
+                    </span>
+                </li>
+                <li>
+                    <span
+                        class="popup-icon"
+                        @click=${() => window.dispatchEvent(showModal(getOneOffCosts()))}>
+                        <span class="clickable">One off costs</span>
+                    </span>
+                </li>
+                <li>
+                    <span
+                        class="popup-icon"
+                        @click=${() => window.dispatchEvent(showModal(getMonthlyCosts()))}>
+                        <span class="clickable">Monthly costs</span>
+                    </span>
+                </li>
+
+                ${
+                    Object.values(outputs)
+                        .filter(o => o.type === 'StructuredText')
+                        .map(o => html`
+                            <li>
+                                <span
+                                    class="popup-icon"
+                                    @click=${() => window.dispatchEvent(showModal(o))}>
+                                    <span class="clickable">${o.name}</span>
+                                </span>
+                            </li>`)
                 }
             </ul>
         </div>` :
         ''
     }
-
-    <div class="summary__block summary__block--docs">
-        <p><b>Documents</b></p>
-        <ul class="dim">
-            <li class="file">Insurance product information</li>
-            <li class="file">Essential information</li>
-            <li class="file">Policy wording</li>
-        </dim>
-    </div>
 </div>`;
