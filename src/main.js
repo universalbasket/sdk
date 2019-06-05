@@ -1,16 +1,16 @@
-import sdk from './sdk';
-import Router from './router';
-import { render } from './lit-html';
+import sdk from './sdk.js';
+import Router from './router.js';
+import { render } from '/web_modules/lit-html.js';
 
-import * as Storage from './storage';
-import * as Cache from './cache';
+import * as Storage from './storage.js';
+import * as Cache from './cache.js';
 
-import PageRenderer from './page-renderer';
-import NotFound from './render-not-found';
-import Loading from './builtin-templates/loading';
-import ProgressBar from './render-progress-bar';
-import Summary from './render-summary';
-import Confirmation from './builtin-templates/confirmation';
+import PageRenderer from './page-renderer.js';
+import NotFound from './render-not-found.js';
+import Loading from './builtin-templates/loading.js';
+import ProgressBar from './render-progress-bar.js';
+import Summary from './render-summary.js';
+import Confirmation from './builtin-templates/confirmation.js';
 
 function createApp({ pages = [], cache = [], layout = [], data = {} }, callback) {
         //TODO: maybe this core app fetches all domain's meta and store them.

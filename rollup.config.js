@@ -1,15 +1,14 @@
-import resolve from 'rollup-plugin-node-resolve';
-import commonjs from 'rollup-plugin-commonjs';
-
 export default {
-  input: 'index.js',
-  output: {
-      file:'bundle.js',
-      format: 'umd',
-      name: 'UBIO_BUNDLE'
-  },
-  plugins: [
-    resolve(),
-    commonjs(),
-  ]
-}
+    input: 'index.js',
+    output: {
+        file:'bundle.js',
+        format: 'umd',
+        name: 'UBIO_BUNDLE'
+    },
+    plugins: [{
+        name: 'resolve-absolute-modules',
+        resolveId(source) {
+            return source.startsWith('/') ? source.slice(1) : null;
+        }
+    }]
+};

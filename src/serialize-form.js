@@ -1,5 +1,5 @@
-import formSerialize from 'form-serialize';
-import camelCaseKeys from 'camelcase-keys';
+import formSerialize from '/web_modules/form-serialize.js';
+import camelCaseKeys from '/web_modules/camelcase-keys.js';
 
 /**
  * @param {String} selector
