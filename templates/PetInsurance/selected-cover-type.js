@@ -1,5 +1,4 @@
-import kebabCase from 'lodash.kebabcase';
-import { html } from 'lit-html';
+import { html } from '/web_modules/lit-html.js';
 
 export default (outputs) => html`
     <div class="field field-set">

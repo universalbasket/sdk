@@ -1,4 +1,4 @@
-import { html, until } from 'lit-html';
+import { html } from '/web_modules/lit-html.js';
 
 export default (covers) => html`
     <div class="field field-set">

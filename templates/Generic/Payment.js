@@ -1,6 +1,6 @@
-import { html } from 'lit-html';
-import Person from './Person';
-import Address from './Address';
+import { html } from '/web_modules/lit-html.js';
+import Person from './Person.js';
+import Address from './Address.js';
 
 const CARD_BRANDS = ['visa', 'mastercard', 'amex', 'discover'];
 
