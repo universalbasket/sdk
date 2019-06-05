@@ -11,11 +11,11 @@ echo $DATA
 
 URL=https://api.github.com/repos/$GITHUB_REPOSITORY/releases?access_token=$GITHUB_TOKEN
 
-status=$(curl -k -s -o /dev/null -w "%{http_code}" --data $DATA $URL)
+status=$(curl -s -o /dev/null -w "%{http_code}" -H "Content-Type: application/json" -d $DATA $URL)
 
-echo "status: $status"
+echo "status was: $status"
 
-if [ "$status" -ge 300 ]; then
+if [ "$status" -ne "201" ]; then
     >&2 echo "Error, got status $status."
     exit 1
 fi
