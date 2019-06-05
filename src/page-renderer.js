@@ -42,7 +42,7 @@ class PageRenderer {
         this.renderSection(section);
     }
 
-    waitVaultOutput() {
+    waitForVaultOutput() {
         return new Promise((resolve, reject) => {
             window.addEventListener("message", receiveOutput);
             function receiveOutput({ data: message }) {
@@ -61,28 +61,60 @@ class PageRenderer {
     }
 
 
-    addListener(name) {
+    addListeners(name) {
         if (!sdk.initiated) {
             return;
         }
 
         const submitBtn = document.querySelector(`#submit-btn-${name}`);
+        const cancelBtn = document.querySelector('#cancel-btn');
         const hostedForm = document.querySelector('#vault-iframe');
-
-        submitBtn.addEventListener('click', () => {
-            // TODO: validate the input (using protocol?)
-            const form = document.querySelector(`#section-form-${name}`);
-
+        const form = document.querySelector(`#section-form-${name}`);
+        const vaultListener = () => {
             if (!form.reportValidity()) {
                 console.log('invalid form');
                 return;
             }
 
-            if (hostedForm) {
-                hostedForm.contentWindow.postMessage('vault.submit', '*');
-                this.waitVaultOutput().then(() => {
+            submitBtn.setAttribute('disabled', 'true');
 
+            hostedForm.contentWindow.postMessage('vault.submit', '*');
+            this.waitForVaultOutput()
+                .then(({ cardToken, panToken }) => {
+                    console.log('tokens issued:', cardToken, panToken );
+                    submitBtn.setAttribute('disabled', 'true');
+                    const inputs = serializeForm(`#section-form-${name}`);
+
+                    if (inputs.payment)  inputs.payment['card'] = { '$token': cardToken };
+                    inputs['panToken'] = panToken;
+
+                    return sdk.createJobInputs(inputs);
+                })
+                .then(submittedInputs => {
+                    const event = new CustomEvent('submitinput', { detail: submittedInputs });
+                    window.dispatchEvent(event);
+
+                    if (this.sections.length === 0) {
+                        render(html``, document.querySelector(this.selector));
+                        this.onFinish();
+                    } else {
+                        form.classList.add('form--disabled');
+                        [...form.querySelectorAll('input')].forEach(_ => _.setAttribute('disabled', 'disabled'));
+                        this.next();
+                    }
+                })
+                .catch(err => {
+                    if (document.querySelector('#error')) {
+                        render(html`${err}`, document.querySelector('#error'));
+                    }
+                    submitBtn.removeAttribute('disabled');
                 });
+        }
+
+        const defaultListener = () => {
+            if (!form.reportValidity()) {
+                console.log('invalid form');
+                return;
             }
 
             submitBtn.setAttribute('disabled', 'true');
@@ -90,31 +122,38 @@ class PageRenderer {
             const inputs = serializeForm(`#section-form-${name}`);
 
             // send input sdk
-            this.submitInputs(inputs);
-        });
-    }
+            sdk.createJobInputs(inputs)
+                .then(submittedInputs => {
+                    const event = new CustomEvent('submitinput', { detail: submittedInputs });
+                    window.dispatchEvent(event);
 
-    submitInputs(inputs) {
-        sdk.createJobInputs(inputs)
-            .then(submittedInputs => {
-                const event = new CustomEvent('submitinput', { detail: submittedInputs });
-                window.dispatchEvent(event);
+                    if (this.sections.length === 0) {
+                        render(html``, document.querySelector(this.selector));
+                        this.onFinish();
+                    } else {
+                        form.classList.add('form--disabled');
+                        [...form.querySelectorAll('input')].forEach(_ => _.setAttribute('disabled', 'disabled'));
+                        this.next();
+                    }
+                })
+                .catch(err => {
+                    if (document.querySelector('#error')) {
+                        render(html`${err}`, document.querySelector('#error'));
+                    }
+                    submitBtn.removeAttribute('disabled');
+                });
+        }
 
-                if (this.sections.length === 0) {
-                    render(html``, document.querySelector(this.selector));
-                    this.onFinish();
-                } else {
-                    form.classList.add('form--disabled');
-                    [...form.querySelectorAll('input')].forEach(_ => _.setAttribute('disabled', 'disabled'));
-                    this.next();
-                }
+        const listener = hostedForm ? vaultListener : defaultListener;
+        submitBtn.addEventListener('click', listener);
+
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => {
+                sdk.sdk.cancelJob().then(res => {
+                    window.location.hash = '/error';
+                });
             })
-            .catch(err => {
-                if (document.querySelector('#error')) {
-                    render(html`${err}`, document.querySelector('#error'));
-                }
-                submitBtn.removeAttribute('disabled');
-            });
+        }
     }
 
     skipSection() {
@@ -131,7 +170,7 @@ class PageRenderer {
         const selector = document.querySelector(`#section-form-${nameForElement}`);
         if (!waitFor) {
            render(html`${template(nameForElement)} `, selector);
-           this.addListener(nameForElement);
+           this.addListeners(nameForElement);
            return;
         }
 
@@ -140,7 +179,7 @@ class PageRenderer {
         this.getDataForSection(waitFor)
             .then(res => {
                 render(html`${template(nameForElement, res)} `, selector);
-                this.addListener(nameForElement);
+                this.addListeners(nameForElement);
             })
     }
 

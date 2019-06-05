@@ -64,15 +64,14 @@ export default {
                 { name: 'checkout', waitFor: ['_.otp'] }
             ]
         },
-/*         {
+        {
             name: 'consentPayment',
             route: '/consent-payment',
-            title: 'Confirmation',
+            title: 'Price has changed',
             sections: [
-                { name: 'finalPriceConsent', waitFor: ['output.finalPrice'] },
-                { name: 'confirmation', waitFor: ['output.confirmation'] }
+                { name: 'finalPriceConsent', waitFor: ['output.oneOffCosts', 'output.finalPrice'] },
             ]
-        } */
+        }
     ],
     layout: [
         { name: 'header', selector: '#header' },
@@ -91,7 +90,7 @@ export default {
                 "addressSelection": true,
                 "moveInDateSelection": true,
                 "keepLandlineNumber": false,
-                "screenshots": true,
+                "screenshots": false,
                 "testingFlow": false
             },
             selectedBroadbandPackage: {

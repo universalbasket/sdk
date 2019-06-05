@@ -63,12 +63,7 @@ function createApp({ pages = [], cache = [], layout = [], data = {} }, callback)
                 router.navigate();
 
                 if (!window.location.hash || window.location.hash === '/') {
-                    sdk.create({ input, category, serverUrlPath})
-                        .then(() => {
-                            window.location.hash = entryPoint;
-                            Cache.poll(cache);
-                        })
-                        .catch(err => console.log(err));
+                    createSdk({ input, category, serverUrlPath });
                 }
 
                 Summary.update();
@@ -94,30 +89,44 @@ function createApp({ pages = [], cache = [], layout = [], data = {} }, callback)
             if (window.location.hash && window.location.hash !== '/') {
                 sdk.retrieve()
                     .then(() => {
-                        Cache.poll(cache);
+                        afterSdkCreated();
                     })
                     .catch(err => {
                         window.location.hash = '';
                     });
 
             } else {
+                createSdk({ input, category, serverUrlPath });
+            }
+
+            function createSdk({ input, category, serverUrlPath }) {
                 sdk.create({ input, category, serverUrlPath})
                     .then(() => {
                         window.location.hash = entryPoint;
-
-                        if (data.local) {
-                            Object.keys(data.local).forEach(key => {
-                                Storage.set('local', key, data.local[key]);
-                            });
-                        }
-
+                        afterSdkCreated();
                     })
                     .catch(err => {
                         console.log(err);
                         window.location.hash = '/error';
                     });
             }
-        }
+
+            function afterSdkCreated () {
+                if (data.local) {
+                    Object.keys(data.local).forEach(key => {
+                        Storage.set('local', key, data.local[key]);
+                    });
+                }
+
+                Cache.poll(cache);
+
+                sdk.trackJob((event) => {
+                    if (event === 'fail') {
+                        window.location.hash = '/error';
+                    }
+                })
+            }
+        },
     }
 }
 

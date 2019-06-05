@@ -17,5 +17,6 @@ const template = html`
 <div class="page">
     <h2> Purchase complete. Thank you. </h2>
     <p> You’ll receive an email confirmation shortly.</p>
+    <button class="button">Finish</button>
 </div>
 `;
