@@ -1,4 +1,4 @@
-import * as Storage from './storage';
+import * as Storage from './storage.js';
 
 export default function getSource(maxType = 'local', key) {
     let source = Storage.get('output', key);

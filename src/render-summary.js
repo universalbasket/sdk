@@ -1,6 +1,6 @@
-import { render } from 'lit-html';
-import summaryWrapper from './builtin-templates/summary-wrapper'
-import * as Storage from './storage';
+import { render } from '/web_modules/lit-html.js';
+import summaryWrapper from './builtin-templates/summary-wrapper.js';
+import * as Storage from './storage.js';
 
 let bodyTemplate = null;
 let initiated = false;

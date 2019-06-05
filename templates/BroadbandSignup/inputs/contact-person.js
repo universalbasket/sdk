@@ -1,5 +1,5 @@
-import { html } from 'lit-html';
-import Person from '../../Generic/Person';
+import { html } from '/web_modules/lit-html.js';
+import Person from '../../Generic/Person.js';
 
 export default () => html`
 <div name="contact-person">

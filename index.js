@@ -1,5 +1,5 @@
-import { createApp } from './src/main';
-import CONFIG from './ubio.config';
+import { createApp } from './src/main.js';
+import CONFIG from './ubio.config.js';
 
 // I'd like this part is done by script
 // if there's an error(i.e. Template for ... not found), it stops build
@@ -7,8 +7,8 @@ import CONFIG from './ubio.config';
 
 // TODO: ideally the directory is will be written in the config
 // or we designate the directory like below and force them to add the templates under the directory
-import * as LayoutTemplates from './templates/BroadbandSignup/layout/index';
-import * as SectionTemplates from './templates/BroadbandSignup/sections/index';
+import * as LayoutTemplates from './templates/BroadbandSignup/layout/index.js';
+import * as SectionTemplates from './templates/BroadbandSignup/sections/index.js';
 // confirmation, 404, error page will be added
 
 const Layout = CONFIG.layout.map(l => {

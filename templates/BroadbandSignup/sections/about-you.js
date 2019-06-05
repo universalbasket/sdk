@@ -1,8 +1,8 @@
-import contactPerson from '../inputs/contact-person';
-import account from '../../Generic/Account';
-import installation from '../inputs/installation';
+import contactPerson from '../inputs/contact-person.js';
+import account from '../../Generic/Account.js';
+import installation from '../inputs/installation.js';
 
-import { html } from 'lit-html';
+import { html } from '/web_modules/lit-html.js';
 
 export default (name, data = {}) => html`
     ${contactPerson()}

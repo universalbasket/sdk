@@ -1,6 +1,6 @@
-import summary from './summary';
-import header from "./header";
-import footer from "./footer";
+import summary from './summary.js';
+import header from './header.js';
+import footer from './footer.js';
 
 export {
     summary,
