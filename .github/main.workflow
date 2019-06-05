@@ -20,3 +20,19 @@ action "upload to release" {
   args = "build.js text/javascript"
   secrets = ["GITHUB_TOKEN"]
 }
+
+workflow "Make release from tag." {
+  on = "push"
+  resolves = ["create release"]
+}
+
+action "only tags" {
+  uses = "actions/bin/filter@3c0b4f0e63ea54ea5df2914b4fabf383368cd0da"
+  args = "tag"
+}
+
+action "create release" {
+  uses = "frankjuniorr/github-create-release-action@59ba1aefc810587252089c0f61c979584ec8e2c9"
+  needs = ["only tags"]
+  secrets = ["GITHUB_TOKEN"]
+}
