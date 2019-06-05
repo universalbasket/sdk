@@ -71,6 +71,7 @@
   "hack-wrap": [
     "form-serialize",
     "camelcase-keys",
-    "lodash.kebabcase"
+    "lodash.kebabcase",
+    "pwa-helpers/media-query"
   ]
 }
