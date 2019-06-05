@@ -1,7 +1,7 @@
 import { html, render } from '/web_modules/lit-html/lit-html.js';
 import summaryWrapper from './builtin-templates/summary-wrapper.js'
 import modal from './builtin-templates/modal.js'
-import { installMediaQueryWatcher } from '../node_modules/pwa-helpers/media-query.js'
+import { installMediaQueryWatcher } from '/web_modules/pwa-helpers/media-query.js'
 import * as Storage from './storage.js';
 
 let BodyTemplate = null;
