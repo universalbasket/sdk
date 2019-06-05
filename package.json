@@ -1,6 +1,6 @@
 {
   "name": "sdk-application-bundle",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "ubio sdk application bundle (prototype)",
   "module": "build.js",
   "scripts": {
