@@ -1,11 +1,10 @@
-import landlineCheck from '../inputs/landline-check.js';
-import landlineOption from '../inputs/landline-options.js';
-
 import { html } from '/web_modules/lit-html/lit-html.js';
+
+import { landlineCheck, landlineOptions } from '../inputs/index.js';
 
 export default (name, data = {}) => html`
     ${landlineCheck()}
-    ${data.landlineOptions ? hidden(data.landlineOptions) : landlineOption() }
+    ${data.landlineOptions ? hidden(data.landlineOptions) : landlineOptions() }
 
     <div class="section__actions">
         <button type="button" class="button button--right button--primary" id="submit-btn-${name}">Look-up</button>

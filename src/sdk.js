@@ -77,6 +77,8 @@ class EndUserSdk {
         try {
             const submitted = await Promise.all(createInputs);
             submitted.forEach(_ => Storage.set('input', _.key, _.data));
+
+            return submitted;
         } catch (err) {
             //await this.sdk.resetJob(keys[0]);
 
@@ -144,6 +146,10 @@ class EndUserSdk {
                 callback(null, error);
             }
         });
+    }
+
+    async cancel() {
+        await this.sdk.cancel();
     }
 }
 

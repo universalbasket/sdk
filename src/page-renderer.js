@@ -70,6 +70,7 @@ class PageRenderer {
         const cancelBtn = document.querySelector('#cancel-btn');
         const hostedForm = document.querySelector('#vault-iframe');
         const form = document.querySelector(`#section-form-${name}`);
+
         const vaultListener = () => {
             if (!form.reportValidity()) {
                 console.log('invalid form');
@@ -144,8 +145,12 @@ class PageRenderer {
                 });
         }
 
-        const listener = hostedForm ? vaultListener : defaultListener;
-        submitBtn.addEventListener('click', listener);
+        if (submitBtn) {
+            const listener = hostedForm ? vaultListener : defaultListener;
+            submitBtn.addEventListener('click', listener);
+        } else {
+            console.warn('no click/input submission listener added for the section');
+        }
 
         if (cancelBtn) {
             cancelBtn.addEventListener('click', () => {
@@ -165,11 +170,15 @@ class PageRenderer {
         }
     }
 
-    renderSection({ name, waitFor, template}) {
+    renderSection({ name, waitFor, template }) {
         const nameForElement = kebabcase(name);
         const selector = document.querySelector(`#section-form-${nameForElement}`);
+        const skip = () => {
+            this.skipSection();
+        };
+
         if (!waitFor) {
-           render(html`${template(nameForElement)} `, selector);
+           render(html`${template(nameForElement, {}, skip)} `, selector);
            this.addListeners(nameForElement);
            return;
         }
@@ -178,7 +187,7 @@ class PageRenderer {
 
         this.getDataForSection(waitFor)
             .then(res => {
-                render(html`${template(nameForElement, res)} `, selector);
+                render(html`${template(nameForElement, res, skip)} `, selector);
                 this.addListeners(nameForElement);
             })
     }

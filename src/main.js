@@ -133,4 +133,20 @@ function createApp({ pages = [], cache = [], layout = [], data = {} }, callback)
     }
 }
 
-export { createApp };
+async function createInputs(inputs) {
+    if (!sdk.initiated) {
+        throw new Error('sdk not initiated');
+    }
+    const submittedInputs = await sdk.createJobInputs(inputs);
+    const event = new CustomEvent('submitinput', { detail: submittedInputs });
+    window.dispatchEvent(event);
+}
+
+async function cancel() {
+    if (!sdk.initiated) {
+        throw new Error('sdk not initiated');
+    }
+    await sdk.cancel();
+}
+
+export { createApp, createInputs, cancel };
