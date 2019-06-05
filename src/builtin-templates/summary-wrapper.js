@@ -1,5 +1,5 @@
-import { html } from 'lit-html';
-import { classMap } from 'lit-html/directives/class-map.js';
+import { html } from '/web_modules/lit-html.js';
+import { classMap } from '/web_modules/lit-html/directives/class-map.js';
 
 const toggleSummary = new CustomEvent('toggle-summary');
 

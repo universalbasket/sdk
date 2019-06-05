@@ -1,4 +1,4 @@
-import { html } from 'lit-html';
+import { html } from '/web_modules/lit-html.js';
 
 const showModal = ({ title, content }) =>
     new CustomEvent('show-modal', { detail: { title, content }});

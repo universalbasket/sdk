@@ -1,8 +1,9 @@
-import { html, render } from 'lit-html';
-import summaryWrapper from './builtin-templates/summary-wrapper'
-import modal from './builtin-templates/modal'
-import { installMediaQueryWatcher } from '../node_modules/pwa-helpers/media-query.js'
-import * as Storage from './storage';
+import { render } from '/web_modules/lit-html.js';
+import { installMediaQueryWatcher } from '/web_modules/pwa-helpers/media-query.js'
+
+import summaryWrapper from './builtin-templates/summary-wrapper.js';
+import * as Storage from './storage.js';
+import modal from './builtin-templates/modal.js'
 
 let BodyTemplate = null;
 let wrapper = null;

@@ -1,4 +1,4 @@
-import { html, render } from 'lit-html';
+import { html, render } from '/web_modules/lit-html.js';
 
 const template = ({title, content}) => html`
 <div class="modal-wrapper">
