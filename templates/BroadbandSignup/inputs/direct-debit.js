@@ -1,6 +1,6 @@
-import { html } from 'lit-html';
-import Person from '../../Generic/Person';
-import Address from '../../Generic/Address';
+import { html } from '/web_modules/lit-html.js';
+import Person from '../../Generic/Person.js';
+import Address from '../../Generic/Address.js';
 
 export default (data) => html`
 <div name="direct-debit" class="filed-set">

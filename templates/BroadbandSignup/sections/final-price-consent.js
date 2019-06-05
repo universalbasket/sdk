@@ -1,5 +1,5 @@
-import { html } from 'lit-html';
-import { finalPriceConsent } from '../inputs/index';
+import { html } from '/web_modules/lit-html.js';
+import { finalPriceConsent } from '../inputs/index.js';
 
 export default (name, { oneOffCosts, finalPrice }) => html`${finalPriceConsent(finalPrice)}
         <div class="section__actions">

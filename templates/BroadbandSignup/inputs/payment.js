@@ -1,6 +1,6 @@
-import { html } from 'lit-html';
-import Address from '../../Generic/Address';
-import Person from '../../Generic/Person';
+import { html } from '/web_modules/lit-html.js';
+import Address from '../../Generic/Address.js';
+import Person from '../../Generic/Person.js';
 
 const baseUrl = 'https://vault.automationcloud.net/forms/index.html';
 

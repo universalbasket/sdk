@@ -1,5 +1,5 @@
-import { html } from 'lit-html';
-import { selectedBroadbandSetupDate, selectedTvSetupDate } from '../inputs/index';
+import { html } from '/web_modules/lit-html.js';
+import { selectedBroadbandSetupDate, selectedTvSetupDate } from '../inputs/index.js';
 
 export default (name, data) => html`
     ${data.availableBroadbandSetupDates ? selectedBroadbandSetupDate(data.availableBroadbandSetupDates) : '' }

@@ -1,4 +1,4 @@
-import { html, render } from 'lit-html';
+import { html, render } from '/web_modules/lit-html.js';
 let installationAddresses = [];
 
 export default (name, { availableAddresses, availableInstallationAddresses }) => {

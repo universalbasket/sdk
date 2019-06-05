@@ -1,6 +1,6 @@
-import { installation } from '../inputs/index';
+import { installation } from '../inputs/index.js';
 
-import { html } from 'lit-html';
+import { html } from '/web_modules/lit-html.js';
 
 export default (name, data) => {
     return html`

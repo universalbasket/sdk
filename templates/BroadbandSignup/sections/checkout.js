@@ -1,5 +1,5 @@
-import { html, render } from 'lit-html';
-import { payment, directDebit } from '../inputs/index';
+import { html, render } from '/web_modules/lit-html.js';
+import { payment, directDebit } from '../inputs/index.js';
 
 export default (name, data) => html`
     ${payment(data.otp)}
