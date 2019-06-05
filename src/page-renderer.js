@@ -100,6 +100,7 @@ class PageRenderer {
                     } else {
                         form.classList.add('form--disabled');
                         [...form.querySelectorAll('input')].forEach(_ => _.setAttribute('disabled', 'disabled'));
+                        hostedForm.setAttribute('id', '#vault-iframe-submitted');
                         this.next();
                     }
                 })

@@ -25,7 +25,7 @@ export default (prefix = 'address') => html`
     <div class="field">
     <!-- select -->
         <label for="${prefix}[country-code]" class="field__name">Country Code</label>
-        <input type="text" name="${prefix}[country-code]" id="${prefix}[country-code]" required />
+        <input type="text" name="${prefix}[country-code]" id="${prefix}[country-code]" maxlength=2 required />
     </div>
 
     <div class="field">
