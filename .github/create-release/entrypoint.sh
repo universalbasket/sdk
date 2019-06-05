@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -l
 
 echo "Creating release for $GITHUB_REF."
 
