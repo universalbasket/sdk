@@ -32,7 +32,7 @@ action "only tags" {
 }
 
 action "create release" {
-  uses = "frankjuniorr/github-create-release-action@59ba1aefc810587252089c0f61c979584ec8e2c9"
+  uses = "./create-release/"
   needs = ["only tags"]
   secrets = ["GITHUB_TOKEN"]
 }
