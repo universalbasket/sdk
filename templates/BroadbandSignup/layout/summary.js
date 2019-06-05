@@ -1,4 +1,7 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
+import { ifDefined } from '/web_modules/lit-html/directives/if-defined.js';
+
+import PriceDisplay from '../../../src/builtin-templates/price-display.js'
 
 function getTermsAndConditions() {
     return {
@@ -191,7 +194,7 @@ export default (inputs = {}, outputs = {}, cache = {}, local = {}) => html`
 <div>
     ${inputs.selectedBroadbandPackage || inputs.selectedTvPackages || inputs.selectedPhonePackage ?
         html`
-        <div id="package-detail" class="summary__block summary__block--list">
+        <div id="package-detail" class="summary__block ${cache.finalPrice ? 'summary__block--list' : ''}">
             <ul class="dim">
                 ${inputs.selectedBroadbandPackage ? html`<li>Broadband: ${inputs.selectedBroadbandPackage.name}</li>` : ''}
                 ${inputs.selectedTvPackages ? html`<li> TV: ${inputs.selectedTvPackages.map(_ => _.name).join(', ')}</li>` : ''}
@@ -213,9 +216,14 @@ export default (inputs = {}, outputs = {}, cache = {}, local = {}) => html`
         </div>` : ''
     }
 
-    <div class="summary__block">
-        <b class="large highlight">£14.99</b>
-    </div>
+    ${cache.finalPrice ?
+        html`<div class="summary__block">
+            <b class="large highlight">
+                ${PriceDisplay(cache.finalPrice)}
+            </b>
+        </div>` :
+        ''
+    }
 
     <div class="summary__block summary__block--docs">
         <p><b>Documents</b></p>

@@ -1,4 +1,5 @@
 import { html, render } from '/web_modules/lit-html.js';
+import PriceDisplay from './price-display.js'
 
 const template = ({name, contents, type}) => {
     let body = contents;
@@ -52,7 +53,7 @@ function getContentsHtml(contents) {
             if (item.type === 'NamedPrice') {
                 return html`<p>
                     ${item.name}
-                    ${item.price.value}${item.price.currencyCode}
+                    ${PriceDisplay(item.price)}
                 </p>`
             }
             return '';

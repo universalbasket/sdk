@@ -1,5 +1,5 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
-import { classMap } from '/web_modules/lit-html/directives/class-map.js';
+import PriceDisplay from './price-display.js'
 
 const toggleSummary = new CustomEvent('toggle-summary');
 
@@ -31,11 +31,15 @@ const SummaryHeaderInitial = (serviceName, domain) => html`
     <span class="faint large">${domain}</span>
 `
 
-const SummaryHeaderPartial = ({ inputs, outputs }) => html`
-    <b class="large summary__preview-price">£14.99</b>
+const SummaryHeaderPartial = ({ inputs, outputs, cache }) => html`
+    <b class="large summary__preview-price">
+        ${cache ? PriceDisplay(cache.finalPrice) : html`&middot;`}
+    </b>
     <span class="faint summary__preview-info">
-        ${Object.values(outputs).slice(4).join(', ')}
-        Starts 11/06/2019, Accidents only, 10% Vet fee
+        ${Object.values(inputs)
+            .filter(i => i.name)
+            .map(i => i.name)
+            .join(', ')}
     </span>
 `
 
@@ -52,14 +56,14 @@ const StaticHeaderWrapper = (template) => html`
     <header class="summary__header">${template}</header>
 `
 
-const SummaryDesktop = ({ serviceName, domain }) =>html`
+const SummaryDesktop = ({ serviceName, domain, cache }) =>html`
     <div class="summary">
         ${SummaryHeaderInitial(serviceName, domain)}
         ${SummaryBodyTemplate()}
     </div>
 `
 
-const SummaryMobile = ({ isExpanded, inputs, outputs, serviceName, domain }) =>
+const SummaryMobile = ({ isExpanded, inputs, outputs, serviceName, domain, cache }) =>
     (inputs || outputs) ?
         html`
             <div class="summary">
@@ -68,7 +72,7 @@ const SummaryMobile = ({ isExpanded, inputs, outputs, serviceName, domain }) =>
                         ${ToggableHeaderWrapper(isExpanded, SummaryHeaderInitial(serviceName, domain))}
                         ${SummaryBodyTemplate()}
                     ` :
-                    ToggableHeaderWrapper(isExpanded, SummaryHeaderPartial({ inputs, outputs }))
+                    ToggableHeaderWrapper(isExpanded, SummaryHeaderPartial({ inputs, outputs, cache }))
                 }
             </div>` :
         html`<div class="summary">
