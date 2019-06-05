@@ -68,7 +68,6 @@
     "form-serialize",
     "camelcase-keys",
     "lodash.kebabcase",
-    "pwa-helpers/media-query",
-    "lit-html/directives/class-map"
+    "pwa-helpers/media-query"
   ]
 }

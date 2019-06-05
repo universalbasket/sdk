@@ -49,6 +49,13 @@ function getContentsHtml(contents) {
             if (item.type === 'Text') {
                 return html`<p>${item.text}</p>`
             }
+            if (item.type === 'NamedPrice') {
+                return html`<p>
+                    ${item.name}
+                    ${item.price.value}${item.price.currencyCode}
+                </p>`
+            }
+            return '';
         })
     }`
 }
