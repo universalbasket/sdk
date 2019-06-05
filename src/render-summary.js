@@ -11,8 +11,8 @@ let wrapper = null;
 let initiated = false;
 let isExpanded = true;
 let isMobile = false;
-const serviceName = localStorage.getItem('serviceName');
-const domain = localStorage.getItem('domain');
+const serviceName = localStorage.getItem('serviceName') || '';
+const domain = localStorage.getItem('domain') || '';
 
 export default {
     init: ({ template, selector = '#summary' }) => {
@@ -76,6 +76,5 @@ function toggleSummary(wrapper) {
 }
 
 function showModal({ detail }) {
-    const { title, content } = detail;
-    render(modal({ title, content }), document.querySelector('#modal'));
+    render(modal(detail), document.querySelector('#modal'));
 }
