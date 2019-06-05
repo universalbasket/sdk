@@ -9,9 +9,11 @@ DATA="{\"tag_name\": \"$TAG_NAME\"}"
 
 echo $DATA
 
-URL=https://api.github.com/repos/$GITHUB_REPOSITORY/releases?access_token=$GITHUB_TOKEN
+URL=https://api.github.com/repos/$GITHUB_REPOSITORY/releases
 
-curl -s -o /dev/null -w "%{http_code}" -H "Content-Type: application/json" -d $DATA $URL
+echo $URL
+
+curl -H "Content-Type: application/json" -d $DATA $URL?access_token=$GITHUB_TOKEN
 
 # echo "status was: $status"
 
