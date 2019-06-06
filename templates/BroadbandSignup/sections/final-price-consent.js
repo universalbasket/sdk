@@ -2,7 +2,7 @@ import { html } from '/web_modules/lit-html/lit-html.js';
 import finalPriceConsent from '../../Generic/FinalPriceConsent.js';
 import { createInputs } from '../../../src/main.js';
 
-export default (name, { oneOffCosts, finalPrice }, skip) => {
+export default (name, { oneOffCosts, finalPrice }) => {
     const finalValue = finalPrice.price.value;
     const estimatedPrice = oneOffCosts.contents && oneOffCosts.contents.find(_ => _.name === 'Pay now');
     let estimatedValue = 0;
