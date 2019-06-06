@@ -82,17 +82,5 @@
     "lodash.kebabcase",
     "pwa-helpers/media-query",
     "currency-symbol-map"
-  ],
-  "babel": {
-    "presets": [
-      [
-        "@babel/preset-env",
-        {
-          "targets": {
-            "node": "current"
-          }
-        }
-      ]
-    ]
-  }
+  ]
 }
