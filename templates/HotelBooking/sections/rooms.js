@@ -1,4 +1,4 @@
-import { html, render } from 'lit-html';
+import { html, render } from '/web_modules/lit-html/lit-html.js';
 
 export default (name, { availableRooms }) => {
     return html`

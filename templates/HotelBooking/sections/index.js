@@ -1,7 +1,7 @@
-import rooms from './rooms';
-import checkout from './checkout';
-import finalPriceConsent from './final-price-consent';
-import confirmation from './confirmation';
+import rooms from './rooms.js';
+import checkout from './checkout.js';
+import finalPriceConsent from './final-price-consent.js';
+import confirmation from './confirmation.js';
 
 export {
     rooms,

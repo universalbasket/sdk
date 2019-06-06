@@ -7,6 +7,7 @@
     "install": "rimraf web_modules && vendor-copy && node hack-wrap.js",
     "start:broadband": "node domain-selector BroadbandSignup && npm run serve",
     "start:pet": "node domain-selector PetInsurance && npm run serve",
+    "start:hotel": "node domain-selector HotelBooking && npm run serve",
     "start": "npm run serve",
     "serve": "browser-sync start --index 'index.html' --server --files 'index.css' 'index.js' 'templates' 'web_modules' 'src/' 'ubio.config.js'",
     "watch:css": "watch 'npm run build:css' css",

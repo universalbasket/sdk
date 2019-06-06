@@ -1,6 +1,6 @@
-import payment from './payment';
-import finalPriceConsent from './final-price-consent'
-import confirmation from './confirmation'
+import payment from './payment.js';
+import finalPriceConsent from './final-price-consent.js'
+import confirmation from './confirmation.js'
 
 export {
     payment,
