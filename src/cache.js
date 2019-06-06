@@ -26,6 +26,7 @@ function pollDefault(CACHE_CONFIG) {
 
     sdk.getDefaultCache(DEFAULT_KEYS)
         .then(data => {
+            console.log('caches', data);
             data.map(cache => Storage.set('cache', cache.key, cache.data));
         })
         .catch(err => console.error('failed to fetch default cache', err))
