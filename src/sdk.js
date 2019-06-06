@@ -89,17 +89,17 @@ class EndUserSdk {
     async getCache({ key: outputKey, sourceInputKeys }) {
         const sourceInputs = sourceInputKeys.map(key => { return { key, data: Storage.get('input', key) }});
 
-        const { data: caches = null } = await this.sdk.getPreviousJobOutputs(sourceInputs) || {};
+        const { data: cacheData = null } = await this.sdk.getPreviousJobOutputs(sourceInputs) || {};
 
-        const cache = caches && caches.find(c => c.key === outputKey) || null;
+        const cache = cacheData && cacheData.find(c => c.key === outputKey) || null;
 
         return cache ? { key: cache.key, data: cache.data } : null;
     }
 
     async getDefaultCache(keys = []) {
-        const { data: caches = null } = await this.sdk.getPreviousJobOutputs([]) || {};
+        const { data: cacheData = null } = await this.sdk.getPreviousJobOutputs([]) || {};
 
-        return caches
+        return cacheData
             .filter(cache => keys.includes(cache.key))
             .map(cache => { return { key: cache.key, data: cache.data }});
     }
