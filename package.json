@@ -4,7 +4,7 @@
   "description": "ubio sdk application bundle (prototype)",
   "module": "build.js",
   "scripts": {
-    "install": "pika-web && node hack-wrap.js",
+    "install": "rimraf web_modules && vendor-copy && node hack-wrap.js",
     "start": "npm run serve",
     "serve": "browser-sync start --index 'index.html' --server --files 'index.css' 'index.js' 'templates' 'web_modules' 'src/' 'ubio.config.js'",
     "watch:css": "watch 'npm run build:css' css",
@@ -29,12 +29,13 @@
   "author": "ubio",
   "license": "ISC",
   "dependencies": {
-    "@pika/web": "^0.4.2",
     "@ubio/sdk": "^0.5.0",
     "camelcase-keys": "^5.2.0",
     "form-serialize": "^0.7.2",
     "lit-html": "^1.1.0",
-    "lodash.kebabcase": "^4.1.1"
+    "lodash.kebabcase": "^4.1.1",
+    "rimraf": "^2.6.3",
+    "vendor-copy": "^2.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.4.5",
@@ -57,12 +58,16 @@
     "stylelint-config-standard": "^18.3.0",
     "watch": "^1.0.2"
   },
-  "@pika/web": {
-    "webDependencies": [
-      "lit-html",
-      "@ubio/sdk"
-    ]
-  },
+  "vendorCopy": [
+    {
+      "from": "node_modules/lit-html",
+      "to": "web_modules/lit-html"
+    },
+    {
+      "from": "node_modules/@ubio/sdk/index.js",
+      "to": "web_modules/@ubio/sdk.js"
+    }
+  ],
   "hack-wrap": [
     "form-serialize",
     "camelcase-keys",

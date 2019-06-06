@@ -1,5 +1,5 @@
 import kebabcase from '/web_modules/lodash.kebabcase.js';
-import { html, render } from '/web_modules/lit-html.js';
+import { html, render } from '/web_modules/lit-html/lit-html.js';
 import sdk from './sdk.js';
 import serializeForm from './serialize-form.js';
 import getData from './get-data-with-priority.js'

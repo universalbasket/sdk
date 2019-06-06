@@ -1,7 +1,7 @@
 import landlineCheck from '../inputs/landline-check.js';
 import landlineOption from '../inputs/landline-options.js';
 
-import { html } from '/web_modules/lit-html.js';
+import { html } from '/web_modules/lit-html/lit-html.js';
 
 export default (name, data = {}) => html`
     ${landlineCheck()}

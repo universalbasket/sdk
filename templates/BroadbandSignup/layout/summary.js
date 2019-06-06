@@ -1,4 +1,4 @@
-import { html } from '/web_modules/lit-html.js';
+import { html } from '/web_modules/lit-html/lit-html.js';
 
 //get service name & domain
 export default (inputs = {}, outputs = {}, cache = {}, local = {}) => html`
