@@ -1,4 +1,4 @@
-import { html } from '/web_modules/lit-html.js';
+import { html } from '/web_modules/lit-html/lit-html.js';
 import { selectedVoluntaryExcess } from '../inputs/index.js';
 
 export default (name, { availableVoluntaryExcesses }) => html`

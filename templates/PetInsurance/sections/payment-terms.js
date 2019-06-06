@@ -1,4 +1,4 @@
-import { html } from '/web_modules/lit-html.js';
+import { html } from '/web_modules/lit-html/lit-html.js';
 import { selectedPaymentTerm, selectedVetPaymentTerm } from '../inputs/index.js';
 
 export default (name, { availablePaymentTerms }) => html`
