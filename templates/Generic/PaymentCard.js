@@ -1,4 +1,4 @@
-import { html } from '/web_modules/lit-html.js';
+import { html } from '/web_modules/lit-html/lit-html.js';
 
 const baseUrl = 'https://vault.automationcloud.net/forms/index.html';
 const fields = 'pan,name,expiry-select,cvv_cvv';
