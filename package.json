@@ -9,14 +9,12 @@
     "start:pet": "node domain-selector PetInsurance && npm run serve",
     "start": "npm run serve",
     "serve": "browser-sync start --index 'index.html' --server --files 'index.css' 'index.js' 'templates' 'web_modules' 'src/' 'ubio.config.js'",
-    "watch:css": "watch 'npm run build:css' css",
-    "watch:js": "watch 'npm run build:rollup && npm run build:js && npm run build:clean-up' templates",
     "build": "npm run build:rollup && npm run build:js && npm run build:clean-up && npm run build:css",
     "build:rollup": "rollup --config",
     "build:js": "browserify bundle.js -o build.js -t babelify",
     "build:clean-up": "rm bundle.js",
     "build:css": "postcss css/index.css -o index.css",
-    "stylelint": "stylelint css/**/* --fix",
+    "stylelint": "stylelint src/css/**/* --fix",
     "check": "eslint --ext=js ."
   },
   "pre-commit": [
@@ -56,8 +54,7 @@
     "rollup-plugin-commonjs": "^10.0.0",
     "rollup-plugin-node-resolve": "^5.0.1",
     "stylelint": "^10.0.1",
-    "stylelint-config-standard": "^18.3.0",
-    "watch": "^1.0.2"
+    "stylelint-config-standard": "^18.3.0"
   },
   "vendorCopy": [
     {
