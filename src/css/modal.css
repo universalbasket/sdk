@@ -32,11 +32,10 @@
 }
 
 .modal__header {
-    padding-right: 40px;
     position: sticky;
     top: 0;
     left: 0;
-    padding: 2em 2.25em 1em;
+    padding: 2em 40px 1em 2.25em ;
     background: white;
 }
 

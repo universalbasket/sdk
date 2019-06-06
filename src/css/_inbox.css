@@ -6,10 +6,6 @@
     color: var(--color--faint);
 }
 
-.form--disabled {
-    opacity: .5;
-}
-
 .highlight {
     animation: yellowfade 5s;
 }

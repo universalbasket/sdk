@@ -1,4 +1,4 @@
-import { html } from '/web_modules/lit-html.js';
+import { html } from '/web_modules/lit-html/lit-html.js';
 import getSymbolFromCurrency from '/web_modules/currency-symbol-map.js'
 
 const template = (price) => {

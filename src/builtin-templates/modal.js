@@ -1,4 +1,4 @@
-import { html, render } from '/web_modules/lit-html.js';
+import { html, render } from '/web_modules/lit-html/lit-html.js';
 import PriceDisplay from './price-display.js'
 
 export default function (body, title) {
