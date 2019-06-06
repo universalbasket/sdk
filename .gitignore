@@ -1,5 +1,5 @@
 /node_modules/
 /web_modules/
 .DS_Store
-build.js
-index.css
+/build.js
+/index.css
