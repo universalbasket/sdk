@@ -14,12 +14,11 @@
     "build:js": "browserify bundle.js -o build.js -t babelify",
     "build:clean-up": "rm bundle.js",
     "build:css": "postcss css/index.css -o index.css",
-    "stylelint": "stylelint css/**/* index.css --fix",
+    "stylelint": "stylelint css/**/* --fix",
     "check": "eslint --ext=js ."
   },
   "pre-commit": [
     "check",
-    "build",
     "stylelint"
   ],
   "keywords": [
