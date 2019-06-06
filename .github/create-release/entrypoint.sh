@@ -13,7 +13,7 @@ URL=https://api.github.com/repos/$GITHUB_REPOSITORY/releases
 
 echo $URL
 
-curl -s -w "\n%{http_code}" -H "Content-Type: application/json" -d $DATA $URL?access_token=$GITHUB_TOKEN > output.txt
+curl -s -w "\n%{http_code}" -H "Content-Type: application/json" -d $DATA "$URL?access_token=$GITHUB_TOKEN" > output.txt
 
 status=$(tail -n 1 < output.txt)
 
