@@ -17,7 +17,7 @@ curl -s -w "\n%{http_code}" -H "Content-Type: application/json" -d $DATA "$URL?a
 
 status=$(tail -n 1 < output.txt)
 
-if [ "$status" -ne "201" ]; then
+if [ "$status" != "201" ]; then
     >&2 echo "Error, got status $status."
     exit 1
 fi

@@ -30,9 +30,9 @@ const Pages = CONFIG.pages.map(page => {
         return { ...s, template };
     });
 
-    return { ...page, ...{ sections: sectionsWithTemplate }};
+    return { ...page, ...{ sections: sectionsWithTemplate } };
 });
 
-var app = createApp({ pages: Pages, cache: CONFIG.cache, layout: Layout, data: CONFIG.data }, () => { console.log('finished!')});
+const app = createApp({ pages: Pages, cache: CONFIG.cache, layout: Layout, data: CONFIG.data }, () => console.log('finished!')); // eslint-disable-line no-console
 
 app.init();

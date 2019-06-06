@@ -1,5 +1,5 @@
 {
-  "extends": ["plugin:lit/recommended"],
+  "extends": ["plugin:lit/recommended", "ub"],
   "parserOptions": {
     "ecmaVersion": 2019,
     "sourceType": "module",
@@ -7,5 +7,9 @@
   },
   "rules": {
     "lit/no-invalid-html": "warn"
+  },
+  "env": {
+    "browser": true,
+    "node": true
   }
 }
