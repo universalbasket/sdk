@@ -17,7 +17,7 @@ export default {
             title: 'Booking details',
             sections: [
                 { name: 'checkout', waitFor: ['_.otp'] },
-                { name: 'finalPriceConsent', waitFor: ['outputs.finalPrice'] }
+                { name: 'finalPriceConsent', waitFor: ['input.selectedRooms', 'outputs.finalPrice'] }
             ]
         },
         {
