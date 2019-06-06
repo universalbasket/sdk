@@ -1,29 +1,6 @@
-workflow "Append build.js to release." {
-  resolves = ["upload to release"]
-  on = "release"
-}
-
-action "npm install" {
-  uses = "actions/npm@59b64a598378f31e49cb76f27d6f3312b582f680"
-  args = "install --unsafe-perm"
-}
-
-action "npm run build" {
-  uses = "actions/npm@59b64a598378f31e49cb76f27d6f3312b582f680"
-  needs = ["npm install"]
-  args = "run build --unsafe-perm"
-}
-
-action "upload to release" {
-  uses = "JasonEtco/upload-to-release@f6be50515ab654bbbe5265afcf9acd97385b694c"
-  needs = ["npm run build"]
-  args = "build.js text/javascript"
-  secrets = ["GITHUB_TOKEN"]
-}
-
 workflow "Make release from tag." {
   on = "push"
-  resolves = ["create release"]
+  resolves = ["upload to release"]
 }
 
 action "only tags" {
@@ -34,5 +11,23 @@ action "only tags" {
 action "create release" {
   uses = "./.github/create-release/"
   needs = ["only tags"]
+  secrets = ["GITHUB_TOKEN"]
+}
+
+action "npm install" {
+  uses = "actions/npm@59b64a598378f31e49cb76f27d6f3312b582f680"
+  needs = ["create release"]
+  args = "install --unsafe-perm"
+}
+
+action "npm run build" {
+  uses = "actions/npm@59b64a598378f31e49cb76f27d6f3312b582f680"
+  needs = ["npm install"]
+  args = "run build --unsafe-perm"
+}
+
+action "upload to release" {
+  uses = "./.github/append-assets"
+  needs = ["npm run build"]
   secrets = ["GITHUB_TOKEN"]
 }

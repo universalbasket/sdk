@@ -1,0 +1,41 @@
+{
+    "url": "https://api.github.com/repos/universalbasket/sdk-application-bundle/releases/17802729",
+    "assets_url": "https://api.github.com/repos/universalbasket/sdk-application-bundle/releases/17802729/assets",
+    "upload_url": "https://uploads.github.com/repos/universalbasket/sdk-application-bundle/releases/17802729/assets{?name,label}",
+    "html_url": "https://github.com/universalbasket/sdk-application-bundle/releases/tag/v0.0.18",
+    "id": 17802729,
+    "node_id": "MDc6UmVsZWFzZTE3ODAyNzI5",
+    "tag_name": "v0.0.18",
+    "target_commitish": "master",
+    "name": null,
+    "draft": false,
+    "author": {
+      "login": "qubyte",
+      "id": 824753,
+      "node_id": "MDQ6VXNlcjgyNDc1Mw==",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/824753?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/qubyte",
+      "html_url": "https://github.com/qubyte",
+      "followers_url": "https://api.github.com/users/qubyte/followers",
+      "following_url": "https://api.github.com/users/qubyte/following{/other_user}",
+      "gists_url": "https://api.github.com/users/qubyte/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/qubyte/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/qubyte/subscriptions",
+      "organizations_url": "https://api.github.com/users/qubyte/orgs",
+      "repos_url": "https://api.github.com/users/qubyte/repos",
+      "events_url": "https://api.github.com/users/qubyte/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/qubyte/received_events",
+      "type": "User",
+      "site_admin": false
+    },
+    "prerelease": false,
+    "created_at": "2019-06-05T15:52:52Z",
+    "published_at": "2019-06-05T16:07:03Z",
+    "assets": [
+
+    ],
+    "tarball_url": "https://api.github.com/repos/universalbasket/sdk-application-bundle/tarball/v0.0.18",
+    "zipball_url": "https://api.github.com/repos/universalbasket/sdk-application-bundle/zipball/v0.0.18",
+    "body": null
+  }
