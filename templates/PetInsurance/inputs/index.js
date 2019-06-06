@@ -12,7 +12,6 @@ import selectedVetFee from './selected-vet-fee.js';
 import selectedVoluntaryExcess from './selected-voluntary-excess.js';
 import selectedCoverOptions from './selected-cover-options.js';
 
-import payment from './payment.js';
 import directDebit from './direct-debit.js';
 
 export {
@@ -28,6 +27,5 @@ export {
     selectedVetFee,
     selectedVoluntaryExcess,
     selectedCoverOptions,
-    payment,
     directDebit
 };

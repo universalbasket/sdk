@@ -1,4 +1,4 @@
-import { html } from '/web_modules/lit-html.js';
+import { html } from '/web_modules/lit-html/lit-html.js';
 import { policyOptions, selectedCover, selectedPaymentTerm } from '../inputs/index.js';
 
 export default (name, { availableCovers, availablePaymentTerms }) => html`
