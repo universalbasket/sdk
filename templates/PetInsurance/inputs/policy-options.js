@@ -4,7 +4,7 @@ export default () => html`
 <div name="policy-options" class="filed-set">
     <div class="field">
         <label class="field__name" for="policy-options[cover-start-date]">Cover start date</label>
-        <input type="date" name="policy-options[cover-start-date]" value="2019-06-01" minDate="${new Date()}" required>
+        <input type="date" name="policy-options[cover-start-date]" min="${getMinDate()}" max="${getMaxDate()}" required>
     </div>
 
     <div class="field">
@@ -12,3 +12,16 @@ export default () => html`
         <input type="tel" name="policy-options[number-of-pets-owned-$number]" value="1" required />
     </div>
 </div>`;
+
+const getMinDate = () => {
+    const date = new Date();
+    date.setDate(date.getDate() + 1);
+    return date.toISOString().split('T')[0]
+}
+
+const getMaxDate = () => {
+    const date = Date.now();
+    const thirtyDays = 30 * 24 * 60 * 60 * 1000;
+    const thirtyDaysLater = new Date(date + thirtyDays);
+    return thirtyDaysLater.toISOString().split('T')[0]
+}

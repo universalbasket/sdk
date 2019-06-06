@@ -196,20 +196,25 @@ class PageRenderer {
         return new Promise((res) => {
             const results = waitFor.map(_ => {
                 const [type, sourceKey] = _.split('.');
+                if (type === 'input') {
+                    const data = Storage.get('input', sourceKey);
+                    return { data, wait: false, sourceKey };
+                }
+
                 const data = getData(type, sourceKey);
 
-                if (data === null) { //skip: true,
-                    return { data: null, skip: true, sourceKey };
+                if (data === null) {
+                    return { data: null, wait: false, sourceKey };
                 }
 
                 if (data) {
-                    return { data, skip: false, sourceKey };
+                    return { data, wait: false, sourceKey };
                 }
 
-                return { data: null, skip: false, sourceKey };
+                return { data: null, wait: true, sourceKey };
             });
 
-            const keysToWaitFor = results.filter(r => r.data == null && r.skip === false).map(r => r.sourceKey);
+            const keysToWaitFor = results.filter(r => r.wait === true).map(r => r.sourceKey);
 
             if (keysToWaitFor.length === 0) {
                 const dataWaitFor = {};

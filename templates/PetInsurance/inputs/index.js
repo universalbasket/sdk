@@ -14,7 +14,6 @@ import selectedCoverOptions from './selected-cover-options.js';
 
 import payment from './payment.js';
 import directDebit from './direct-debit.js';
-import finalPriceConsent from './final-price-consent.js';
 
 export {
     petsSelectedBreedType,
@@ -30,6 +29,5 @@ export {
     selectedVoluntaryExcess,
     selectedCoverOptions,
     payment,
-    directDebit,
-    finalPriceConsent
+    directDebit
 };
