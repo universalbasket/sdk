@@ -9,14 +9,14 @@ echo $URL
 
 statusjs=$(curl -w "\n%{http_code}" --data-binary @"build.js" -H "Content-Type: octet/stream" "$URL?access_token=$GITHUB_TOKEN&name=build.js" | tail -n 1)
 
-if [ "$statusjs" -ne "201" ]; then
+if [ "$statusjs" != "201" ]; then
     >&2 echo "Error, got status $statusjs when uploading build.js."
     exit 1
 fi
 
 statuscss=$(curl -w "\n%{http_code}" --data-binary @"index.css" -H "Content-Type: octet/stream" "$URL?access_token=$GITHUB_TOKEN&name=index.css" | tail -n 1)
 
-if [ "$statuscss" -ne "201" ]; then
+if [ "$statuscss" != "201" ]; then
     >&2 echo "Error, got status $statuscss when uploading index.css."
     exit 1
 fi
