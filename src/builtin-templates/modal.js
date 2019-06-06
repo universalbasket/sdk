@@ -1,19 +1,30 @@
 import { html, render } from '/web_modules/lit-html.js';
 import PriceDisplay from './price-display.js'
 
-const template = ({name, contents, type}) => {
-    let body = contents;
-    if (type === 'StructuredText') {
-        body = getContentsHtml(contents);
+export default function (body, title) {
+    if (!body || typeof body !== 'object') {
+        return ''
     }
 
+    switch (body.type) {
+        case 'html': return showModal(body, title);
+        case 'StructuredText': return showModal(getContentsHtml(body.contents), body.name);
+        default: return '';
+    }
+}
+
+function close() {
+    render('', document.querySelector('#modal'))
+}
+
+function showModal(details, title) {
     return html`
         <div class="modal-wrapper">
             <div class="modal">
                 <div class="modal__header">
-                    <h2 class="large">${name}</h2>
+                    <h2 class="large">${title}</h2>
                 </div>
-                <div class="modal__body">${body}</div>
+                <div class="modal__body">${details}</div>
                 <span
                     class="modal__close"
                     @click="${close}">
@@ -24,12 +35,6 @@ const template = ({name, contents, type}) => {
                 @click=${close}></div>
         </div>
         `;
-}
-
-export default template;
-
-function close() {
-    render('', document.querySelector('#modal'))
 }
 
 function getContentsHtml(contents) {

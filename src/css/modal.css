@@ -22,6 +22,7 @@
     background: white;
     z-index: 2;
     box-shadow: 0 0 6px rgba(0, 0, 0, .21);
+    min-width: 40vw;
     max-width: 60ch;
     max-height: 90vh;
     overflow: hidden;

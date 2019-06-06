@@ -75,5 +75,5 @@ function toggleSummary(wrapper) {
 }
 
 function showModal({ detail }) {
-    render(modal(detail), document.querySelector('#modal'));
+    render(modal(...detail), document.querySelector('#modal'));
 }

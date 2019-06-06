@@ -1,0 +1,37 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Modal UI Default use case: show any HTML renders template result 1`] = `
+Object {
+  "processor": Any<Object>,
+  "strings": Any<Array>,
+  "type": "html",
+  "values": Any<Array>,
+}
+`;
+
+exports[`Modal UI Default use case: show any HTML renders with title when the second arg is provided 1`] = `
+Object {
+  "processor": Any<Object>,
+  "strings": Any<Array>,
+  "type": "html",
+  "values": Any<Array>,
+}
+`;
+
+exports[`Modal UI Job output use case: show StructuredText as HTML renders with nested NamedPrice contents 1`] = `
+Object {
+  "processor": Any<Object>,
+  "strings": Any<Array>,
+  "type": "html",
+  "values": Any<Array>,
+}
+`;
+
+exports[`Modal UI Job output use case: show StructuredText as HTML renders with nested Text contents 1`] = `
+Object {
+  "processor": Any<Object>,
+  "strings": Any<Array>,
+  "type": "html",
+  "values": Any<Array>,
+}
+`;

@@ -16,7 +16,10 @@
     "build:clean-up": "rm bundle.js",
     "build:css": "postcss src/css/index.css -o index.css",
     "stylelint": "stylelint src/css/**/* --fix",
-    "check": "eslint --ext=js ."
+    "check": "eslint --ext=js .",
+    "test:ui": "jest",
+    "test:watch": "jest --watchAll",
+    "test:update": "jest --updateSnapshot"
   },
   "pre-commit": [
     "check",
@@ -41,13 +44,17 @@
   },
   "devDependencies": {
     "@babel/core": "^7.4.5",
+    "@babel/preset-env": "^7.4.5",
     "autoprefixer": "^9.6.0",
+    "babel-jest": "^24.8.0",
     "babelify": "^10.0.0",
     "browser-sync": "^2.26.5",
     "browserify": "^16.2.3",
     "eslint": "^5.16.0",
     "eslint-config-ub": "^3.0.0",
     "eslint-plugin-lit": "^1.0.0",
+    "jest": "^24.8.0",
+    "jest-transform-stub": "^2.0.0",
     "postcss": "^7.0.16",
     "postcss-cli": "^6.1.2",
     "postcss-import": "^12.0.1",
@@ -74,7 +81,18 @@
     "camelcase-keys",
     "lodash.kebabcase",
     "pwa-helpers/media-query",
-    "currency-symbol-map",
-    "lit-html/directives/if-defined"
-  ]
+    "currency-symbol-map"
+  ],
+  "babel": {
+    "presets": [
+      [
+        "@babel/preset-env",
+        {
+          "targets": {
+            "node": "current"
+          }
+        }
+      ]
+    ]
+  }
 }
