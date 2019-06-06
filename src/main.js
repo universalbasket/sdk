@@ -122,6 +122,7 @@ function createApp({ pages = [], cache = [], layout = [], data = {} }, callback)
                 }
 
                 Cache.poll(cache);
+                Summary.update();
 
                 sdk.trackJob((event) => {
                     if (event === 'fail') {

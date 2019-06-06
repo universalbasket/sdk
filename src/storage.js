@@ -4,7 +4,7 @@ function getAll() {
     const length = localStorage.length;
     const inputs = {};
     const outputs = {};
-    const caches = {};
+    const cache = {};
     const local = {};
     const _ = {};
 
@@ -26,7 +26,7 @@ function getAll() {
         if (key.startsWith('cache.')) {
             const trimmed = key.replace('cache.', '');
             const data = JSON.parse(localStorage.getItem(key));
-            caches[trimmed] = data;
+            cache[trimmed] = data;
         }
 
         if (key.startsWith('local.')) {
@@ -42,7 +42,7 @@ function getAll() {
         }
     }
 
-    return { inputs, outputs, caches, local, _ };
+    return { inputs, outputs, cache, local, _ };
 }
 
 function objectToArray(inputs) {
