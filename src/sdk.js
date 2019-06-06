@@ -25,11 +25,11 @@ class EndUserSdk {
 
         localStorage.clear();
 
-        const newJob = await createJob(input, category, serverUrlPath);
+        const meta = await createJobAndEndUser(input, category, serverUrlPath);
 
-        jobId = newJob.jobId;
-        token = newJob.token;
-        serviceId = newJob.serviceId;
+        jobId = meta.jobId;
+        token = meta.token;
+        serviceId = meta.serviceId;
         localStorage.setItem('jobId', jobId);
         localStorage.setItem('token', token);
         localStorage.setItem('serviceId', serviceId);
@@ -153,7 +153,7 @@ class EndUserSdk {
     }
 }
 
-async function createJob(input = {}, category = 'test', SERVER_URL_PATH) {
+async function createJobAndEndUser(input = {}, category = 'test', SERVER_URL_PATH) {
     SERVER_URL_PATH = SERVER_URL_PATH;
     const res = await fetch(SERVER_URL_PATH, {
         method: 'POST',
