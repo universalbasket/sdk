@@ -1,5 +1,7 @@
 'use strict';
 
+/* env: node */
+
 const p = require('./package');
 const { join } = require('path');
 const rollup = require('rollup');
@@ -11,7 +13,7 @@ async function wrapPackage(name) {
         input: require.resolve(name),
         plugins: [
             resolve(),
-            commonjs(),
+            commonjs()
         ]
     });
 
