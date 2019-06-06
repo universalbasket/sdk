@@ -1,4 +1,4 @@
-import { html } from '/web_modules/lit-html.js';
+import { html } from '/web_modules/lit-html/lit-html.js';
 import Modal from '@/src/builtin-templates/modal.js'
 
 describe('Modal UI', () => {
