@@ -10,48 +10,45 @@ import NotFound from './render-not-found.js';
 import Loading from './builtin-templates/loading.js';
 import ProgressBar from './render-progress-bar.js';
 import Summary from './render-summary.js';
-import Confirmation from './builtin-templates/confirmation.js';
+import ErrorTemplate from './builtin-templates/error.js';
 
 function createApp({ pages = [], cache = [], layout = [], data = {} }, callback) {
-        //TODO: maybe this core app fetches all domain's meta and store them.
-        // config will accept input keys rather than whole met
-
     const isValidConfig = pages.length > 0 && pages.every(config => config.name && config.title && config.sections && config.route);
 
     if (!isValidConfig) {
-        throw new Error('invalid config');
+        throw new Error('invalid page config');
     }
 
     const { selector: mainSelector } = layout.find(_ => _.mainTarget == true) || {};
     if (!mainSelector) {
-        throw new Error(`main target selector not found in config`);
+        throw new Error(`main selector not found in config`);
     }
 
     //setup router
-    const flow = pages.map(con => con.route);
-    const titles = pages.map(con => con.title);
-
-    flow.push('/confirmation');
+    const flow = pages.map(page => page.route);
+    const titles = pages.map(page => page.title);
 
     const routes = {
         '/': Loading(mainSelector),
-        '/confirmation': { renderer: Confirmation(mainSelector), title: null, step: null } // TODO: define final step
+        '/error': { renderer: ErrorTemplate(mainSelector), title: null, step: null }
     };
 
     pages.forEach((config, idx) => {
         const { title, sections, route } = config;
-        const next = flow[idx + 1];
+        let onFinish = null;
 
-        const renderer = PageRenderer(name, sections, mainSelector, () => setTimeout(() => { window.location.hash = next }, 1000));
+        if (flow.length > idx + 1) {
+            const nextRoute = flow[idx + 1];
+            onFinish = () => setTimeout(() => { window.location.hash = nextRoute }, 500);
+        } else {
+            onFinish = callback;
+        }
+
+        const renderer = PageRenderer(name, sections, mainSelector, onFinish);
         routes[route] = { renderer, title, step: idx + 1 };
     });
 
     const entryPoint = flow[0];
-
-    if (data.local) {
-        Object.keys(data.local).forEach(key => Storage.set('local', key, data.local[key]));
-    }
-
 
     return {
         init: () => {
@@ -67,13 +64,9 @@ function createApp({ pages = [], cache = [], layout = [], data = {} }, callback)
 
             window.addEventListener('hashchange', () => {
                 router.navigate();
+
                 if (!window.location.hash || window.location.hash === '/') {
-                    sdk.create({ input, category, serverUrlPath})
-                        .then(() => {
-                            window.location.hash = entryPoint;
-                            Cache.poll(cache);
-                        })
-                        .catch(err => console.log(err));
+                    createSdk({ input, category, serverUrlPath });
                 }
 
                 Summary.update();
@@ -88,8 +81,7 @@ function createApp({ pages = [], cache = [], layout = [], data = {} }, callback)
             //custom event when input submitted
             window.addEventListener('submitinput', (e) => {
                 //TODO: get cache using output
-                console.log(e);
-                e.detail.forEach(({ key }) => Cache.poll(cache, key));
+                //e.detail.forEach(({ key }) => Cache.poll(cache, key));
                 Summary.update();
             })
 
@@ -100,21 +92,61 @@ function createApp({ pages = [], cache = [], layout = [], data = {} }, callback)
             if (window.location.hash && window.location.hash !== '/') {
                 sdk.retrieve()
                     .then(() => {
-                        Cache.poll(cache);
+                        afterSdkCreated();
                     })
                     .catch(err => {
                         window.location.hash = '';
                     });
 
             } else {
+                createSdk({ input, category, serverUrlPath });
+            }
+
+            function createSdk({ input, category, serverUrlPath }) {
                 sdk.create({ input, category, serverUrlPath})
                     .then(() => {
                         window.location.hash = entryPoint;
+                        afterSdkCreated();
                     })
-                    .catch(err => console.log(err));
+                    .catch(err => {
+                        console.error(err);
+                        window.location.hash = '/error';
+                    });
             }
-        }
+
+            function afterSdkCreated () {
+                if (data.local) {
+                    Object.keys(data.local).forEach(key => {
+                        Storage.set('local', key, data.local[key]);
+                    });
+                }
+
+                Cache.poll(cache);
+
+                sdk.trackJob((event) => {
+                    if (event === 'fail') {
+                        window.location.hash = '/error';
+                    }
+                })
+            }
+        },
     }
 }
 
-export { createApp };
+async function createInputs(inputs) {
+    if (!sdk.initiated) {
+        throw new Error('sdk not initiated');
+    }
+    const submittedInputs = await sdk.createJobInputs(inputs);
+    const event = new CustomEvent('submitinput', { detail: submittedInputs });
+    window.dispatchEvent(event);
+}
+
+async function cancel() {
+    if (!sdk.initiated) {
+        throw new Error('sdk not initiated');
+    }
+    await sdk.cancel();
+}
+
+export { createApp, createInputs, cancel };

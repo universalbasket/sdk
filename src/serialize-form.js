@@ -37,12 +37,10 @@ function hash_serializer(result, key, value) {
     }
     else {
         // Non bracket notation can make assignments directly.
-        console.log('[pre]key,value', key,value)
         const parsed = parse_type(key, value);
         key = parsed.key;
         value = parsed.value;
 
-        console.log('[post]key,value', key,value);
         var existing = result[key];
 
         // If the value has been assigned already (for instance when a radio and

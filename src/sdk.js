@@ -25,11 +25,11 @@ class EndUserSdk {
 
         localStorage.clear();
 
-        const newJob = await createJob(input, category, serverUrlPath);
+        const meta = await createJobAndEndUser(input, category, serverUrlPath);
 
-        jobId = newJob.jobId;
-        token = newJob.token;
-        serviceId = newJob.serviceId;
+        jobId = meta.jobId;
+        token = meta.token;
+        serviceId = meta.serviceId;
         localStorage.setItem('jobId', jobId);
         localStorage.setItem('token', token);
         localStorage.setItem('serviceId', serviceId);
@@ -38,11 +38,23 @@ class EndUserSdk {
 
         this.sdk = createEndUserSdk({ token, jobId, serviceId });
         this.initiated = true;
+
+        const job = await this.sdk.getJob();
+        const otp = await this.sdk.createOtp();
+
+        Storage.set('_', 'serviceName', job.serviceName);
+        Storage.set('_', 'otp', otp);
     }
 
     async retrieve() {
         this.sdk = createEndUserSdk({ token, jobId, serviceId });
         this.initiated = true;
+
+        const job = await this.sdk.getJob();
+        const otp = await this.sdk.createOtp();
+
+        Storage.set('_', 'serviceName', job.serviceName);
+        Storage.set('_', 'otp', otp);
     }
 
     async createJobInputs(inputs) {
@@ -65,8 +77,10 @@ class EndUserSdk {
         try {
             const submitted = await Promise.all(createInputs);
             submitted.forEach(_ => Storage.set('input', _.key, _.data));
+
+            return submitted;
         } catch (err) {
-            await this.sdk.resetJob(keys[0]);
+            //await this.sdk.resetJob(keys[0]);
 
             throw err;
         }
@@ -122,7 +136,6 @@ class EndUserSdk {
     trackJob(callback) {
         const stopTracking = this.sdk.trackJob((event, error) => {
             console.log(`event ${event}`);
-            console.log(event);
 
             if (event) {
                 callback(event, null);
@@ -134,9 +147,13 @@ class EndUserSdk {
             }
         });
     }
+
+    async cancel() {
+        await this.sdk.cancel();
+    }
 }
 
-async function createJob(input = {}, category = 'test', SERVER_URL_PATH) {
+async function createJobAndEndUser(input = {}, category = 'test', SERVER_URL_PATH) {
     SERVER_URL_PATH = SERVER_URL_PATH;
     const res = await fetch(SERVER_URL_PATH, {
         method: 'POST',

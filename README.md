@@ -43,6 +43,3 @@ To build that structure, you just need to specify the right name for the input f
 Also, if you need to convert the value to integer or boolean, suffix the name with `-$number`, `-$boolean` or `-$object` to let the form serializer know it needs to parse the value. (if it fails to convert to the specified type, it will just use string value)
 
 Then when you submitting form, it will camel-case the keys and serialize the form to json object which is ready to be posted to automation cloud.
-
-
-

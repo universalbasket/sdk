@@ -13,6 +13,10 @@ export default {
             sourceInputKeys: []
         },
         {
+            key: 'installationOptions',
+            sourceInputKeys: []
+        },
+        {
             key: 'finalPrice',
             sourceInputKeys: []
         },
@@ -31,8 +35,8 @@ export default {
             route: '/land-line',
             title: 'Landline Check',
             sections: [
-                { name: 'landline' },
-                { name: 'selectedAddress', waitFor: ['output.availableAddresses'] }
+                { name: 'landline', waitFor: ['local.landlineOptions'] },
+                { name: 'selectedAddress', waitFor: ['output.availableAddresses', 'output.availableInstallationAddresses'] }
             ]
         },
         {
@@ -40,35 +44,35 @@ export default {
             route: '/about-you',
             title: 'About You',
             sections: [
-                { name: 'aboutYou' }
+                { name: 'aboutYou' },
+                { name: 'installation', waitFor: ['output.installationOptions'] }
             ]
-        },/*
+        },
         {
-            name: 'package',
-            route: '/package',
-            title: 'Package',
+            name: 'setup-dates',
+            route: '/setup-dates',
+            title: 'Setup dates for your packages',
             sections: [
-                { name: 'yourPackage', waitFor: ['cache.oneOffCosts', 'cache.monthlyCosts'] }
+                { name: 'setupDates', waitFor: ['output.availableBroadbandSetupDates'] }
             ]
         },
         {
             name: 'checkout',
             route: '/checkout',
-            title: 'Set-up and payment',
+            title: 'Payment details',
             sections: [
-                { name: 'selectedBroadbandSetupDate', waitFor: ['output.availableBroadbandSetupDates'] },
-                { name: 'payment' }
+                { name: 'checkout', waitFor: ['_.otp'] },
+                { name: 'finalPriceConsent', waitFor: ['output.oneOffCosts', 'output.finalPrice'] },
             ]
         },
         {
-            name: 'consentPayment',
-            route: '/consent-payment',
+            name: 'confirmation',
+            route: '/confirmation',
             title: 'Confirmation',
             sections: [
-                { name: 'finalPriceConsent', waitFor: ['output.finalPrice'] },
-                { name: 'confirmation', waitFor: ['output.confirmation'] }
+                { name: 'confirmation', waitFor: ['outputs.confirmation'] }
             ]
-        } */
+        }
     ],
     layout: [
         { name: 'header', selector: '#header' },
@@ -87,7 +91,7 @@ export default {
                 "addressSelection": true,
                 "moveInDateSelection": true,
                 "keepLandlineNumber": false,
-                "screenshots": true,
+                "screenshots": false,
                 "testingFlow": false
             },
             selectedBroadbandPackage: {
@@ -102,10 +106,10 @@ export default {
         },
         local: {
             landlineOptions: {
-                "justMoved": true,
-                "sharedProperty": false,
-                "restartLine": false,
-                "additionalLine": false
+                'justMoved': true,
+                'sharedProperty': false,
+                'restartLine': false,
+                'additionalLine': false
             },
             finalPrice: {
                 value: 2000,
