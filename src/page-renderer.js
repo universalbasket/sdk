@@ -40,6 +40,7 @@ class PageRenderer {
     next() {
         const section = this.sections.shift();
         this.renderSection(section);
+        this.currentSection = section;
     }
 
     waitForVaultOutput() {
@@ -59,7 +60,6 @@ class PageRenderer {
             }
         });
     }
-
 
     addListeners(name) {
         if (!sdk.initiated) {
@@ -93,7 +93,7 @@ class PageRenderer {
                     return sdk.createJobInputs(inputs);
                 })
                 .then(submittedInputs => {
-                    const event = new CustomEvent('submitinput', { detail: submittedInputs });
+                    const event = new CustomEvent('newInputs', { detail: submittedInputs });
                     window.dispatchEvent(event);
 
                     if (this.sections.length === 0) {
@@ -127,7 +127,7 @@ class PageRenderer {
             // send input sdk
             sdk.createJobInputs(inputs)
                 .then(submittedInputs => {
-                    const event = new CustomEvent('submitinput', { detail: submittedInputs });
+                    const event = new CustomEvent('newInputs', { detail: submittedInputs });
                     window.dispatchEvent(event);
 
                     if (this.sections.length === 0) {
@@ -205,7 +205,7 @@ class PageRenderer {
 
                 const data = getData(type, sourceKey);
 
-                if (data === null) {
+                if (data === null) { // data is explicitly null
                     return { data: null, wait: false, sourceKey };
                 }
 
@@ -228,19 +228,28 @@ class PageRenderer {
             const dataWaitFor = {};
             results.forEach(result => { dataWaitFor[result.sourceKey] = result.data; });
 
-            const stop = sdk.trackJobOutput(message => {
-                if (message === 'outputCreate') {
-                    const { outputs } = Storage.getAll();
-                    const allAvailable = keysToWaitFor.every(k => outputs[k]);
-
-                    if (allAvailable) {
-                        keysToWaitFor.forEach(k => dataWaitFor[k] = outputs[k]);
-                        stop();
-
-                        res(dataWaitFor);
-                    }
-                }
+            this.waitForOutputs(keysToWaitFor).then(data => {
+                res({ ...dataWaitFor, ...data });
             });
+        });
+    }
+
+    waitForOutputs(keysToWaitFor) {
+        return new Promise(resolve => {
+            const trackOutput = () => {
+                const { outputs } = Storage.getAll();
+                const allAvailable = keysToWaitFor.every(k => outputs[k]);
+
+                if (allAvailable) {
+                    const data = {};
+                    keysToWaitFor.forEach(k => data[k] = outputs[k]);
+
+                    window.removeEventListener('newOutputs', trackOutput);
+                    resolve(data);
+                }
+            };
+
+            window.addEventListener('newOutputs', trackOutput);
         });
     }
 }

@@ -38,14 +38,7 @@ class EndUserSdk {
 
         Object.keys(input).forEach(key => Storage.set('input', key, input[key]));
 
-        this.sdk = createEndUserSdk({ token, jobId, serviceId });
-        this.initiated = true;
-
-        const job = await this.sdk.getJob();
-        const otp = await this.sdk.createOtp();
-
-        Storage.set('_', 'serviceName', job.serviceName);
-        Storage.set('_', 'otp', otp);
+        await this.retrieve()
     }
 
     async retrieve() {
@@ -106,24 +99,8 @@ class EndUserSdk {
             .map(cache => ({ key: cache.key, data: cache.data }));
     }
 
-    trackJobOutput(callback) {
-        return this.sdk.trackJob((event, _error) => {
-            let createdOutputProcessing = false;
-
-            if (event === 'createOutput' && !createdOutputProcessing) {
-                createdOutputProcessing = true;
-                this.sdk
-                    .getJobOutputs()
-                    .then(outputs => {
-                        outputs.data.forEach(output => {
-                            Storage.set('output', output.key, output.data);
-                        });
-
-                        callback('outputCreate', null);
-                        createdOutputProcessing = false;
-                    });
-            }
-        });
+    async getJobOutputs() {
+        return await this.sdk.getJobOutputs();
     }
 
     async submitPan(pan) {
