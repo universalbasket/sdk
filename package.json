@@ -13,7 +13,7 @@
     "build:rollup": "rollup --config",
     "build:js": "browserify bundle.js -o build.js -t babelify",
     "build:clean-up": "rm bundle.js",
-    "build:css": "postcss css/index.css -o index.css",
+    "build:css": "postcss src/css/index.css -o index.css",
     "stylelint": "stylelint src/css/**/* --fix",
     "check": "eslint --ext=js ."
   },
