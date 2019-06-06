@@ -6,11 +6,15 @@ const brands = 'visa,mastercard';
 const validateOnInput = 'on';
 const css = 'https://kk-iframe-prd.glitch.me/style.css'; // todo: host it somewhere proper.
 
-export default (otp) => html`
-    <iframe
-        id="vault-iframe"
-        width="400"
-        height="280"
-        scrolling="no"
-        src="${baseUrl}?otp=${otp}&css=${css}&fields=${fields}&brands=${brands}&validateOnInput=${validateOnInput}">
-    </iframe>`;
+export default (otp) => {
+    const src = `${baseUrl}?otp=${otp}&css=${css}&fields=${fields}&brands=${brands}&validateOnInput=${validateOnInput}`;
+
+    return html`
+        <iframe
+            id="vault-iframe"
+            width="400"
+            height="280"
+            scrolling="no"
+            src="${src}">
+        </iframe>`;
+};
