@@ -1,6 +1,6 @@
 import sdk from './sdk.js';
 import Router from './router.js';
-import { render } from '/web_modules/lit-html.js';
+import { render } from '/web_modules/lit-html/lit-html.js';
 
 import * as Storage from './storage.js';
 import * as Cache from './cache.js';

@@ -1,4 +1,4 @@
-import { html } from '/web_modules/lit-html.js';
+import { html } from '/web_modules/lit-html/lit-html.js';
 import Person from '../Generic/Person.js';
 import Address from '../Generic/Address.js';
 
