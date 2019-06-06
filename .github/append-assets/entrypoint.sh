@@ -3,7 +3,7 @@
 echo "Appending assets to $GITHUB_REF."
 
 # Trims off quotes and the trailing "{?name,label}"
-URL=$(jq .upload_url < ./append-assets/release.json | sed -e 's/"//g' -e 's/^\(.*\){.*$/\1/')
+URL=$(jq .upload_url < release.json | sed -e 's/"//g' -e 's/^\(.*\){.*$/\1/')
 
 echo $URL
 
