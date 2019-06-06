@@ -1,61 +1,61 @@
 workflow "Make release from tag." {
   on = "push"
-  resolves = ["upload to release"]
+  resolves = ["Make release from tag: Upload assets"]
 }
 
-action "only tags" {
+action "Make release from tag: only tags" {
   uses = "actions/bin/filter@3c0b4f0e63ea54ea5df2914b4fabf383368cd0da"
   args = "tag"
 }
 
-action "create release" {
+action "Make release from tag: create release" {
   uses = "./.github/create-release/"
-  needs = ["only tags"]
+  needs = ["Make release from tag: only tags"]
   secrets = ["GITHUB_TOKEN"]
 }
 
-action "npm install for release" {
+action "Make release from tag: npm install" {
   uses = "actions/npm@59b64a598378f31e49cb76f27d6f3312b582f680"
-  needs = ["create release"]
+  needs = ["Make release from tag: create release"]
   args = "install --unsafe-perm"
 }
 
-action "npm run build for release" {
+action "Make release from tag: npm run build" {
   uses = "actions/npm@59b64a598378f31e49cb76f27d6f3312b582f680"
   args = "run build --unsafe-perm"
-  needs = ["npm install for release"]
+  needs = ["Make release from tag: npm install"]
 }
 
-action "upload to release" {
+action "Make release from tag: Upload assets" {
   uses = "./.github/append-assets"
   secrets = ["GITHUB_TOKEN"]
-  needs = ["npm run build for release"]
+  needs = ["Make release from tag: npm run build"]
 }
 
 workflow "Pull request." {
   on = "pull_request"
-  resolves = ["npm test for pull request", "npm run check for pull request"]
+  resolves = ["Pull request: npm test", "Pull request: npm run check"]
 }
 
-action "opened or edited" {
+action "Pull request: opened or synchronize" {
   uses = "actions/bin/filter@3c0b4f0e63ea54ea5df2914b4fabf383368cd0da"
-  args = "action 'opened|edited'"
+  args = "action 'opened|synchronize'"
 }
 
-action "npm install for pull request" {
+action "Pull request: npm install" {
   uses = "actions/npm@59b64a598378f31e49cb76f27d6f3312b582f680"
   args = "install"
-  needs = ["opened or edited"]
+  needs = ["Pull request: opened or synchronize"]
 }
 
-action "npm test for pull request" {
+action "Pull request: npm test" {
   uses = "actions/npm@59b64a598378f31e49cb76f27d6f3312b582f680"
   args = "test"
-  needs = ["npm install for pull request"]
+  needs = ["Pull request: npm install"]
 }
 
-action "npm run check for pull request" {
+action "Pull request: npm run check" {
   uses = "actions/npm@59b64a598378f31e49cb76f27d6f3312b582f680"
-  needs = ["npm install for pull request"]
+  needs = ["Pull request: npm install"]
   args = "run check"
 }
