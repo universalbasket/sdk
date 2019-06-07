@@ -9,7 +9,7 @@ action "Make release from tag: only tags" {
 }
 
 action "Make release from tag: create release" {
-  uses = "./.github/create-release/"
+  uses = "./.github/create-release"
   needs = ["Make release from tag: only tags"]
   secrets = ["GITHUB_TOKEN"]
 }
