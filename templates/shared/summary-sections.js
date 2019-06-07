@@ -1,5 +1,5 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
-import PriceDisplay from '../../../src/builtin-templates/price-display.js'
+import PriceDisplay from '../../../src/builtin-templates/price-display.js';
 
 const showModal = (...detail) => new CustomEvent('show-modal', { detail });
 
@@ -7,13 +7,14 @@ export {
     PriceInformation,
     OtherInformation,
     Documents
-}
+};
 
 function PriceInformation({ cache = {}, outputs = {} }) {
     const price = outputs.finalPrice ||
         outputs.estimatedPrice ||
         cache.finalPrice ||
         cache.estimatedPrice;
+
     return price ?
         html`
             <div class="summary__block">
@@ -21,7 +22,7 @@ function PriceInformation({ cache = {}, outputs = {} }) {
                     ${PriceDisplay(price)}
                 </b>
             </div>` :
-        ''
+        '';
 }
 
 function OtherInformation({ outputs }) {
@@ -34,17 +35,17 @@ function OtherInformation({ outputs }) {
                     @click=${() => window.dispatchEvent(showModal(o))}>
                     <span class="clickable">${o.name}</span>
                 </span>
-            </li>`)
+            </li>`);
 
     if (items.length === 0) {
-        return ''
+        return '';
     }
 
     return html`
         <div class="summary__block summary__block--docs">
             <p><b>Other information</b></p>
             <ul class="dim">${ items }</ul>
-        </div>`
+        </div>`;
 }
 
 function Documents({ outputs }) {
@@ -53,21 +54,20 @@ function Documents({ outputs }) {
         .map(o => html`
             <li class="file-icon">
                 ${o.name}
-            </li>`)
+            </li>`);
 
     if (items.length === 0) {
-        return ''
+        return '';
     }
 
+    // ${outputs.insuranceProductInformationDocument ? FileType(outputs.insuranceProductInformationDocument) : ''}
+    // ${outputs.essentialInformation ? FileType(outputs.essentialInformation) : ''}
+    // ${outputs.policyWording ? FileType(outputs.policyWording) : ''}
+    // ${outputs.eligibilityConditions ? HtmlType(outputs.eligibilityConditions) : ''}
     return html`
         <div class="summary__block summary__block--docs">
             <p><b>Documents</b></p>
             <ul class="dim">${ items }</ul>
-        </div>`
-
-// ${outputs.insuranceProductInformationDocument ? FileType(outputs.insuranceProductInformationDocument) : ''}
-// ${outputs.essentialInformation ? FileType(outputs.essentialInformation) : ''}
-// ${outputs.policyWording ? FileType(outputs.policyWording) : ''}
-// ${outputs.eligibilityConditions ? HtmlType(outputs.eligibilityConditions) : ''}
+        </div>`;
 
 }

@@ -10,8 +10,6 @@ let wrapper = null;
 let initiated = false;
 let isExpanded = true;
 let isMobile = false;
-const serviceName = localStorage.getItem('serviceName') || '';
-const domain = 'domain placeholder';
 
 export default {
     init({ template, selector = '#summary' }) {
@@ -28,7 +26,7 @@ export default {
 
         const data = Storage.getAll();
 
-        render(summaryWrapper({ isExpanded, isMobile, serviceName, domain, ...data }), wrapper);
+        render(summaryWrapper({ isExpanded, isMobile, ...data }), wrapper);
 
         window.addEventListener('toggle-summary', () => toggleSummary(wrapper));
         window.addEventListener('show-modal', showModal);
@@ -40,7 +38,7 @@ export default {
             throw new Error('renderSummary: not initiated');
         }
 
-        const { inputs, outputs, cache, local } = Storage.getAll();
+        const { inputs, outputs, cache, local} = Storage.getAll();
 
         _updateDetails(inputs, outputs, cache, local);
     }
@@ -57,7 +55,7 @@ function _updateUI() {
     }
 
     const { inputs, outputs, cache, local } = Storage.getAll();
-    render(summaryWrapper({ isExpanded, isMobile, serviceName, domain, inputs, outputs, cache, local }), wrapper);
+    render(summaryWrapper({ isExpanded, isMobile, inputs, outputs, cache, local }), wrapper);
     _updateDetails(inputs, outputs, cache, local);
 }
 

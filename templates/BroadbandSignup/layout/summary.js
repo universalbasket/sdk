@@ -3,9 +3,9 @@ import {
     PriceInformation,
     OtherInformation,
     Documents
-} from '../../shared/summary-sections.js'
+} from '../../shared/summary-sections.js';
 
-export default (inputs = {}, outputs = {}, cache = {}, local = {}) => html`
+export default (inputs = {}, outputs = {}, cache = {}, _local = {}) => html`
 <div>
     ${inputs.selectedBroadbandPackage || inputs.selectedTvPackages || inputs.selectedPhonePackage ?
         html`
@@ -15,8 +15,7 @@ export default (inputs = {}, outputs = {}, cache = {}, local = {}) => html`
                 ${inputs.selectedTvPackages ? html`<li> TV: ${inputs.selectedTvPackages.map(_ => _.name).join(', ')}</li>` : ''}
                 ${inputs.selectedPhonePackage ? html`<li> Phone: ${inputs.selectedPhonePackage.name}</li>` : ''}
             </ul>
-        </div>` : ''
-    }
+        </div>` : ''}
 
     ${PriceInformation({ cache, outputs })}
     ${Documents({ outputs })}

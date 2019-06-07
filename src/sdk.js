@@ -5,8 +5,6 @@ let jobId = localStorage.getItem('jobId') || null;
 let token = localStorage.getItem('token') || null;
 let serviceId = localStorage.getItem('serviceId') || null;
 
-let serviceName = localStorage.getItem('serviceName') || '';
-
 class EndUserSdk {
     constructor() {
         this.sdk = null;
@@ -44,8 +42,6 @@ class EndUserSdk {
         this.initiated = true;
 
         const job = await this.sdk.getJob();
-        localStorage.setItem('serviceName', job.serviceName);
-
         const otp = await this.sdk.createOtp();
 
         Storage.set('_', 'serviceName', job.serviceName);

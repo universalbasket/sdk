@@ -3,25 +3,32 @@ import PriceDisplay from './price-display.js'
 
 const toggleSummary = new CustomEvent('toggle-summary');
 
-export default ({
+function getView({
     isExpanded,
     isMobile,
-    serviceName,
-    domain,
     inputs = {},
     outputs = {},
     cache = {},
-    local = {}
-}) =>
-    isMobile ?
-        html`
-            ${SummaryMobile({ isExpanded, serviceName, domain, inputs, outputs, cache, local })}
+    local = {},
+    _ = {}
+}) {
+    const serviceName = _.serviceName;
+    const domain = 'domain placeholder';
+    if (isMobile) {
+        return html`
+            ${ SummaryMobile({ isExpanded, inputs, outputs, cache, local, serviceName, domain }) }
             ${ isExpanded ?
-                html`<div
-                    class="summary-wrapper__overlay"
-                    @click=${ () => window.dispatchEvent(toggleSummary) }></div>` :
-                ''}`:
-        SummaryDesktop({ serviceName, domain });
+                html`
+                    <div
+                        class="summary-wrapper__overlay"
+                        @click=${ () => window.dispatchEvent(toggleSummary) }></div>` :
+                ''
+            }`;
+    }
+    return SummaryDesktop({ serviceName, domain });
+}
+
+export default getView;
 
 const SummaryBodyTemplate = () => html`
     <section class="summary__body" id="summary-body"></section>`

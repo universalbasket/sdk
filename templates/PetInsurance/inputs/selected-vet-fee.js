@@ -1,12 +1,11 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
 const key = 'selected-vet-fee';
 
-export default (output) => {
-    return html`
+export default output => html`
     <div class="field field-set">
         <span class="field__name">Vet Fee</span>
         <div class="field__inputs group group--merged">
-            ${output.map(optionObj => html`
+            ${ output.map(optionObj => html`
                 <input
                     type="radio"
                     id="${key}-${optionObj.price.value}"
@@ -16,8 +15,7 @@ export default (output) => {
                     for="${key}-${optionObj.price.value}"
                     class="button">
                     <div><b>${optionObj.text}</b> <p>${optionObj.price.value * 0.01} ${optionObj.price.currencyCode}</p></div>
-                </label>`
-            )}
+                </label>`)}
             </div>
     </div>
-`};
+`;
