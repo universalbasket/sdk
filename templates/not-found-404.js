@@ -8,4 +8,4 @@ export default () => {
         <button type="button" class="button button--right button--primary" id="submitBtn" @click="${() => { window.location.hash = '/#';}}">Continue</button>
     </div>
     `;
-}
+};

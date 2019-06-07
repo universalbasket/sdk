@@ -1,7 +1,7 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
 import PaymentCard from '../../Generic/PaymentCard.js';
 
-export default (otp) => html`
+export default otp => html`
     <h2>Guest details</h2>
     <div class="field">
         <label class="field__name" for="main-guest[person][first-name]">First name</label>

@@ -8,5 +8,5 @@ export default (name, data) => {
 
         <div class="section__actions">
             <button type="button" class="button button--right button--primary" id="submit-btn-${name}">Continue</button>
-        </div>`
+        </div>`;
 };

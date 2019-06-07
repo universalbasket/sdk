@@ -1,6 +1,6 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
 
-export default (finalPrice) => {
+export default finalPrice => {
     const { value, currencyCode } = finalPrice && finalPrice.price || {};
     let displayValue = value || 0;
 
@@ -12,8 +12,11 @@ export default (finalPrice) => {
         <div>
             <h4>Price check</h4>
             <p>The final price has changed and will be:</p>
-            ${displayValue} ${currencyCode}
-
-            <input type="hidden" name="final-price-consent-$object" value="${JSON.stringify(finalPrice)}"/>
-        </div>
-`};
+            ${displayValue}
+            ${currencyCode}
+            <input
+                type="hidden"
+                name="final-price-consent-$object"
+                value="${JSON.stringify(finalPrice)}"/>
+        </div>`;
+};

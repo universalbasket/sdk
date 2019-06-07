@@ -1,7 +1,7 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
 
 const TITLES = ['mr', 'ms', 'mrs', 'miss'];
-const MARITAL_STATUS = ["Civil Partner", "Cohabiting", "Divorced", "Married", "Separated", "Single", "Widowed"];
+const MARITAL_STATUS = ['Civil Partner', 'Cohabiting', 'Divorced', 'Married', 'Separated', 'Single', 'Widowed'];
 
 export default () => html`
     <div name="owner">
@@ -9,9 +9,7 @@ export default () => html`
             <div class="field">
                 <label class="field__name">Title</label>
                 <select name="owner[person][title]">
-                    ${ TITLES.map(t => html`
-                    <option value="${t}">${ t.toUpperCase() }</option>`
-                    ) }
+                    ${ TITLES.map(t => html`<option value="${t}">${ t.toUpperCase() }</option>`) }
                 </select>
             </div>
 
@@ -38,9 +36,7 @@ export default () => html`
             <div class="field">
                 <label class="field__name" for="owner[person][marital-status]">Marital Status</label>
                 <select name="owner[person][marital-status]">
-                    ${ MARITAL_STATUS.map(ms => html`
-                        <option value="${ms}"> ${ ms }</option>`
-                    )}
+                    ${ MARITAL_STATUS.map(ms => html`<option value="${ms}"> ${ ms }</option>`) }
                 </select>
             </div>
         </div>
