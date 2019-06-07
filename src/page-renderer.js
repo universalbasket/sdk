@@ -18,9 +18,7 @@ class PageRenderer {
         this.selector = selector;
         this.sections = [...sections];
         this.onFinish = onFinish;
-
-        this.sectionsToRender = sections.map(s => s.name);
-        //this.sectionToSubmit = this.sections.length;
+        this.currentSection = null;
     }
 
     init() {
@@ -39,8 +37,9 @@ class PageRenderer {
 
     next() {
         const section = this.sections.shift();
-        this.renderSection(section);
         this.currentSection = section;
+
+        this.renderSection(section);
     }
 
     waitForVaultOutput() {
@@ -168,20 +167,37 @@ class PageRenderer {
             render(html``, document.querySelector(this.selector));
             this.onFinish();
         } else {
+            const kebabCaseName = kebabcase(this.currentSection.name);
+            const form = document.querySelector(`#section-form-${kebabCaseName}`);
+            if (form) {
+                form.classList.add('form--disabled');
+                [...form.querySelectorAll('input')].forEach(_ => _.setAttribute('disabled', 'disabled'));
+            }
+
+            const vaultForm = document.querySelector('#vault-iframe');
+            if (vaultForm) {
+                vaultForm.setAttribute('id', '#vault-iframe-submitted');
+            }
+
             this.next();
         }
     }
 
     renderSection({ name, waitFor, template }) {
-        const nameForElement = kebabcase(name);
-        const selector = document.querySelector(`#section-form-${nameForElement}`);
+        const sectionName = kebabcase(name);
+        const selector = document.querySelector(`#section-form-${sectionName}`);
         const skip = () => {
             this.skipSection();
         };
 
         if (!waitFor) {
-            render(html`${template(nameForElement, {}, skip)} `, selector);
-            this.addListeners(nameForElement);
+            render(html`${template(sectionName, {}, skip)} `, selector);
+            this.addListeners(sectionName);
+
+            const { inputs } = Storage.getAll();
+            const submittedInputs = Object.keys(inputs);
+            this.skipIfSubmitted(submittedInputs);
+
             return;
         }
 
@@ -189,8 +205,12 @@ class PageRenderer {
 
         this.getDataForSection(waitFor)
             .then(res => {
-                render(html`${template(nameForElement, res, skip)} `, selector);
-                this.addListeners(nameForElement);
+                render(html`${template(sectionName, res, skip)} `, selector);
+                this.addListeners(sectionName);
+
+                const { inputs } = Storage.getAll();
+                const submittedInputs = Object.keys(inputs);
+                this.skipIfSubmitted(submittedInputs);
             });
     }
 
@@ -204,7 +224,6 @@ class PageRenderer {
                 }
 
                 const data = getData(type, sourceKey);
-
                 if (data === null) { // data is explicitly null
                     return { data: null, wait: false, sourceKey };
                 }
@@ -238,7 +257,7 @@ class PageRenderer {
         return new Promise(resolve => {
             const trackOutput = () => {
                 const { outputs } = Storage.getAll();
-                const allAvailable = keysToWaitFor.every(k => outputs[k]);
+                const allAvailable = keysToWaitFor.every(k => outputs[k] !== undefined);
 
                 if (allAvailable) {
                     const data = {};
@@ -251,6 +270,37 @@ class PageRenderer {
 
             window.addEventListener('newOutputs', trackOutput);
         });
+    }
+
+    skipIfSubmitted([...submittedInputKeys]) {
+        const kebabCaseName = kebabcase(this.currentSection.name);
+        const inputs = serializeForm(`#section-form-${kebabCaseName}`);
+        const inputKeys = Object.keys(inputs);
+
+        if (inputKeys.length === 0) {
+            return;
+        }
+        /**
+         * all input keys submitted -> skip section
+         * part of the input keys submitted -> reset job, preserve input keys = submittedInputKeys - part of the keys submitted
+         * non of keys submitted -> render
+         */
+        const submittedKeysInSection = inputKeys.map(k => submittedInputKeys.includes(k)).filter(k => k);
+        //all submitted
+        if (submittedKeysInSection.length === inputKeys.length) {
+            this.skipSection();
+        } else if (submittedKeysInSection.length > 0) {
+            submittedInputKeys.forEach(k => {
+                const idx = submittedInputKeys.indexOf(k);
+                submittedInputKeys.splice(idx, 1);
+                sdk.resetJob(inputKeys[0], submittedInputKeys)
+                    .then(() => {
+                        console.log('reset sections');
+                        submittedInputKeys.forEach(k => localStorage.removeItem(`input.${k}`));
+                    })
+                    .catch(_err => window.location.hash = '/error');
+            });
+        }
     }
 }
 

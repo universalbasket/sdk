@@ -84,7 +84,6 @@ function parseType(key, value) {
         key = key.replace('-$number', '');
         const num = Number.parseInt(value);
         if (isNaN(num)) {
-            console.error('number type is specified but non-number value is provided:', value);
         } else {
             value = num;
         }
@@ -116,7 +115,6 @@ function hashAssign(result, keys, value) {
         key = key.replace('-$number', '');
         const num = Number.parseInt(value);
         if (isNaN(num)) {
-            console.error('number type is specified but non-number value is provided:', value);
         } else {
             value = num;
         }
