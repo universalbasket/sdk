@@ -22,17 +22,15 @@ if [ "$status" != "201" ]; then
     exit 1
 fi
 
-echo "Appending assets to $GITHUB_REF."
-
 # Trims off quotes and the trailing "{?name,label}"
-URL=$(head -n -1 < output.txt | jq .upload_url | sed -e 's/"//g' -e 's/^\(.*\){.*$/\1/')
+ASSETS_URL=$(head -n -1 < output.txt | jq .upload_url | sed -e 's/"//g' -e 's/^\(.*\){.*$/\1/')
 
-echo $URL
+echo "Uploading assets using $ASSETS_URL."
 
 for name in "$@"
 do
     echo "Uploading $name"
-    status=$(curl -w "\n%{http_code}" --data-binary @"$name" -H "Content-Type: octet/stream" "$URL?access_token=$GITHUB_TOKEN&name=$name" | tail -n 1)
+    status=$(curl -w "\n%{http_code}" --data-binary @"$name" -H "Content-Type: octet/stream" "$ASSETS_URL?access_token=$GITHUB_TOKEN&name=$name" | tail -n 1)
 
     if [ "$status" != "201" ]; then
         >&2 echo "Error, got status $status when uploading $name."
