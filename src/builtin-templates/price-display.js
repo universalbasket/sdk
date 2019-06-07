@@ -9,7 +9,7 @@ const template = (price) => {
     const currencySymbol = getSymbolFromCurrency(price.currencyCode);
 
     if (currencySymbol && typeof price.value === 'undefined') {
-        return html`${currencySymbol}&middot;`
+        return html`${currencySymbol} &middot;`
     }
 
     if (isNaN(Number(price.value))) {

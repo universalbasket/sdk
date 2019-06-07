@@ -7,13 +7,13 @@ import {
     Documents
 } from '../../shared/summary-sections.js';
 
-export default (inputs = {}, outputs = {}, cache = {}, _local = {}) => html`
+export default (inputs = {}, outputs = {}, cache = {}, local = {}) => html`
 <div>
     ${ inputs.policyOptions || inputs.selectedCover || inputs.selectedVoluntaryExcess || inputs.selectedPaymentTerm ?
         html`
-            <article id="policy-detail" class="summary__block">
+            <article class="summary__block">
                 <ul class="dim">
-                    ${inputs.policyOptions && inputs.policyOptions.coverStartDate ? StartDate(inputs.policyOptions) : ''}
+                    ${inputs.policyOptions && inputs.policyOptions.coverStartDate ? html`<li>Starts on ${inputs.policyOptions.coverStartDate}</li>` : ''}
                     ${inputs.selectedCover ? html`<li>Cover: ${inputs.selectedCover}</li>` : ''}
                     ${inputs.selectedVetPaymentTerm ? html`<li> Vet Payment Term: ${inputs.selectedVetPaymentTerm}</li>` : ''}
                     ${inputs.selectedPaymentTerm ? html`<li>Payment term: ${inputs.selectedPaymentTerm}</li>` : ''}
@@ -27,67 +27,26 @@ export default (inputs = {}, outputs = {}, cache = {}, _local = {}) => html`
 
     ${ inputs.pets ?
         html`
-            <article id="pet-detail"  class="summary__block">
-                ${Pet(inputs.pets[0])}
+            <article class="summary__block">
+                ${ Pet(inputs.pets[0], local.currencyCode) }
             </article>` :
         ''}
 
-    ${ outputs.insuranceProductInformationDocument || outputs.essentialInformation || outputs.policyWording || outputs.eligibilityConditions ?
-        html`
-            <article id="policy-info" class="summary__block">
-                <header class="summary__block-title">
-                    Your Documents
-                </header>
-                <ul>
-                    ${outputs.insuranceProductInformationDocument ? FileType(outputs.insuranceProductInformationDocument) : ''}
-                    ${outputs.essentialInformation ? FileType(outputs.essentialInformation) : ''}
-                    ${outputs.policyWording ? FileType(outputs.policyWording) : ''}
-                    ${outputs.eligibilityConditions ? HtmlType(outputs.eligibilityConditions) : ''}
-                </ul>
-            </article>` :
-        ''}
-
-    <div id="price">
-        ${PriceInformation({ cache, outputs })}
-    </div>
-
-    ${OtherInformation({ outputs })}
-    ${Documents({ outputs })}
+    ${ PriceInformation({ cache, outputs }) }
+    ${ OtherInformation({ outputs }) }
+    ${ Documents({ outputs }) }
 </div>`;
 
-function Pet(pet) {
+function Pet(pet, currencyCode = 'gbp') {
     return html`
         <header class="summary__block-title">
-            Your ${pet.name}
+            Your ${ pet.name }
         </header>
         <ul class="dim">
-            <li>Breed Name: ${pet.breedName}</li>
-            <li>Date of Birth: ${pet.dateOfBirth}</li>
-            <li>Paid/Donated: ${PriceDisplay({ currencyCode: 'gbp', value: pet.petPrice })}</li>
+            <li>Breed Name: ${ pet.breedName }</li>
+            <li>Date of Birth: ${ pet.dateOfBirth }</li>
+            <li>Paid/Donated: ${ PriceDisplay({ currencyCode, value: pet.petPrice })}</li>
         </ul>
-    `;
-}
-
-function StartDate(policyOptions) {
-    const { coverStartDate } = policyOptions;
-    return html`<li>Starts on ${coverStartDate}</li>`;
-}
-
-function FileType(data) {
-    return html`
-        <div>
-            <h5>${data.name}</h5>
-            <a>${data.filename}</a>
-        </div>
-    `;
-}
-
-function HtmlType(data) {
-    return html`
-        <div>
-            <h5>${data.name}</h5>
-            <pre style="display:none">${data.html}</pre>
-        </div>
     `;
 }
 

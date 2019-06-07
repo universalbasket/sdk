@@ -44,7 +44,7 @@ export default {
             }
         },
         local: {
-
+            currencyCode: 'gbp',
         }
     }
 }

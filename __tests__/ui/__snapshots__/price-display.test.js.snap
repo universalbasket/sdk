@@ -48,7 +48,7 @@ Object {
   "processor": Any<Object>,
   "strings": Array [
     "",
-    "&middot;",
+    " &middot;",
   ],
   "type": "html",
   "values": Array [

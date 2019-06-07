@@ -10,16 +10,16 @@ export {
 };
 
 function PriceInformation({ cache = {}, outputs = {} }) {
-    const price = outputs.finalPrice ||
+    const priceObj = outputs.finalPrice ||
         outputs.estimatedPrice ||
         cache.finalPrice ||
         cache.estimatedPrice;
 
-    return price ?
+    return priceObj ?
         html`
             <div class="summary__block">
                 <b class="large highlight">
-                    ${PriceDisplay(price)}
+                    ${PriceDisplay(priceObj.price)}
                 </b>
             </div>` :
         '';
@@ -71,3 +71,21 @@ function Documents({ outputs }) {
         </div>`;
 
 }
+
+// function FileType(data) {
+//     return html`
+//         <div>
+//             <h5>${data.name}</h5>
+//             <a>${data.filename}</a>
+//         </div>
+//     `;
+// }
+
+// function HtmlType(data) {
+//     return html`
+//         <div>
+//             <h5>${data.name}</h5>
+//             <pre style="display:none">${data.html}</pre>
+//         </div>
+//     `;
+// }

@@ -12,7 +12,7 @@ function getView({
     local = {},
     _ = {}
 }) {
-    const serviceName = _.serviceName;
+    const serviceName = _.serviceName || 'Your package';
     const domain = 'domain placeholder';
     if (isMobile) {
         return html`
@@ -38,15 +38,15 @@ const SummaryHeaderInitial = (serviceName, domain) => html`
     <span class="faint large">${domain}</span>
 `
 
-const SummaryHeaderPartial = ({ inputs, outputs, cache }) => html`
+const SummaryHeaderPartial = ({ inputs, outputs, cache, local }) => html`
     <b class="large summary__preview-price">
-        ${cache.finalPrice ? PriceDisplay(cache.finalPrice.price) : ''}
+        ${PriceDisplay(cache.finalPrice ?
+            cache.finalPrice.price :
+            { currencyCode: local.currencyCode }
+        )}
     </b>
     <span class="faint summary__preview-info">
-        ${Object.values(inputs)
-            .filter(i => i.name)
-            .map(i => i.name)
-            .join(', ')}
+        ${ getSummaryPreviewInfo({ inputs, local }) }
     </span>
 `
 
@@ -63,14 +63,14 @@ const StaticHeaderWrapper = (template) => html`
     <header class="summary__header">${template}</header>
 `
 
-const SummaryDesktop = ({ serviceName, domain, cache }) =>html`
+const SummaryDesktop = ({ serviceName, domain }) =>html`
     <div class="summary">
         ${SummaryHeaderInitial(serviceName, domain)}
         ${SummaryBodyTemplate()}
     </div>
 `
 
-const SummaryMobile = ({ isExpanded, inputs, outputs, serviceName, domain, cache }) =>
+const SummaryMobile = ({ isExpanded, inputs, outputs, serviceName, domain, cache, local }) =>
     (inputs || outputs) ?
         html`
             <div class="summary">
@@ -79,11 +79,26 @@ const SummaryMobile = ({ isExpanded, inputs, outputs, serviceName, domain, cache
                         ${ToggableHeaderWrapper(isExpanded, SummaryHeaderInitial(serviceName, domain))}
                         ${SummaryBodyTemplate()}
                     ` :
-                    ToggableHeaderWrapper(isExpanded, SummaryHeaderPartial({ inputs, outputs, cache }))
+                    ToggableHeaderWrapper(isExpanded, SummaryHeaderPartial({ inputs, outputs, cache, local }))
                 }
             </div>` :
         html`<div class="summary">
             ${StaticHeaderWrapper(SummaryHeaderInitial(serviceName, domain))}
         </div>`
 
+function getSummaryPreviewInfo({ inputs, local }) {
+    let items = Object.values(inputs)
+        .filter(i => i.name)
+        .map(i => i.name);
+
+    if (inputs.policyOptions && inputs.policyOptions.coverStartDate) {
+        items.push(inputs.policyOptions.coverStartDate);
+    }
+
+    if (inputs.selectedCover) {
+        items.push(inputs.selectedCover);
+    }
+
+    return items.join(', ');
+}
 

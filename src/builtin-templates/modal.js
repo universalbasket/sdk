@@ -41,6 +41,12 @@ function getContentsHtml(contents) {
     if (!Array.isArray(contents)) {
         return ''
     }
+
+    // TODO address:
+    // Generic.File
+    // Generic.StructuredPrice
+    // Generic.HTML
+
     return html`${
         contents.map(item => {
             if (item.type === 'StructuredText') {
@@ -52,16 +58,14 @@ function getContentsHtml(contents) {
                         <div class="dim">${getContentsHtml(item.contents)}</div>
                     </article>`;
             }
-            if (item.type === 'Text') {
-                return html`<p>${item.text}</p>`
+
+            switch (item.type) {
+                case 'Text': return html`<p>${item.text}</p>`;
+                case 'Link': return html`<a href="${item.url}" target="_blank">${item.name}</a>`;
+                case 'NamedText': return html`<p><b>${item.name}</b> ${item.text}</p>`;
+                case 'NamedPrice': return html`<p><b>${item.name}</b> ${PriceDisplay(item.price)}</p>`;
+                default: return '';
             }
-            if (item.type === 'NamedPrice') {
-                return html`<p>
-                    ${item.name}
-                    ${PriceDisplay(item.price)}
-                </p>`
-            }
-            return '';
         })
     }`
 }

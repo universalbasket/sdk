@@ -77,7 +77,7 @@ describe('PriceDisplay UI', () => {
 
             expect(result).toMatchSnapshot({
                 processor: expect.any(Object),
-                strings: ['', '&middot;'],
+                strings: ['', ' &middot;'],
                 type: 'html',
                 values: ['£']
             });

@@ -2,6 +2,21 @@ import { html, render } from '/web_modules/lit-html/lit-html.js';
 
 let availableBreedTypes = {};
 
+const breedTypeOptions = options => html`
+    ${ options.map(o => html`<option value="${o}"> ${o}</option>`) }`;
+
+const breedTypeHandler = {
+    // handleEvent method is required.
+    handleEvent(e) {
+        const animalType = e.target.value;
+        const options = availableBreedTypes[animalType] || [];
+
+        render(breedTypeOptions(options), document.querySelector('#selected-breed-type'));
+    }
+// event listener objects can also define zero or more of the event
+// listener options: capture, passive, and once.
+};
+
 export default data => {
     availableBreedTypes = data;
     return html`
@@ -152,20 +167,4 @@ export default data => {
                 </div>
             </div>
         </div>`;
-}
-
-const breedTypeOptions = (options) => html`
-    ${ options.map(o => html`<option value="${o}"> ${o}</option>`) }`;
-
-const breedTypeHandler = {
-    // handleEvent method is required.
-    handleEvent(e) {
-        const animalType = e.target.value;
-        const options = availableBreedTypes[animalType] || [];
-
-        render(breedTypeOptions(options), document.querySelector('#selected-breed-type'));
-    },
-// event listener objects can also define zero or more of the event
-// listener options: capture, passive, and once.
 };
-
