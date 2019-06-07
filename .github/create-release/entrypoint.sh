@@ -22,5 +22,20 @@ if [ "$status" != "201" ]; then
     exit 1
 fi
 
-head -n -1 < output.txt > release.json
-rm output.txt
+echo "Appending assets to $GITHUB_REF."
+
+# Trims off quotes and the trailing "{?name,label}"
+URL=$(head -n -1 < output.txt | jq .upload_url | sed -e 's/"//g' -e 's/^\(.*\){.*$/\1/')
+
+echo $URL
+
+for name in "$@"
+do
+    echo "Uploading $name"
+    status=$(curl -w "\n%{http_code}" --data-binary @"$name" -H "Content-Type: octet/stream" "$URL?access_token=$GITHUB_TOKEN&name=$name" | tail -n 1)
+
+    if [ "$status" != "201" ]; then
+        >&2 echo "Error, got status $status when uploading $name."
+        exit 1
+    fi
+done
