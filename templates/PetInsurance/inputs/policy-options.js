@@ -13,13 +13,13 @@ export default () => html`
     </div>
 </div>`;
 
-const getMinDate = () => {
+function getMinDate() {
     const date = new Date();
     date.setDate(date.getDate() + 1);
     return date.toISOString().split('T')[0]
 }
 
-const getMaxDate = () => {
+function getMaxDate() {
     const date = Date.now();
     const thirtyDays = 30 * 24 * 60 * 60 * 1000;
     const thirtyDaysLater = new Date(date + thirtyDays);
