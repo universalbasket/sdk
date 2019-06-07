@@ -25,8 +25,10 @@ export default {
         }
 
         BodyTemplate = template;
+        console.info(template);
 
         const data = Storage.getAll();
+
         render(summaryWrapper({ isExpanded, isMobile, serviceName, domain, ...data }), wrapper);
 
         window.addEventListener('toggle-summary', () => toggleSummary(wrapper));

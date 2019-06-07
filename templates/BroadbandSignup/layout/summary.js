@@ -20,7 +20,7 @@ export default (inputs = {}, outputs = {}, cache = {}, local = {}) => html`
     ${cache.finalPrice ?
         html`<div class="summary__block">
             <b class="large highlight">
-                ${PriceDisplay(cache.finalPrice)}
+                ${PriceDisplay(cache.finalPrice.price)}
             </b>
         </div>` :
         ''

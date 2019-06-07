@@ -3,12 +3,27 @@ import getSymbolFromCurrency from '/web_modules/currency-symbol-map.js'
 
 const template = (price) => {
     if (!price) {
-        return html`&middot;`
+        return '';
     }
-    const {value, currencyCode} = price;
-    return value === 0 ?
+
+    const currencySymbol = getSymbolFromCurrency(price.currencyCode);
+
+    if (currencySymbol && typeof price.value === 'undefined') {
+        return html`${currencySymbol}&middot;`
+    }
+
+    if (isNaN(Number(price.value))) {
+        return '';
+    }
+
+    const value = (price.value * 0.01).toFixed(2);
+
+    return price.value === 0 ?
         html`FREE` :
-        html`${getSymbolFromCurrency(currencyCode.toUpperCase())}${value}`
+        currencySymbol ?
+            html`${currencySymbol}${value}` :
+            html`${value}${price.currencyCode}`
+
 }
 
 export default template

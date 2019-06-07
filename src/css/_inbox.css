@@ -22,7 +22,7 @@
 @keyframes yellowfade {
     from {
         background: var(--highlight);
-        box-shadow: 0 0 0 3px var(--highlight);
+        box-shadow: 0 0 1px 5px var(--highlight);
     }
     to {
         background: transparent;

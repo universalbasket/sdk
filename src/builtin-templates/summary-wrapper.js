@@ -6,16 +6,16 @@ const toggleSummary = new CustomEvent('toggle-summary');
 export default ({
     isExpanded,
     isMobile,
-    inputs,
-    outputs,
-    cache,
-    local,
     serviceName,
-    domain
+    domain,
+    inputs = {},
+    outputs = {},
+    cache = {},
+    local = {}
 }) =>
     isMobile ?
         html`
-            ${SummaryMobile({ isExpanded, inputs, outputs, serviceName, domain })}
+            ${SummaryMobile({ isExpanded, serviceName, domain, inputs, outputs, cache, local })}
             ${ isExpanded ?
                 html`<div
                     class="summary-wrapper__overlay"
@@ -28,12 +28,13 @@ const SummaryBodyTemplate = () => html`
 
 const SummaryHeaderInitial = (serviceName, domain) => html`
     <b class="large">${serviceName || 'Your Package'}</b>
+    ${ console.info(domain)}
     <span class="faint large">${domain}</span>
 `
 
 const SummaryHeaderPartial = ({ inputs, outputs, cache }) => html`
     <b class="large summary__preview-price">
-        ${cache ? PriceDisplay(cache.finalPrice) : html`&middot;`}
+        ${cache.finalPrice ? PriceDisplay(cache.finalPrice.price) : ''}
     </b>
     <span class="faint summary__preview-info">
         ${Object.values(inputs)
