@@ -54,8 +54,8 @@ function _updateUI() {
         return;
     }
 
-    const { inputs, outputs, cache, local } = Storage.getAll();
-    render(summaryWrapper({ isExpanded, isMobile, inputs, outputs, cache, local }), wrapper);
+    const { inputs, outputs, cache, local, _ } = Storage.getAll();
+    render(summaryWrapper({ isExpanded, isMobile, inputs, outputs, cache, local, _ }), wrapper);
     _updateDetails(inputs, outputs, cache, local);
 }
 
