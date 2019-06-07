@@ -9,10 +9,10 @@ class Router {
     }
 
     navigate() {
-        const request = parseRequestURL();
-
+        const url = location.hash.slice(1).toLowerCase() || '/';
+        const page = url.split('/')[1];
         // Parse the URL and if it has an id part, change it with the string ":id"
-        const parsedURL = (request.page ? '/' + request.page : '/') + (request.input ? '/' + request.input : '');
+        const parsedURL = page ? '/' + page : '/';
 
         // Get the page from our hash of supported routes.
         // If the parsed URL is not in our list of supported routes, select the 404 page instead
@@ -21,18 +21,6 @@ class Router {
         route.renderer.init();
         this.ProgressBarTemplate(this.titles, route.step);
     }
-}
-function parseRequestURL() {
-    const url = location.hash.slice(1).toLowerCase() || '/';
-    const r = url.split('/');
-    const request = {
-        page    : null,
-        input      : null
-    };
-    request.page = r[1];
-    request.input = r[2];
-
-    return parseRequestURL;
 }
 
 export default (routes, titles, notFoundTemplate, ProgressBarTemplate) => new Router(routes, titles, notFoundTemplate, ProgressBarTemplate);
