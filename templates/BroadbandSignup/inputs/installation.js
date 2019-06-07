@@ -22,24 +22,25 @@ export default (installationOptions = {}) => html`
 </div>
 `;
 
-const propertyType = (propertyTypes) => {
+function propertyType(propertyTypes) {
     if (!propertyTypes || propertyTypes.length === 0) {
-        return ''
+        return '';
     }
 
     return html`
-    <div class="field">
-        <span class="field__name">What is you property type? </span>
-        <div class="field__inputs group group--merged">
-            ${propertyTypes.map(type => html`
-                <input type="radio" name="installation[property-type]" id="installation[property-type]-${type}" value="${type}" required>
-                <label for="installation[property-type]-${type}" class="button">${type}</label>`
-            )}
+        <div class="field">
+            <span class="field__name">What is you property type? </span>
+            <div class="field__inputs group group--merged">
+                ${propertyTypes.map(type => html`
+                    <input type="radio" name="installation[property-type]" id="installation[property-type]-${type}" value="${type}" required>
+                    <label for="installation[property-type]-${type}" class="button">${type}</label>
+                `)}
+            </div>
         </div>
-    </div>`
+    `;
 }
 
-const selectFields = (data, label, name) => {
+function selectFields(data, label, name) {
     if (!data || data.length === 0) {
         return '';
     }
@@ -47,10 +48,9 @@ const selectFields = (data, label, name) => {
         <div class="field">
             <span class="field__name">${label}</span>
                 <select name="${name}" required>
-                    ${ data.map(d => html`
-                        <option value="${d}">${d}</option>`
-                    )}
+                    ${data.map(d => html`<option value="${d}">${d}</option> `)}
                 </select>
             </div>
-        </div>`
+        </div>
+    `;
 }

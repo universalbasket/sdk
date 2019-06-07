@@ -22,4 +22,4 @@ export {
     selectedBroadbandSetupDate,
     selectedMoveInDate,
     selectedAddress
-}
+};
