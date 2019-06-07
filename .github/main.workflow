@@ -1,6 +1,6 @@
 workflow "Make release from tag." {
   on = "push"
-  resolves = ["Make release from tag: Upload assets"]
+  resolves = ["Make release from tag: create release"]
 }
 
 action "Make release from tag: only tags" {
@@ -8,15 +8,9 @@ action "Make release from tag: only tags" {
   args = "tag"
 }
 
-action "Make release from tag: create release" {
-  uses = "./.github/create-release"
-  needs = ["Make release from tag: only tags"]
-  secrets = ["GITHUB_TOKEN"]
-}
-
 action "Make release from tag: npm install" {
   uses = "actions/npm@59b64a598378f31e49cb76f27d6f3312b582f680"
-  needs = ["Make release from tag: create release"]
+  needs = ["Make release from tag: only tags"]
   args = "install --unsafe-perm"
 }
 
@@ -26,9 +20,10 @@ action "Make release from tag: npm run build" {
   needs = ["Make release from tag: npm install"]
 }
 
-action "Make release from tag: Upload assets" {
-  uses = "./.github/append-assets"
+action "Make release from tag: create release" {
+  uses = "./.github/create-release"
   secrets = ["GITHUB_TOKEN"]
+  args = ["build.js", "index.css"]
   needs = ["Make release from tag: npm run build"]
 }
 
