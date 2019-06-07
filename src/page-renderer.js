@@ -1,7 +1,7 @@
 import kebabcase from '/web_modules/lodash.kebabcase.js';
 import { html, render } from '/web_modules/lit-html/lit-html.js';
 import sdk from './sdk.js';
-import serializeForm from './serialize-form.js';
+import { serializeForm , getFormInputKeys } from './serialize-form.js';
 import getData from './get-data-with-priority.js';
 import pageWrapper from './builtin-templates/page-wrapper.js';
 import inlineLoading from './builtin-templates/inline-loading.js';
@@ -274,8 +274,7 @@ class PageRenderer {
 
     skipIfSubmitted([...submittedInputKeys]) {
         const kebabCaseName = kebabcase(this.currentSection.name);
-        const inputs = serializeForm(`#section-form-${kebabCaseName}`);
-        const inputKeys = Object.keys(inputs);
+        const inputKeys = getFormInputKeys(`#section-form-${kebabCaseName}`);
 
         if (inputKeys.length === 0) {
             return;
