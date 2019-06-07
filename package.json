@@ -17,6 +17,7 @@
     "build:css": "postcss src/css/index.css -o index.css",
     "stylelint": "stylelint src/css/**/* --fix",
     "check": "eslint --ext=js .",
+    "test": "npm run test:ui",
     "test:ui": "jest",
     "test:watch": "jest --watchAll",
     "test:update": "jest --updateSnapshot"
