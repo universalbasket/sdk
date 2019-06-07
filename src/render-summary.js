@@ -6,9 +6,9 @@ let bodyTemplate = null;
 let initiated = false;
 
 export default {
-    init: ({ template, selector = '#summary' }) => {
+    init({ template, selector = '#summary' }) {
         if (!template || typeof template !== 'function') {
-            throw new Error(`renderSummary: invalid template`);
+            throw new Error('renderSummary: invalid template');
         }
 
         const wrapper = document.querySelector(selector);
@@ -22,11 +22,11 @@ export default {
         initiated = true;
     },
 
-    update: () => {
+    update() {
         if (!initiated || !bodyTemplate) {
             throw new Error('renderSummary: not initiated');
         }
         const { inputs, outputs, cache, local } = Storage.getAll();
         render(bodyTemplate(inputs, outputs, cache, local), document.querySelector('#summary-body'));
     }
-}
+};

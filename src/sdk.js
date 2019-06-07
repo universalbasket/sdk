@@ -11,7 +11,7 @@ class EndUserSdk {
         this.initiated = false;
     }
 
-    async create({ input = {}, category, serverUrlPath}) {
+    async create({ input = {}, category, serverUrlPath }) {
         if (jobId && token && serviceId) {
             let previous;
 
@@ -87,7 +87,7 @@ class EndUserSdk {
     }
 
     async getCache({ key: outputKey, sourceInputKeys }) {
-        const sourceInputs = sourceInputKeys.map(key => { return { key, data: Storage.get('input', key) }});
+        const sourceInputs = sourceInputKeys.map(key => ({ key, data: Storage.get('input', key) }));
 
         const { data: cacheData = null } = await this.sdk.getPreviousJobOutputs(sourceInputs) || {};
 
@@ -101,11 +101,11 @@ class EndUserSdk {
 
         return cacheData
             .filter(cache => keys.includes(cache.key))
-            .map(cache => { return { key: cache.key, data: cache.data }});
+            .map(cache => ({ key: cache.key, data: cache.data }));
     }
 
     trackJobOutput(callback) {
-        return this.sdk.trackJob((event, error) => {
+        return this.sdk.trackJob((event, _error) => {
             let createdOutputProcessing = false;
 
             if (event === 'createOutput' && !createdOutputProcessing) {
@@ -120,8 +120,8 @@ class EndUserSdk {
                         callback('outputCreate', null);
                         createdOutputProcessing = false;
                     });
-                }
-            });
+            }
+        });
     }
 
     async submitPan(pan) {
@@ -154,7 +154,6 @@ class EndUserSdk {
 }
 
 async function createJobAndEndUser(input = {}, category = 'test', SERVER_URL_PATH) {
-    SERVER_URL_PATH = SERVER_URL_PATH;
     const res = await fetch(SERVER_URL_PATH, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
