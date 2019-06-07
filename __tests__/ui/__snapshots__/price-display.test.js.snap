@@ -1,5 +1,21 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`PriceDisplay UI Happy case renders 0.00 when value is 'zero' 1`] = `
+Object {
+  "processor": Any<Object>,
+  "strings": Array [
+    "",
+    "",
+    "",
+  ],
+  "type": "html",
+  "values": Array [
+    "£",
+    "0.00",
+  ],
+}
+`;
+
 exports[`PriceDisplay UI Happy case renders FREE when value is zero 1`] = `
 Object {
   "processor": Any<Object>,

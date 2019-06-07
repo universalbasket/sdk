@@ -53,6 +53,20 @@ describe('PriceDisplay UI', () => {
                 values: []
             });
         });
+
+        it('renders 0.00 when value is \'zero\'', () => {
+            const result = PriceDisplay({
+                value: '0',
+                currencyCode: 'gbp'
+            });
+
+            expect(result).toMatchSnapshot({
+                processor: expect.any(Object),
+                strings: ['', '', ''],
+                type: 'html',
+                values: ['£', '0.00']
+            });
+        });
     });
 
     describe('Partial case', () => {

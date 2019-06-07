@@ -28,7 +28,6 @@ const SummaryBodyTemplate = () => html`
 
 const SummaryHeaderInitial = (serviceName, domain) => html`
     <b class="large">${serviceName || 'Your Package'}</b>
-    ${ console.info(domain)}
     <span class="faint large">${domain}</span>
 `
 

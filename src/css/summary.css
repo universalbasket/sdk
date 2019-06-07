@@ -44,6 +44,11 @@
     padding: 10px 0;
 }
 
+.summary__block-title {
+    font-weight: bold;
+    font-size: var(--font-size);
+}
+
 .summary__block--list {
     border-bottom: dashed 1px var(--color--dim);
 }

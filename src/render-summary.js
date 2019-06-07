@@ -11,7 +11,7 @@ let initiated = false;
 let isExpanded = true;
 let isMobile = false;
 const serviceName = localStorage.getItem('serviceName') || '';
-const domain = localStorage.getItem('domain') || '';
+const domain = 'domain placeholder';
 
 export default {
     init({ template, selector = '#summary' }) {
@@ -25,7 +25,6 @@ export default {
         }
 
         BodyTemplate = template;
-        console.info(template);
 
         const data = Storage.getAll();
 

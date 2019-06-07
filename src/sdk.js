@@ -6,7 +6,6 @@ let token = localStorage.getItem('token') || null;
 let serviceId = localStorage.getItem('serviceId') || null;
 
 let serviceName = localStorage.getItem('serviceName') || '';
-let domain = localStorage.getItem('domain') || '';
 
 class EndUserSdk {
     constructor() {
@@ -33,14 +32,10 @@ class EndUserSdk {
         jobId = meta.jobId;
         token = meta.token;
         serviceId = meta.serviceId;
-        serviceName = meta.serviceName || '';
-        domain = meta.domain || '';
 
         localStorage.setItem('jobId', jobId);
         localStorage.setItem('token', token);
         localStorage.setItem('serviceId', serviceId);
-        localStorage.setItem('serviceName', serviceName);
-        localStorage.setItem('domain', domain);
 
 
         Object.keys(input).forEach(key => Storage.set('input', key, input[key]));
@@ -49,6 +44,8 @@ class EndUserSdk {
         this.initiated = true;
 
         const job = await this.sdk.getJob();
+        localStorage.setItem('serviceName', job.serviceName);
+
         const otp = await this.sdk.createOtp();
 
         Storage.set('_', 'serviceName', job.serviceName);
