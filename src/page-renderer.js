@@ -272,33 +272,33 @@ class PageRenderer {
         });
     }
 
-    skipIfSubmitted([...submittedInputKeys]) {
+    skipIfSubmitted(submittedInputKeys) {
         const kebabCaseName = kebabcase(this.currentSection.name);
-        const inputKeys = getFormInputKeys(`#section-form-${kebabCaseName}`);
+        const inputKeysInSection = getFormInputKeys(`#section-form-${kebabCaseName}`);
 
-        if (inputKeys.length === 0) {
+        if (inputKeysInSection.length === 0) {
             return;
         }
+
         /**
          * all input keys submitted -> skip section
          * part of the input keys submitted -> reset job, preserve input keys = submittedInputKeys - part of the keys submitted
-         * non of keys submitted -> render
-         */
-        const submittedKeysInSection = inputKeys.map(k => submittedInputKeys.includes(k)).filter(k => k);
+         * none of keys submitted -> do nothing
+        */
+        const submittedKeysInSection = inputKeysInSection.map(k => submittedInputKeys.includes(k) ? k : null).filter(k => k);
         //all submitted
-        if (submittedKeysInSection.length === inputKeys.length) {
-            this.skipSection();
-        } else if (submittedKeysInSection.length > 0) {
-            submittedInputKeys.forEach(k => {
-                const idx = submittedInputKeys.indexOf(k);
-                submittedInputKeys.splice(idx, 1);
-                sdk.resetJob(inputKeys[0], submittedInputKeys)
-                    .then(() => {
-                        console.log('reset sections');
-                        submittedInputKeys.forEach(k => localStorage.removeItem(`input.${k}`));
-                    })
-                    .catch(_err => window.location.hash = '/error');
-            });
+        if (submittedKeysInSection.length === inputKeysInSection.length) {
+            return this.skipSection();
+        }
+
+        if (submittedKeysInSection.length > 0) {
+            const preserveInputs = submittedInputKeys.filter(k => !submittedKeysInSection.includes(k));
+
+            sdk.resetJob(inputKeysInSection[0], preserveInputs)
+                .then(() => {
+                    submittedKeysInSection.forEach(k => localStorage.removeItem(`input.${k}`));
+                })
+                .catch(_err => window.location.hash = '/error');
         }
     }
 }

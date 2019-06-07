@@ -66,19 +66,11 @@ class EndUserSdk {
             const data = inputs[key];
 
             await this.sdk.createJobInput(key, data);
+            Storage.set('input', key, data);
             return { key, data };
         });
 
-        try {
-            const submitted = await Promise.all(createInputs);
-            submitted.forEach(_ => Storage.set('input', _.key, _.data));
-
-            return submitted;
-        } catch (err) {
-            //await this.sdk.resetJob(keys[0]);
-
-            throw err;
-        }
+        return await Promise.all(createInputs);
     }
 
     async getCache({ key: outputKey, sourceInputKeys }) {
