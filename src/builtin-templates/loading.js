@@ -1,5 +1,13 @@
 import { html, render } from '/web_modules/lit-html/lit-html.js';
 
+const template = html`
+    <div class="loading">
+        <h2 id="loading-message">
+            We are preparing your form...
+        </h2>
+    </div>
+`;
+
 export default (selector = '#app') => {
     return {
         renderer: {
@@ -12,13 +20,5 @@ export default (selector = '#app') => {
                 render(template, target);
             }
         }
-    }
-}
-
-const template = html`
-<div class="loading">
-    <h2 id="loading-message">
-        We are preparing your form...
-    </h2>
-</div>
-`;
+    };
+};

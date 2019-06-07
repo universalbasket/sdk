@@ -1,9 +1,9 @@
 import { html, render } from '/web_modules/lit-html/lit-html.js';
-import PriceDisplay from './price-display.js'
+import PriceDisplay from './price-display.js';
 
-export default function (body, title) {
+export default function(body, title) {
     if (!body || typeof body !== 'object') {
-        return ''
+        return '';
     }
 
     switch (body.type) {
@@ -14,7 +14,7 @@ export default function (body, title) {
 }
 
 function close() {
-    render('', document.querySelector('#modal'))
+    render('', document.querySelector('#modal'));
 }
 
 function showModal(details, title) {
@@ -33,13 +33,12 @@ function showModal(details, title) {
             <div
                 class="modal-wrapper__overlay"
                 @click=${close}></div>
-        </div>
-        `;
+        </div>`;
 }
 
 function getContentsHtml(contents) {
     if (!Array.isArray(contents)) {
-        return ''
+        return '';
     }
 
     // TODO address:
@@ -67,5 +66,5 @@ function getContentsHtml(contents) {
                 default: return '';
             }
         })
-    }`
+    }`;
 }

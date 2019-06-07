@@ -15,4 +15,4 @@ export default () => html`
 
     <span>Please wait a moment</span>
 </div>
-`
+`;

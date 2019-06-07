@@ -2,7 +2,7 @@ import { html } from '/web_modules/lit-html/lit-html.js';
 import Person from '../../Generic/Person.js';
 import Address from '../../Generic/Address.js';
 
-export default (data) => html`
+export default () => html`
 <div name="direct-debit" class="filed-set">
     <div class="field">
         <label class="field__name" for="direct-debit[sort-code]">Sort Code</label>
@@ -15,7 +15,6 @@ export default (data) => html`
     </div>
 
     ${Person('direct-debit[account-holder]')}
-
     ${Address('direct-debit[account-holder-address]')}
 </div>
 `;

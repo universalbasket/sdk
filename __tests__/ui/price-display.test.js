@@ -1,4 +1,4 @@
-import PriceDisplay from '@/src/builtin-templates/price-display.js'
+import PriceDisplay from '@/src/builtin-templates/price-display.js';
 
 describe('PriceDisplay UI', () => {
     describe('Unhappy case', () => {

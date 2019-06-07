@@ -1,7 +1,7 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
-import getSymbolFromCurrency from '/web_modules/currency-symbol-map.js'
+import getSymbolFromCurrency from '/web_modules/currency-symbol-map.js';
 
-const template = (price) => {
+function template(price) {
     if (!price) {
         return '';
     }
@@ -9,7 +9,7 @@ const template = (price) => {
     const currencySymbol = getSymbolFromCurrency(price.currencyCode);
 
     if (currencySymbol && typeof price.value === 'undefined') {
-        return html`${currencySymbol} &middot;`
+        return html`${currencySymbol} &middot;`;
     }
 
     if (isNaN(Number(price.value))) {
@@ -22,8 +22,7 @@ const template = (price) => {
         html`FREE` :
         currencySymbol ?
             html`${currencySymbol}${value}` :
-            html`${value}${price.currencyCode}`
-
+            html`${value}${price.currencyCode}`;
 }
 
-export default template
+export default template;
