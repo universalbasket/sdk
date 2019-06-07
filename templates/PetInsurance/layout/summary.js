@@ -7,7 +7,7 @@ import {
     Documents
 } from '../../shared/summary-sections.js'
 
-export default (inputs = {}, outputs = {}, _cache = {}, _local = {}) => html`
+export default (inputs = {}, outputs = {}, cache = {}, local = {}) => html`
 <div>
     ${
         inputs.policyOptions || inputs.selectedCover || inputs.selectedVoluntaryExcess || inputs.selectedPaymentTerm ?
@@ -53,7 +53,7 @@ export default (inputs = {}, outputs = {}, _cache = {}, _local = {}) => html`
     }
 
     <div id="price">
-        ${PriceInformation({ cache: _cache, outputs })}
+        ${PriceInformation({ cache, outputs })}
     </div>
 
     ${OtherInformation({ outputs })}
