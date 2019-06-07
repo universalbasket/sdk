@@ -8,7 +8,7 @@ function getAll() {
     const local = {};
     const _ = {};
 
-    for (let i = 0; i < length ; i += 1) {
+    for (let i = 0; i < length; i += 1) {
         const key = localStorage.key(i);
 
         if (key.startsWith('input.')) {
@@ -46,9 +46,7 @@ function getAll() {
 }
 
 function objectToArray(inputs) {
-    const arr = Object.keys(inputs).map(key => {
-        return { key, data: inputs[key] };
-    })
+    const arr = Object.keys(inputs).map(key => ({ key, data: inputs[key] }));
 
     return arr;
 }

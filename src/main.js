@@ -19,9 +19,9 @@ function createApp({ pages = [], cache = [], layout = [], data = {} }, callback)
         throw new Error('invalid page config');
     }
 
-    const { selector: mainSelector } = layout.find(_ => _.mainTarget == true) || {};
+    const { selector: mainSelector } = layout.find(_ => _.mainTarget) || {};
     if (!mainSelector) {
-        throw new Error(`main selector not found in config`);
+        throw new Error('main selector not found in config');
     }
 
     //setup router
@@ -39,7 +39,7 @@ function createApp({ pages = [], cache = [], layout = [], data = {} }, callback)
 
         if (flow.length > idx + 1) {
             const nextRoute = flow[idx + 1];
-            onFinish = () => setTimeout(() => { window.location.hash = nextRoute }, 500);
+            onFinish = () => setTimeout(() => { window.location.hash = nextRoute; }, 500);
         } else {
             onFinish = callback;
         }
@@ -53,7 +53,7 @@ function createApp({ pages = [], cache = [], layout = [], data = {} }, callback)
     return {
         init: () => {
             const { initialInputs: input, category, serverUrlPath } = data;
-            const router = Router(routes, titles, NotFound(mainSelector), ProgressBar('#progress-bar'))
+            const router = Router(routes, titles, NotFound(mainSelector), ProgressBar('#progress-bar'));
 
             layout
                 .filter(l => !l.mainTarget)
@@ -79,22 +79,22 @@ function createApp({ pages = [], cache = [], layout = [], data = {} }, callback)
             });
 
             //custom event when input submitted
-            window.addEventListener('submitinput', (e) => {
+            window.addEventListener('submitinput', () => {
                 //TODO: get cache using output
                 //e.detail.forEach(({ key }) => Cache.poll(cache, key));
                 Summary.update();
-            })
+            });
 
             window.addEventListener('createoutput', () => {
                 Summary.update();
-            })
+            });
 
             if (window.location.hash && window.location.hash !== '/') {
                 sdk.retrieve()
                     .then(() => {
                         afterSdkCreated();
                     })
-                    .catch(err => {
+                    .catch(() => {
                         window.location.hash = '';
                     });
 
@@ -103,7 +103,7 @@ function createApp({ pages = [], cache = [], layout = [], data = {} }, callback)
             }
 
             function createSdk({ input, category, serverUrlPath }) {
-                sdk.create({ input, category, serverUrlPath})
+                sdk.create({ input, category, serverUrlPath })
                     .then(() => {
                         window.location.hash = entryPoint;
                         afterSdkCreated();
@@ -114,7 +114,7 @@ function createApp({ pages = [], cache = [], layout = [], data = {} }, callback)
                     });
             }
 
-            function afterSdkCreated () {
+            function afterSdkCreated() {
                 if (data.local) {
                     Object.keys(data.local).forEach(key => {
                         Storage.set('local', key, data.local[key]);
@@ -124,14 +124,14 @@ function createApp({ pages = [], cache = [], layout = [], data = {} }, callback)
                 Cache.poll(cache);
                 Summary.update();
 
-                sdk.trackJob((event) => {
+                sdk.trackJob(event => {
                     if (event === 'fail') {
                         window.location.hash = '/error';
                     }
-                })
+                });
             }
-        },
-    }
+        }
+    };
 }
 
 async function createInputs(inputs) {

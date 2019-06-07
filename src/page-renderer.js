@@ -2,7 +2,7 @@ import kebabcase from '/web_modules/lodash.kebabcase.js';
 import { html, render } from '/web_modules/lit-html/lit-html.js';
 import sdk from './sdk.js';
 import serializeForm from './serialize-form.js';
-import getData from './get-data-with-priority.js'
+import getData from './get-data-with-priority.js';
 import pageWrapper from './builtin-templates/page-wrapper.js';
 import inlineLoading from './builtin-templates/inline-loading.js';
 import * as Storage from './storage.js';
@@ -44,17 +44,17 @@ class PageRenderer {
 
     waitForVaultOutput() {
         return new Promise((resolve, reject) => {
-            window.addEventListener("message", receiveOutput);
+            window.addEventListener('message', receiveOutput);
             function receiveOutput({ data: message }) {
                 // Consider security concerns: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#Security_concerns
                 if (message.name === 'vault.output') {
-                    window.removeEventListener('message', this);;
+                    window.removeEventListener('message', this);
                     return resolve(message.data);
                 }
 
                 if (message.name === 'vault.validationError' || message.name === 'vault.error') {
-                    window.removeEventListener('message', this);;
-                    return reject(message.name)
+                    window.removeEventListener('message', this);
+                    return reject(message.name);
                 }
             }
         });
@@ -85,7 +85,9 @@ class PageRenderer {
                     submitBtn.setAttribute('disabled', 'true');
                     const inputs = serializeForm(`#section-form-${name}`);
 
-                    if (inputs.payment)  inputs.payment['card'] = { '$token': cardToken };
+                    if (inputs.payment) {
+                        inputs.payment['card'] = { '$token': cardToken };
+                    }
                     inputs['panToken'] = panToken;
 
                     return sdk.createJobInputs(inputs);
@@ -110,7 +112,7 @@ class PageRenderer {
                     }
                     submitBtn.removeAttribute('disabled');
                 });
-        }
+        };
 
         const defaultListener = () => {
             if (!form.reportValidity()) {
@@ -143,7 +145,7 @@ class PageRenderer {
                     }
                     submitBtn.removeAttribute('disabled');
                 });
-        }
+        };
 
         if (submitBtn) {
             const listener = hostedForm ? vaultListener : defaultListener;
@@ -154,10 +156,10 @@ class PageRenderer {
 
         if (cancelBtn) {
             cancelBtn.addEventListener('click', () => {
-                sdk.sdk.cancelJob().then(res => {
+                sdk.sdk.cancelJob().then(_res => {
                     window.location.hash = '/error';
                 });
-            })
+            });
         }
     }
 
@@ -178,22 +180,22 @@ class PageRenderer {
         };
 
         if (!waitFor) {
-           render(html`${template(nameForElement, {}, skip)} `, selector);
-           this.addListeners(nameForElement);
-           return;
+            render(html`${template(nameForElement, {}, skip)} `, selector);
+            this.addListeners(nameForElement);
+            return;
         }
 
-        render(html`${inlineLoading()} `, selector)
+        render(html`${inlineLoading()} `, selector);
 
         this.getDataForSection(waitFor)
             .then(res => {
                 render(html`${template(nameForElement, res, skip)} `, selector);
                 this.addListeners(nameForElement);
-            })
+            });
     }
 
     getDataForSection(waitFor) {
-        return new Promise((res) => {
+        return new Promise(res => {
             const results = waitFor.map(_ => {
                 const [type, sourceKey] = _.split('.');
                 if (type === 'input') {
@@ -226,7 +228,7 @@ class PageRenderer {
             const dataWaitFor = {};
             results.forEach(result => { dataWaitFor[result.sourceKey] = result.data; });
 
-            const stop = sdk.trackJobOutput((message) => {
+            const stop = sdk.trackJobOutput(message => {
                 if (message === 'outputCreate') {
                     const { outputs } = Storage.getAll();
                     const allAvailable = keysToWaitFor.every(k => outputs[k]);
@@ -238,12 +240,10 @@ class PageRenderer {
                         res(dataWaitFor);
                     }
                 }
-            })
+            });
         });
     }
 }
-
-
 
 function getPageRenderer(name, sections, selector, onFinish) {
     return new PageRenderer(name, sections, selector, onFinish);
