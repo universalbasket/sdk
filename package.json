@@ -9,7 +9,7 @@
     "start:pet": "node domain-selector PetInsurance && npm run serve",
     "start:hotel": "node domain-selector HotelBooking && npm run serve",
     "start": "npm run serve",
-    "serve": "browser-sync start --index 'index.html' --server --files 'index.css' 'index.js' 'templates' 'web_modules' 'src/' 'ubio.config.js'",
+    "serve": "browser-sync start --index 'index.html' --server --files 'index.js' 'templates' 'web_modules' 'src' 'ubio.config.js'",
     "build": "npm run build:rollup && npm run build:js && npm run build:clean-up && npm run build:css",
     "build:rollup": "rollup --config",
     "build:js": "browserify bundle.js -o build.js -t babelify",
