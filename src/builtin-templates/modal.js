@@ -1,4 +1,6 @@
 import { html, render } from '/web_modules/lit-html/lit-html.js';
+import { unsafeHTML } from '/web_modules/lit-html/directives/unsafe-html.js';
+
 import PriceDisplay from './price-display.js';
 
 export default function(body, title) {
@@ -8,6 +10,7 @@ export default function(body, title) {
 
     switch (body.type) {
         case 'html': return showModal(body, title);
+        case 'HTML': return showModal(unsafeHTML(body.html), body.name);
         case 'StructuredText': return showModal(getContentsHtml(body.contents), body.name);
         default: return '';
     }
@@ -61,6 +64,7 @@ function getContentsHtml(contents) {
             switch (item.type) {
                 case 'Text': return html`<p>${item.text}</p>`;
                 case 'Link': return html`<a href="${item.url}" target="_blank">${item.name}</a>`;
+                case 'HTML': return unsafeHTML(item.html);
                 case 'NamedText': return html`<p><b>${item.name}</b> ${item.text}</p>`;
                 case 'NamedPrice': return html`<p><b>${item.name}</b> ${PriceDisplay(item.price)}</p>`;
                 default: return '';

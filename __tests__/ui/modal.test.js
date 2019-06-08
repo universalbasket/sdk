@@ -33,7 +33,8 @@ describe('Modal UI', () => {
                 type: 'html',
                 values: expect.any(Array)
             });
-            expect(result.values.filter(v => v === undefined).length).toBe(1);
+            expect(result.values[0]).toBe(undefined);
+            expect(result.values[1]).not.toBe(undefined);
         });
 
         it('renders with title when the second arg is provided', () => {
@@ -48,7 +49,24 @@ describe('Modal UI', () => {
                 type: 'html',
                 values: expect.any(Array)
             });
-            expect(result.values.filter(v => v === undefined).length).toBe(0);
+            expect(result.values[0]).toBe('title');
+            expect(result.values[1]).not.toBe(undefined);
+        });
+    });
+
+    describe('Job output use case: show HTML', () => {
+        it('renders with HTML contents', () => {
+            const jobOutput = getOutput('eligibilityConditions');
+            const result = Modal(jobOutput);
+
+            expect(result).toMatchSnapshot({
+                processor: expect.any(Object),
+                strings: expect.any(Array),
+                type: 'html',
+                values: expect.any(Array)
+            });
+            expect(result.values[0]).toBe(jobOutput.name);
+            expect(typeof result.values[1]).toBe('function');
         });
     });
 
@@ -65,7 +83,6 @@ describe('Modal UI', () => {
             });
             expect(result.values[0]).toBe(jobOutput.name);
             expect(result.values[1].type).toBe('html');
-            expect(result.values.filter(v => v === undefined).length).toBe(0);
         });
 
         it('renders with nested NamedPrice contents', () => {
@@ -80,12 +97,94 @@ describe('Modal UI', () => {
             });
             expect(result.values[0]).toBe(jobOutput.name);
             expect(result.values[1].type).toBe('html');
-            expect(result.values.filter(v => v === undefined).length).toBe(0);
+        });
+
+        it('renders with nested NamedText contents', () => {
+            const result = Modal({
+                type: 'StructuredText',
+                name: 'NamedText test',
+                contents: [
+                    {
+                        type: 'NamedText',
+                        text: 'Lorem ipsum dolor sit amet',
+                        name: 'Text Name'
+                    }
+                ]
+            });
+
+            expect(result).toMatchSnapshot({
+                processor: expect.any(Object),
+                strings: expect.any(Array),
+                type: 'html',
+                values: expect.any(Array)
+            });
+            expect(result.values[0]).toBe('NamedText test');
+            expect(result.values[1].type).toBe('html');
+        });
+
+        it('renders with nested Link contents', () => {
+            const result = Modal({
+                type: 'StructuredText',
+                name: 'Link test',
+                contents: [
+                    {
+                        type: 'Link',
+                        url: 'linkurl',
+                        name: 'Link Name'
+                    }
+                ]
+            });
+
+            expect(result).toMatchSnapshot({
+                processor: expect.any(Object),
+                strings: expect.any(Array),
+                type: 'html',
+                values: expect.any(Array)
+            });
+            expect(result.values[0]).toBe('Link test');
+            expect(result.values[1].type).toBe('html');
         });
     });
 });
 
 const outputs = {
+    eligibilityConditions: {
+        html: `<div><div><div>
+            <p>
+                This is the eligibility criteria you must meet in order to take out a Lorem Pet Insurance.
+                If you cannot meet this eligibility criteria, please call our dedicated Lorem Pet Team who will be happy to help.
+                Call us on <span>0000 000 000</span>.
+            </p>
+            <h3>Eligibility Criteria</h3>
+            <p>You and your pet must meet the following conditions.</p>
+            <h3>You</h3>
+            <ul>
+                <li><span>&gt;</span> Must be the owner and keeper of the pet.</li>
+                <li><span>&gt;</span> Must be at least 18 years old.</li>
+                <li><span>&gt;</span> Must live permanently at your home address.</li>
+                <li><span>&gt;</span> Must live in the United Kingdom, Isle of Man or the Channel Islands.</li>
+                <li><span>&gt;</span> Must never have had any pet policy covering this pet declared void or cancelled.</li>
+            </ul>
+            <h3>Your Pet</h3>
+            <ul>
+                <li><span>&gt;</span> Must be at least eight weeks old.</li>
+                <li><span>&gt;</span> Must live with you at your home address.</li>
+                <li><span>&gt;</span> Has not had complaints made about its behaviour.</li>
+                <li><span>&gt;</span> Has not been the cause of an incident or legal action.</li>
+                <li><span>&gt;</span> Has not been trained to attack, used for security or as a guard dog.</li>
+                <li><span>&gt;</span> Is not used for commercial breeding (this means your pet has not been used for breeding more than two times in its life).</li>
+                <li><span>&gt;</span> Has not been and is not used for racing.</li>
+                <li><span>&gt;</span> Has not been and is not used for fighting.</li>
+                <li><span>&gt;</span> Is not used as a business to make money or earn an income.</li>
+                <li>
+                    <span>&gt;</span> Is not (whether pedigree, cross breed or mixed breed) a Pit Bull, Japanese Tosa, Fila Braziliero, Dogo Argentino, American Bulldog, Wolf or Wolf Hybrid.
+                    If your pets breed is not listed on our website we do not insure them unless you have contacted us and we have agreed to do so, please call <span>0000 000 0000</span>.
+                </li>
+            </ul>
+        </div></div></div>`,
+        name: 'eligibility conditions',
+        type: 'HTML'
+    },
     termsAndConditions: {
         'type': 'StructuredText',
         'name': 'Here\'s the legal bit',

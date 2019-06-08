@@ -24,7 +24,8 @@
   },
   "pre-commit": [
     "check",
-    "stylelint"
+    "stylelint",
+    "test"
   ],
   "keywords": [
     "ubio",

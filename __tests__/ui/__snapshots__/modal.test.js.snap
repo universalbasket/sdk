@@ -18,7 +18,34 @@ Object {
 }
 `;
 
+exports[`Modal UI Job output use case: show HTML renders with HTML contents 1`] = `
+Object {
+  "processor": Any<Object>,
+  "strings": Any<Array>,
+  "type": "html",
+  "values": Any<Array>,
+}
+`;
+
+exports[`Modal UI Job output use case: show StructuredText as HTML renders with nested Link contents 1`] = `
+Object {
+  "processor": Any<Object>,
+  "strings": Any<Array>,
+  "type": "html",
+  "values": Any<Array>,
+}
+`;
+
 exports[`Modal UI Job output use case: show StructuredText as HTML renders with nested NamedPrice contents 1`] = `
+Object {
+  "processor": Any<Object>,
+  "strings": Any<Array>,
+  "type": "html",
+  "values": Any<Array>,
+}
+`;
+
+exports[`Modal UI Job output use case: show StructuredText as HTML renders with nested NamedText contents 1`] = `
 Object {
   "processor": Any<Object>,
   "strings": Any<Array>,
