@@ -3,6 +3,7 @@
   "version": "0.0.29",
   "description": "ubio sdk application bundle (prototype)",
   "module": "build.js",
+  "repository": "github:universalbasket/sdk-application-bundle",
   "scripts": {
     "install": "rimraf web_modules && vendor-copy && node hack-wrap.js",
     "start:broadband": "node domain-selector BroadbandSignup && npm run serve",
