@@ -24,9 +24,7 @@ export default {
 
         BodyTemplate = template;
 
-        const data = Storage.getAll();
-
-        render(summaryWrapper({ isExpanded, isMobile, ...data }), wrapper);
+        render(summaryWrapper({ isExpanded, isMobile }), wrapper);
 
         window.addEventListener('toggle-summary', () => toggleSummary(wrapper));
         window.addEventListener('show-modal', showModal);
@@ -38,8 +36,10 @@ export default {
             throw new Error('renderSummary: not initiated');
         }
 
-        const { inputs, outputs, cache, local } = Storage.getAll();
+        const data = Storage.getAll();
+        const { inputs, outputs, cache, local } = data;
 
+        render(summaryWrapper({ isExpanded, isMobile, ...data }), wrapper);
         _updateDetails(inputs, outputs, cache, local);
     }
 };

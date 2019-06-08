@@ -41,7 +41,8 @@
 }
 
 .summary__block {
-    padding: 10px 0;
+    padding: 1.5em 0 .5em;
+    line-height: 1.6;
 }
 
 .summary__block-title {
@@ -49,8 +50,9 @@
     font-size: var(--font-size);
 }
 
-.summary__block--list {
-    border-bottom: dashed 1px var(--color--dim);
+.summary__block--price {
+    border-top: dashed 1px var(--color--dim);
+    padding: .5em 0;
 }
 
 .summary__block--docs {

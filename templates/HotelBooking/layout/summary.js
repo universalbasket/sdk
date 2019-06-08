@@ -1,15 +1,28 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
 
-//get service name & domain
-export default (inputs = {}) => html`
-<div>
-    ${inputs.selectedRooms ?
+import PriceDisplay from '../../../../src/builtin-templates/price-display.js';
+
+import {
+    PriceInformation,
+    OtherInformation,
+    Documents
+} from '../../shared/summary-sections.js';
+
+export default (inputs = {}, outputs = {}, cache = {}, _local = {}) => {
+    return html`
+        ${inputs.selectedRooms && inputs.selectedRooms[0] ?
         html`
-        <div id="selected-room" class="summary__block">
-            <h5 class="summary__block-title"> Your Room </h5>
-            <ul>
-                <li>${inputs.selectedRooms[0].type}</li>
-                <li>${inputs.selectedRooms[0].price.value / 100} ${inputs.selectedRooms[0].price.currencyCode.toUpperCase()}</li>
-            </ul>
-        </div>` : ''}
-</div>`;
+            <article class="summary__block">
+                <header class="summary__block-title">
+                    Your Room
+                </header>
+                <ul class="dim">
+                    <li>${inputs.selectedRooms[0].type}</li>
+                    <li>${PriceDisplay(inputs.selectedRooms[0].price)}</li>
+                </ul>
+            </article>` : ''}
+
+        ${PriceInformation({ cache, outputs })}
+        ${Documents({ outputs })}
+        ${OtherInformation({ outputs })}`;
+};

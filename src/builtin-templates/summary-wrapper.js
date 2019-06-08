@@ -39,13 +39,20 @@ function SummaryHeaderInitial(serviceName, domain) {
         <span class="faint large">${domain}</span>`;
 }
 
-function SummaryHeaderPartial({ inputs, cache, local }) {
+function SummaryHeaderPartial({ inputs, outputs, cache, local }) {
+    const priceObj = outputs.finalPrice ||
+        outputs.estimatedPrice ||
+        cache.finalPrice ||
+        cache.estimatedPrice;
+
+    const price = priceObj && priceObj.price || { currencyCode: local.currencyCode || 'gbp' };
+
     return html`
         <b class="large summary__preview-price">
-            ${ PriceDisplay(cache.finalPrice ? cache.finalPrice.price : { currencyCode: local.currencyCode }) }
+            ${PriceDisplay(price)}
         </b>
         <span class="faint summary__preview-info">
-            ${ getSummaryPreviewInfo({ inputs }) }
+            ${getSummaryPreviewInfo({ inputs })}
         </span>`;
 }
 
@@ -75,14 +82,14 @@ function SummaryDesktop({ serviceName, domain }) {
     </div>`;
 }
 
-function SummaryMobile({ isExpanded, inputs, serviceName, domain, cache, local }) {
+function SummaryMobile({ isExpanded, inputs, outputs, serviceName, domain, cache, local }) {
     let contents;
-    if (inputs || cache) {
+    if (inputs || outputs || cache) {
         contents = html`
         ${ isExpanded ? html`
             ${ ToggableHeaderWrapper(isExpanded, SummaryHeaderInitial(serviceName, domain)) }
             ${ SummaryBodyTemplate() }` :
-        ToggableHeaderWrapper(isExpanded, SummaryHeaderPartial({ inputs, cache, local })) }`;
+        ToggableHeaderWrapper(isExpanded, SummaryHeaderPartial({ inputs, outputs, cache, local })) }`;
     } else {
         contents = StaticHeaderWrapper(SummaryHeaderInitial(serviceName, domain));
     }
@@ -90,18 +97,37 @@ function SummaryMobile({ isExpanded, inputs, serviceName, domain, cache, local }
 }
 
 function getSummaryPreviewInfo({ inputs }) {
+    // TODO re-implement using domain knowledge
+
+    // Broadband
     const items = Object.values(inputs)
         .filter(i => i.name)
-        .map(i => i.name);
+        .map(i => i.name)
+        .join(', ');
 
+    if (items.length > 0) {
+        return items.join(', ');
+    }
+
+    // Pet
     if (inputs.policyOptions && inputs.policyOptions.coverStartDate) {
         items.push(inputs.policyOptions.coverStartDate);
     }
-
     if (inputs.selectedCover) {
         items.push(inputs.selectedCover);
     }
+    if (items.length > 0) {
+        return items.join(', ');
+    }
 
-    return items.join(', ');
+    // Hotel
+    if (inputs.selectedRooms && inputs.selectedRooms[0]) {
+        return html`
+            ${ inputs.selectedRooms[0].type }
+            –
+            ${ PriceDisplay(inputs.selectedRooms[0].price) }`;
+    }
+
+    return '';
 }
 

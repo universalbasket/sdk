@@ -9,17 +9,19 @@ export {
     Documents
 };
 
-function PriceInformation({ cache = {}, outputs = {} }) {
+function PriceInformation({ cache = {}, outputs = {}, local = {} }) {
     const priceObj = outputs.finalPrice ||
         outputs.estimatedPrice ||
         cache.finalPrice ||
         cache.estimatedPrice;
 
+    const price = priceObj && priceObj.price || { currencyCode: local.currencyCode || 'gbp' };
+
     return priceObj ?
         html`
-            <div class="summary__block">
+            <div class="summary__block summary__block--price">
                 <b class="large highlight">
-                    ${PriceDisplay(priceObj.price)}
+                    ${PriceDisplay(price)}
                 </b>
             </div>` :
         '';
@@ -27,7 +29,7 @@ function PriceInformation({ cache = {}, outputs = {} }) {
 
 function OtherInformation({ outputs }) {
     const items = Object.values(outputs)
-        .filter(o => o.type === 'StructuredText')
+        .filter(o => ['StructuredText', 'HTML'].includes(o.type))
         .map(o => html`
             <li>
                 <span
@@ -53,7 +55,7 @@ function Documents({ outputs }) {
         .filter(o => o.type === 'File')
         .map(o => html`
             <li class="file-icon">
-                ${o.name}
+                <a href="${o.url} target="_blank">${o.filename}</a>
             </li>`);
 
     if (items.length === 0) {
@@ -71,21 +73,3 @@ function Documents({ outputs }) {
         </div>`;
 
 }
-
-// function FileType(data) {
-//     return html`
-//         <div>
-//             <h5>${data.name}</h5>
-//             <a>${data.filename}</a>
-//         </div>
-//     `;
-// }
-
-// function HtmlType(data) {
-//     return html`
-//         <div>
-//             <h5>${data.name}</h5>
-//             <pre style="display:none">${data.html}</pre>
-//         </div>
-//     `;
-// }
