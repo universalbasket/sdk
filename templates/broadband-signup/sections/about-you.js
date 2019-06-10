@@ -1,7 +1,7 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
 
 import { contactPerson, selectedMarketingContactOptions } from '../inputs/index.js';
-import account from '../../Generic/Account.js';
+import account from '../../generic/account.js';
 
 export default (name, _data = {}) => html`
     ${contactPerson()}

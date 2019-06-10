@@ -1,8 +1,8 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
 
-import PaymentCard from '../../Generic/PaymentCard.js';
-import Address from '../../Generic/Address.js';
-import Person from '../../Generic/Person.js';
+import PaymentCard from '../../generic/payment-card.js';
+import Address from '../../generic/address.js';
+import Person from '../../generic/person.js';
 
 export default otp => html`
     <h2>Card details</h2>

@@ -1,5 +1,5 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
-import payment from '../../Generic/Payment.js';
+import payment from '../../generic/payment.js';
 
 export default (name, { otp }) => html`
     ${payment(otp)}

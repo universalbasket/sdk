@@ -1,7 +1,7 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
-import Person from './Person.js';
-import Address from './Address.js';
-import PaymentCard from './PaymentCard.js';
+import Person from './person.js';
+import Address from './address.js';
+import PaymentCard from './payment-card.js';
 
 export default (otp, prefix = 'payment') => html`
 <div class="filed-set">
