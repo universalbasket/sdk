@@ -1,4 +1,4 @@
-import { html, render } from '/web_modules/lit-html/lit-html.js';
+import { html } from '/web_modules/lit-html/lit-html.js';
 
 export default (name, { availableRooms }) => {
     return html`
@@ -7,8 +7,10 @@ export default (name, { availableRooms }) => {
             <select name="selected-rooms-$object[]" required>
                 <option>select room...</option>
                 ${ availableRooms.map(room => html`
-                    <option value="${JSON.stringify(room)}">${room.type} – ${room.price.value/100} ${room.price.currencyCode.toUpperCase()}</option>`
-                )}
+                    <option
+                        value="${JSON.stringify(room)}">
+                        ${room.type} – ${room.price.value / 100} ${room.price.currencyCode.toUpperCase()}
+                    </option>`) }
             </select>
         </div>
 

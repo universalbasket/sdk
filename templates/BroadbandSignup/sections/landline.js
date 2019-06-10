@@ -11,4 +11,6 @@ export default (name, data = {}) => html`
     </div>
 `;
 
-const hidden = (data) => html`<input type="hidden" name="landline-options-$object" value="${JSON.stringify(data)}" />`;
+function hidden(data) {
+    return html`<input type="hidden" name="landline-options-$object" value="${JSON.stringify(data)}" />`;
+}

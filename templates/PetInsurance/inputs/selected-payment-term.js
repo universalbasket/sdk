@@ -1,6 +1,6 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
 
-export default (terms) => html`
+export default terms => html`
     <div class="field field-set">
         <span class="field__name">Select Payment term</span>
         <div class="field__inputs group group--merged">
@@ -12,8 +12,7 @@ export default (terms) => html`
                 id="selected-payment-term-${term}"
                 required>
             <label for="selected-payment-term-${term}" class="button">${term}</label>
-            `)
-        }
+            `)}
         </div>
     </div>
 `;

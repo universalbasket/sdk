@@ -105,6 +105,7 @@ export default {
             }
         },
         local: {
+            currencyCode: 'gbp',
             landlineOptions: {
                 'justMoved': true,
                 'sharedProperty': false,

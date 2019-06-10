@@ -1,6 +1,15 @@
 import { html, render } from '/web_modules/lit-html/lit-html.js';
 import { payment, directDebit } from '../inputs/index.js';
 
+const onChange = {
+    handleEvent(e) {
+        const paymentMethod = e.target.value;
+        const showDirectDebit = paymentMethod === 'directdebit';
+
+        render(showDirectDebit ? directDebit() : html``, document.querySelector('#direct-debit-wrapper'));
+    }
+};
+
 export default (name, data) => html`
     ${payment(data.otp)}
 
@@ -26,12 +35,3 @@ export default (name, data) => html`
             id="submit-btn-${name}">Pay</button>
     </div>
 `;
-
-const onChange = {
-    handleEvent(e) {
-        const paymentMethod = e.target.value;
-        const showDirectDebit = paymentMethod === 'directdebit';
-
-        render(showDirectDebit ? directDebit() : html``, document.querySelector('#direct-debit-wrapper'));
-    },
-};

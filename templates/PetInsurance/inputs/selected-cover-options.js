@@ -1,8 +1,7 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
 const key = 'selected-cover-options';
 
-export default (output) => {
-    return html`
+export default output => html`
     <div id="${key}">
         <div class="field field-set">
             <span class="field__name">Select Covers</span>
@@ -14,8 +13,7 @@ export default (output) => {
                     <pre>${o.detail}</pre>
                     <p>${(o.price.value * 0.01).toFixed(2)} ${o.price.currencyCode}</p>
                 </div>
-            </label>`
-                )}
+            </label>`)}
         </div>
     </div>
-`};
+`;

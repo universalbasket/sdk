@@ -12,6 +12,6 @@
 
 .button--primary {
     color: #fff;
-    background: var(--primary-color);
+    background: var(--color--primary);
     border: 0;
 }

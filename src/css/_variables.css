@@ -1,12 +1,22 @@
 :root {
     --header-background-color: #333;
+    --header-height--large: 60px;
+    --header-height--small: 45px;
     --summary-background-color: #fff;
     --progress-bar-background-color: #f1f1f1;
-    --primary-color: #2a3c4f;
-    --accent-color: #333;
     --step-icon: #c7c7c7;
     --step-icon--active: #606060;
     --input-border-radius: 2px;
-    --nav-height--large: 60px;
-    --nav-height--small: 45px;
+    --font-family: 'Helvetica', 'Helvetica Neue', 'Arial', sans-serif;
+    --font-size: 14px;
+    --font-size--large: 18px;
+    --color: black;
+    --color--dim: #4a4a4a;
+    --color--primary: #2a3c4f;
+    --color--accent: #333;
+    --color--focus: #31aade;
+    --color--hr: #c7c7c7;
+    --color--faint: #7e7e7e;
+    --highlight: #ffec84;
+    --overlay: rgba(0, 0, 0, .5);
 }

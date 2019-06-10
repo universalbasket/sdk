@@ -3,6 +3,7 @@
   "version": "0.0.29",
   "description": "ubio sdk application bundle (prototype)",
   "module": "build.js",
+  "repository": "github:universalbasket/sdk-application-bundle",
   "scripts": {
     "install": "rimraf web_modules && vendor-copy && node hack-wrap.js",
     "start:broadband": "node domain-selector BroadbandSignup && npm run serve",
@@ -16,11 +17,16 @@
     "build:clean-up": "rm bundle.js",
     "build:css": "postcss src/css/index.css -o index.css",
     "stylelint": "stylelint src/css/**/* --fix",
-    "check": "eslint --ext=js ."
+    "check": "eslint --ext=js .",
+    "test": "npm run test:ui",
+    "test:ui": "jest",
+    "test:watch": "jest --watchAll",
+    "test:update": "jest --updateSnapshot"
   },
   "pre-commit": [
     "check",
-    "stylelint"
+    "stylelint",
+    "test"
   ],
   "keywords": [
     "ubio",
@@ -31,21 +37,27 @@
   "dependencies": {
     "@ubio/sdk": "^0.5.0",
     "camelcase-keys": "^5.2.0",
+    "currency-symbol-map": "^4.0.4",
     "form-serialize": "^0.7.2",
     "lit-html": "^1.1.0",
     "lodash.kebabcase": "^4.1.1",
     "rimraf": "^2.6.3",
-    "vendor-copy": "^2.0.0"
+    "vendor-copy": "^2.0.0",
+    "pwa-helpers": "^0.9.1"
   },
   "devDependencies": {
     "@babel/core": "^7.4.5",
+    "@babel/preset-env": "^7.4.5",
     "autoprefixer": "^9.6.0",
+    "babel-jest": "^24.8.0",
     "babelify": "^10.0.0",
     "browser-sync": "^2.26.5",
     "browserify": "^16.2.3",
     "eslint": "^5.16.0",
     "eslint-config-ub": "^3.0.0",
     "eslint-plugin-lit": "^1.0.0",
+    "jest": "^24.8.0",
+    "jest-transform-stub": "^2.0.0",
     "postcss": "^7.0.16",
     "postcss-cli": "^6.1.2",
     "postcss-import": "^12.0.1",
@@ -70,6 +82,8 @@
   "hack-wrap": [
     "form-serialize",
     "camelcase-keys",
-    "lodash.kebabcase"
+    "lodash.kebabcase",
+    "pwa-helpers/media-query",
+    "currency-symbol-map"
   ]
 }

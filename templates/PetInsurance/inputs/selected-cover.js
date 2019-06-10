@@ -1,6 +1,6 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
 
-export default (covers) => html`
+export default covers => html`
     <div class="field field-set">
         <span class="field__name">Select Cover</span>
         <div class="field__inputs group group--merged">
@@ -12,8 +12,7 @@ export default (covers) => html`
                 id="selected-cover-${cover}"
                 required>
             <label for="selected-cover-${cover}" class="button">${cover}</label>
-            `)
-        }
+            `)}
         </div>
     </div>
 `;

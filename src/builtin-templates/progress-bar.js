@@ -10,10 +10,7 @@ const stepTemplate = (title, index, activeIndex) => html`
         <div class="progress-bar__label">${title}</div>
     </li>`;
 
-export default (titles, activeIndex) => {
-    return  html`
-<ol class="progress-bar">
-    ${ titles.map((title, index) => stepTemplate(title, index + 1, activeIndex))}
-</ol>
-`
-};
+export default (titles, activeIndex) => html`
+    <ol class="progress-bar">
+        ${ titles.map((title, index) => stepTemplate(title, index + 1, activeIndex))}
+    </ol>`;

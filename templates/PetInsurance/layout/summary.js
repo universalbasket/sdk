@@ -1,97 +1,90 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
+import { ifDefined } from '/web_modules/lit-html/directives/if-defined.js';
 
-//get service name & domain
-export default (inputs = {}, outputs = {}, _cache = {}, _local = {}) => html`
-<div>
-    ${inputs.pets ?
-        html`
-        <div id="pet-detail" class="summary__block">
-            ${pet(inputs.pets[0])}
-        </div>
-        ` : ''}
-    ${inputs.policyOptions || inputs.selectedCover || inputs.selectedVoluntaryExcess || inputs.selectedPaymentTerm ?
-        html`
-        <div id="policy-detail" class="summary__block">
-            <h5 class="summary__block-title"> Your Policy </h5>
-            <ul>
-                ${inputs.policyOptions && inputs.policyOptions.coverStartDate ? startDate(inputs.policyOptions) : ''}
-                ${inputs.selectedCover ? html`<li>Cover: ${inputs.selectedCover}</li>` : ''}
-                ${inputs.selectedVetPaymentTerm ? html`<li> Vet Payment Term: ${inputs.selectedVetPaymentTerm}</li>` : ''}
-                ${inputs.selectedPaymentTerm ? html`<li>Payment term: ${inputs.selectedPaymentTerm}</li>` : ''}
-                ${inputs.selectedCoverType ? html`<li>Cover type: ${inputs.selectedCoverType.coverName} - ${(inputs.selectedCoverType.price.value * 0.01).toFixed(2)} ${inputs.selectedCoverType.price.currencyCode} </li>` : ''}
-                ${inputs.selectedVetFee ? html`<li>Vet Fee:  - <p>${inputs.selectedVetFee.price.value * 0.01} ${inputs.selectedVetFee.price.currencyCode} </li>` : ''}
-                ${inputs.selectedVoluntaryExcess ? html`<li>Voluntary Excess: ${inputs.selectedVoluntaryExcess.name}</li>` : ''}
-                ${inputs.selectedCoverOptions ? html`<li>Cover options: ${inputs.selectedCoverOptions.map(_ => _.name)}</li>` : ''}
-            </ul>
-        </div>` : ''}
-    ${outputs.insuranceProductInformationDocument || outputs.essentialInformation || outputs.policyWording || outputs.eligibilityConditions ?
-        html`
-        <div id="policy-info" class="summary__block">
-            <h5 class="summary__block-title"> Your Documents </h5>
-            <ul>
-                ${outputs.insuranceProductInformationDocument ? fileType(outputs.insuranceProductInformationDocument) : ''}
-                ${outputs.essentialInformation ? fileType(outputs.essentialInformation) : ''}
-                ${outputs.policyWording ? fileType(outputs.policyWording) : ''}
-                ${outputs.eligibilityConditions ? htmlType(outputs.eligibilityConditions) : ''}
-            </ul>
-        </div>` : ''}
-    ${outputs.estimatedPrice ?
-        html`
-        <div id="price" class="summary__block">
-            ${price(outputs.estimatedPrice)}
-        </div>` : ''}
-</div>`;
+import PriceDisplay from '../../../../src/builtin-templates/price-display.js';
+import {
+    PriceInformation,
+    OtherInformation,
+    Documents
+} from '../../shared/summary-sections.js';
 
-function pet(pet) {
+export default (inputs = {}, outputs = {}, cache = {}, local = {}) => {
+    const selectedCoverOptions = (inputs.selectedCoverOptions || []).map(_ => _.name).join(', ');
+
     return html`
-        <h5 class="summary__block-title"> Your ${pet.name} </h5>
-        <ul>
-            <li> Breed Name: ${pet.breedName}</li>
-            <li> Date of Birth: ${pet.dateOfBirth}</li>
-            <li> Paid/Donated: £ ${(Number(pet.petPrice)).toFixed(2)}</li>
+        ${ inputs.policyOptions || inputs.selectedCover || inputs.selectedVoluntaryExcess || inputs.selectedPaymentTerm ?
+        html`
+            <article class="summary__block">
+                <ul class="dim">
+                    <li>Starts on ${ ifDefined(inputs.policyOptions.coverStartDate) }</li>
+                    <li>Cover: ${ ifDefined(inputs.selectedCover) }</li>
+                    <li> Vet Payment Term: ${ ifDefined(inputs.selectedVetPaymentTerm) }</li>
+                    <li>Payment term: ${ ifDefined(inputs.selectedPaymentTerm) }</li>
+                    ${ CoverType(inputs.selectedCoverType) }
+                    ${ VetFee(inputs.selectedVetFee) }
+                    <li>Voluntary Excess: ${ ifDefined(inputs.selectedVoluntaryExcess.name) }</li>
+                    <li>Cover options: ${ ifDefined(selectedCoverOptions) }</li>
+                </ul>
+            </article>` :
+        ''}
+
+        ${ PetInfo({ pets: inputs.pets, currencyCode: local.currencyCode })}
+        ${ PriceInformation({ cache, outputs }) }
+        ${ OtherInformation({ outputs }) }
+        ${ Documents({ outputs }) }`;
+};
+
+function VetFee(selectedVetFee) {
+    if (!selectedVetFee) {
+        return '';
+    }
+    return html`<li>
+        Vet Fee:
+        -
+        ${ PriceDisplay(selectedVetFee.price) }
+    </li>`;
+}
+
+function CoverType(selectedCoverType) {
+    if (!selectedCoverType) {
+        return '';
+    }
+    return html`<li>
+        Cover type:
+        ${selectedCoverType.coverName}
+        -
+        ${ PriceDisplay(selectedCoverType.price) }
+    </li>`;
+}
+
+function PetInfo({ pets = [], currencyCode }) {
+    if (!pets[0]) {
+        return '';
+    }
+    return html`
+    <article class="summary__block">
+        ${ Pet(pets[0], currencyCode) }
+    </article>`;
+}
+
+function Pet(pet, currencyCode = 'gbp') {
+    return html`
+        <header class="summary__block-title">
+            Your ${ pet.name }
+        </header>
+        <ul class="dim">
+            <li>Breed Name: ${ pet.breedName }</li>
+            <li>Date of Birth: ${ pet.dateOfBirth }</li>
+            <li>Paid/Donated: ${ PriceDisplay({ currencyCode, value: pet.petPrice })}</li>
         </ul>
-    `;
-}
-
-function startDate(policyOptions) {
-    const { coverStartDate } = policyOptions;
-    return html`
-        <li>
-            Starts on ${coverStartDate}
-        </li>
-    `;
-}
-
-function fileType(data) {
-    return html`
-        <div>
-            <h5>${data.name}</h5>
-            <a>${data.filename}</a>
-        </div>
-    `;
-}
-
-function htmlType(data) {
-    return html`
-        <div>
-            <h5>${data.name}</h5>
-            <pre style="display:none">${data.html}</pre>
-        </div>
-    `;
-}
-
-function price(data) {
-    return html`
-        <h5>Price</h5>
-        <span>${(data.price.value * 0.01).toFixed(2)} ${data.price.countryCode}</span>
     `;
 }
 
 /**
  *
  *  insuranceProductInformationDocument
- * 	essentialInformation
- * 	policyWording
+ *  essentialInformation
+ *  policyWording
  *  eligibilityConditions
  *  estimatedPrice
  *

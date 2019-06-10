@@ -30,9 +30,11 @@ class EndUserSdk {
         jobId = meta.jobId;
         token = meta.token;
         serviceId = meta.serviceId;
+
         localStorage.setItem('jobId', jobId);
         localStorage.setItem('token', token);
         localStorage.setItem('serviceId', serviceId);
+
 
         Object.keys(input).forEach(key => Storage.set('input', key, input[key]));
 

@@ -3,7 +3,7 @@ import { html } from '/web_modules/lit-html/lit-html.js';
 import { contactPerson, selectedMarketingContactOptions } from '../inputs/index.js';
 import account from '../../Generic/Account.js';
 
-export default (name, data = {}) => html`
+export default (name, _data = {}) => html`
     ${contactPerson()}
     ${account()}
     ${selectedMarketingContactOptions()}

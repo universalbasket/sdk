@@ -7,9 +7,7 @@ export default (prefix = 'person') => html`
     <div class="field">
         <label class="field__name">Title</label>
         <select name="${prefix}[title]">
-            ${ TITLES.map(t => html`
-            <option value="${t}"> ${ t.toUpperCase() }</option>`
-            ) }
+            ${ TITLES.map(t => html`<option value="${t}"> ${ t.toUpperCase() }</option>`) }
         </select>
     </div>
 
