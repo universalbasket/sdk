@@ -1,7 +1,7 @@
 import kebabcase from '/web_modules/lodash.kebabcase.js';
 import { html, render } from '/web_modules/lit-html/lit-html.js';
 import sdk from './sdk.js';
-import serializeForm from './serialize-form.js';
+import { serializeForm , getFormInputKeys } from './serialize-form.js';
 import getData from './get-data-with-priority.js';
 import pageWrapper from './builtin-templates/page-wrapper.js';
 import inlineLoading from './builtin-templates/inline-loading.js';
@@ -18,9 +18,7 @@ class PageRenderer {
         this.selector = selector;
         this.sections = [...sections];
         this.onFinish = onFinish;
-
-        this.sectionsToRender = sections.map(s => s.name);
-        //this.sectionToSubmit = this.sections.length;
+        this.currentSection = null;
     }
 
     init() {
@@ -39,6 +37,8 @@ class PageRenderer {
 
     next() {
         const section = this.sections.shift();
+        this.currentSection = section;
+
         this.renderSection(section);
     }
 
@@ -59,7 +59,6 @@ class PageRenderer {
             }
         });
     }
-
 
     addListeners(name) {
         if (!sdk.initiated) {
@@ -93,7 +92,7 @@ class PageRenderer {
                     return sdk.createJobInputs(inputs);
                 })
                 .then(submittedInputs => {
-                    const event = new CustomEvent('submitinput', { detail: submittedInputs });
+                    const event = new CustomEvent('newInputs', { detail: submittedInputs });
                     window.dispatchEvent(event);
 
                     if (this.sections.length === 0) {
@@ -127,7 +126,7 @@ class PageRenderer {
             // send input sdk
             sdk.createJobInputs(inputs)
                 .then(submittedInputs => {
-                    const event = new CustomEvent('submitinput', { detail: submittedInputs });
+                    const event = new CustomEvent('newInputs', { detail: submittedInputs });
                     window.dispatchEvent(event);
 
                     if (this.sections.length === 0) {
@@ -168,20 +167,37 @@ class PageRenderer {
             render(html``, document.querySelector(this.selector));
             this.onFinish();
         } else {
+            const kebabCaseName = kebabcase(this.currentSection.name);
+            const form = document.querySelector(`#section-form-${kebabCaseName}`);
+            if (form) {
+                form.classList.add('form--disabled');
+                [...form.querySelectorAll('input')].forEach(_ => _.setAttribute('disabled', 'disabled'));
+            }
+
+            const vaultForm = document.querySelector('#vault-iframe');
+            if (vaultForm) {
+                vaultForm.setAttribute('id', '#vault-iframe-submitted');
+            }
+
             this.next();
         }
     }
 
     renderSection({ name, waitFor, template }) {
-        const nameForElement = kebabcase(name);
-        const selector = document.querySelector(`#section-form-${nameForElement}`);
+        const sectionName = kebabcase(name);
+        const selector = document.querySelector(`#section-form-${sectionName}`);
         const skip = () => {
             this.skipSection();
         };
 
         if (!waitFor) {
-            render(html`${template(nameForElement, {}, skip)} `, selector);
-            this.addListeners(nameForElement);
+            render(html`${template(sectionName, {}, skip)} `, selector);
+            this.addListeners(sectionName);
+
+            const { inputs } = Storage.getAll();
+            const submittedInputs = Object.keys(inputs);
+            this.skipIfSubmitted(submittedInputs);
+
             return;
         }
 
@@ -189,8 +205,12 @@ class PageRenderer {
 
         this.getDataForSection(waitFor)
             .then(res => {
-                render(html`${template(nameForElement, res, skip)} `, selector);
-                this.addListeners(nameForElement);
+                render(html`${template(sectionName, res, skip)} `, selector);
+                this.addListeners(sectionName);
+
+                const { inputs } = Storage.getAll();
+                const submittedInputs = Object.keys(inputs);
+                this.skipIfSubmitted(submittedInputs);
             });
     }
 
@@ -204,8 +224,7 @@ class PageRenderer {
                 }
 
                 const data = getData(type, sourceKey);
-
-                if (data === null) {
+                if (data === null) { // data is explicitly null
                     return { data: null, wait: false, sourceKey };
                 }
 
@@ -228,20 +247,59 @@ class PageRenderer {
             const dataWaitFor = {};
             results.forEach(result => { dataWaitFor[result.sourceKey] = result.data; });
 
-            const stop = sdk.trackJobOutput(message => {
-                if (message === 'outputCreate') {
-                    const { outputs } = Storage.getAll();
-                    const allAvailable = keysToWaitFor.every(k => outputs[k]);
-
-                    if (allAvailable) {
-                        keysToWaitFor.forEach(k => dataWaitFor[k] = outputs[k]);
-                        stop();
-
-                        res(dataWaitFor);
-                    }
-                }
+            this.waitForOutputs(keysToWaitFor).then(data => {
+                res({ ...dataWaitFor, ...data });
             });
         });
+    }
+
+    waitForOutputs(keysToWaitFor) {
+        return new Promise(resolve => {
+            const trackOutput = () => {
+                const { outputs } = Storage.getAll();
+                const allAvailable = keysToWaitFor.every(k => outputs[k] !== undefined);
+
+                if (allAvailable) {
+                    const data = {};
+                    keysToWaitFor.forEach(k => data[k] = outputs[k]);
+
+                    window.removeEventListener('newOutputs', trackOutput);
+                    resolve(data);
+                }
+            };
+
+            window.addEventListener('newOutputs', trackOutput);
+        });
+    }
+
+    skipIfSubmitted(submittedInputKeys) {
+        const kebabCaseName = kebabcase(this.currentSection.name);
+        const inputKeysInSection = getFormInputKeys(`#section-form-${kebabCaseName}`);
+
+        if (inputKeysInSection.length === 0) {
+            return;
+        }
+
+        /**
+         * all input keys submitted -> skip section
+         * part of the input keys submitted -> reset job, preserve input keys = submittedInputKeys - part of the keys submitted
+         * none of keys submitted -> do nothing
+        */
+        const submittedKeysInSection = inputKeysInSection.map(k => submittedInputKeys.includes(k) ? k : null).filter(k => k);
+        //all submitted
+        if (submittedKeysInSection.length === inputKeysInSection.length) {
+            return this.skipSection();
+        }
+
+        if (submittedKeysInSection.length > 0) {
+            const preserveInputs = submittedInputKeys.filter(k => !submittedKeysInSection.includes(k));
+
+            sdk.resetJob(inputKeysInSection[0], preserveInputs)
+                .then(() => {
+                    submittedKeysInSection.forEach(k => localStorage.removeItem(`input.${k}`));
+                })
+                .catch(_err => window.location.hash = '/error');
+        }
     }
 }
 

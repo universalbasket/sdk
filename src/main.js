@@ -64,12 +64,11 @@ function createApp({ pages = [], cache = [], layout = [], data = {} }, callback)
 
             window.addEventListener('hashchange', () => {
                 router.navigate();
+                Summary.update();
 
                 if (!window.location.hash || window.location.hash === '/') {
                     createSdk({ input, category, serverUrlPath });
                 }
-
-                Summary.update();
             });
 
             // Listen on pages load:
@@ -79,13 +78,12 @@ function createApp({ pages = [], cache = [], layout = [], data = {} }, callback)
             });
 
             //custom event when input submitted
-            window.addEventListener('submitinput', () => {
-                //TODO: get cache using output
-                //e.detail.forEach(({ key }) => Cache.poll(cache, key));
+            window.addEventListener('newInputs', e => {
+                e.detail && e.detail.forEach(({ key }) => Cache.poll(cache, key));
                 Summary.update();
             });
 
-            window.addEventListener('createoutput', () => {
+            window.addEventListener('newOutputs', () => {
                 Summary.update();
             });
 
@@ -124,9 +122,26 @@ function createApp({ pages = [], cache = [], layout = [], data = {} }, callback)
                 Cache.poll(cache);
                 Summary.update();
 
+                const newOutputsEvent = new CustomEvent('newOutputs');
+                let loading = false;
+
                 sdk.trackJob(event => {
                     if (event === 'fail') {
                         window.location.hash = '/error';
+                    }
+
+                    if (event === 'createOutput' && !loading) {
+                        loading = true;
+
+                        sdk.getJobOutputs()
+                            .then(outputs => {
+                                outputs.data.forEach(output => {
+                                    Storage.set('output', output.key, output.data);
+                                });
+
+                                window.dispatchEvent(newOutputsEvent);
+                                loading = false;
+                            });
                     }
                 });
             }
@@ -139,7 +154,8 @@ async function createInputs(inputs) {
         throw new Error('sdk not initiated');
     }
     const submittedInputs = await sdk.createJobInputs(inputs);
-    const event = new CustomEvent('submitinput', { detail: submittedInputs });
+    const event = new CustomEvent('newInputs', { detail: submittedInputs });
+
     window.dispatchEvent(event);
 }
 

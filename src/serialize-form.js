@@ -5,16 +5,27 @@ import camelCaseKeys from '/web_modules/camelcase-keys.js';
  * @param {String} selector
  * @return {Object}
  */
-export default function serializeForm(selector = 'form') {
+export {
+    serializeForm,
+    getFormInputKeys
+};
+
+function serializeForm(selector = 'form', options = {}) {
     const form = document.querySelector(selector);
 
     if (!form || !(form instanceof HTMLFormElement)) {
         throw new Error('specified form not found');
     }
 
-    const serialized = formSerialize(form, { empty: false, serializer: hashSerializer });
+    const serialized = formSerialize(form, { empty: false, serializer: hashSerializer, ...options });
 
     return camelCaseKeys(serialized, { deep: true });
+}
+
+function getFormInputKeys(formId) {
+    const inputs = serializeForm(formId, { empty: true, serializer: null });
+
+    return Object.keys(inputs);
 }
 
 /**
@@ -84,7 +95,6 @@ function parseType(key, value) {
         key = key.replace('-$number', '');
         const num = Number.parseInt(value);
         if (isNaN(num)) {
-            console.error('number type is specified but non-number value is provided:', value);
         } else {
             value = num;
         }
@@ -97,7 +107,7 @@ function parseType(key, value) {
         try {
             value = JSON.parse(value);
         } catch (err) { // do nothing
-            console.error('boolean/object type is specified but could not parse the value:', value);
+            console.warn('boolean/object type is specified but could not parse the value:', value);
         }
     }
 
@@ -116,7 +126,7 @@ function hashAssign(result, keys, value) {
         key = key.replace('-$number', '');
         const num = Number.parseInt(value);
         if (isNaN(num)) {
-            console.error('number type is specified but non-number value is provided:', value);
+            console.warn('number type is specified but non-number value is provided:', value);
         } else {
             value = num;
         }
@@ -129,7 +139,7 @@ function hashAssign(result, keys, value) {
         try {
             value = JSON.parse(value);
         } catch (err) { // do nothing
-            console.error('boolean/object type is specified but could not parse the value:', value);
+            console.warn('boolean/object type is specified but could not parse the value:', value);
         }
     }
 
