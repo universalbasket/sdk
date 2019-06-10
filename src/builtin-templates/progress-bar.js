@@ -1,16 +1,58 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
+import { classMap } from '/web_modules/lit-html/directives/class-map.js';
+import { styleMap } from '/web_modules/lit-html/directives/style-map.js';
 
-const stepTemplate = (title, index, activeIndex) => html`
-    <li class="progress-bar__step ${activeIndex != null && index === activeIndex ? 'progress-bar__step--active' : ''}">
-        <div class="progress-bar__icon-container">
-            <div class="progress-bar__icon">
-                <span class="progress-bar__step-index">${index}</span>
-            </div>
-        </div>
-        <div class="progress-bar__label">${title}</div>
-    </li>`;
+function StepIcon(title, i, activeIndex) {
+    const classes = {
+        'progress-bar__step': true,
+        'progress-bar__step--active': activeIndex != null && i === activeIndex
+    };
+
+    return html`<div class="${classMap(classes)}">${ i }</div>`;
+}
+
+function StepLabel(titles, activeIndex) {
+    let leftRuler = activeIndex - 1;
+    let rightRuler = activeIndex + 2;
+    let textAlign = 'center';
+
+    if (titles[activeIndex].length > 14) {
+        leftRuler = activeIndex - 2;
+        rightRuler = activeIndex + 3;
+    }
+
+    if (activeIndex <= 1) {
+        leftRuler = 1;
+        rightRuler = -1;
+    }
+
+    if (rightRuler >= titles.length) {
+        rightRuler = -1;
+    }
+
+    if (activeIndex === 1) {
+        textAlign = 'left';
+    }
+
+    if (activeIndex === titles.length) {
+        textAlign = 'right';
+    }
+
+    const styles = {
+        'grid-column-start': `${ leftRuler }`,
+        'grid-column-end': `${ rightRuler }`,
+        textAlign
+    };
+
+    return html`
+    <span class="progress-bar__current-step" style="${styleMap(styles)}">
+        ${ titles[activeIndex - 1] }
+    </span>`;
+}
 
 export default (titles, activeIndex) => html`
-    <ol class="progress-bar">
-        ${ titles.map((title, index) => stepTemplate(title, index + 1, activeIndex))}
-    </ol>`;
+    <div class="progress-bar"
+        style="${ styleMap({ 'grid-template-columns': `repeat(${titles.length}, var(--step-icon-size))` }) }">
+        ${ titles.map((title, index) => StepIcon(title, index + 1, activeIndex)) }
+        ${ StepLabel(titles, activeIndex) }
+    </div>`;

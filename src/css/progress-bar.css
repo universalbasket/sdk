@@ -1,35 +1,46 @@
 .progress-bar {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    margin: 15px;
+    --step-icon-size: 33px;
+
+    display: grid;
+    grid-row-gap: 10px;
+    grid-column-gap: 16px;
+    margin: 0 10px;
+    padding: 20px 10px;
 }
 
 .progress-bar__step {
-    flex-basis: 6em;
-}
-
-.progress-bar__label {
-    display: none;
-    font-weight: 600;
-}
-
-.progress-bar__step--active .progress-bar__label {
-    display: initial;
-}
-
-.progress-bar__icon {
-    display: inline-flex;
+    display: inline-grid;
     justify-content: center;
     align-items: center;
     background-color: var(--step-icon);
     color: white;
-    width: 35px;
-    height: 35px;
-    border-radius: 20px;
-    margin: 10px;
+    width: var(--step-icon-size);
+    height: var(--step-icon-size);
+    border-radius: 50%;
+    font-size: var(--font-size--large);
 }
 
-.progress-bar__step--active .progress-bar__icon {
+.progress-bar__step--active {
     background-color: var(--step-icon--active);
+}
+
+.progress-bar__current-step {
+    font-weight: 600;
+    font-size: var(--font-size);
+}
+
+@media all and (max-width: 650px) {
+    .progress-bar {
+        --step-icon-size: 44px;
+
+        margin: 0;
+        justify-content: center;
+        padding: 30px 10px;
+        grid-row-gap: 15px;
+    }
+
+    .progress-bar__current-step {
+        font-weight: 600;
+        font-size: var(--font-size--large);
+    }
 }
