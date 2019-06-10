@@ -1,8 +1,8 @@
 import { createApp } from './src/main.js';
-import CONFIG from './templates/PetInsurance/ubio.config.js';
+import CONFIG from './templates/pet-insurance/ubio.config.js';
 
-import * as LayoutTemplates from './templates/PetInsurance/layout/index.js';
-import * as SectionTemplates from './templates/PetInsurance/sections/index.js';
+import * as LayoutTemplates from './templates/pet-insurance/layout/index.js';
+import * as SectionTemplates from './templates/pet-insurance/sections/index.js';
 
 const Layout = CONFIG.layout.map(l => {
     const template = LayoutTemplates[l.name];
