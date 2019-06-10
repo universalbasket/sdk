@@ -2,8 +2,7 @@ import { html } from '/web_modules/lit-html/lit-html.js';
 import { selectedAddress } from '../inputs/index.js';
 
 export default (name, { availableAddresses }, skip) => {
-    console.log('availableAddresses',availableAddresses, typeof availableAddresses);
-    if(availableAddresses == null) {
+    if (availableAddresses == null) {
         return skip();
     }
 

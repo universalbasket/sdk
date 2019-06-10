@@ -23,7 +23,7 @@ function serializeForm(selector = 'form', options = {}) {
 }
 
 function getFormInputKeys(formId) {
-    const inputs = serializeForm(formId, { empty: true });
+    const inputs = serializeForm(formId, { empty: true, serializer: null });
 
     return Object.keys(inputs);
 }
@@ -126,6 +126,7 @@ function hashAssign(result, keys, value) {
         key = key.replace('-$number', '');
         const num = Number.parseInt(value);
         if (isNaN(num)) {
+            console.warn('number type is specified but non-number value is provided:', value);
         } else {
             value = num;
         }
