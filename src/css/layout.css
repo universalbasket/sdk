@@ -33,6 +33,7 @@
         flex-flow: column nowrap;
         justify-content: flex-start;
     }
+
     /* We tell both sidebars to share a row */
     .summary-wrapper {
         order: 1;

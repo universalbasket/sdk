@@ -2,16 +2,13 @@
     position: sticky;
     z-index: 2;
     background-color: var(--summary-background-color);
-    padding: 15px 10px;
+    padding: 5px 10px;
     align-self: stretch;
-}
-
-.summary > li {
-    border-bottom: solid 1px #c8c8c8;
 }
 
 .summary__header {
     font-size: var(--font-size--large);
+    padding: 10px 0;
 }
 
 .summary__header--toggable {
@@ -41,7 +38,7 @@
 }
 
 .summary__block {
-    padding: 1.5em 0 .5em;
+    padding: 1em 0;
     line-height: 1.6;
 }
 
