@@ -17,7 +17,11 @@ class EndUserSdk {
 
             try {
                 previous = createEndUserSdk({ token, jobId, serviceId });
-                await previous.cancelJob();
+                const job = await previous.getJob();
+
+                if (job.state !== 'fail') {
+                    await previous.cancelJob();
+                }
             } catch (err) {
                 console.log('failed to cancel previous job. it will be abandoned');
             }
@@ -119,8 +123,8 @@ class EndUserSdk {
         });
     }
 
-    async cancel() {
-        await this.sdk.cancel();
+    async cancelJob() {
+        await this.sdk.cancelJob();
     }
 }
 

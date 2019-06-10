@@ -1,5 +1,5 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
-import PriceDisplay from '../../../src/builtin-templates/price-display.js';
+import PriceDisplay from '../../src/builtin-templates/price-display.js';
 
 const showModal = (...detail) => new CustomEvent('show-modal', { detail });
 

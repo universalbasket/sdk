@@ -42,19 +42,46 @@ class PageRenderer {
         this.renderSection(section);
     }
 
-    waitForVaultOutput() {
+    isVaultFormValid(vaultForm) {
+        return new Promise((resolve, reject) => {
+            window.addEventListener('message', receiveValidation);
+            vaultForm.contentWindow.postMessage('vault.validate', '*');
+
+            function receiveValidation({ data: message }) {
+                if (message.name === 'vault.validation') {
+                    if (message.data.isValid) {
+                        resolve(message.data);
+                    } else {
+                        reject('Please check payment details');
+                    }
+
+                    window.removeEventListener('message', receiveValidation);
+                }
+            }
+        });
+    }
+
+    submitVaultForm(vaultForm) {
         return new Promise((resolve, reject) => {
             window.addEventListener('message', receiveOutput);
+            vaultForm.contentWindow.postMessage('vault.submit', '*');
+
             function receiveOutput({ data: message }) {
-                // Consider security concerns: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#Security_concerns
                 if (message.name === 'vault.output') {
-                    window.removeEventListener('message', this);
+                    window.removeEventListener('message', receiveOutput);
                     return resolve(message.data);
                 }
 
-                if (message.name === 'vault.validationError' || message.name === 'vault.error') {
-                    window.removeEventListener('message', this);
+                if (message.name === 'vault.validationError') {
+                    window.removeEventListener('message', receiveOutput);
                     return reject(message.name);
+                }
+
+                if (message.name === 'vault.error') {
+                    reject(message.name);
+                    sdk.cancelJob().then(() => {
+                        window.location.hash = '/error';
+                    });
                 }
             }
         });
@@ -67,7 +94,7 @@ class PageRenderer {
 
         const submitBtn = document.querySelector(`#submit-btn-${name}`);
         const cancelBtn = document.querySelector('#cancel-btn');
-        const hostedForm = document.querySelector('#vault-iframe');
+        const vaultForm = document.querySelector('#vault-iframe');
         const form = document.querySelector(`#section-form-${name}`);
 
         const vaultListener = () => {
@@ -78,8 +105,10 @@ class PageRenderer {
 
             submitBtn.setAttribute('disabled', 'true');
 
-            hostedForm.contentWindow.postMessage('vault.submit', '*');
-            this.waitForVaultOutput()
+            this.isVaultFormValid(vaultForm)
+                .then(() => {
+                    return this.submitVaultForm(vaultForm);
+                })
                 .then(({ cardToken, panToken }) => {
                     submitBtn.setAttribute('disabled', 'true');
                     const inputs = serializeForm(`#section-form-${name}`);
@@ -101,7 +130,7 @@ class PageRenderer {
                     } else {
                         form.classList.add('form--disabled');
                         [...form.querySelectorAll('input')].forEach(_ => _.setAttribute('disabled', 'disabled'));
-                        hostedForm.setAttribute('id', '#vault-iframe-submitted');
+                        vaultForm.setAttribute('id', '#vault-iframe-submitted');
                         this.next();
                     }
                 })
@@ -147,7 +176,7 @@ class PageRenderer {
         };
 
         if (submitBtn) {
-            const listener = hostedForm ? vaultListener : defaultListener;
+            const listener = vaultForm ? vaultListener : defaultListener;
             submitBtn.addEventListener('click', listener);
         } else {
             console.warn('no click/input submission listener added for the section');
