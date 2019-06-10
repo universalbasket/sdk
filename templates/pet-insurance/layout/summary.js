@@ -1,7 +1,7 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
 import { ifDefined } from '/web_modules/lit-html/directives/if-defined.js';
 
-import PriceDisplay from '../../../../src/builtin-templates/price-display.js';
+import PriceDisplay from '../../../src/builtin-templates/price-display.js';
 import {
     PriceInformation,
     OtherInformation,
