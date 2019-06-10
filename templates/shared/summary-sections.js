@@ -55,7 +55,7 @@ function Documents({ outputs }) {
         .filter(o => o.type === 'File')
         .map(o => html`
             <li class="file-icon">
-                <a href="${o.url} target="_blank">${o.filename}</a>
+                <a href="${o.url}" target="_blank">${o.filename}</a>
             </li>`);
 
     if (items.length === 0) {

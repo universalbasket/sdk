@@ -38,7 +38,7 @@ class EndUserSdk {
 
         Object.keys(input).forEach(key => Storage.set('input', key, input[key]));
 
-        await this.retrieve()
+        await this.retrieve();
     }
 
     async retrieve() {
