@@ -6,6 +6,9 @@ import getData from './get-data-with-priority.js';
 import pageWrapper from './builtin-templates/page-wrapper.js';
 import inlineLoading from './builtin-templates/inline-loading.js';
 import * as Storage from './storage.js';
+
+const VAULT_FORM_SELECTOR = '#ubio-vault-form';
+
 /**
  * @param {String} name
  * @param {Array} sections
@@ -42,51 +45,6 @@ class PageRenderer {
         this.renderSection(section);
     }
 
-    isVaultFormValid(vaultForm) {
-        return new Promise((resolve, reject) => {
-            window.addEventListener('message', receiveValidation);
-            vaultForm.contentWindow.postMessage('vault.validate', '*');
-
-            function receiveValidation({ data: message }) {
-                if (message.name === 'vault.validation') {
-                    if (message.data.isValid) {
-                        resolve(message.data);
-                    } else {
-                        reject('Please check payment details');
-                    }
-
-                    window.removeEventListener('message', receiveValidation);
-                }
-            }
-        });
-    }
-
-    submitVaultForm(vaultForm) {
-        return new Promise((resolve, reject) => {
-            window.addEventListener('message', receiveOutput);
-            vaultForm.contentWindow.postMessage('vault.submit', '*');
-
-            function receiveOutput({ data: message }) {
-                if (message.name === 'vault.output') {
-                    window.removeEventListener('message', receiveOutput);
-                    return resolve(message.data);
-                }
-
-                if (message.name === 'vault.validationError') {
-                    window.removeEventListener('message', receiveOutput);
-                    return reject(message.name);
-                }
-
-                if (message.name === 'vault.error') {
-                    reject(message.name);
-                    sdk.cancelJob().then(() => {
-                        window.location.hash = '/error';
-                    });
-                }
-            }
-        });
-    }
-
     addListeners(name) {
         if (!sdk.initiated) {
             return;
@@ -94,7 +52,7 @@ class PageRenderer {
 
         const submitBtn = document.querySelector(`#submit-btn-${name}`);
         const cancelBtn = document.querySelector('#cancel-btn');
-        const vaultForm = document.querySelector('#vault-iframe');
+        const vaultForm = document.querySelector(VAULT_FORM_SELECTOR);
         const form = document.querySelector(`#section-form-${name}`);
 
         const vaultListener = () => {
@@ -105,9 +63,9 @@ class PageRenderer {
 
             submitBtn.setAttribute('disabled', 'true');
 
-            this.isVaultFormValid(vaultForm)
+            isVaultFormValid(vaultForm)
                 .then(() => {
-                    return this.submitVaultForm(vaultForm);
+                    return submitVaultForm(vaultForm);
                 })
                 .then(({ cardToken, panToken }) => {
                     submitBtn.setAttribute('disabled', 'true');
@@ -130,7 +88,7 @@ class PageRenderer {
                     } else {
                         form.classList.add('form--disabled');
                         [...form.querySelectorAll('input')].forEach(_ => _.setAttribute('disabled', 'disabled'));
-                        vaultForm.setAttribute('id', '#vault-iframe-submitted');
+                        vaultForm.setAttribute('id', `${VAULT_FORM_SELECTOR}-submitted`);
                         this.next();
                     }
                 })
@@ -184,7 +142,7 @@ class PageRenderer {
 
         if (cancelBtn) {
             cancelBtn.addEventListener('click', () => {
-                sdk.sdk.cancelJob().then(_res => {
+                sdk.cancelJob().then(_res => {
                     window.location.hash = '/error';
                 });
             });
@@ -203,9 +161,9 @@ class PageRenderer {
                 [...form.querySelectorAll('input')].forEach(_ => _.setAttribute('disabled', 'disabled'));
             }
 
-            const vaultForm = document.querySelector('#vault-iframe');
+            const vaultForm = document.querySelector(VAULT_FORM_SELECTOR);
             if (vaultForm) {
-                vaultForm.setAttribute('id', '#vault-iframe-submitted');
+                vaultForm.setAttribute('id', `${VAULT_FORM_SELECTOR}-submitted`);
             }
 
             this.next();
@@ -330,6 +288,58 @@ class PageRenderer {
                 .catch(_err => window.location.hash = '/error');
         }
     }
+}
+
+function isVaultFormValid(vaultForm) {
+    return new Promise((resolve, reject) => {
+        if (!vaultForm) {
+            reject('vault form not found');
+        }
+        window.addEventListener('message', receiveValidation);
+        vaultForm.contentWindow.postMessage('vault.validate', '*');
+
+        function receiveValidation({ data: message }) {
+            if (message.name === 'vault.validation') {
+                if (message.data.isValid) {
+                    resolve(message.data);
+                } else {
+                    reject('Please check payment details');
+                }
+
+                window.removeEventListener('message', receiveValidation);
+            }
+        }
+    });
+}
+
+function submitVaultForm(vaultForm) {
+    return new Promise((resolve, reject) => {
+        if (!vaultForm) {
+            reject('vault form not found');
+        }
+
+        window.addEventListener('message', receiveOutput);
+        vaultForm.contentWindow.postMessage('vault.submit', '*');
+
+        function receiveOutput({ data: message }) {
+            if (message.name === 'vault.output') {
+                window.removeEventListener('message', receiveOutput);
+                return resolve(message.data);
+            }
+
+            if (message.name === 'vault.validationError') {
+                window.removeEventListener('message', receiveOutput);
+                return reject(message.name);
+            }
+
+            if (message.name === 'vault.error') {
+                reject(message.name);
+                sdk.cancelJob().then(() => {
+                    window.location.hash = '/error';
+                });
+            }
+        }
+    });
 }
 
 function getPageRenderer(name, sections, selector, onFinish) {
