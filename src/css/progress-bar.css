@@ -31,16 +31,8 @@
 
 @media all and (max-width: 650px) {
     .progress-bar {
-        --step-icon-size: 44px;
-
         margin: 0;
         justify-content: center;
-        padding: 30px 10px;
-        grid-row-gap: 15px;
-    }
-
-    .progress-bar__current-step {
-        font-weight: 600;
-        font-size: var(--font-size--large);
+        padding: 20px 10px;
     }
 }
