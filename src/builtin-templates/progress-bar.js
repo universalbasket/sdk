@@ -12,6 +12,10 @@ function StepIcon(title, i, activeIndex) {
 }
 
 function StepLabel(titles, activeIndex) {
+    if (!activeIndex) {
+        return '';
+    }
+
     let leftRuler = activeIndex - 1;
     let rightRuler = activeIndex + 2;
     let textAlign = 'center';
