@@ -8,7 +8,7 @@ export default (finalPrice, hide = true) => {
             id="final-price-consent"
             name="final-price-consent-$object"
             value="${JSON.stringify(finalPrice)}"
-            readonly />
-        <label for="final-price-consent" style="${hide ? 'visibility="hidden"' : ''}">${priceDisplay(finalPrice.price)}</label>
+            />
+        <label for="final-price-consent" style="${hide ? 'visibility: hidden' : ''}">${priceDisplay(finalPrice.price)}</label>
         </div>`;
 };

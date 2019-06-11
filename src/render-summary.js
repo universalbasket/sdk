@@ -44,5 +44,6 @@ function _updateUI() {
 }
 
 function showModal({ detail }) {
-    render(modal(...detail), document.querySelector('#modal'));
+    const template = modal.create(...detail);
+    modal.show(template);
 }

@@ -12,15 +12,20 @@ export default (name, { estimatedPrice = {}, finalPrice = {} }, skip) => {
 
     if (finalValue > estimatedValue) {
         const template = html`
-            <h4>Price check</h4>
-            <p>The final price has changed and will be:</p>
+            <p>The final price has changed. and will be:</p>
             ${priceTemplate(finalPrice.price)}
-            <div class="section__actions">
-                <button type="button" class="button button--right button--primary" id="submit-btn-${name}">Confirm and pay</button>
+            <div class="section__actions field field-set">
+                <button type="button" class="button button--right button--secondary" id="cancel-btn" @click="${Modal.close}">Cancel</button>
+                <button type="button" class="button button--right button--primary" id="submit-btn-${name}" @click="${Modal.close}">Confirm and pay</button>
             </div>
         `;
 
-        window.dispatchEvent(showModal({ type: 'html', content: template }));
+        const modalTemplate = Modal.create(template, 'Price check', {
+            closeOnOverlay: false,
+            showClose: false
+        });
+
+        Modal.show(modalTemplate);
 
         return finalPriceConsent(finalPrice);
     }

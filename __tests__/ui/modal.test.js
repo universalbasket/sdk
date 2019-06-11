@@ -1,16 +1,16 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
-import Modal from '@/src/builtin-templates/modal.js';
+import * as Modal from '@/src/builtin-templates/modal.js';
 
 describe('Modal UI', () => {
     describe('Unhappy case', () => {
         it('renders empty when no args passed', () => {
-            const result = Modal();
+            const result = Modal.create();
             expect(result).toBe('');
             expect(result.type).toBe(undefined);
         });
 
         it('renders empty when unsupported type of arg passed', () => {
-            const result = Modal(`
+            const result = Modal.create(`
                 <p class="dim">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce posuere erat elit, sed tincidunt velit venenatis ac. Vivamus vel nulla orci. Etiam mattis, mauris eget tristique blandit, arcu tellus condimentum nisl, eget dictum libero dolor in erat. Quisque placerat mattis maximus. Cras et fringilla lorem. Vivamus sed rutrum neque. Aliquam pulvinar sem eros, accumsan eleifend est finibus in. Ut et nisl vitae est condimentum faucibus. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Ut at ex at lacus varius aliquam.</p>
                 <p class="dim">Morbi orci metus, commodo sit amet suscipit ac, pharetra eu mauris. Morbi sagittis lacus vel lacus finibus mollis. Phasellus arcu velit, viverra a eros ac, semper fringilla lectus. Sed varius sodales sapien nec auctor. Nam eget ornare lectus. Proin vehicula, urna nec congue rutrum, nunc odio pharetra nibh, eu dictum justo ante ut risus. Ut vulputate rhoncus dolor, id pharetra nisl semper quis. Nam tristique molestie lacinia. Aliquam vestibulum gravida ex id consequat. Suspendisse quis porta libero, cursus ultrices enim.</p>
             `);
@@ -22,7 +22,7 @@ describe('Modal UI', () => {
 
     describe('Default use case: show any HTML', () => {
         it('renders template result', () => {
-            const result = Modal(html`
+            const result = Modal.create(html`
                 <p class="dim">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce posuere erat elit, sed tincidunt velit venenatis ac. Vivamus vel nulla orci. Etiam mattis, mauris eget tristique blandit, arcu tellus condimentum nisl, eget dictum libero dolor in erat. Quisque placerat mattis maximus. Cras et fringilla lorem. Vivamus sed rutrum neque. Aliquam pulvinar sem eros, accumsan eleifend est finibus in. Ut et nisl vitae est condimentum faucibus. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Ut at ex at lacus varius aliquam.</p>
                 <p class="dim">Morbi orci metus, commodo sit amet suscipit ac, pharetra eu mauris. Morbi sagittis lacus vel lacus finibus mollis. Phasellus arcu velit, viverra a eros ac, semper fringilla lectus. Sed varius sodales sapien nec auctor. Nam eget ornare lectus. Proin vehicula, urna nec congue rutrum, nunc odio pharetra nibh, eu dictum justo ante ut risus. Ut vulputate rhoncus dolor, id pharetra nisl semper quis. Nam tristique molestie lacinia. Aliquam vestibulum gravida ex id consequat. Suspendisse quis porta libero, cursus ultrices enim.</p>
             `);
@@ -38,7 +38,7 @@ describe('Modal UI', () => {
         });
 
         it('renders with title when the second arg is provided', () => {
-            const result = Modal(html`
+            const result = Modal.create(html`
                 <p class="dim">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce posuere erat elit, sed tincidunt velit venenatis ac. Vivamus vel nulla orci. Etiam mattis, mauris eget tristique blandit, arcu tellus condimentum nisl, eget dictum libero dolor in erat. Quisque placerat mattis maximus. Cras et fringilla lorem. Vivamus sed rutrum neque. Aliquam pulvinar sem eros, accumsan eleifend est finibus in. Ut et nisl vitae est condimentum faucibus. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Ut at ex at lacus varius aliquam.</p>
                 <p class="dim">Morbi orci metus, commodo sit amet suscipit ac, pharetra eu mauris. Morbi sagittis lacus vel lacus finibus mollis. Phasellus arcu velit, viverra a eros ac, semper fringilla lectus. Sed varius sodales sapien nec auctor. Nam eget ornare lectus. Proin vehicula, urna nec congue rutrum, nunc odio pharetra nibh, eu dictum justo ante ut risus. Ut vulputate rhoncus dolor, id pharetra nisl semper quis. Nam tristique molestie lacinia. Aliquam vestibulum gravida ex id consequat. Suspendisse quis porta libero, cursus ultrices enim.</p>
             `, 'title');
@@ -57,7 +57,7 @@ describe('Modal UI', () => {
     describe('Job output use case: show HTML', () => {
         it('renders with HTML contents', () => {
             const jobOutput = getOutput('eligibilityConditions');
-            const result = Modal(jobOutput);
+            const result = Modal.create(jobOutput);
 
             expect(result).toMatchSnapshot({
                 processor: expect.any(Object),
@@ -73,7 +73,7 @@ describe('Modal UI', () => {
     describe('Job output use case: show StructuredText as HTML', () => {
         it('renders with nested Text contents', () => {
             const jobOutput = getOutput('termsAndConditions');
-            const result = Modal(jobOutput);
+            const result = Modal.create(jobOutput);
 
             expect(result).toMatchSnapshot({
                 processor: expect.any(Object),
@@ -87,7 +87,7 @@ describe('Modal UI', () => {
 
         it('renders with nested NamedPrice contents', () => {
             const jobOutput = getOutput('oneOffCosts');
-            const result = Modal(jobOutput);
+            const result = Modal.create(jobOutput);
 
             expect(result).toMatchSnapshot({
                 processor: expect.any(Object),
@@ -100,7 +100,7 @@ describe('Modal UI', () => {
         });
 
         it('renders with nested NamedText contents', () => {
-            const result = Modal({
+            const result = Modal.create({
                 type: 'StructuredText',
                 name: 'NamedText test',
                 contents: [
@@ -123,7 +123,7 @@ describe('Modal UI', () => {
         });
 
         it('renders with nested Link contents', () => {
-            const result = Modal({
+            const result = Modal.create({
                 type: 'StructuredText',
                 name: 'Link test',
                 contents: [
