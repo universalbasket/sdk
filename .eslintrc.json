@@ -6,7 +6,8 @@
     "ecmaFeatures": {}
   },
   "rules": {
-    "lit/no-invalid-html": "warn"
+    "lit/no-invalid-html": "warn",
+    "no-warning-comments": ["warn", { "terms": ["todo"] }]
   },
   "env": {
     "node": true

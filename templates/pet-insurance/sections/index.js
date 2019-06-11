@@ -6,7 +6,7 @@ import selectedVoluntaryExcess from './excess.js';
 import selectedCoverOptions from './cover-options.js';
 import policyOptions from './policy-options.js';
 import checkout from './checkout.js';
-import directDebit from './directdebit.js';
+import directDebit from './direct-debit.js';
 import finalPriceConsent from './final-price-consent.js';
 import confirmation from './confirmation.js';
 
