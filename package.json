@@ -7,11 +7,7 @@
   "repository": "github:universalbasket/sdk-application-bundle",
   "scripts": {
     "install": "rimraf web_modules && vendor-copy && node hack-wrap.js",
-    "start:broadband": "node domain-selector broadband-signup && npm run serve",
-    "start:pet": "node domain-selector pet-insurance && npm run serve",
-    "start:hotel": "node domain-selector hotel-booking && npm run serve",
     "start": "npm run serve",
-    "serve": "browser-sync start --index 'index.html' --server --files 'index.js' 'templates' 'web_modules' 'src' 'ubio.config.js'",
     "build": "npm run build:rollup && npm run build:umd && npm run build:css",
     "build:rollup": "rollup --config",
     "build:umd": "rollup -n UBIO_BUNDLE -f umd bundle.js | babel -f bundle.umd.js > bundle.umd.js",
@@ -32,6 +28,7 @@
     "ubio",
     "sdk"
   ],
+  "bin": "./generator.js",
   "author": "ubio",
   "license": "ISC",
   "dependencies": {
