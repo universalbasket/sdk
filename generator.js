@@ -74,7 +74,7 @@ async function run() {
     await cpy(path.join(__dirname, 'templates', 'generic'), 'generic');
     await fs.copyFile(path.join(__dirname, 'templates', `${domain}.config.js`), 'ubio.config.js');
 
-    await fs.writeFile('index.js', `import { createApp } from './src/main.js';
+    await fs.writeFile('index.js', `import { createApp } from '/web_modules/@ubio/sdk-application-bundle.js';
 import CONFIG from './ubio.config.js';
 
 const app = createApp(CONFIG, () => console.log('finished!'));
