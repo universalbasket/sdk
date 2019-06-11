@@ -1,9 +1,8 @@
 export default {
     input: 'index.js',
     output: {
-        file:'bundle.js',
-        format: 'umd',
-        name: 'UBIO_BUNDLE'
+        file: 'bundle.js',
+        format: 'esm'
     },
     plugins: [{
         name: 'resolve-absolute-modules',

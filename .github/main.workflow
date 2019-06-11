@@ -23,7 +23,7 @@ action "Make release from tag: npm run build" {
 action "Make release from tag: create release" {
   uses = "./.github/create-release"
   secrets = ["GITHUB_TOKEN"]
-  args = ["build.js", "index.css"]
+  args = ["bundle.js", "bundle.umd.js", "index.css"]
   needs = ["Make release from tag: npm run build"]
 }
 

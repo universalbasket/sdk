@@ -1,4 +1,5 @@
 node_modules/
 web_modules/
 *.config.js
-build.js
+/bundle.js
+/bundle.umd.js

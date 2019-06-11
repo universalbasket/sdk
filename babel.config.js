@@ -6,6 +6,7 @@ module.exports = {
         targets: {
           node: 'current',
         },
+        modules: process.env.NODE_ENV === 'test' ? 'commonjs' : false
       },
     ],
   ]

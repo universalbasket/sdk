@@ -1,5 +1,6 @@
 /node_modules/
 /web_modules/
 .DS_Store
-/build.js
+/bundle.js
+/bundle.umd.js
 /index.css
