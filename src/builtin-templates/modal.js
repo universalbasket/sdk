@@ -3,17 +3,21 @@ import { unsafeHTML } from '/web_modules/lit-html/directives/unsafe-html.js';
 
 import PriceDisplay from './price-display.js';
 
-export {
-    show,
-    create,
-    close
-};
+export default function create(body, title, options) {
+    const template = createTemplate(body, title, options);
+
+    return {
+        template,
+        show: () => { show(template); },
+        close
+    };
+}
 
 function show(template) {
     render(template, document.querySelector('#modal'));
 }
 
-function create(body, title, options = {}) {
+function createTemplate(body, title, options = {}) {
     if (!body || typeof body !== 'object') {
         return '';
     }
