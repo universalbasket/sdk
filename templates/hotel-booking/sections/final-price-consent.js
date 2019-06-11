@@ -8,14 +8,30 @@ export default (name, { selectedRooms, finalPrice }, skip) => {
     const estimatedValue = estimatedPrice.value || 0;
 
     if (finalValue > estimatedValue) {
+        //template to just display on modal
+        const template = html`
+            <p>The final price has changed. and will be:</p>
+            <b class="large">${priceTemplate(finalPrice.price)}</b>
+            <div class="section__actions field field-set">
+                <button type="button" class="button button--right button--secondary" id="cancel-btn" @click="${Modal.close}">Cancel</button>
+                <button type="button" class="button button--right button--primary" id="submit-btn-${name}" @click="${Modal.close}">Confirm and pay</button>
+            </div>
+        `;
+
+        const modalTemplate = Modal.create(template, 'Price check', {
+            closeOnOverlay: false,
+            showClose: false
+        });
+
+        Modal.show(modalTemplate);
+
+        // return input field to the main form
         return finalPriceConsent(finalPrice);
     }
 
     createInputs({ finalPriceConsent: finalPrice })
         .then(() => {
             skip();
-            return html``;
+            return '';
         });
-
-    return html``;
 };

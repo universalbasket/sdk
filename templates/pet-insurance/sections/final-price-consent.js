@@ -11,9 +11,10 @@ export default (name, { estimatedPrice = {}, finalPrice = {} }, skip) => {
     }
 
     if (finalValue > estimatedValue) {
+        //template to just display on modal
         const template = html`
             <p>The final price has changed. and will be:</p>
-            ${priceTemplate(finalPrice.price)}
+            <b class="large">${priceTemplate(finalPrice.price)}</b>
             <div class="section__actions field field-set">
                 <button type="button" class="button button--right button--secondary" id="cancel-btn" @click="${Modal.close}">Cancel</button>
                 <button type="button" class="button button--right button--primary" id="submit-btn-${name}" @click="${Modal.close}">Confirm and pay</button>
@@ -27,6 +28,7 @@ export default (name, { estimatedPrice = {}, finalPrice = {} }, skip) => {
 
         Modal.show(modalTemplate);
 
+        // return input field to the main form
         return finalPriceConsent(finalPrice);
     }
 

@@ -17,16 +17,16 @@ function create(body, title, options = {}) {
     if (!body || typeof body !== 'object') {
         return '';
     }
-    const modalOption = {
+    const modalOptions = {
         showClose: true,
         closeOnClickOverlay: true,
         ...options
     };
 
     switch (body.type) {
-        case 'html': return showModal(body, title, modalOption);
-        case 'HTML': return showModal(unsafeHTML(body.html), body.name, modalOption);
-        case 'StructuredText': return showModal(getContentsHtml(body.contents), body.name, modalOption);
+        case 'html': return showModal(body, title, modalOptions);
+        case 'HTML': return showModal(unsafeHTML(body.html), body.name, modalOptions);
+        case 'StructuredText': return showModal(getContentsHtml(body.contents), body.name, modalOptions);
         default: return '';
     }
 }
