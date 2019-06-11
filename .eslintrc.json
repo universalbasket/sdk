@@ -9,8 +9,6 @@
     "lit/no-invalid-html": "warn"
   },
   "env": {
-    "browser": true,
-    "node": true,
-    "jest": true
+    "node": true
   }
 }
