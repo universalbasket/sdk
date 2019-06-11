@@ -1,22 +1,14 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
+import priceDisplay from '../../src/builtin-templates/price-display.js';
 
-export default finalPrice => {
-    const { value, currencyCode } = finalPrice && finalPrice.price || {};
-    let displayValue = value || 0;
-
-    if (!isNaN(Number(value))) {
-        displayValue = (value * 0.01).toFixed(2);
-    }
-
+export default (finalPrice, hide = true) => {
     return html`
-        <div>
-            <h4>Price check</h4>
-            <p>The final price has changed and will be:</p>
-            ${displayValue}
-            ${currencyCode}
-            <input
-                type="hidden"
-                name="final-price-consent-$object"
-                value="${JSON.stringify(finalPrice)}"/>
+        <input
+            type="${hide ? 'hidden' : 'text' }"
+            id="final-price-consent"
+            name="final-price-consent-$object"
+            value="${JSON.stringify(finalPrice)}"
+            readonly />
+        <label for="final-price-consent" style="${hide ? 'visibility="hidden"' : ''}">${priceDisplay(finalPrice.price)}</label>
         </div>`;
 };
