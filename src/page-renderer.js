@@ -70,8 +70,6 @@ class PageRenderer {
         }
 
         const submitBtn = document.querySelector(`#submit-btn-${name}`);
-        const cancelBtn = document.querySelector('#cancel-btn');
-        const vaultForm = document.querySelector(VAULT_FORM_SELECTOR);
         const inputForm = this.currentSection.inputForm;
 
         const vaultListener = () => {
@@ -82,43 +80,11 @@ class PageRenderer {
 
             submitBtn.setAttribute('disabled', 'true');
 
-            isVaultFormValid(vaultForm)
+            this.processVault()
                 .then(() => {
-                    return submitVaultForm(vaultForm);
-                })
-                .then(({ cardToken, panToken }) => {
-                    Storage.del('_', 'otp');
-                    Storage.set('_', 'cardToken', cardToken);
-                    Storage.set('_', 'panToken', panToken);
-
-                    vaultForm.setAttribute('id', `${VAULT_FORM_SELECTOR}-submitted`);
                     const inputs = serializeForm(`#section-form-${name}`);
-
                     return this.createInputs(inputs);
                 })
-                .then(() => {
-                    this.disableSection();
-                    this.next();
-
-                })
-                .catch(err => {
-                    if (document.querySelector('#error')) {
-                        render(flashError(err), document.querySelector('#error'));
-                    }
-                    submitBtn.removeAttribute('disabled');
-                });
-        };
-
-        const defaultListener = () => {
-            if (inputForm && !inputForm.reportValidity()) {
-                console.log('invalid form');
-                return;
-            }
-
-            submitBtn.setAttribute('disabled', 'true');
-
-            const inputs = serializeForm(`#section-form-${name}`);
-            this.createInputs(inputs)
                 .then(() => {
                     this.disableSection();
                     this.next();
@@ -132,18 +98,31 @@ class PageRenderer {
         };
 
         if (submitBtn) {
-            const listener = vaultForm ? vaultListener : defaultListener;
-            submitBtn.addEventListener('click', listener);
+            submitBtn.addEventListener('click', vaultListener);
         } else {
             console.warn('no click/input submission listener added for the section');
         }
+    }
 
-        if (cancelBtn) {
-            cancelBtn.addEventListener('click', () => {
-                sdk.cancelJob().then(_res => {
-                    window.location.hash = '/error';
+    processVault() {
+        const vaultForm = document.querySelector(VAULT_FORM_SELECTOR);
+
+        if (!vaultForm) {
+            return Promise.resolve();
+        }
+
+        if (vaultForm) {
+            return isVaultFormValid(vaultForm)
+                .then(() => {
+                    return submitVaultForm(vaultForm);
+                })
+                .then(({ cardToken, panToken }) => {
+                    Storage.del('_', 'otp');
+                    Storage.set('_', 'cardToken', cardToken);
+                    Storage.set('_', 'panToken', panToken);
+
+                    vaultForm.setAttribute('id', `${VAULT_FORM_SELECTOR}-submitted`);
                 });
-            });
         }
     }
 
