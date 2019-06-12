@@ -18,23 +18,27 @@ const VAULT_FORM_SELECTOR = '#ubio-vault-form';
  */
 class PageRenderer {
     constructor(name, sections = [], selector, onFinish) {
+        if (sections.length === 0) {
+            throw new Error('PageRenderer constructor: sections is empty');
+        }
+
         this.name = name;
         this.selector = selector;
         this.sections = [...sections];
         this.onFinish = onFinish;
+
+        this.sectionsToRender = [];
         this.currentSection = null;
     }
 
     init() {
-        if (this.sections.length === 0) {
-            throw 'PageRenderer init: empty sections []';
-        }
+        this.sectionsToRender = [...this.sections];
         this.renderWrapper();
     }
 
     renderWrapper() {
         render(pageWrapper(), document.querySelector(this.selector));
-        const wrappers = this.sections.map(section => kebabcase(section.name)).map(name => {
+        const wrappers = this.sectionsToRender.map(section => kebabcase(section.name)).map(name => {
             return html`<form id="section-form-${name}"></form>`;
         });
 
@@ -43,7 +47,14 @@ class PageRenderer {
     }
 
     next() {
-        const section = this.sections.shift();
+        const section = this.sectionsToRender.shift();
+        if (!section) {
+            console.info('PageRenderer next: no section to render.');
+            render(html``, document.querySelector(this.selector));
+            return this.onFinish();
+        }
+
+        this.currentSection = section;
 
         if (!section) {
             throw 'PageRenderer next: no section';
@@ -90,15 +101,13 @@ class PageRenderer {
                     const event = new CustomEvent('newInputs', { detail: submittedInputs });
                     window.dispatchEvent(event);
 
-                    if (this.sections.length === 0) {
-                        render(html``, document.querySelector(this.selector));
-                        this.onFinish();
-                    } else {
-                        form.classList.add('form--disabled');
-                        [...form.querySelectorAll('input')].forEach(_ => _.setAttribute('disabled', 'disabled'));
-                        vaultForm.setAttribute('id', `${VAULT_FORM_SELECTOR}-submitted`);
-                        this.next();
-                    }
+                    form.classList.add('form--disabled');
+                    [...form.querySelectorAll('input'), ...form.querySelectorAll('select')]
+                        .forEach(_ => _.setAttribute('disabled', 'disabled'));
+                    vaultForm.setAttribute('id', `${VAULT_FORM_SELECTOR}-submitted`);
+
+                    this.next();
+
                 })
                 .catch(err => {
                     if (document.querySelector('#error')) {
@@ -124,14 +133,10 @@ class PageRenderer {
                     const event = new CustomEvent('newInputs', { detail: submittedInputs });
                     window.dispatchEvent(event);
 
-                    if (this.sections.length === 0) {
-                        render(html``, document.querySelector(this.selector));
-                        this.onFinish();
-                    } else {
-                        form.classList.add('form--disabled');
-                        [...form.querySelectorAll('input')].forEach(_ => _.setAttribute('disabled', 'disabled'));
-                        this.next();
-                    }
+                    form.classList.add('form--disabled');
+                    [...form.querySelectorAll('input'), ...form.querySelectorAll('select')]
+                        .forEach(_ => _.setAttribute('disabled', 'disabled'));
+                    this.next();
                 })
                 .catch(err => {
                     if (document.querySelector('#error')) {
@@ -141,15 +146,15 @@ class PageRenderer {
                 });
         };
 
-        if (submitBtn) {
-            const listener = vaultForm ? vaultListener : defaultListener;
-            submitBtn.addEventListener('click', listener);
+        if (this.currentSection.elements.submitBtn) {
+            const listener = this.currentSection.elements.vaultForm ? vaultListener : defaultListener;
+            this.currentSection.elements.submitBtn.addEventListener('click', listener);
         } else {
             console.warn('no click/input submission listener added for the section');
         }
 
-        if (cancelBtn) {
-            cancelBtn.addEventListener('click', () => {
+        if (this.currentSection.elements.cancelBtn) {
+            this.currentSection.elements.cancelBtn.addEventListener('click', () => {
                 sdk.cancelJob().then(_res => {
                     window.location.hash = '/error';
                 });
@@ -158,58 +163,43 @@ class PageRenderer {
     }
 
     skipSection() {
-        if (this.sections.length === 0) {
-            render(html``, document.querySelector(this.selector));
-            this.onFinish();
-        } else {
-            const kebabCaseName = kebabcase(this.currentSection.name);
-            const form = document.querySelector(`#section-form-${kebabCaseName}`);
-            if (form) {
-                form.classList.add('form--disabled');
-                [...form.querySelectorAll('input')].forEach(_ => _.setAttribute('disabled', 'disabled'));
-            }
-
-            const vaultForm = document.querySelector(VAULT_FORM_SELECTOR);
-            if (vaultForm) {
-                vaultForm.setAttribute('id', `${VAULT_FORM_SELECTOR}-submitted`);
-            }
-
-            this.next();
+        const inputForm = this.currentSection.elements.inputForm;
+        if (inputForm) {
+            inputForm.classList.add('form--disabled');
+            [...inputForm.querySelectorAll('input'), ...inputForm.querySelectorAll('select')]
+                .forEach(_ => _.setAttribute('disabled', 'disabled'));
         }
+
+        const vaultForm = this.currentSection.elements.vaultForm;
+        if (vaultForm) {
+            vaultForm.setAttribute('id', `${VAULT_FORM_SELECTOR}-submitted`);
+        }
+
+        this.next();
     }
 
     renderSection({ name, waitFor, template }) {
         const sectionName = kebabcase(name);
-        const selector = document.querySelector(`#section-form-${sectionName}`);
+        const sectionTarget = document.querySelector(`#section-form-${sectionName}`);
+        render(html`${inlineLoading()} `, sectionTarget);
+
         const skip = () => {
             this.skipSection();
         };
 
-        if (!waitFor) {
-            render(html`${template(sectionName, {}, skip)} `, selector);
-            this.addListeners(sectionName);
-
-            const { inputs } = Storage.getAll();
-            const submittedInputs = Object.keys(inputs);
-            this.skipIfSubmitted(submittedInputs);
-
-            return;
-        }
-
-        render(html`${inlineLoading()} `, selector);
-
         this.getDataForSection(waitFor)
             .then(res => {
-                render(html`${template(sectionName, res, skip)} `, selector);
-                this.addListeners(sectionName);
-
-                const { inputs } = Storage.getAll();
-                const submittedInputs = Object.keys(inputs);
-                this.skipIfSubmitted(submittedInputs);
+                render(html`${template(sectionName, res, skip)} `, sectionTarget);
+                this.addListeners();
+                this.skipIfSubmitted();
             });
     }
 
-    getDataForSection(waitFor) {
+    getDataForSection(waitFor = []) {
+        if (!waitFor || waitFor.length === 0) {
+            return {};
+        }
+
         return new Promise(res => {
             const results = waitFor.map(_ => {
                 const [type, sourceKey] = _.split('.');
@@ -267,7 +257,10 @@ class PageRenderer {
         });
     }
 
-    skipIfSubmitted(submittedInputKeys) {
+    skipIfSubmitted() {
+        const { inputs } = Storage.getAll();
+        const submittedInputKeys = Object.keys(inputs);
+
         const kebabCaseName = kebabcase(this.currentSection.name);
         const inputKeysInSection = getFormInputKeys(`#section-form-${kebabCaseName}`);
 
