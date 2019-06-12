@@ -30,7 +30,7 @@ function StepLabel(titles, activeIndex) {
         rightRuler = -1;
     }
 
-    if (rightRuler >= titles.length) {
+    if (rightRuler > titles.length) {
         rightRuler = -1;
     }
 
