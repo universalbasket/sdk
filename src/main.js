@@ -117,12 +117,6 @@ export function createApp({ pages, cache = [], layout, data = {} }, callback) {
                 }
             });
 
-            // Listen on pages load:
-            window.addEventListener('load', () => {
-                router.navigate();
-                Summary.update();
-            });
-
             //custom event when input submitted
             window.addEventListener('newInputs', e => {
                 e.detail && e.detail.forEach(({ key }) => Cache.poll(cache, key));
@@ -136,6 +130,7 @@ export function createApp({ pages, cache = [], layout, data = {} }, callback) {
             if (window.location.hash && window.location.hash !== '/') {
                 sdk.retrieve()
                     .then(() => {
+                        router.navigate();
                         afterSdkCreated();
                     })
                     .catch(() => {
@@ -209,5 +204,5 @@ export async function cancel() {
     if (!sdk.initiated) {
         throw new Error('sdk not initiated');
     }
-    await sdk.cancel();
+    await sdk.cancelJob();
 }
