@@ -17,7 +17,8 @@
     "test": "npm run test:ui",
     "test:ui": "jest",
     "test:watch": "jest --watchAll",
-    "test:update": "jest --updateSnapshot"
+    "test:update": "jest --updateSnapshot",
+    "serve": "browser-sync start --index 'index.html' --server --files 'templates' 'web_modules' 'src'"
   },
   "pre-commit": [
     "check",
@@ -34,12 +35,13 @@
   "dependencies": {
     "@ubio/sdk": "^0.6.0",
     "camelcase-keys": "^5.2.0",
-    "cpy": "^7.3.0",
     "currency-symbol-map": "^4.0.4",
     "form-serialize": "^0.7.2",
     "lit-html": "^1.1.0",
     "lodash.kebabcase": "^4.1.1",
     "pwa-helpers": "^0.9.1",
+    "recursive-copy": "^2.0.10",
+    "replace-in-files": "^1.1.4",
     "rimraf": "^2.6.3",
     "vendor-copy": "^2.0.0"
   },
