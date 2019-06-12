@@ -72,10 +72,10 @@ class PageRenderer {
         const submitBtn = document.querySelector(`#submit-btn-${name}`);
         const cancelBtn = document.querySelector('#cancel-btn');
         const vaultForm = document.querySelector(VAULT_FORM_SELECTOR);
-        const form = document.querySelector(`#section-form-${name}`);
+        const inputForm = this.currentSection.inputForm;
 
         const vaultListener = () => {
-            if (!form.reportValidity()) {
+            if (inputForm && !inputForm.reportValidity()) {
                 console.log('invalid form');
                 return;
             }
@@ -87,25 +87,17 @@ class PageRenderer {
                     return submitVaultForm(vaultForm);
                 })
                 .then(({ cardToken, panToken }) => {
-                    submitBtn.setAttribute('disabled', 'true');
+                    Storage.del('_', 'otp');
+                    Storage.set('_', 'cardToken', cardToken);
+                    Storage.set('_', 'panToken', panToken);
+
+                    vaultForm.setAttribute('id', `${VAULT_FORM_SELECTOR}-submitted`);
                     const inputs = serializeForm(`#section-form-${name}`);
 
-                    if (inputs.payment) {
-                        inputs.payment['card'] = { '$token': cardToken };
-                    }
-                    inputs['panToken'] = panToken;
-
-                    return sdk.createJobInputs(inputs);
+                    return this.createInputs(inputs);
                 })
-                .then(submittedInputs => {
-                    const event = new CustomEvent('newInputs', { detail: submittedInputs });
-                    window.dispatchEvent(event);
-
-                    form.classList.add('form--disabled');
-                    [...form.querySelectorAll('input'), ...form.querySelectorAll('select')]
-                        .forEach(_ => _.setAttribute('disabled', 'disabled'));
-                    vaultForm.setAttribute('id', `${VAULT_FORM_SELECTOR}-submitted`);
-
+                .then(() => {
+                    this.disableSection();
                     this.next();
 
                 })
@@ -118,7 +110,7 @@ class PageRenderer {
         };
 
         const defaultListener = () => {
-            if (!form.reportValidity()) {
+            if (inputForm && !inputForm.reportValidity()) {
                 console.log('invalid form');
                 return;
             }
@@ -126,16 +118,9 @@ class PageRenderer {
             submitBtn.setAttribute('disabled', 'true');
 
             const inputs = serializeForm(`#section-form-${name}`);
-
-            // send input sdk
-            sdk.createJobInputs(inputs)
-                .then(submittedInputs => {
-                    const event = new CustomEvent('newInputs', { detail: submittedInputs });
-                    window.dispatchEvent(event);
-
-                    form.classList.add('form--disabled');
-                    [...form.querySelectorAll('input'), ...form.querySelectorAll('select')]
-                        .forEach(_ => _.setAttribute('disabled', 'disabled'));
+            this.createInputs(inputs)
+                .then(() => {
+                    this.disableSection();
                     this.next();
                 })
                 .catch(err => {
@@ -146,15 +131,15 @@ class PageRenderer {
                 });
         };
 
-        if (this.currentSection.elements.submitBtn) {
-            const listener = this.currentSection.elements.vaultForm ? vaultListener : defaultListener;
-            this.currentSection.elements.submitBtn.addEventListener('click', listener);
+        if (submitBtn) {
+            const listener = vaultForm ? vaultListener : defaultListener;
+            submitBtn.addEventListener('click', listener);
         } else {
             console.warn('no click/input submission listener added for the section');
         }
 
-        if (this.currentSection.elements.cancelBtn) {
-            this.currentSection.elements.cancelBtn.addEventListener('click', () => {
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => {
                 sdk.cancelJob().then(_res => {
                     window.location.hash = '/error';
                 });
@@ -162,15 +147,44 @@ class PageRenderer {
         }
     }
 
-    skipSection() {
-        const inputForm = this.currentSection.elements.inputForm;
-        if (inputForm) {
-            inputForm.classList.add('form--disabled');
-            [...inputForm.querySelectorAll('input'), ...inputForm.querySelectorAll('select')]
-                .forEach(_ => _.setAttribute('disabled', 'disabled'));
+    createInputs(inputs) {
+        let cardTokenSent = false;
+        let panTokenSent = false;
+
+        if (inputs.payment) {
+            const cardToken = Storage.get('_', 'cardToken');
+            const panToken = Storage.get('_', 'panToken');
+
+            if (cardToken) {
+                inputs.payment['card'] = { '$token': cardToken };
+                cardTokenSent = true;
+            }
+
+            if (panToken) {
+                inputs['panToken'] = panToken;
+                panTokenSent = true;
+            }
         }
 
-        const vaultForm = this.currentSection.elements.vaultForm;
+        return sdk.createJobInputs(inputs)
+            .then(submittedInputs => {
+                const event = new CustomEvent('newInputs', { detail: submittedInputs });
+                window.dispatchEvent(event);
+
+                if (cardTokenSent) {
+                    Storage.del('_', 'cardToken');
+                }
+
+                if (panTokenSent) {
+                    Storage.del('_', 'panToken');
+                }
+            });
+    }
+
+    skipSection() {
+        this.disableSection();
+
+        const vaultForm = document.querySelector(VAULT_FORM_SELECTOR);
         if (vaultForm) {
             vaultForm.setAttribute('id', `${VAULT_FORM_SELECTOR}-submitted`);
         }
@@ -178,10 +192,24 @@ class PageRenderer {
         this.next();
     }
 
+    disableSection() {
+        const inputForm = this.currentSection.inputForm;
+        if (inputForm) {
+            inputForm.classList.add('form--disabled');
+            const fields = [
+                ...inputForm.querySelectorAll('input'),
+                ...inputForm.querySelectorAll('select')
+            ];
+            fields.forEach(_ => _.setAttribute('disabled', 'disabled'));
+        }
+    }
+
     renderSection({ name, waitFor, template }) {
         const sectionName = kebabcase(name);
-        const sectionTarget = document.querySelector(`#section-form-${sectionName}`);
-        render(html`${inlineLoading()} `, sectionTarget);
+        const sectionForm = document.querySelector(`#section-form-${sectionName}`);
+        this.currentSection.inputForm = sectionForm;
+
+        render(html`${inlineLoading()} `, sectionForm);
 
         const skip = () => {
             this.skipSection();
@@ -189,8 +217,8 @@ class PageRenderer {
 
         this.getDataForSection(waitFor)
             .then(res => {
-                render(html`${template(sectionName, res, skip)} `, sectionTarget);
-                this.addListeners();
+                render(html`${template(sectionName, res, skip)} `, sectionForm);
+                this.addListeners(name);
                 this.skipIfSubmitted();
             });
     }
