@@ -48,6 +48,10 @@
     align-content: center;
 }
 
+.loading {
+    padding: var(--gap);
+}
+
 .file-icon {
     padding-left: 20px;
     min-height: 16px;

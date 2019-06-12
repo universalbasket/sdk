@@ -1,0 +1,15 @@
+.flash-error p {
+    margin: .5em 0;
+}
+
+@media all and (max-width: 650px) {
+    .flash-error {
+        padding: var(--gap);
+    }
+}
+
+@media all and (min-width: 650px) {
+    .flash-error {
+        padding: var(--gap) 0;
+    }
+}

@@ -1,28 +1,94 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
-
-import PriceDisplay from '../../../../src/builtin-templates/price-display.js';
+import PriceDisplay from '../../../src/builtin-templates/price-display.js';
 
 import {
-    PriceInformation,
     OtherInformation,
+    MobileSummaryWrapper,
     Documents
-} from '../../shared/summary-sections.js';
+} from '../../shared/summary.js';
 
-export default (inputs = {}, outputs = {}, cache = {}, _local = {}) => {
+export default {
+    MobileTemplate,
+    DesktopTemplate
+};
+
+function SummaryDetails(inputs, outputs, cache) {
+    const price = getPrice(outputs, cache);
+
     return html`
-        ${inputs.selectedRooms && inputs.selectedRooms[0] ?
+    <div class="summary__body">
+        ${ hasContent(inputs) ?
         html`
             <article class="summary__block">
                 <header class="summary__block-title">
                     Your Room
                 </header>
                 <ul class="dim">
-                    <li>${inputs.selectedRooms[0].type}</li>
-                    <li>${PriceDisplay(inputs.selectedRooms[0].price)}</li>
+                    ${ inputs.selectedRooms[0].type ? html`<li>${ inputs.selectedRooms[0].type }</li>` : '' }
+                    ${ inputs.selectedRooms[0].price ? html`<li>${ PriceDisplay(inputs.selectedRooms[0].price) }</li>` : '' }
                 </ul>
-            </article>` : ''}
+            </article>` :
+        '' }
 
-        ${PriceInformation({ cache, outputs })}
-        ${Documents({ outputs })}
-        ${OtherInformation({ outputs })}`;
-};
+        ${ price ? html`
+            <div class="summary__block summary__block--price">
+                <b class="large highlight">
+                    ${ PriceDisplay(price) }
+                </b>
+            </div>` :
+        '' }
+
+        ${ Documents(outputs) }
+        ${ OtherInformation(outputs) }
+    </div>`;
+}
+
+function SummaryPreview(inputs, outputs, cache) {
+    const price = getPrice(outputs, cache);
+
+    return html`
+        <b class="large summary__preview-price">
+            ${ PriceDisplay(price || { currencyCode: 'gbp' }) }
+        </b>
+
+        ${ hasContent(inputs) ? html`
+            <span class="faint summary__preview-info">
+                ${ inputs.selectedRooms[0].type ? html`<span>${ inputs.selectedRooms[0].type }</span>` : '' }
+                ${ inputs.selectedRooms[0].price ? html`<span>${ PriceDisplay(inputs.selectedRooms[0].price) }</span>` : '' }
+            </span>` :
+        '' }`;
+}
+
+function SummaryTitle(_) {
+    const title = _.serviceName || 'Your Package';
+    return html`
+        <b class="large">${ title }</b>
+        <span class="faint large">Hotel Booking</span>
+    `;
+}
+
+function getPrice(outputs, cache) {
+    const priceObj = outputs.finalPrice ||
+        outputs.estimatedPrice ||
+        cache.finalPrice ||
+        cache.estimatedPrice;
+
+    return priceObj && priceObj.price;
+}
+
+function hasContent(inputs) {
+    return !!inputs.selectedRooms && inputs.selectedRooms[0];
+}
+
+function DesktopTemplate(inputs, outputs, cache, _) {
+    return html`
+    <aside class="summary">
+        <header class="summary__header">${ SummaryTitle(_) }</header>
+        ${ SummaryDetails(inputs, outputs, cache) }
+    </aside>`;
+}
+
+function MobileTemplate(inputs, outputs, cache, _) {
+    return MobileSummaryWrapper(inputs, outputs, cache, _,
+        SummaryPreview, SummaryTitle, SummaryDetails, hasContent);
+}

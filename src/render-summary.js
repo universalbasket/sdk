@@ -1,33 +1,26 @@
 import { render } from '/web_modules/lit-html/lit-html.js';
-import summaryWrapper from './builtin-templates/summary-wrapper.js';
 import modal from './builtin-templates/modal.js';
-import { installMediaQueryWatcher } from '/web_modules/pwa-helpers/media-query.js';
+
 import * as Storage from './storage.js';
 
 let BodyTemplate = null;
-let wrapper = null;
-
 let initiated = false;
-let isExpanded = true;
-let isMobile = false;
+let currentTarget, prevTarget;
 
 export default {
-    init({ template, selector = '#summary' }) {
+    init(template, isMobile) {
         if (!template || typeof template !== 'function') {
             throw new Error('renderSummary: invalid template');
         }
 
-        wrapper = document.querySelector(selector);
-        if (!wrapper) {
-            throw new Error(`renderSummary: element ${selector} not found`);
-        }
-
         BodyTemplate = template;
+        currentTarget = document.querySelector(isMobile ? '#summary-mobile' : '#summary-desktop');
+        prevTarget = document.querySelector(!isMobile ? '#summary-mobile' : '#summary-desktop');
 
-        render(summaryWrapper({ isExpanded, isMobile }), wrapper);
-
-        window.addEventListener('toggle-summary', () => toggleSummary(wrapper));
+        _updateUI();
+        window.addEventListener('update', _updateUI);
         window.addEventListener('show-modal', showModal);
+
         initiated = true;
     },
 
@@ -36,18 +29,9 @@ export default {
             throw new Error('renderSummary: not initiated');
         }
 
-        const data = Storage.getAll();
-        const { inputs, outputs, cache, local } = data;
-
-        render(summaryWrapper({ isExpanded, isMobile, ...data }), wrapper);
-        _updateDetails(inputs, outputs, cache, local);
+        _updateUI();
     }
 };
-
-function _updateDetails(inputs, outputs, cache, local) {
-    const el = document.querySelector('#summary-body');
-    el && render(BodyTemplate(inputs, outputs, cache, local), el);
-}
 
 function _updateUI() {
     if (!initiated) {
@@ -55,19 +39,8 @@ function _updateUI() {
     }
 
     const { inputs, outputs, cache, local, _ } = Storage.getAll();
-    render(summaryWrapper({ isExpanded, isMobile, inputs, outputs, cache, local, _ }), wrapper);
-    _updateDetails(inputs, outputs, cache, local);
-}
-
-installMediaQueryWatcher('(max-width: 650px)', match => {
-    isExpanded = !match;
-    isMobile = match;
-    _updateUI();
-});
-
-function toggleSummary() {
-    isExpanded = !isExpanded;
-    _updateUI();
+    render(BodyTemplate(inputs, outputs, cache, local, _), currentTarget);
+    render('', prevTarget);
 }
 
 function showModal({ detail }) {
