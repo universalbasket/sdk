@@ -19,7 +19,7 @@ class EndUserSdk {
                 previous = createEndUserSdk({ token, jobId, serviceId });
                 const job = await previous.getJob();
 
-                if (job.state !== 'fail') {
+                if (['fail', 'success'].includes(job.state)) {
                     await previous.cancelJob();
                 }
             } catch (err) {
