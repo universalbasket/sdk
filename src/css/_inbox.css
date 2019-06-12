@@ -13,6 +13,7 @@
 .clickable {
     text-decoration: underline;
     cursor: pointer;
+    color: currentColor;
 }
 
 .clickable:hover {

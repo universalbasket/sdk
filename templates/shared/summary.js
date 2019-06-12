@@ -74,8 +74,8 @@ function OtherInformation(outputs = {}) {
     }
 
     return html`
-        <div class="summary__block summary__block--docs">
-            <p><b>Other information</b></p>
+        <div class="summary__block summary__block--bordered">
+            <h4>Other information</h4>
             <ul class="dim">${ items }</ul>
         </div>`;
 }
@@ -93,8 +93,8 @@ function Documents(outputs = {}) {
     }
 
     return html`
-        <div class="summary__block summary__block--docs">
-            <p><b>Documents</b></p>
+        <div class="summary__block summary__block--bordered">
+            <h4>Documents</h4>
             <ul class="dim">${ items }</ul>
         </div>`;
 

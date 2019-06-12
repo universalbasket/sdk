@@ -80,6 +80,7 @@
     .summary-wrapper--desktop {
         width: 37vw;
         padding: var(--gap) 0;
+        margin-top: 20px;
     }
 
     .header,
