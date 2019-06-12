@@ -17,11 +17,10 @@ import error from './builtin-templates/error.js';
 import inlineLoading from './builtin-templates/inline-loading.js';
 import loading from './builtin-templates/loading.js';
 import modal from './builtin-templates/modal.js';
-import notFound404 from './builtin-templates/not-found-404';
+import notFound404 from './builtin-templates/not-found-404.js';
 import pageWrapper from './builtin-templates/page-wrapper.js';
 import priceDisplay from './builtin-templates/price-display.js';
 import progressBar from './builtin-templates/progress-bar.js';
-import summaryWrapper from './builtin-templates/summary-wrapper.js';
 
 export const templates = {
     error,
@@ -31,8 +30,7 @@ export const templates = {
     notFound404,
     pageWrapper,
     priceDisplay,
-    progressBar,
-    summaryWrapper
+    progressBar
 };
 
 function validatePages(pages) {
@@ -65,17 +63,8 @@ function validatePages(pages) {
     }
 }
 
-function validateLayout(layout) {
-    const missing = ['header', 'summary', 'footer'].filter(name => typeof layout[name] !== 'function');
-
-    if (missing.length) {
-        throw new Error(`Layout missing functions for: ${missing.join(', ')}`);
-    }
-}
-
 export function createApp({ pages, cache = [], layout, data = {} }, callback) {
     validatePages(pages);
-    validateLayout(layout);
 
     const mainSelector = '#main';
 

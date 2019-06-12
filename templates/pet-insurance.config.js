@@ -1,4 +1,4 @@
-import * as layout from './pet-insurance/layout/index.js';
+import { header, summary, footer } from './pet-insurance/layout/index.js';
 import {
     aboutYou,
     checkout,
@@ -13,7 +13,11 @@ import {
 } from './pet-insurance/sections/index.js';
 
 export default {
-    layout,
+    layout: {
+        header,
+        summary,
+        footer
+    },
     cache: [
         {
             key: 'priceBreakdown',

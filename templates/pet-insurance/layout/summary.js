@@ -1,5 +1,5 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
-import { templates } from '/web_modules/@ubio/sdk-application-bundle.js';
+import { templates } from '/src/main.js';
 import {
     OtherInformation,
     MobileSummaryWrapper,

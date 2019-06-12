@@ -1,6 +1,6 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
 import finalPriceConsent from '../../generic/final-price-consent.js';
-import { createInputs } from '/web_modules/@ubio/sdk-application-bundle.js';
+import { createInputs } from '/src/main.js';
 
 export default (name, { estimatedPrice = {}, finalPrice = {} }, skip) => {
     const finalValue = finalPrice.price && finalPrice.price.value;

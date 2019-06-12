@@ -1,8 +1,12 @@
-import * as layout from './hotel-booking/layout/index.js';
+import { header, summary, footer } from './hotel-booking/layout/index.js';
 import { checkout, confirmation, finalPriceConsent, rooms } from './hotel-booking/sections/index.js';
 
 export default {
-    layout,
+    layout: {
+        header,
+        summary,
+        footer
+    },
     cache: [
 
     ],

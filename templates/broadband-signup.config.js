@@ -1,4 +1,4 @@
-import * as layout from './broadband-signup/layout/index.js';
+import { header, summary, footer } from './broadband-signup/layout/index.js';
 import {
     landline,
     selectedAddress,
@@ -11,7 +11,11 @@ import {
 } from './broadband-signup/sections/index.js';
 
 export default {
-    layout,
+    layout: {
+        header,
+        summary,
+        footer
+    },
     cache: [
         {
             key: 'availableTvPackages',
