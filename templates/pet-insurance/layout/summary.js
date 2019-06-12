@@ -1,5 +1,10 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
-import PriceDisplay from '../../../src/builtin-templates/price-display.js';
+import { templates } from '/src/main.js';
+import {
+    OtherInformation,
+    MobileSummaryWrapper,
+    Documents
+} from '../../shared/summary.js';
 
 const keyInputs = [
     'policyOptions',
@@ -11,12 +16,6 @@ const keyInputs = [
     'selectedVetFee',
     'selectedPaymentTerm'
 ];
-
-import {
-    OtherInformation,
-    MobileSummaryWrapper,
-    Documents
-} from '../../shared/summary.js';
 
 export default {
     MobileTemplate,
@@ -46,7 +45,7 @@ function SummaryDetails(inputs, outputs, cache) {
         ${ price ? html`
             <div class="summary__block summary__block--price">
                 <b class="large highlight">
-                    ${ PriceDisplay(price) }
+                    ${ templates.priceDisplay(price) }
                 </b>
             </div>` :
         '' }
@@ -62,7 +61,7 @@ function SummaryPreview(inputs, outputs, cache) {
 
     return html`
         <b class="large summary__preview-price">
-            ${ PriceDisplay(price || { currencyCode: 'gbp' }) }
+            ${ templates.priceDisplay(price || { currencyCode: 'gbp' }) }
         </b>
 
         ${ hasContent(inputs) ? html`
@@ -104,7 +103,7 @@ function VetFee(selectedVetFee) {
     if (!selectedVetFee) {
         return '';
     }
-    return html`Vet Fee: - ${ PriceDisplay(selectedVetFee.price) }`;
+    return html`Vet Fee: - ${ templates.priceDisplay(selectedVetFee.price) }`;
 }
 
 function CoverType(selectedCoverType) {
@@ -112,7 +111,7 @@ function CoverType(selectedCoverType) {
         return '';
     }
     return html`Cover type: ${selectedCoverType.coverName}
-    - ${ PriceDisplay(selectedCoverType.price) }`;
+    - ${ templates.priceDisplay(selectedCoverType.price) }`;
 }
 
 function PetInformation(inputs, currencyCode = 'gbp') {
@@ -130,7 +129,7 @@ function PetInformation(inputs, currencyCode = 'gbp') {
         <ul class="dim">
             <li>Breed Name: ${ pets[0].breedName }</li>
             <li>Date of Birth: ${ pets[0].dateOfBirth }</li>
-            <li>Paid/Donated: ${ PriceDisplay({ currencyCode, value: pets[0].petPrice })}</li>
+            <li>Paid/Donated: ${ templates.priceDisplay({ currencyCode, value: pets[0].petPrice })}</li>
         </ul>
     </article>`;
 }

@@ -4,7 +4,20 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>ubio application bundle</title>
         <link href="./src/css/index.css" rel="stylesheet">
-        <script src="./index.js" type="module"></script>
+        <script type="module">
+            async function init() {
+                const domain = new URLSearchParams(window.location.search).get('domain') || 'pet-insurance';
+                const config = (await import(`/templates/${domain}.config.js`)).default;
+
+                console.log(config)
+
+                const { createApp } = await import('/src/main.js');
+                const app = createApp(config, () => console.log('finished!'));
+                app.init();
+            }
+
+            init();
+        </script>
     </head>
 
     <body>

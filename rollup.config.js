@@ -1,5 +1,5 @@
 export default {
-    input: 'index.js',
+    input: 'src/main.js',
     output: {
         file: 'bundle.js',
         format: 'esm'

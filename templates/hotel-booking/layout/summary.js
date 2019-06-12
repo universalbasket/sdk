@@ -1,5 +1,5 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
-import PriceDisplay from '../../../src/builtin-templates/price-display.js';
+import { templates } from '/src/main.js';
 
 import {
     OtherInformation,
@@ -25,7 +25,7 @@ function SummaryDetails(inputs, outputs, cache) {
                 </header>
                 <ul class="dim">
                     ${ inputs.selectedRooms[0].type ? html`<li>${ inputs.selectedRooms[0].type }</li>` : '' }
-                    ${ inputs.selectedRooms[0].price ? html`<li>${ PriceDisplay(inputs.selectedRooms[0].price) }</li>` : '' }
+                    ${ inputs.selectedRooms[0].price ? html`<li>${ templates.priceDisplay(inputs.selectedRooms[0].price) }</li>` : '' }
                 </ul>
             </article>` :
         '' }
@@ -33,7 +33,7 @@ function SummaryDetails(inputs, outputs, cache) {
         ${ price ? html`
             <div class="summary__block summary__block--price">
                 <b class="large highlight">
-                    ${ PriceDisplay(price) }
+                    ${ templates.priceDisplay(price) }
                 </b>
             </div>` :
         '' }
@@ -48,13 +48,13 @@ function SummaryPreview(inputs, outputs, cache) {
 
     return html`
         <b class="large summary__preview-price">
-            ${ PriceDisplay(price || { currencyCode: 'gbp' }) }
+            ${ templates.priceDisplay(price || { currencyCode: 'gbp' }) }
         </b>
 
         ${ hasContent(inputs) ? html`
             <span class="faint summary__preview-info">
                 ${ inputs.selectedRooms[0].type ? html`<span>${ inputs.selectedRooms[0].type }</span>` : '' }
-                ${ inputs.selectedRooms[0].price ? html`<span>${ PriceDisplay(inputs.selectedRooms[0].price) }</span>` : '' }
+                ${ inputs.selectedRooms[0].price ? html`<span>${ templates.priceDisplay(inputs.selectedRooms[0].price) }</span>` : '' }
             </span>` :
         '' }`;
 }

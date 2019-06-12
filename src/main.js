@@ -7,20 +7,64 @@ import * as Cache from './cache.js';
 
 import PageRenderer from './page-renderer.js';
 import NotFound from './render-not-found.js';
-import Loading from './builtin-templates/loading.js';
 import ProgressBar from './render-progress-bar.js';
 import Summary from './render-summary.js';
-import ErrorTemplate from './builtin-templates/error.js';
 
 import { installMediaQueryWatcher } from '/web_modules/pwa-helpers/media-query.js';
 import Layout from './layout.js';
 
-function createApp({ pages = [], cache = [], layout = {}, data = {} }, callback) {
-    const isValidConfig = pages.length > 0 && pages.every(config => config.name && config.title && config.sections && config.route);
+import error from './builtin-templates/error.js';
+import inlineLoading from './builtin-templates/inline-loading.js';
+import loading from './builtin-templates/loading.js';
+import modal from './builtin-templates/modal.js';
+import notFound404 from './builtin-templates/not-found-404.js';
+import pageWrapper from './builtin-templates/page-wrapper.js';
+import priceDisplay from './builtin-templates/price-display.js';
+import progressBar from './builtin-templates/progress-bar.js';
 
-    if (!isValidConfig) {
-        throw new Error('invalid page config');
+export const templates = {
+    error,
+    inlineLoading,
+    loading,
+    modal,
+    notFound404,
+    pageWrapper,
+    priceDisplay,
+    progressBar
+};
+
+function validatePages(pages) {
+    if (!pages || !pages.length) {
+        throw new Error('No pages configured.');
     }
+
+    for (const { name, title, sections, route } of pages) {
+        if (typeof name !== 'string') {
+            throw new Error('The name of a page was not found.');
+        }
+
+        if (typeof title !== 'string') {
+            throw new Error(`The title of page ${name} was not found.`);
+        }
+
+        if (typeof route !== 'string') {
+            throw new Error(`The route of page ${name} was not found.`);
+        }
+
+        if (!Array.isArray(sections)) {
+            throw new Error(`The sections of page ${name} were not found.`);
+        }
+
+        for (const { name: sectionName, template } of sections) {
+            if (!template) {
+                throw new Error(`Template for page ${name} section ${sectionName} not found.`);
+            }
+        }
+    }
+}
+
+export function createApp({ pages, cache = [], layout, data = {} }, callback) {
+    validatePages(pages);
 
     const mainSelector = '#main';
 
@@ -29,12 +73,12 @@ function createApp({ pages = [], cache = [], layout = {}, data = {} }, callback)
     const titles = pages.map(page => page.title);
 
     const routes = {
-        '/': Loading(mainSelector),
-        '/error': { renderer: ErrorTemplate(mainSelector), title: null, step: null }
+        '/': loading(mainSelector),
+        '/error': { renderer: error(mainSelector), title: null, step: null }
     };
 
     pages.forEach((config, idx) => {
-        const { title, sections, route } = config;
+        const { title, sections = [], route } = config;
         let onFinish = null;
 
         if (flow.length > idx + 1) {
@@ -151,7 +195,7 @@ function createApp({ pages = [], cache = [], layout = {}, data = {} }, callback)
     };
 }
 
-async function createInputs(inputs) {
+export async function createInputs(inputs) {
     if (!sdk.initiated) {
         throw new Error('sdk not initiated');
     }
@@ -161,11 +205,9 @@ async function createInputs(inputs) {
     window.dispatchEvent(event);
 }
 
-async function cancel() {
+export async function cancel() {
     if (!sdk.initiated) {
         throw new Error('sdk not initiated');
     }
     await sdk.cancel();
 }
-
-export { createApp, createInputs, cancel };

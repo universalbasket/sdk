@@ -1,4 +1,12 @@
+import { header, summary, footer } from './hotel-booking/layout/index.js';
+import { checkout, confirmation, finalPriceConsent, rooms } from './hotel-booking/sections/index.js';
+
 export default {
+    layout: {
+        header,
+        summary,
+        footer
+    },
     cache: [
 
     ],
@@ -8,7 +16,11 @@ export default {
             route: '/rooms',
             title: 'Available rooms',
             sections: [
-                { name: 'rooms', waitFor: ['output.availableRooms'] }
+                {
+                    name: 'rooms',
+                    template: rooms,
+                    waitFor: ['output.availableRooms']
+                }
             ]
         },
         {
@@ -16,8 +28,16 @@ export default {
             route: '/checkout',
             title: 'Booking details',
             sections: [
-                { name: 'checkout', waitFor: ['_.otp'] },
-                { name: 'finalPriceConsent', waitFor: ['input.selectedRooms', 'outputs.finalPrice'] }
+                {
+                    name: 'checkout',
+                    template: checkout,
+                    waitFor: ['_.otp']
+                },
+                {
+                    name: 'final-price-consent',
+                    template: finalPriceConsent,
+                    waitFor: ['input.selectedRooms', 'outputs.finalPrice']
+                }
             ]
         },
         {
@@ -25,7 +45,11 @@ export default {
             route: '/confirmation',
             title: 'Confirmation',
             sections: [
-                { name: 'confirmation', waitFor: ['outputs.bookingConfirmation'] }
+                {
+                    name: 'confirmation',
+                    template: confirmation,
+                    waitFor: ['outputs.bookingConfirmation']
+                }
             ]
         }
     ],

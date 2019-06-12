@@ -1,4 +1,21 @@
+import { header, summary, footer } from './broadband-signup/layout/index.js';
+import {
+    landline,
+    selectedAddress,
+    aboutYou,
+    installation,
+    setupDates,
+    checkout,
+    finalPriceConsent,
+    confirmation
+} from './broadband-signup/sections/index.js';
+
 export default {
+    layout: {
+        header,
+        summary,
+        footer
+    },
     cache: [
         {
             key: 'availableTvPackages',
@@ -35,17 +52,32 @@ export default {
             route: '/land-line',
             title: 'Landline Check',
             sections: [
-                { name: 'landline', waitFor: ['local.landlineOptions'] },
-                { name: 'selectedAddress', waitFor: ['output.availableAddresses', 'output.availableInstallationAddresses'] }
+                {
+                    name: 'landline',
+                    template: landline,
+                    waitFor: ['local.landlineOptions']
+                },
+                {
+                    name: 'selected-address',
+                    template: selectedAddress,
+                    waitFor: ['output.availableAddresses', 'output.availableInstallationAddresses']
+                }
             ]
         },
         {
-            name: 'aboutYou',
+            name: 'about-you',
             route: '/about-you',
             title: 'About You',
             sections: [
-                { name: 'aboutYou' },
-                { name: 'installation', waitFor: ['output.installationOptions'] }
+                {
+                    name: 'about-you',
+                    template: aboutYou
+                },
+                {
+                    name: 'installation',
+                    template: installation,
+                    waitFor: ['output.installationOptions']
+                }
             ]
         },
         {
@@ -53,7 +85,11 @@ export default {
             route: '/setup-dates',
             title: 'Setup dates for your packages',
             sections: [
-                { name: 'setupDates', waitFor: ['output.availableBroadbandSetupDates'] }
+                {
+                    name: 'setup-dates',
+                    template: setupDates,
+                    waitFor: ['output.availableBroadbandSetupDates']
+                }
             ]
         },
         {
@@ -61,8 +97,16 @@ export default {
             route: '/checkout',
             title: 'Payment details',
             sections: [
-                { name: 'checkout', waitFor: ['_.otp'] },
-                { name: 'finalPriceConsent', waitFor: ['output.oneOffCosts', 'output.finalPrice'] },
+                {
+                    name: 'checkout',
+                    template: checkout,
+                    waitFor: ['_.otp']
+                },
+                {
+                    name: 'final-price-consent',
+                    template: finalPriceConsent,
+                    waitFor: ['output.oneOffCosts', 'output.finalPrice']
+                }
             ]
         },
         {
@@ -70,7 +114,11 @@ export default {
             route: '/confirmation',
             title: 'Confirmation',
             sections: [
-                { name: 'confirmation', waitFor: ['outputs.confirmation'] }
+                {
+                    name: 'confirmation',
+                    template: confirmation,
+                    waitFor: ['outputs.confirmation']
+                }
             ]
         }
     ],

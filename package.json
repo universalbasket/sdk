@@ -7,11 +7,7 @@
   "repository": "github:universalbasket/sdk-application-bundle",
   "scripts": {
     "install": "rimraf web_modules && vendor-copy && node hack-wrap.js",
-    "start:broadband": "node domain-selector broadband-signup && npm run serve",
-    "start:pet": "node domain-selector pet-insurance && npm run serve",
-    "start:hotel": "node domain-selector hotel-booking && npm run serve",
     "start": "npm run serve",
-    "serve": "browser-sync start --index 'index.html' --server --files 'index.js' 'templates' 'web_modules' 'src' 'ubio.config.js'",
     "build": "npm run build:rollup && npm run build:umd && npm run build:css",
     "build:rollup": "rollup --config",
     "build:umd": "rollup -n UBIO_BUNDLE -f umd bundle.js | babel -f bundle.umd.js > bundle.umd.js",
@@ -21,7 +17,8 @@
     "test": "npm run test:ui",
     "test:ui": "jest",
     "test:watch": "jest --watchAll",
-    "test:update": "jest --updateSnapshot"
+    "test:update": "jest --updateSnapshot",
+    "serve": "browser-sync start --index 'index.html' --server --files 'templates' 'web_modules' 'src'"
   },
   "pre-commit": [
     "check",
@@ -32,6 +29,7 @@
     "ubio",
     "sdk"
   ],
+  "bin": "./generator.js",
   "author": "ubio",
   "license": "ISC",
   "dependencies": {
@@ -42,6 +40,8 @@
     "lit-html": "^1.1.0",
     "lodash.kebabcase": "^4.1.1",
     "pwa-helpers": "^0.9.1",
+    "recursive-copy": "^2.0.10",
+    "replace-in-files": "^1.1.4",
     "rimraf": "^2.6.3",
     "vendor-copy": "^2.0.0"
   },
