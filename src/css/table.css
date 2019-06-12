@@ -1,0 +1,21 @@
+.table {
+    border-top: 2px solid var(--color);
+    margin: 0 0 1em;
+}
+
+.table th {
+    text-align: left;
+    border-bottom: 1px solid var(--color--hr);
+    padding: var(--gap) var(--gap) var(--gap) 0;
+}
+
+.table td {
+    text-align: right;
+    border-bottom: 1px solid var(--color--hr);
+    padding: var(--gap) 2px var(--gap) var(--gap);
+}
+
+.table tr:last-child th,
+.table tr:last-child td {
+    border: 0;
+}
