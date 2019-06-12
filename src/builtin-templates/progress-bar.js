@@ -20,7 +20,7 @@ function StepLabel(titles, activeIndex) {
     let rightRuler = activeIndex + 2;
     let textAlign = 'center';
 
-    if (titles[activeIndex].length > 14) {
+    if (titles[activeIndex - 1].length > 14) {
         leftRuler = activeIndex - 2;
         rightRuler = activeIndex + 3;
     }
