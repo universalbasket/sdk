@@ -65,8 +65,17 @@ function validatePages(pages) {
     }
 }
 
+function validateLayout(layout) {
+    const missing = ['header', 'summary', 'footer'].filter(name => typeof layout[name] !== 'function');
+
+    if (missing.length) {
+        throw new Error(`Layout missing functions for: ${missing.join(', ')}`);
+    }
+}
+
 export function createApp({ pages, cache = [], layout, data = {} }, callback) {
     validatePages(pages);
+    validateLayout(layout);
 
     const mainSelector = '#main';
 
