@@ -1,104 +1,89 @@
+.sticky-top {
+    position: sticky;
+    z-index: 2;
+    top: 0;
+    left: 0;
+}
+
+.sticky-top__overlay {
+    z-index: 1;
+    position: fixed;
+    height: 100%;
+    left: 0;
+    right: 0;
+    background: var(--overlay);
+}
+
 .header-wrapper {
     background-color: var(--header-background-color);
     color: white;
     width: 100%;
-    position: fixed;
-    top: 0;
-    padding: 10px;
 }
 
-.container {
-    display: flex;
-    flex-flow: row wrap;
-    /*    justify-content: space-evenly;
-    align-items: flex-start;*/
-    margin-top: var(--header-height--large);
-    height: 90%;
+.flash-error-wrapper {
+    background-color: var(--error-background-color);
+    color: var(--error-color);
 }
 
 .progress-bar-wrapper {
     background-color: var(--progress-bar-background-color);
 }
 
-.main-wrapper {
-    display: flex;
-    justify-content: center;
-    height: 100%;
-    overflow-y: auto;
+.page {
+    padding: var(--gap) 0;
 }
 
 @media all and (max-width: 650px) {
-    .container {
-        margin-top: var(--header-height--small);
-        flex-flow: column nowrap;
-        justify-content: flex-start;
-    }
-
-    /* We tell both sidebars to share a row */
     .summary-wrapper {
-        order: 1;
-        position: sticky;
-        z-index: 1;
-        top: 25px;
         border-bottom: 2px solid #ccc;
     }
 
-    .summary-wrapper__overlay {
-        z-index: 1;
-        position: fixed;
-        bottom: 0;
-        top: 0;
-        left: 0;
-        right: 0;
-        background: var(--overlay);
+    .header-wrapper {
+        height: var(--header-height--mobile);
     }
 
-    .progress-bar-wrapper {
-        order: 2;
-        align-self: stretch;
+    .header,
+    .footer {
+        padding: var(--gap);
     }
 
     .main-wrapper {
-        order: 3;
-        justify-content: stretch;
-        margin-top: 10px;
-    }
-
-    .header-wrapper {
-        height: var(--header-height--small);
-        z-index: 2;
+        padding: 20px var(--gap);
     }
 }
 
 /* Large screens */
 @media all and (min-width: 650px) {
-    /* We invert order of first sidebar and main
-    * And tell the main element to take twice as much width as the other two sidebars
-    */
+    .header-wrapper {
+        height: var(--header-height--desktop);
+    }
+
     .progress-bar-wrapper {
-        order: 1;
-        flex: 1 100%;
+        margin: 0;
+    }
+
+    .container {
+        padding-left: 15vw;
+        padding-right: 1vw;
+        margin: 0 auto;
+        display: grid;
+        grid-gap: 2vw;
+        grid-auto-flow: column;
+        grid-auto-columns: auto;
     }
 
     .main-wrapper {
-        flex: 2 auto;
-        order: 2;
-        max-width: 60vw;
-        margin-top: 20px;
+        min-width: 45vw;
+        padding: var(--gap) 0;
     }
 
     .summary-wrapper {
-        flex: 1 auto;
-        order: 3;
-        padding: 20px;
+        width: 37vw;
+        padding: var(--gap) 0;
     }
 
-    .header-wrapper {
-        height: var(--header-height--large);
-    }
-
-    .page {
-        width: 40vw;
-        min-width: 400px;
+    .header,
+    .footer {
+        padding: var(--gap) 0;
     }
 }

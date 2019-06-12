@@ -15,12 +15,6 @@ export default {
             ]
         }
     ],
-    layout: [
-        { name: 'header', selector: '#header' },
-        { name: 'summary',  selector: '#summary' },
-        { name: 'main', selector: '#main', mainTarget: true },
-        { name: 'footer', selector: '#footer' }
-    ],
     data: {
         serverUrlPath: 'https://url-of-your-server/create-job-using-js-sdk',
         initialInputs: {},

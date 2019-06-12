@@ -1,9 +1,6 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
-import { classMap } from '/web_modules/lit-html/directives/class-map.js';
-
 import PriceDisplay from '../../../src/builtin-templates/price-display.js';
 
-const toggleSummary = new CustomEvent('toggle-summary');
 const keyInputs = [
     'policyOptions',
     'selectedCover',
@@ -17,13 +14,21 @@ const keyInputs = [
 
 import {
     OtherInformation,
+    MobileSummaryWrapper,
     Documents
-} from '../../shared/summary-sections.js';
+} from '../../shared/summary.js';
 
-function SummaryDetails(inputs, outputs, price) {
+export default {
+    MobileTemplate,
+    DesktopTemplate
+};
+
+function SummaryDetails(inputs, outputs, cache) {
+    const price = getPrice(outputs, cache);
+
     return html`
     <div class="summary__body">
-        ${ Object.keys(inputs).find(key => keyInputs.includes(key)) ? html`
+        ${ hasContent(inputs) ? html`
             <article class="summary__block">
                 <ul class="dim">
                     ${ inputs.policyOptions.coverStartDate ? html`<li>Starts on: ${ inputs.policyOptions.coverStartDate }</li>` : '' }
@@ -52,13 +57,15 @@ function SummaryDetails(inputs, outputs, price) {
     </div>`;
 }
 
-function SummaryPreview(inputs, price) {
+function SummaryPreview(inputs, outputs, cache) {
+    const price = getPrice(outputs, cache);
+
     return html`
         <b class="large summary__preview-price">
             ${ PriceDisplay(price || { currencyCode: 'gbp' }) }
         </b>
 
-        ${ Object.keys(inputs).find(key => keyInputs.includes(key)) ? html`
+        ${ hasContent(inputs) ? html`
             <span class="faint summary__preview-info">
                 ${ inputs.policyOptions.coverStartDate ? html`<span>Starts on: ${ inputs.policyOptions.coverStartDate }</span>` : '' }
                 ${ inputs.selectedCover ? html`<span>Cover: ${ inputs.selectedCover }</span>` : '' }
@@ -80,19 +87,17 @@ function SummaryTitle(_) {
     `;
 }
 
-function ToggableWrapper(isExpanded, template) {
-    const classes = {
-        'summary__header': true,
-        'summary__header--toggable': true,
-        'summary__header--toggled-down': isExpanded,
-        'summary__header--toggled-up': !isExpanded
-    };
-    return html`
-        <header
-            class="${ classMap(classes) }"
-            @click=${ () => window.dispatchEvent(toggleSummary) }>
-            <div class="summary__preview">${ template }</div>
-        </header>`;
+function getPrice(outputs, cache) {
+    const priceObj = outputs.finalPrice ||
+        outputs.estimatedPrice ||
+        cache.finalPrice ||
+        cache.estimatedPrice;
+
+    return priceObj && priceObj.price;
+}
+
+function hasContent(inputs) {
+    return !!Object.keys(inputs).find(key => keyInputs.includes(key));
 }
 
 function VetFee(selectedVetFee) {
@@ -130,42 +135,15 @@ function PetInformation(inputs, currencyCode = 'gbp') {
     </article>`;
 }
 
-
-export default (inputs = {}, outputs = {}, cache = {}, _local = {}, _ = {}, isMobile, isExpanded) => {
-    const priceObj = outputs.finalPrice ||
-        outputs.estimatedPrice ||
-        cache.finalPrice ||
-        cache.estimatedPrice;
-
-    const price = priceObj && priceObj.price;
-
-    if (isMobile) {
-
-        // details are available
-        if (Object.keys(inputs).find(key => keyInputs.includes(key)) || price) {
-            if (isExpanded) {
-                return html`
-                <aside class="summary">
-                    ${ ToggableWrapper(isExpanded, SummaryTitle(_)) }
-                    ${ SummaryDetails(inputs, outputs, price) }
-                </aside>
-                <div class="summary-wrapper__overlay" @click=${ () => window.dispatchEvent(toggleSummary) }></div>`;
-            }
-            return html`
-            <aside class="summary">
-                ${ ToggableWrapper(isExpanded, SummaryPreview(inputs, price)) }
-            </aside>`;
-
-        }
-        return html`
-        <aside class="summary">
-            <header class="summary__header">${ SummaryTitle(_) }</header>
-        </aside>`;
-    }
-
+function DesktopTemplate(inputs, outputs, cache, _) {
     return html`
     <aside class="summary">
         <header class="summary__header">${ SummaryTitle(_) }</header>
-        ${ SummaryDetails(inputs, outputs, price) }
+        ${ SummaryDetails(inputs, outputs, cache) }
     </aside>`;
-};
+}
+
+function MobileTemplate(inputs, outputs, cache, _) {
+    return MobileSummaryWrapper(inputs, outputs, cache, _,
+        SummaryPreview, SummaryTitle, SummaryDetails, hasContent);
+}

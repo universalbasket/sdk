@@ -1,17 +1,8 @@
 import { createApp } from './src/main.js';
-import CONFIG from './templates/pet-insurance/ubio.config.js';
+import CONFIG from './templates/hotel-booking/ubio.config.js';
 
-import * as LayoutTemplates from './templates/pet-insurance/layout/index.js';
-import * as SectionTemplates from './templates/pet-insurance/sections/index.js';
-
-const Layout = CONFIG.layout.map(l => {
-    const template = LayoutTemplates[l.name];
-    if (!template && !l.mainTarget) {
-        throw new Error(`Template for Layout ${l.name} is not found`);
-    }
-
-    return { ...l, template };
-});
+import * as LayoutTemplates from './templates/hotel-booking/layout/index.js';
+import * as SectionTemplates from './templates/hotel-booking/sections/index.js';
 
 const Pages = CONFIG.pages.map(page => {
     const { sections = [] } = page;
@@ -26,6 +17,6 @@ const Pages = CONFIG.pages.map(page => {
     return { ...page, ...{ sections: sectionsWithTemplate } };
 });
 
-const app = createApp({ pages: Pages, cache: CONFIG.cache, layout: Layout, data: CONFIG.data }, () => console.log('finished!'));
+const app = createApp({ pages: Pages, cache: CONFIG.cache, layout: LayoutTemplates, data: CONFIG.data }, () => console.log('finished!'));
 
 app.init();

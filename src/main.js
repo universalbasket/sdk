@@ -12,17 +12,17 @@ import ProgressBar from './render-progress-bar.js';
 import Summary from './render-summary.js';
 import ErrorTemplate from './builtin-templates/error.js';
 
-function createApp({ pages = [], cache = [], layout = [], data = {} }, callback) {
+import { installMediaQueryWatcher } from '/web_modules/pwa-helpers/media-query.js';
+import Layout from './layout.js';
+
+function createApp({ pages = [], cache = [], layout = {}, data = {} }, callback) {
     const isValidConfig = pages.length > 0 && pages.every(config => config.name && config.title && config.sections && config.route);
 
     if (!isValidConfig) {
         throw new Error('invalid page config');
     }
 
-    const { selector: mainSelector } = layout.find(_ => _.mainTarget) || {};
-    if (!mainSelector) {
-        throw new Error('main selector not found in config');
-    }
+    const mainSelector = '#main';
 
     //setup router
     const flow = pages.map(page => page.route);
@@ -54,13 +54,15 @@ function createApp({ pages = [], cache = [], layout = [], data = {} }, callback)
         init: () => {
             const { initialInputs: input, category, serverUrlPath } = data;
             const router = Router(routes, titles, NotFound(mainSelector), ProgressBar('#progress-bar'));
+            const { MobileTemplate, DesktopTemplate } = layout['summary'];
 
-            layout
-                .filter(l => !l.mainTarget)
-                .forEach(l => render(l.template(), document.querySelector(l.selector)));
+            installMediaQueryWatcher('(max-width: 650px)', match => {
+                render(Layout(match), document.querySelector('#app'));
+                render(layout['header'](), document.querySelector('#header'));
+                render(layout['footer'](), document.querySelector('#footer'));
 
-            const summaryConfig = layout.find(l => l.name === 'summary');
-            Summary.init(summaryConfig);
+                Summary.init(match ? MobileTemplate : DesktopTemplate, match);
+            });
 
             window.addEventListener('hashchange', () => {
                 router.navigate();

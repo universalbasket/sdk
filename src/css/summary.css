@@ -1,14 +1,13 @@
 .summary {
-    position: sticky;
-    z-index: 2;
     background-color: var(--summary-background-color);
-    padding: 5px 10px;
+    padding: 0 var(--gap);
     align-self: stretch;
+    display: grid;
 }
 
 .summary__header {
     font-size: var(--font-size--large);
-    padding: 10px 0;
+    padding: var(--gap) 0;
 }
 
 .summary__header--toggable {
@@ -38,7 +37,7 @@
 }
 
 .summary__block {
-    padding: 1em 0;
+    padding: .5em 0 1.5em;
     line-height: 1.6;
 }
 

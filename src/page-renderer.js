@@ -5,6 +5,7 @@ import { serializeForm , getFormInputKeys } from './serialize-form.js';
 import getData from './get-data-with-priority.js';
 import pageWrapper from './builtin-templates/page-wrapper.js';
 import inlineLoading from './builtin-templates/inline-loading.js';
+import flashError from './builtin-templates/flash-error.js';
 import * as Storage from './storage.js';
 
 const VAULT_FORM_SELECTOR = '#ubio-vault-form';
@@ -40,6 +41,9 @@ class PageRenderer {
 
     next() {
         const section = this.sections.shift();
+        if (!section) {
+            return;
+        }
         this.currentSection = section;
 
         this.renderSection(section);
@@ -94,7 +98,7 @@ class PageRenderer {
                 })
                 .catch(err => {
                     if (document.querySelector('#error')) {
-                        render(html`${err}`, document.querySelector('#error'));
+                        render(flashError(err), document.querySelector('#error'));
                     }
                     submitBtn.removeAttribute('disabled');
                 });
@@ -127,7 +131,7 @@ class PageRenderer {
                 })
                 .catch(err => {
                     if (document.querySelector('#error')) {
-                        render(html`${err}`, document.querySelector('#error'));
+                        render(flashError(err), document.querySelector('#error'));
                     }
                     submitBtn.removeAttribute('disabled');
                 });

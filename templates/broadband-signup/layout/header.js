@@ -2,5 +2,5 @@ import { html } from '/web_modules/lit-html/lit-html.js';
 
 export default () => html`
 <div class="header">
-    <h2>Here goes brand</h2>
+    <h1>Here goes brand</h1>
 </div>`;
