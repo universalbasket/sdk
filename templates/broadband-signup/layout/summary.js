@@ -1,21 +1,24 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
-import { classMap } from '/web_modules/lit-html/directives/class-map.js';
-
 import PriceDisplay from '../../../src/builtin-templates/price-display.js';
-
-const toggleSummary = new CustomEvent('toggle-summary');
 
 import {
     OtherInformation,
+    MobileSummaryWrapper,
     Documents
-} from '../../shared/summary-sections.js';
+} from '../../shared/summary.js';
 
-function SummaryDetails(inputs, outputs, price) {
+export default {
+    MobileTemplate,
+    DesktopTemplate
+};
+
+function SummaryDetails(inputs, outputs, cache) {
+    const price = getPrice(outputs, cache);
     const selectedTvPackages = inputs.selectedTvPackages && inputs.selectedTvPackages.map(_ => _.name).join(', ');
 
     return html`
     <div class="summary__body">
-        ${ inputs.selectedBroadbandPackage || inputs.selectedPhonePackage || selectedTvPackages ?
+        ${ hasContent(inputs) ?
         html`
             <article class="summary__block">
                 <header class="summary__block-title">
@@ -43,7 +46,8 @@ function SummaryDetails(inputs, outputs, price) {
     </div>`;
 }
 
-function SummaryPreview(inputs, price) {
+function SummaryPreview(inputs, outputs, cache) {
+    const price = getPrice(outputs, cache);
     const selectedTvPackages = inputs.selectedTvPackages && inputs.selectedTvPackages.map(_ => _.name).join(', ');
 
     return html`
@@ -51,7 +55,7 @@ function SummaryPreview(inputs, price) {
             ${ PriceDisplay(price || { currencyCode: 'gbp' }) }
         </b>
 
-        ${ inputs.selectedBroadbandPackage || inputs.selectedPhonePackage || selectedTvPackages ? html`
+        ${ hasContent(inputs) ? html`
             <span class="faint summary__preview-info">
                 ${ inputs.selectedBroadbandPackage ? html`<span>Broadband: ${ inputs.selectedBroadbandPackage.name }</span>` : '' }
                 ${ selectedTvPackages ? html`<span>TV: ${ selectedTvPackages }</span>` : '' }
@@ -68,55 +72,31 @@ function SummaryTitle(_) {
     `;
 }
 
-function ToggableWrapper(isExpanded, template) {
-    const classes = {
-        'summary__header': true,
-        'summary__header--toggable': true,
-        'summary__header--toggled-down': isExpanded,
-        'summary__header--toggled-up': !isExpanded
-    };
-    return html`
-        <header
-            class="${ classMap(classes) }"
-            @click=${ () => window.dispatchEvent(toggleSummary) }>
-            <div class="summary__preview">${ template }</div>
-        </header>`;
-}
-
-export default (inputs = {}, outputs = {}, cache = {}, _local = {}, _ = {}, isMobile, isExpanded) => {
+function getPrice(outputs, cache) {
     const priceObj = outputs.finalPrice ||
         outputs.estimatedPrice ||
         cache.finalPrice ||
         cache.estimatedPrice;
 
-    const price = priceObj && priceObj.price;
+    return priceObj && priceObj.price;
+}
 
-    if (isMobile) {
+function hasContent(inputs) {
+    return !!(inputs.selectedBroadbandPackage ||
+        inputs.selectedPhonePackage ||
+        inputs.selectedTvPackages && inputs.selectedTvPackages.length > 0);
+}
 
-        if (inputs.selectedRooms && inputs.selectedRooms[0] || price) {
-            if (isExpanded) {
-                return html`
-                    <aside class="summary">
-                        ${ ToggableWrapper(isExpanded, SummaryTitle(_)) }
-                        ${ SummaryDetails(inputs, outputs, price) }
-                    </aside>
-                    <div class="summary-wrapper__overlay" @click=${ () => window.dispatchEvent(toggleSummary) }></div>`;
-            }
-            return html`
-                <aside class="summary">
-                    ${ ToggableWrapper(isExpanded, SummaryPreview(inputs, price)) }
-                </aside>`;
-        }
-        return html`
-            <aside class="summary">
-                <header class="summary__header">${ SummaryTitle(_) }</header>
-            </aside>`;
-    }
-
+function DesktopTemplate(inputs, outputs, cache, _) {
     return html`
-        <aside class="summary">
-            <header class="summary__header">${ SummaryTitle(_) }</header>
-            ${ SummaryDetails(inputs, outputs, price) }
-        </aside>`;
-};
+    <aside class="summary">
+        <header class="summary__header">${ SummaryTitle(_) }</header>
+        ${ SummaryDetails(inputs, outputs, cache) }
+    </aside>`;
+}
+
+function MobileTemplate(inputs, outputs, cache, _) {
+    return MobileSummaryWrapper(inputs, outputs, cache, _,
+        SummaryPreview, SummaryTitle, SummaryDetails, hasContent);
+}
 

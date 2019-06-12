@@ -42,6 +42,11 @@ p {
     margin: 1em 0;
 }
 
+h2 {
+    font-size: 22px;
+    font-weight: 600;
+}
+
 
 button:disabled {
     opacity: .5;
