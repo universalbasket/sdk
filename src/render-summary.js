@@ -5,14 +5,17 @@ import * as Storage from './storage.js';
 
 let BodyTemplate = null;
 let initiated = false;
+let currentTarget, prevTarget;
 
 export default {
-    init(template) {
+    init(template, isMobile) {
         if (!template || typeof template !== 'function') {
             throw new Error('renderSummary: invalid template');
         }
 
         BodyTemplate = template;
+        currentTarget = document.querySelector(isMobile ? '#summary-mobile' : '#summary-desktop');
+        prevTarget = document.querySelector(!isMobile ? '#summary-mobile' : '#summary-desktop');
 
         _updateUI();
         window.addEventListener('update', _updateUI);
@@ -36,7 +39,8 @@ function _updateUI() {
     }
 
     const { inputs, outputs, cache, local, _ } = Storage.getAll();
-    render(BodyTemplate(inputs, outputs, cache, local, _), document.querySelector('#summary'));
+    render(BodyTemplate(inputs, outputs, cache, local, _), currentTarget);
+    render('', prevTarget);
 }
 
 function showModal({ detail }) {

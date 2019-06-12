@@ -34,7 +34,7 @@
 }
 
 @media all and (max-width: 650px) {
-    .summary-wrapper {
+    .summary-wrapper--mobile {
         border-bottom: 2px solid #ccc;
     }
 
@@ -77,7 +77,7 @@
         padding: var(--gap) 0;
     }
 
-    .summary-wrapper {
+    .summary-wrapper--desktop {
         width: 37vw;
         padding: var(--gap) 0;
     }

@@ -26,6 +26,9 @@ class PageRenderer {
     }
 
     init() {
+        if (this.sections.length === 0) {
+            throw 'PageRenderer init: empty sections []';
+        }
         this.renderWrapper();
     }
 
@@ -41,11 +44,12 @@ class PageRenderer {
 
     next() {
         const section = this.sections.shift();
-        if (!section) {
-            return;
-        }
-        this.currentSection = section;
 
+        if (!section) {
+            throw 'PageRenderer next: no section';
+        }
+
+        this.currentSection = section;
         this.renderSection(section);
     }
 

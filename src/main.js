@@ -56,11 +56,11 @@ function createApp({ pages = [], cache = [], layout = {}, data = {} }, callback)
             const router = Router(routes, titles, NotFound(mainSelector), ProgressBar('#progress-bar'));
             const { MobileTemplate, DesktopTemplate } = layout['summary'];
 
-            installMediaQueryWatcher('(max-width: 650px)', match => {
-                render(Layout(match), document.querySelector('#app'));
-                render(layout['header'](), document.querySelector('#header'));
-                render(layout['footer'](), document.querySelector('#footer'));
+            render(Layout(), document.querySelector('#app'));
+            render(layout['header'](), document.querySelector('#header'));
+            render(layout['footer'](), document.querySelector('#footer'));
 
+            installMediaQueryWatcher('(max-width: 650px)', match => {
                 Summary.init(match ? MobileTemplate : DesktopTemplate, match);
             });
 
