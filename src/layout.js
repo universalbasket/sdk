@@ -1,26 +1,27 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
 
 const Layout = () => html`
-    <div class="sticky-top">
-        <header class="header-wrapper">
+    <header class="sticky-top">
+        <div class="header-wrapper">
             <div id="header" class="container"></div>
-        </header>
+        </div>
         <div class="flash-error-wrapper">
             <div id="error" class="container"></div>
         </div>
         <div id="summary-mobile" class="summary-wrapper summary-wrapper--mobile"></div>
-    </div>
+    </header>
 
     <div class="progress-bar-wrapper">
         <div class="container" id="progress-bar"></div>
     </div>
 
-    <div class="container">
-        <main id="main" class="main-wrapper"></main>
+    <main class="container">
+        <section id="main" class="main-wrapper"></section>
         <aside id="summary-desktop" class="summary-wrapper summary-wrapper--desktop"></aside>
-    </div>
+    </main>
 
-    <div id="footer"></div>
+    <footer id="footer"></footer>
+
     <div id="modal"></div>
 `;
 
