@@ -218,14 +218,14 @@ class PageRenderer {
         this.getDataForSection(waitFor)
             .then(res => {
                 render(html`${template(sectionName, res, skip)} `, sectionForm);
-                this.addListeners(name);
+                this.addListeners(sectionName);
                 this.skipIfSubmitted();
             });
     }
 
     getDataForSection(waitFor = []) {
         if (!waitFor || waitFor.length === 0) {
-            return {};
+            return Promise.resolve({});
         }
 
         return new Promise(res => {
