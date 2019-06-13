@@ -7,7 +7,8 @@ import {
     setupDates,
     checkout,
     finalPriceConsent,
-    confirmation
+    confirmation,
+    summaryPage
 } from './broadband-signup/sections/index.js';
 
 export default {
@@ -89,6 +90,22 @@ export default {
                     name: 'setup-dates',
                     template: setupDates,
                     waitFor: ['output.availableBroadbandSetupDates']
+                }
+            ]
+        },
+        {
+            name: 'summary',
+            route: '/summary',
+            title: 'Summary',
+            sections: [
+                {
+                    name: 'summary',
+                    template: summaryPage,
+                    waitFor: [
+                        'input.selectedBroadbandPackage',
+                        'input.selectedTvPackages',
+                        'input.selectedPhonePackage'
+                    ]
                 }
             ]
         },

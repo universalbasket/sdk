@@ -7,10 +7,24 @@ const update = new CustomEvent('update');
 export {
     OtherInformation,
     Documents,
-    MobileSummaryWrapper
+    MobileSummaryWrapper,
+    DesktopSummaryWrapper
 };
 
 let isExpanded = false;
+
+function showDetails() {
+    const route = window.location.hash.slice(1);
+    return !['/error', '/confirmation'].includes(route);
+}
+
+function DesktopSummaryWrapper(inputs, outputs, cache, _, SummaryTitle, SummaryDetails) {
+    return html`
+    <aside class="summary">
+        <header class="summary__header">${ SummaryTitle(_) }</header>
+        ${ showDetails() ? SummaryDetails(inputs, outputs, cache) : '' }
+    </aside>`;
+}
 
 function MobileSummaryWrapper(inputs, outputs, cache, _, SummaryPreview, SummaryTitle, SummaryDetails, hasContent) {
     const toggleSummary = {
@@ -21,7 +35,7 @@ function MobileSummaryWrapper(inputs, outputs, cache, _, SummaryPreview, Summary
         capture: true
     };
 
-    if (hasContent(inputs)) {
+    if (hasContent(inputs) && showDetails()) {
         if (isExpanded) {
             return html`
             <aside class="summary">
@@ -74,8 +88,8 @@ function OtherInformation(outputs = {}) {
     }
 
     return html`
-        <div class="summary__block summary__block--docs">
-            <p><b>Other information</b></p>
+        <div class="summary__block summary__block--bordered">
+            <h4>Other information</h4>
             <ul class="dim">${ items }</ul>
         </div>`;
 }
@@ -93,8 +107,8 @@ function Documents(outputs = {}) {
     }
 
     return html`
-        <div class="summary__block summary__block--docs">
-            <p><b>Documents</b></p>
+        <div class="summary__block summary__block--bordered">
+            <h4>Documents</h4>
             <ul class="dim">${ items }</ul>
         </div>`;
 

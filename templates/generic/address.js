@@ -22,11 +22,7 @@ export default (prefix = 'address') => html`
         <input type="text" name="${prefix}[country-subdivision]" id="${prefix}[country-subdivision]" required/>
     </div>
 
-    <div class="field">
-    <!-- select -->
-        <label for="${prefix}[country-code]" class="field__name">Country Code</label>
-        <input type="text" name="${prefix}[country-code]" id="${prefix}[country-code]" maxlength=2 required />
-    </div>
+    <input type="hidden" name="${prefix}[country-code]" id="${prefix}[country-code]" maxlength=2 value="gb" required />
 
     <div class="field">
         <label for="${prefix}[postcode]" class="field__name">Postcode</label>

@@ -13,6 +13,7 @@
 .clickable {
     text-decoration: underline;
     cursor: pointer;
+    color: currentColor;
 }
 
 .clickable:hover {
@@ -40,16 +41,6 @@
 
 .form--disabled {
     opacity: .5;
-}
-
-.inline-loading {
-    display: flex;
-    justify-content: center;
-    align-content: center;
-}
-
-.loading {
-    padding: var(--gap);
 }
 
 .file-icon {

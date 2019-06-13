@@ -19,6 +19,7 @@ import modal from './builtin-templates/modal.js';
 import notFound404 from './builtin-templates/not-found-404.js';
 import pageWrapper from './builtin-templates/page-wrapper.js';
 import priceDisplay from './builtin-templates/price-display.js';
+import priceType from './builtin-templates/price-type.js';
 import progressBar from './builtin-templates/progress-bar.js';
 
 export const templates = {
@@ -29,6 +30,7 @@ export const templates = {
     notFound404,
     pageWrapper,
     priceDisplay,
+    priceType,
     progressBar
 };
 

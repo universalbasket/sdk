@@ -16,30 +16,31 @@ function StepLabel(activeLabel, activeIndex, totalSteps) {
         return '';
     }
 
-    let leftRuler = activeIndex - 1;
-    let rightRuler = activeIndex + 2;
+    let leftRuler = activeIndex;
+    let rightRuler = activeIndex + 3;
     let textAlign = 'center';
 
     if (activeLabel.length > 14) {
-        leftRuler = activeIndex - 2;
-        rightRuler = activeIndex + 3;
+        leftRuler = activeIndex - 1;
+        rightRuler = activeIndex + 4;
     }
 
-    if (activeIndex <= 1) {
+    if (leftRuler <= 0) {
         leftRuler = 1;
-        rightRuler = -1;
     }
 
-    if (rightRuler >= totalSteps) {
+    if (rightRuler > totalSteps) {
         rightRuler = -1;
     }
 
     if (activeIndex === 0) {
         textAlign = 'left';
+        rightRuler = -1;
     }
 
     if (activeIndex + 1 === totalSteps) {
         textAlign = 'right';
+        leftRuler = 1;
     }
 
     const styles = {

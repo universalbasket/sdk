@@ -29,8 +29,14 @@
     background-color: var(--progress-bar-background-color);
 }
 
-.page {
+.inline-loading {
+    display: inline-grid;
+    grid-template-columns: auto 1fr;
+    grid-gap: var(--gap);
+    justify-content: start;
+    align-items: center;
     padding: var(--gap) 0;
+    font-weight: bold;
 }
 
 @media all and (max-width: 650px) {
@@ -48,7 +54,11 @@
     }
 
     .main-wrapper {
-        padding: 20px var(--gap);
+        padding: var(--gap);
+    }
+
+    .inline-loading {
+        padding: var(--gap);
     }
 }
 
@@ -74,12 +84,14 @@
 
     .main-wrapper {
         min-width: 45vw;
+        margin-top: 20px;
         padding: var(--gap) 0;
     }
 
     .summary-wrapper--desktop {
         width: 37vw;
         padding: var(--gap) 0;
+        margin-top: 20px;
     }
 
     .header,
