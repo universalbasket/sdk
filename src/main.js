@@ -128,7 +128,6 @@ export function createApp({ pages, cache = [], layout, data = {} }, callback) {
                             console.error(err);
                             window.location.hash = '/error';
                         });
-                } else {
                 }
             });
 
