@@ -12,7 +12,7 @@ const pkg = require('./package.json');
 const domains = ['broadband-signup', 'hotel-booking', 'pet-insurance'];
 const args = process.argv.slice(1);
 
-async function run() {
+function getArgs() {
     const domainIndex = args.indexOf('--domain');
 
     if (domainIndex === -1) {
@@ -37,18 +37,25 @@ async function run() {
         throw new Error('A valid domain name must follow the --name flag in order to name your new project.');
     }
 
-    await fs.mkdir(name);
+    return { name, domain };
+}
+
+async function run() {
+    const { name, domain } = getArgs();
+
+    await copy(path.join(__dirname, 'application-template'), name);
 
     process.chdir(name);
 
     await fs.writeFile('package.json', JSON.stringify({
-        name: 'project-template',
+        name,
         version: '1.0.0',
         description: '',
         main: 'index.js',
         private: true,
         scripts: {
             install: 'rimraf web_modules && vendor-copy',
+            start: 'browser-sync start --index \'index.html\' --server --files \'index.html\' \'index.js\' \'src\' \'web_modules\'',
             test: 'echo \'Error: no test specified\' && exit 1'
         },
         dependencies: {
@@ -58,37 +65,35 @@ async function run() {
             'vendor-copy': pkg.dependencies['vendor-copy'],
             'rimraf': pkg.dependencies['rimraf']
         },
+        devDependencies: {
+            'browser-sync': pkg.devDependencies['browser-sync']
+        },
         vendorCopy: [
             {
                 from: 'node_modules/lit-html',
                 to: 'web_modules/lit-html'
             },
             {
-                from: `node_modules/@ubio/sdk-application-bundle/${pkg.module}`,
-                to: 'web_modules/@ubio/sdk-application-bundle.js'
+                from: 'node_modules/@ubio/sdk-application-bundle/bundle.js',
+                to: 'web_modules/@ubio/sdk-application-bundle/bundle.js'
+            },
+            {
+                from: 'node_modules/@ubio/sdk-application-bundle/index.css',
+                to: 'web_modules/@ubio/sdk-application-bundle/index.css'
             }
         ]
     }, null, 2));
 
-    await exec('npm i');
-    await copy(path.join(__dirname, 'templates', domain), domain);
-    await copy(path.join(__dirname, 'templates', 'generic'), 'generic');
+    await exec('npm i', { env: process.env });
+    await copy(path.join(__dirname, 'templates', domain), path.join('src', domain));
+    await copy(path.join(__dirname, 'templates', 'generic'), path.join('src', 'generic'));
+    await copy(path.join(__dirname, 'templates', 'shared'), path.join('src', 'shared'));
     await replaceInFiles({
-        files: [
-            `${domain}/**/*.js`,
-            'generic/**/*.js'
-        ],
-        from: '/src/main.js',
-        to: '/web_modules/@ubio/sdk-application-bundle.js'
+        files: ['src/**/*.js'],
+        from: /\/src\/main.js/g,
+        to: '/web_modules/@ubio/sdk-application-bundle/bundle.js'
     });
-    await fs.copyFile(path.join(__dirname, 'templates', `${domain}.config.js`), 'ubio.config.js');
-
-    await fs.writeFile('index.js', `import { createApp } from '/web_modules/@ubio/sdk-application-bundle.js';
-import CONFIG from './ubio.config.js';
-
-const app = createApp(CONFIG, () => console.log('finished!'));
-app.init();
-`);
+    await fs.copyFile(path.join(__dirname, 'templates', `${domain}.config.js`), path.join('src', 'ubio.config.js'));
 }
 
 run();
