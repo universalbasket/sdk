@@ -4,6 +4,7 @@ import PriceDisplay from '../../../src/builtin-templates/price-display.js';
 import {
     OtherInformation,
     MobileSummaryWrapper,
+    DesktopSummaryWrapper,
     Documents
 } from '../../shared/summary.js';
 
@@ -65,7 +66,7 @@ function SummaryTitle(_) {
     const title = _.serviceName || 'Your Package';
     return html`
         <b class="large">${ title }</b>
-        <span class="faint large">Hotel Booking</span>
+        <span class="faint large">Broadband signup</span>
     `;
 }
 
@@ -85,11 +86,7 @@ function hasContent(inputs) {
 }
 
 function DesktopTemplate(inputs, outputs, cache, _) {
-    return html`
-    <aside class="summary">
-        <header class="summary__header">${ SummaryTitle(_) }</header>
-        ${ SummaryDetails(inputs, outputs, cache) }
-    </aside>`;
+    return DesktopSummaryWrapper(inputs, outputs, cache, _, SummaryTitle, SummaryDetails);
 }
 
 function MobileTemplate(inputs, outputs, cache, _) {

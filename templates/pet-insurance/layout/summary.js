@@ -3,6 +3,7 @@ import { templates } from '/src/main.js';
 import {
     OtherInformation,
     MobileSummaryWrapper,
+    DesktopSummaryWrapper,
     Documents
 } from '../../shared/summary.js';
 
@@ -135,11 +136,7 @@ function PetInformation(inputs, currencyCode = 'gbp') {
 }
 
 function DesktopTemplate(inputs, outputs, cache, _) {
-    return html`
-    <aside class="summary">
-        <header class="summary__header">${ SummaryTitle(_) }</header>
-        ${ SummaryDetails(inputs, outputs, cache) }
-    </aside>`;
+    return DesktopSummaryWrapper(inputs, outputs, cache, _, SummaryTitle, SummaryDetails);
 }
 
 function MobileTemplate(inputs, outputs, cache, _) {

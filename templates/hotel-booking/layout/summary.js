@@ -4,6 +4,7 @@ import { templates } from '/src/main.js';
 import {
     OtherInformation,
     MobileSummaryWrapper,
+    DesktopSummaryWrapper,
     Documents
 } from '../../shared/summary.js';
 
@@ -81,11 +82,7 @@ function hasContent(inputs) {
 }
 
 function DesktopTemplate(inputs, outputs, cache, _) {
-    return html`
-    <div class="summary">
-        <header class="summary__header">${ SummaryTitle(_) }</header>
-        ${ SummaryDetails(inputs, outputs, cache) }
-    </div>`;
+    return DesktopSummaryWrapper(inputs, outputs, cache, _, SummaryTitle, SummaryDetails);
 }
 
 function MobileTemplate(inputs, outputs, cache, _) {
