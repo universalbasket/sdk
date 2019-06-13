@@ -1,4 +1,4 @@
-import { html } from '/web_modules/lit-html/lit-html.js';
+import { html } from '/src/main.js';
 import priceDisplay from '../../src/builtin-templates/price-display.js';
 
 export default (finalPrice, hide = true) => {

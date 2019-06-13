@@ -1,4 +1,4 @@
-import { html } from '/web_modules/lit-html/lit-html.js';
+import { html } from '/src/main.js';
 import { directDebit } from '../inputs/index.js';
 
 export default (name, { selectedPaymentTerm }, skip) => {

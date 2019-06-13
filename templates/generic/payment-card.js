@@ -1,4 +1,4 @@
-import { html } from '/web_modules/lit-html/lit-html.js';
+import { html } from '/src/main.js';
 
 const BASE_URL = 'https://vault.automationcloud.net/forms/index.html';
 const DEFAULT_OPTIONS = {

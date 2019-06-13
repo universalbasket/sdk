@@ -1,5 +1,4 @@
-import { html } from '/web_modules/lit-html/lit-html.js';
-import { classMap } from '/web_modules/lit-html/directives/class-map.js';
+import { html, classMap } from '/src/main.js';
 
 const showModal = (...detail) => new CustomEvent('show-modal', { detail });
 const update = new CustomEvent('update');

@@ -1,4 +1,4 @@
-import { html, render } from '/web_modules/lit-html/lit-html.js';
+import { html, render } from '/src/main.js';
 let installationAddresses = [];
 
 const cloneAddress = address => html`
