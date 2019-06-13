@@ -1,5 +1,5 @@
 node_modules/
 web_modules/
-*.config.js
+*.html
 /bundle.js
 /bundle.umd.js
