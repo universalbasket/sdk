@@ -75,13 +75,16 @@ export function createApp({ pages, cache = [], layout, data = {} }, callback) {
     };
 
     pages.forEach((config, stepIndex) => {
-        const { title, sections, route, isSuccessPage = false } = config;
+        const { title, sections, route, excludeStep = false } = config;
         let onFinish = null;
         let step = stepIndex;
 
-        if (isSuccessPage || pages.length === stepIndex + 1) {
-            onFinish = callback;
+        if (excludeStep) {
             step = null;
+        }
+
+        if (pages.length === stepIndex + 1) {
+            onFinish = callback;
         } else {
             const nextRoute = routingOrder[stepIndex + 1];
             onFinish = () => setTimeout(() => { window.location.hash = nextRoute; }, 500);

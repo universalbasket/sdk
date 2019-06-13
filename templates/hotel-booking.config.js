@@ -41,8 +41,8 @@ export default {
             ]
         },
         {
-            name: 'awaiting-confirmation',
-            route: '/awaiting-confirmation',
+            name: 'confirmation',
+            route: '/confirmation',
             title: '',
             sections: [
                 {
@@ -51,7 +51,7 @@ export default {
                     waitFor: ['outputs.bookingConfirmation']
                 }
             ],
-            onSuccess: true,
+            excludeStep: true
         }
     ],
     data: {
