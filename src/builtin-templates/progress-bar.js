@@ -2,17 +2,17 @@ import { html } from '/web_modules/lit-html/lit-html.js';
 import { classMap } from '/web_modules/lit-html/directives/class-map.js';
 import { styleMap } from '/web_modules/lit-html/directives/style-map.js';
 
-function StepIcon(title, i, activeIndex) {
+function StepIcon(i, activeIndex) {
     const classes = {
         'progress-bar__step': true,
         'progress-bar__step--active': activeIndex != null && i === activeIndex
     };
 
-    return html`<div class="${classMap(classes)}">${ i }</div>`;
+    return html`<div class="${classMap(classes)}">${ i + 1 }</div>`;
 }
 
-function StepLabel(titles, activeIndex) {
-    if (!activeIndex) {
+function StepLabel(activeLabel, activeIndex, totalSteps) {
+    if (activeLabel == null || activeIndex == null) {
         return '';
     }
 
@@ -20,7 +20,7 @@ function StepLabel(titles, activeIndex) {
     let rightRuler = activeIndex + 2;
     let textAlign = 'center';
 
-    if (titles[activeIndex - 1].length > 14) {
+    if (activeLabel.length > 14) {
         leftRuler = activeIndex - 2;
         rightRuler = activeIndex + 3;
     }
@@ -30,15 +30,15 @@ function StepLabel(titles, activeIndex) {
         rightRuler = -1;
     }
 
-    if (rightRuler >= titles.length) {
+    if (rightRuler >= totalSteps) {
         rightRuler = -1;
     }
 
-    if (activeIndex === 1) {
+    if (activeIndex === 0) {
         textAlign = 'left';
     }
 
-    if (activeIndex === titles.length) {
+    if (activeIndex + 1 === totalSteps) {
         textAlign = 'right';
     }
 
@@ -50,13 +50,13 @@ function StepLabel(titles, activeIndex) {
 
     return html`
     <span class="progress-bar__current-step" style="${styleMap(styles)}">
-        ${ titles[activeIndex - 1] }
+        ${ activeLabel }
     </span>`;
 }
 
-export default (titles, activeIndex) => html`
+export default (titles, activeLabel, activeStep) => html`
     <div class="progress-bar"
         style="${ styleMap({ 'grid-template-columns': `repeat(${titles.length}, var(--step-icon-size))` }) }">
-        ${ titles.map((title, index) => StepIcon(title, index + 1, activeIndex)) }
-        ${ StepLabel(titles, activeIndex) }
+        ${ titles.map((_title, index) => StepIcon(index, activeStep)) }
+        ${ StepLabel(activeLabel, activeStep, titles.length) }
     </div>`;

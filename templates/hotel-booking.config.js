@@ -43,14 +43,15 @@ export default {
         {
             name: 'confirmation',
             route: '/confirmation',
-            title: 'Confirmation',
+            title: '',
             sections: [
                 {
                     name: 'confirmation',
                     template: confirmation,
                     waitFor: ['outputs.bookingConfirmation']
                 }
-            ]
+            ],
+            excludeStep: true
         }
     ],
     data: {

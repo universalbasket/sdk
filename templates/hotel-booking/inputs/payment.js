@@ -20,7 +20,7 @@ export default otp => html`
 
     <div class="field">
         <label class="field__name" for="main-guest[contact][email]">Email address</label>
-        <input type="text" name="main-guest[contact][email]" placeholder="" required/>
+        <input type="email" name="main-guest[contact][email]" placeholder="" required/>
     </div>
 
     <h2>Card details</h2>

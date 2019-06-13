@@ -119,7 +119,8 @@ export default {
                     template: confirmation,
                     waitFor: ['outputs.confirmation']
                 }
-            ]
+            ],
+            excludeStep: true
         }
     ],
     data: {
