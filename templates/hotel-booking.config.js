@@ -36,7 +36,7 @@ export default {
                 {
                     name: 'final-price-consent',
                     template: finalPriceConsent,
-                    waitFor: ['input.selectedRooms', 'outputs.finalPrice'],
+                    waitFor: ['input.selectedRooms', 'outputs.finalPrice']
                 }
             ]
         },
