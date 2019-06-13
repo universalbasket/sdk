@@ -21,7 +21,7 @@ function SummaryDetails(inputs, outputs, cache) {
         html`
             <article class="summary__block">
                 <header class="summary__block-title">
-                    Your Room
+                    Your room
                 </header>
                 <ul class="dim">
                     ${ inputs.selectedRooms[0].type ? html`<li>${ inputs.selectedRooms[0].type }</li>` : '' }
@@ -82,10 +82,10 @@ function hasContent(inputs) {
 
 function DesktopTemplate(inputs, outputs, cache, _) {
     return html`
-    <aside class="summary">
+    <div class="summary">
         <header class="summary__header">${ SummaryTitle(_) }</header>
         ${ SummaryDetails(inputs, outputs, cache) }
-    </aside>`;
+    </div>`;
 }
 
 function MobileTemplate(inputs, outputs, cache, _) {

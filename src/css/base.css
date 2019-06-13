@@ -48,7 +48,10 @@ p {
 
 h2 {
     font-size: 22px;
+    line-height: 1.25;
     font-weight: 600;
+    margin-bottom: .5em;
+    padding: var(--gap--small) 0;
 }
 
 h3 {

@@ -1,6 +1,7 @@
 .table {
     border-top: 2px solid var(--color);
     margin: 0 0 1em;
+    width: 100%;
 }
 
 .table th {

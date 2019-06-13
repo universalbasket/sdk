@@ -66,8 +66,8 @@
     padding: 0 var(--gap);
 }
 
-@media all and (min-width: 650px) {
+@media all and (max-width: 650px) {
     .summary {
-        top: var(--header-height--large);
+        padding: var(--gap--small) 0;
     }
 }

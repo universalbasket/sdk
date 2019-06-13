@@ -21,9 +21,6 @@ function SummaryDetails(inputs, outputs, cache) {
         ${ hasContent(inputs) ?
         html`
             <article class="summary__block">
-                <header class="summary__block-title">
-                    Your Room
-                </header>
                 <ul class="dim">
                     ${ inputs.selectedBroadbandPackage ? html`<li>Broadband: ${ inputs.selectedBroadbandPackage.name }</li>` : '' }
                     ${ selectedTvPackages ? html`<li>TV: ${ selectedTvPackages }</li>` : '' }

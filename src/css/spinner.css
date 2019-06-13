@@ -1,15 +1,17 @@
 .spinner {
-    width: 10px;
-    height: 20px;
+    --spinner-size: 20px;
+
+    width: var(--spinner-size);
+    height: var(--spinner-size);
     position: relative;
-    margin-right: 10px;
+    display: inline-block;
 }
 
 .spinner .spinner__bar {
-    width: 100%;
+    width: 50%;
     height: 100%;
     position: absolute;
-    left: 0;
+    left: 25%;
     top: 0;
 }
 
