@@ -12,6 +12,8 @@ class EndUserSdk {
     }
 
     async create({ input = {}, category, serverUrlPath }) {
+        localStorage.clear();
+
         if (jobId && token && serviceId) {
             let previous;
 
@@ -26,8 +28,6 @@ class EndUserSdk {
                 console.log('failed to cancel previous job. it will be abandoned');
             }
         }
-
-        localStorage.clear();
 
         const meta = await createJobAndEndUser(input, category, serverUrlPath);
 

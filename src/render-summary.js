@@ -1,5 +1,5 @@
 import { render } from '/web_modules/lit-html/lit-html.js';
-import modal from './builtin-templates/modal.js';
+import createModal from './builtin-templates/modal.js';
 
 import * as Storage from './storage.js';
 
@@ -44,5 +44,6 @@ function _updateUI() {
 }
 
 function showModal({ detail }) {
-    render(modal(...detail), document.querySelector('#modal'));
+    const modal = createModal(...detail);
+    modal.show();
 }

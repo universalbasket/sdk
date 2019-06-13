@@ -3,15 +3,34 @@ import { unsafeHTML } from '/web_modules/lit-html/directives/unsafe-html.js';
 
 import PriceDisplay from './price-display.js';
 
-export default function(body, title) {
+export default function create(body, title, options) {
+    const template = createTemplate(body, title, options);
+
+    return {
+        template,
+        show: () => { show(template); },
+        close
+    };
+}
+
+function show(template) {
+    render(template, document.querySelector('#modal'));
+}
+
+function createTemplate(body, title, options = {}) {
     if (!body || typeof body !== 'object') {
         return '';
     }
+    const modalOptions = {
+        showClose: true,
+        closeOnClickOverlay: true,
+        ...options
+    };
 
     switch (body.type) {
-        case 'html': return showModal(body, title);
-        case 'HTML': return showModal(unsafeHTML(body.html), body.name);
-        case 'StructuredText': return showModal(getContentsHtml(body.contents), body.name);
+        case 'html': return showModal(body, title, modalOptions);
+        case 'HTML': return showModal(unsafeHTML(body.html), body.name, modalOptions);
+        case 'StructuredText': return showModal(getContentsHtml(body.contents), body.name, modalOptions);
         default: return '';
     }
 }
@@ -20,7 +39,7 @@ function close() {
     render('', document.querySelector('#modal'));
 }
 
-function showModal(details, title) {
+function showModal(details, title, options) {
     return html`
         <div class="modal-wrapper">
             <div class="modal">
@@ -28,14 +47,15 @@ function showModal(details, title) {
                     <h2 class="large">${title}</h2>
                 </div>
                 <div class="modal__body">${details}</div>
-                <span
-                    class="modal__close"
-                    @click="${close}">
-                </span>
+                    ${options.showClose ? html`
+                    <span
+                        class="modal__close"
+                        @click=${close}>
+                    </span>` : ''}
             </div>
             <div
                 class="modal-wrapper__overlay"
-                @click=${close}></div>
+                @click=${options.closeOnClickOverlay ? close : () => { return; }}></div>
         </div>`;
 }
 

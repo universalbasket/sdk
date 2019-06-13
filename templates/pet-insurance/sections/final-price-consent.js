@@ -1,6 +1,6 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
 import finalPriceConsent from '../../generic/final-price-consent.js';
-import { createInputs } from '/src/main.js';
+import { createInputs, templates } from '/src/main.js';
 
 export default (name, { estimatedPrice = {}, finalPrice = {} }, skip) => {
     const finalValue = finalPrice.price && finalPrice.price.value;
@@ -11,18 +11,33 @@ export default (name, { estimatedPrice = {}, finalPrice = {} }, skip) => {
     }
 
     if (finalValue > estimatedValue) {
-        return html`
-            ${finalPriceConsent(finalPrice)}
-            <div class="section__actions">
+        //template to just display on modal
+        const template = html`
+            <p>The final price has changed. and will be:</p>
+            <b class="large">${templates.priceTemplate(finalPrice.price)}</b>
+            <div class="section__actions field field-set">
+                <button type="button" class="button button--right button--secondary" id="cancel-btn">Cancel</button>
                 <button type="button" class="button button--right button--primary" id="submit-btn-${name}">Confirm and pay</button>
             </div>
-            `;
+        `;
+
+        const modal = templates.modal(template, 'Price check', {
+            closeOnOverlay: false,
+            showClose: false
+        });
+
+        modal.show();
+
+        document.querySelector(`#submit-btn-${name}`).addEventListener('click', modal.close);
+        document.querySelector('#cancel-btn').addEventListener('click', modal.close);
+
+        // return input field to the main form
+        return finalPriceConsent(finalPrice);
     }
 
     createInputs({ finalPriceConsent: finalPrice })
         .then(() => {
             skip();
+            return '';
         });
-
-    return html``;
 };
