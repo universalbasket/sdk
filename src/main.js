@@ -87,7 +87,7 @@ export function createApp({ pages, cache = [], layout, data = {} }, callback) {
             onFinish = callback;
         } else {
             const nextRoute = routingOrder[stepIndex + 1];
-            onFinish = () => setTimeout(() => { window.location.hash = nextRoute; }, 500);
+            onFinish = () => { window.location.hash = nextRoute; };
         }
 
         const renderer = PageRenderer(name, sections, mainSelector, onFinish);
@@ -168,9 +168,9 @@ export function createApp({ pages, cache = [], layout, data = {} }, callback) {
 
 function afterSdkInitiated(cacheConfig, data) {
     if (data.local) {
-        Object.keys(data.local).forEach(key => {
-            Storage.set('local', key, data.local[key]);
-        });
+        for (const [key, val] of Object.entries(data.local)) {
+            Storage.set('local', key, val);
+        }
     }
 
     Cache.poll(cacheConfig);
