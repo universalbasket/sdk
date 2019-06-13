@@ -5,7 +5,7 @@ export default (name, { availableRooms }) => {
         <div class="field field-set">
             <span class="field__name">Select room</span>
             <select name="selected-rooms-$object[]" required>
-                <option>select room...</option>
+                <option value="">select room...</option>
                 ${ availableRooms.map(room => html`
                     <option
                         value="${JSON.stringify(room)}">
