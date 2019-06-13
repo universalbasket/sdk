@@ -61,7 +61,6 @@ async function run() {
         dependencies: {
             // '@ubio/sdk-application-bundle': `^${pkg.version}`,
             '@ubio/sdk-application-bundle': '..',
-            'lit-html': pkg.dependencies['lit-html'],
             'vendor-copy': pkg.dependencies['vendor-copy'],
             'rimraf': pkg.dependencies['rimraf']
         },
@@ -69,10 +68,6 @@ async function run() {
             'browser-sync': pkg.devDependencies['browser-sync']
         },
         vendorCopy: [
-            {
-                from: 'node_modules/lit-html',
-                to: 'web_modules/lit-html'
-            },
             {
                 from: 'node_modules/@ubio/sdk-application-bundle/bundle.js',
                 to: 'web_modules/@ubio/sdk-application-bundle/bundle.js'
