@@ -23,7 +23,7 @@ function serializeForm(selector = 'form', options = {}) {
 }
 
 function getFormInputKeys(formId) {
-    const inputs = serializeForm(formId, { empty: true, serializer: null });
+    const inputs = serializeForm(formId, { empty: true });
 
     return Object.keys(inputs);
 }

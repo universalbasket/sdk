@@ -32,15 +32,13 @@ class PageRenderer {
     }
 
     init() {
-        this.sectionsToRender = [...this.sections];
+        this.sectionsToRender = this.sections.map(s => { return { elementName: kebabcase(s.name), ...s }; });
         this.renderWrapper();
     }
 
     renderWrapper() {
         render(pageWrapper(), document.querySelector(this.selector));
-        const wrappers = this.sectionsToRender.map(section => kebabcase(section.name)).map(name => {
-            return html`<form id="section-form-${name}"></form>`;
-        });
+        const wrappers = this.sectionsToRender.map(s => html`<form id="section-form-${s.elementName}"></form>`);
 
         render(html`${wrappers.map(w => w)}`, document.querySelector('#target'));
         this.next();
@@ -54,8 +52,6 @@ class PageRenderer {
             return this.onFinish();
         }
 
-        this.currentSection = section;
-
         if (!section) {
             throw 'PageRenderer next: no section';
         }
@@ -64,13 +60,13 @@ class PageRenderer {
         this.renderSection(section);
     }
 
-    addListeners(name) {
+    addListeners(elementName) {
         if (!sdk.initiated) {
             return;
         }
-
-        const submitBtn = document.querySelector(`#submit-btn-${name}`);
-        const inputForm = this.currentSection.inputForm;
+        console.log('elementName', elementName);
+        const submitBtn = document.querySelector(`#submit-btn-${elementName}`);
+        const inputForm = document.querySelector(`#section-form-${elementName}`);
 
         const vaultListener = () => {
             if (inputForm && !inputForm.reportValidity()) {
@@ -82,7 +78,7 @@ class PageRenderer {
 
             this.processVault()
                 .then(() => {
-                    const inputs = serializeForm(`#section-form-${name}`);
+                    const inputs = serializeForm(`#section-form-${elementName}`);
                     return this.createInputs(inputs);
                 })
                 .then(() => {
@@ -183,9 +179,8 @@ class PageRenderer {
         }
     }
 
-    renderSection({ name, waitFor, template }) {
-        const sectionName = kebabcase(name);
-        const sectionForm = document.querySelector(`#section-form-${sectionName}`);
+    renderSection({ elementName, waitFor, template }) {
+        const sectionForm = document.querySelector(`#section-form-${elementName}`);
         this.currentSection.inputForm = sectionForm;
 
         render(html`${inlineLoading()} `, sectionForm);
@@ -196,8 +191,8 @@ class PageRenderer {
 
         this.getDataForSection(waitFor)
             .then(res => {
-                render(html`${template(sectionName, res, skip)} `, sectionForm);
-                this.addListeners(sectionName);
+                render(html`${template(elementName, res, skip)} `, sectionForm);
+                this.addListeners(elementName);
                 this.skipIfSubmitted();
             });
     }
@@ -247,7 +242,9 @@ class PageRenderer {
 
     waitForOutputs(keysToWaitFor) {
         return new Promise(resolve => {
-            const trackOutput = () => {
+            window.addEventListener('newOutputs', trackOutput);
+
+            function trackOutput() {
                 const { outputs } = Storage.getAll();
                 const allAvailable = keysToWaitFor.every(k => outputs[k] !== undefined);
 
@@ -258,19 +255,15 @@ class PageRenderer {
                     window.removeEventListener('newOutputs', trackOutput);
                     resolve(data);
                 }
-            };
-
-            window.addEventListener('newOutputs', trackOutput);
+            }
         });
     }
 
     skipIfSubmitted() {
         const { inputs } = Storage.getAll();
         const submittedInputKeys = Object.keys(inputs);
-
-        const kebabCaseName = kebabcase(this.currentSection.name);
-        const inputKeysInSection = getFormInputKeys(`#section-form-${kebabCaseName}`);
-
+        const inputKeysInSection = getFormInputKeys(`#section-form-${this.currentSection.elementName}`);
+        console.log(inputKeysInSection);
         if (inputKeysInSection.length === 0) {
             return;
         }
