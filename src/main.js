@@ -7,7 +7,6 @@ import * as Cache from './cache.js';
 
 import PageRenderer from './page-renderer.js';
 import NotFound from './render-not-found.js';
-import ProgressBar from './render-progress-bar.js';
 import Summary from './render-summary.js';
 
 import { installMediaQueryWatcher } from '/web_modules/pwa-helpers/media-query.js';
@@ -53,8 +52,8 @@ function validatePages(pages) {
             throw new Error(`The route of page ${name} was not found.`);
         }
 
-        if (!Array.isArray(sections)) {
-            throw new Error(`The sections of page ${name} were not found.`);
+        if (!Array.isArray(sections) || sections.length === 0) {
+            throw new Error(`The sections of page ${name} were not found or empty.`);
         }
 
         for (const { name: sectionName, template } of sections) {
@@ -71,35 +70,38 @@ export function createApp({ pages, cache = [], layout, data = {} }, callback) {
     const mainSelector = '#main';
 
     //setup router
-    const flow = pages.map(page => page.route);
-    const titles = pages.map(page => page.title);
-
+    const routingOrder = pages.map(page => page.route);
     const routes = {
         '/': loading(mainSelector),
         '/error': { renderer: error(mainSelector), title: null, step: null }
     };
 
-    pages.forEach((config, idx) => {
-        const { title, sections = [], route } = config;
+    pages.forEach((config, stepIndex) => {
+        const { title, sections, route, excludeStep = false } = config;
         let onFinish = null;
+        let step = stepIndex;
 
-        if (flow.length > idx + 1) {
-            const nextRoute = flow[idx + 1];
-            onFinish = () => setTimeout(() => { window.location.hash = nextRoute; }, 500);
-        } else {
+        if (excludeStep) {
+            step = null;
+        }
+
+        if (pages.length === stepIndex + 1) {
             onFinish = callback;
+        } else {
+            const nextRoute = routingOrder[stepIndex + 1];
+            onFinish = () => { window.location.hash = nextRoute; };
         }
 
         const renderer = PageRenderer(name, sections, mainSelector, onFinish);
-        routes[route] = { renderer, title, step: idx + 1 };
+
+        routes[route] = { renderer, title, step };
     });
 
-    const entryPoint = flow[0];
+    const entryPoint = routingOrder[0];
+    const router = Router(routes, NotFound(mainSelector));
 
     return {
         init: () => {
-            const { initialInputs: input, category, serverUrlPath } = data;
-            const router = Router(routes, titles, NotFound(mainSelector), ProgressBar('#progress-bar'));
             const { MobileTemplate, DesktopTemplate } = layout['summary'];
 
             render(Layout(), document.querySelector('#app'));
@@ -110,12 +112,24 @@ export function createApp({ pages, cache = [], layout, data = {} }, callback) {
                 Summary.init(match ? MobileTemplate : DesktopTemplate, match);
             });
 
+
+            const { initialInputs: input, category, serverUrlPath } = data;
+
             window.addEventListener('hashchange', () => {
                 router.navigate();
                 Summary.update();
 
-                if (!window.location.hash || window.location.hash === '/') {
-                    createSdk({ input, category, serverUrlPath });
+                const isRoot = !window.location.hash || window.location.hash === '/';
+                if (isRoot) {
+                    sdk.create({ input, category, serverUrlPath })
+                        .then(() => {
+                            window.location.hash = entryPoint;
+                            afterSdkInitiated(cache, data);
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            window.location.hash = '/error';
+                        });
                 }
             });
 
@@ -129,67 +143,63 @@ export function createApp({ pages, cache = [], layout, data = {} }, callback) {
                 Summary.update();
             });
 
-            if (window.location.hash && window.location.hash !== '/') {
-                sdk.retrieve()
-                    .then(() => {
-                        router.navigate();
-                        afterSdkCreated();
-                    })
-                    .catch(() => {
-                        window.location.hash = '';
-                    });
-
-            } else {
-                createSdk({ input, category, serverUrlPath });
-            }
-
-            function createSdk({ input, category, serverUrlPath }) {
+            router.navigate();
+            const isRoot = !window.location.hash || window.location.hash === '/';
+            if (isRoot) {
                 sdk.create({ input, category, serverUrlPath })
                     .then(() => {
                         window.location.hash = entryPoint;
-                        afterSdkCreated();
+                        afterSdkInitiated(cache, data);
                     })
                     .catch(err => {
                         console.error(err);
                         window.location.hash = '/error';
                     });
-            }
-
-            function afterSdkCreated() {
-                if (data.local) {
-                    Object.keys(data.local).forEach(key => {
-                        Storage.set('local', key, data.local[key]);
+            } else {
+                sdk.retrieve()
+                    .then(() => {
+                        afterSdkInitiated(cache, data);
+                    })
+                    .catch(() => {
+                        window.location.hash = '';
                     });
-                }
-
-                Cache.poll(cache);
-                Summary.update();
-
-                const newOutputsEvent = new CustomEvent('newOutputs');
-                let loading = false;
-
-                sdk.trackJob(event => {
-                    if (event === 'fail') {
-                        window.location.hash = '/error';
-                    }
-
-                    if (event === 'createOutput' && !loading) {
-                        loading = true;
-
-                        sdk.getJobOutputs()
-                            .then(outputs => {
-                                outputs.data.forEach(output => {
-                                    Storage.set('output', output.key, output.data);
-                                });
-
-                                window.dispatchEvent(newOutputsEvent);
-                                loading = false;
-                            });
-                    }
-                });
             }
         }
     };
+}
+
+function afterSdkInitiated(cacheConfig, data) {
+    if (data.local) {
+        for (const [key, val] of Object.entries(data.local)) {
+            Storage.set('local', key, val);
+        }
+    }
+
+    Cache.poll(cacheConfig);
+    Summary.update();
+
+    const newOutputsEvent = new CustomEvent('newOutputs');
+    let loading = false;
+
+    sdk.trackJob(event => {
+        if (event === 'fail') {
+            window.location.hash = '/error';
+        }
+
+        if (event === 'createOutput' && !loading) {
+            loading = true;
+
+            sdk.getJobOutputs()
+                .then(outputs => {
+                    outputs.data.forEach(output => {
+                        Storage.set('output', output.key, output.data);
+                    });
+
+                    window.dispatchEvent(newOutputsEvent);
+                    loading = false;
+                });
+        }
+    });
 }
 
 export async function createInputs(inputs) {

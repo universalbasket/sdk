@@ -86,7 +86,7 @@ export default {
                     name: 'selected-cover-options',
                     template: selectedCoverOptions,
                     waitFor: ['output.availableCoverOptions']
-                },
+                }
                 /* { name: 'selectedVetFee', waitFor: 'output.availableVetFees' } */
             ]
         },
@@ -120,8 +120,10 @@ export default {
                     template: confirmation,
                     waitFor: ['output.purchaseConfirmation']
                 }
-            ]
-    }],
+            ],
+            excludeStep: true
+        }
+    ],
     data: {
         serverUrlPath: 'https://ubio-application-bundle-dummy-server.glitch.me/create-job',
         initialInputs: {
@@ -130,18 +132,18 @@ export default {
         local: {
             currencyCode: 'gbp',
             availableBreedTypes: {
-                "cat": [
-                    "Pedigree",
-                    "Non-Pedigree"
+                cat: [
+                    'Pedigree',
+                    'Non-Pedigree'
                 ],
-                "dog": [
-                    "Cross Breed",
-                    "Pedigree",
-                    "Small mixed breed (up to 10kg)",
-                    "Medium mixed breed (10 - 20kg)",
-                    "Large mixed breed (above 20kg)"
+                dog: [
+                    'Cross Breed',
+                    'Pedigree',
+                    'Small mixed breed (up to 10kg)',
+                    'Medium mixed breed (10 - 20kg)',
+                    'Large mixed breed (above 20kg)'
                 ]
             }
         }
     }
-}
+};
