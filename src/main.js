@@ -62,144 +62,108 @@ function validatePages(pages) {
     }
 }
 
-class App {
-    constructor({ pages, cache = [], layout, data = {}, callback }) {
-        validatePages(pages);
+export function createApp({ pages, cache = [], layout, data = {} }, callback) {
+    validatePages(pages);
 
-        this.pages = pages;
-        this.cacheConfig = cache;
-        this.layout = layout;
-        this.data = data;
-        this.mainSelector = '#main';
-        this.callback = callback;
-    }
+    const mainSelector = '#main';
 
-    createRoutes() {
-        const routingOrder = this.pages.map(page => page.route);
-        const routes = {
-            '/': loading(this.mainSelector),
-            '/error': { renderer: error(this.mainSelector), title: null, step: null }
-        };
+    //setup router
+    const routingOrder = pages.map(page => page.route);
+    const routes = {
+        '/': loading(mainSelector),
+        '/error': { renderer: error(mainSelector), title: null, step: null }
+    };
 
-        this.pages.forEach((config, stepIndex) => {
-            const { title, sections, route, isSuccessPage = false } = config;
-            let onFinish = null;
-            let step = stepIndex;
+    pages.forEach((config, stepIndex) => {
+        const { title, sections, route, isSuccessPage = false } = config;
+        let onFinish = null;
+        let step = stepIndex;
 
-            if (isSuccessPage || this.pages.length === stepIndex + 1) {
-                onFinish = this.callback;
-                step = null;
-            } else {
-                const nextRoute = routingOrder[stepIndex + 1];
-                onFinish = () => setTimeout(() => { window.location.hash = nextRoute; }, 500);
-            }
-
-            const renderer = PageRenderer(name, sections, this.mainSelector, onFinish);
-
-            routes[route] = { renderer, title, step };
-
-            return routes;
-        });
-    }
-
-    init() {
-        const routes = this.createRoutes;
-        const router = Router(routes, NotFound(this.mainSelector));
-
-        const { MobileTemplate, DesktopTemplate } = this.layout['summary'];
-
-        render(Layout(), document.querySelector('#app'));
-        render(this.layout['header'](), document.querySelector('#header'));
-        render(this.layout['footer'](), document.querySelector('#footer'));
-
-        installMediaQueryWatcher('(max-width: 650px)', match => {
-            Summary.init(match ? MobileTemplate : DesktopTemplate, match);
-        });
-
-        window.addEventListener('hashchange', () => {
-            router.navigate();
-            Summary.update();
-
-            if (!window.location.hash || window.location.hash === '/') {
-                this.createSdk();
-            }
-        });
-
-        //custom event when input submitted
-        window.addEventListener('newInputs', e => {
-            e.detail && e.detail.forEach(({ key }) => Cache.poll(this.cacheConfig, key));
-            Summary.update();
-        });
-
-        window.addEventListener('newOutputs', () => {
-            Summary.update();
-        });
-
-        router.navigate();
-        if (window.location.hash && window.location.hash !== '/') {
-            sdk.retrieve()
-                .then(() => {
-                    this.afterSdkInitiated();
-                })
-                .catch(() => {
-                    window.location.hash = '';
-                });
-
+        if (isSuccessPage || pages.length === stepIndex + 1) {
+            onFinish = callback;
+            step = null;
         } else {
-            this.createSdk();
-        }
-    }
-
-    createSdk(entryPoint) {
-        const { initialInputs: input, category, serverUrlPath } = this.data;
-
-        sdk.create({ input, category, serverUrlPath })
-            .then(() => {
-                window.location.hash = entryPoint;
-                this.afterSdkInitiated(this.cacheConfig, this.data);
-            })
-            .catch(err => {
-                console.error(err);
-                window.location.hash = '/error';
-            });
-    }
-
-    afterSdkInitiated(cacheConfig, data) {
-        if (data.local) {
-            Object.keys(data.local).forEach(key => {
-                Storage.set('local', key, data.local[key]);
-            });
+            const nextRoute = routingOrder[stepIndex + 1];
+            onFinish = () => setTimeout(() => { window.location.hash = nextRoute; }, 500);
         }
 
-        Cache.poll(cacheConfig);
-        Summary.update();
+        const renderer = PageRenderer(name, sections, mainSelector, onFinish);
 
-        const newOutputsEvent = new CustomEvent('newOutputs');
-        let loading = false;
+        routes[route] = { renderer, title, step };
+    });
 
-        sdk.trackJob(event => {
-            if (event === 'fail') {
-                window.location.hash = '/error';
-            }
+    const entryPoint = routingOrder[0];
+    const router = Router(routes, NotFound(mainSelector));
 
-            if (event === 'createOutput' && !loading) {
-                loading = true;
+    return {
+        init: () => {
+            const { MobileTemplate, DesktopTemplate } = layout['summary'];
 
-                sdk.getJobOutputs()
-                    .then(outputs => {
-                        outputs.data.forEach(output => {
-                            Storage.set('output', output.key, output.data);
+            render(Layout(), document.querySelector('#app'));
+            render(layout['header'](), document.querySelector('#header'));
+            render(layout['footer'](), document.querySelector('#footer'));
+
+            installMediaQueryWatcher('(max-width: 650px)', match => {
+                Summary.init(match ? MobileTemplate : DesktopTemplate, match);
+            });
+
+
+            const { initialInputs: input, category, serverUrlPath } = data;
+
+            window.addEventListener('hashchange', () => {
+                router.navigate();
+                Summary.update();
+
+                const isRoot = !window.location.hash || window.location.hash === '/';
+                if (isRoot) {
+                    sdk.create({ input, category, serverUrlPath })
+                        .then(() => {
+                            window.location.hash = entryPoint;
+                            afterSdkInitiated(cache, data);
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            window.location.hash = '/error';
                         });
+                } else {
+                }
+            });
 
-                        window.dispatchEvent(newOutputsEvent);
-                        loading = false;
+            //custom event when input submitted
+            window.addEventListener('newInputs', e => {
+                e.detail && e.detail.forEach(({ key }) => Cache.poll(cache, key));
+                Summary.update();
+            });
+
+            window.addEventListener('newOutputs', () => {
+                Summary.update();
+            });
+
+            router.navigate();
+            const isRoot = !window.location.hash || window.location.hash === '/';
+            if (isRoot) {
+                sdk.create({ input, category, serverUrlPath })
+                    .then(() => {
+                        window.location.hash = entryPoint;
+                        afterSdkInitiated(cache, data);
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        window.location.hash = '/error';
+                    });
+            } else {
+                sdk.retrieve()
+                    .then(() => {
+                        afterSdkInitiated(cache, data);
+                    })
+                    .catch(() => {
+                        window.location.hash = '';
                     });
             }
-        });
-    }
+        }
+    };
 }
 
-/*
 function afterSdkInitiated(cacheConfig, data) {
     if (data.local) {
         Object.keys(data.local).forEach(key => {
@@ -232,89 +196,7 @@ function afterSdkInitiated(cacheConfig, data) {
                 });
         }
     });
-} */
-/*export function createApp({ pages, cache = [], layout, data = {} }, callback) {
-    validatePages(pages);
-
-    const mainSelector = '#main';
-
-    //setup router
-    const routingOrder = pages.map(page => page.route);
-    const routes = {
-        '/': loading(mainSelector),
-        '/error': { renderer: error(mainSelector), title: null, step: null }
-    };
-
-    pages.forEach((config, stepIndex) => {
-        const { title, sections, route, isSuccessPage = false } = config;
-        let onFinish = null;
-        let step = stepIndex;
-
-        if (isSuccessPage || pages.length === stepIndex + 1) {
-            onFinish = callback;
-            step = null;
-        } else {
-            const nextRoute = routingOrder[stepIndex + 1];
-            onFinish = () => setTimeout(() => { window.location.hash = nextRoute; }, 500);
-        }
-
-        const renderer = PageRenderer(name, sections, mainSelector, onFinish);
-
-        routes[route] = { renderer, title, step };
-    });
-
-    const entryPoint = routingOrder[0];
-
-    return {
-        init: () => {
-            const { initialInputs: input, category, serverUrlPath } = data;
-            const router = Router(routes, NotFound(mainSelector));
-            const { MobileTemplate, DesktopTemplate } = layout['summary'];
-
-            render(Layout(), document.querySelector('#app'));
-            render(layout['header'](), document.querySelector('#header'));
-            render(layout['footer'](), document.querySelector('#footer'));
-
-            installMediaQueryWatcher('(max-width: 650px)', match => {
-                Summary.init(match ? MobileTemplate : DesktopTemplate, match);
-            });
-
-            window.addEventListener('hashchange', () => {
-                router.navigate();
-                Summary.update();
-
-                if (!window.location.hash || window.location.hash === '/') {
-                    createSdk({ input, category, serverUrlPath });
-                }
-            });
-
-            //custom event when input submitted
-            window.addEventListener('newInputs', e => {
-                e.detail && e.detail.forEach(({ key }) => Cache.poll(cache, key));
-                Summary.update();
-            });
-
-            window.addEventListener('newOutputs', () => {
-                Summary.update();
-            });
-
-            if (window.location.hash && window.location.hash !== '/') {
-                sdk.retrieve()
-                    .then(() => {
-                        router.navigate();
-                        afterSdkInitiated();
-                    })
-                    .catch(() => {
-                        window.location.hash = '';
-                    });
-
-            } else {
-                createSdk({ input, category, serverUrlPath });
-            }
-        }
-    };
-}*/
-
+}
 
 export async function createInputs(inputs) {
     if (!sdk.initiated) {
