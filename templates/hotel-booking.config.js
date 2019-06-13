@@ -36,21 +36,22 @@ export default {
                 {
                     name: 'final-price-consent',
                     template: finalPriceConsent,
-                    waitFor: ['input.selectedRooms', 'outputs.finalPrice']
+                    waitFor: ['input.selectedRooms', 'outputs.finalPrice'],
                 }
             ]
         },
         {
-            name: 'confirmation',
-            route: '/confirmation',
-            title: 'Confirmation',
+            name: 'awaiting-confirmation',
+            route: '/awaiting-confirmation',
+            title: '',
             sections: [
                 {
                     name: 'confirmation',
                     template: confirmation,
                     waitFor: ['outputs.bookingConfirmation']
                 }
-            ]
+            ],
+            onSuccess: true,
         }
     ],
     data: {

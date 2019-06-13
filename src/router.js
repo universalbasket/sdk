@@ -1,11 +1,18 @@
+import ProgressBar from './render-progress-bar.js';
 
 // The router code. Takes a URL, checks against the list of supported routes and then renders the corresponding content page.
 class Router {
-    constructor(routes, titles, notFoundTemplate, ProgressBarTemplate) {
+    constructor(routes, notFoundTemplate) {
         this.routes = routes;
-        this.titles = titles;
         this.notFoundTemplate = notFoundTemplate;
-        this.ProgressBarTemplate = ProgressBarTemplate;
+
+        const titles = Object.keys(routes)
+            .map(key => routes[key])
+            .filter(route => route.step != null && typeof route.step === 'number')
+            .sort((a, b) => a.step - b.step)
+            .map(r => r.title);
+
+        this.progressBar = ProgressBar('#progress-bar', titles);
     }
 
     navigate() {
@@ -19,8 +26,8 @@ class Router {
         const route = this.routes[parsedURL] ? this.routes[parsedURL] : this.notFoundTemplate;
 
         route.renderer.init();
-        this.ProgressBarTemplate(this.titles, route.step);
+        this.progressBar.update(route.step);
     }
 }
 
-export default (routes, titles, notFoundTemplate, ProgressBarTemplate) => new Router(routes, titles, notFoundTemplate, ProgressBarTemplate);
+export default (routes, notFoundTemplate) => new Router(routes, notFoundTemplate);
