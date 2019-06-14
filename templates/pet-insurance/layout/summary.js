@@ -80,7 +80,7 @@ function SummaryPreview(inputs, outputs, cache) {
 }
 
 function SummaryTitle(_) {
-    const title = _.serviceName || 'Your Package';
+    const title = _.serviceName || 'Your package';
     return html`
         <b class="large">${ title }</b>
         <span class="faint large">Pet Insurance</span>

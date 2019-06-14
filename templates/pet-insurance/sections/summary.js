@@ -8,7 +8,7 @@ export default (name, { policyOptions, selectedCoverOptions, selectedCoverType, 
     return html`
         <h2>Summary</h2>
 
-        <h3>Your room</h3>
+        <h3>Your package</h3>
         <table class="table">
             <tr>
                 <th>Starts on</th>
