@@ -2,11 +2,11 @@ import kebabcase from '/web_modules/lodash.kebabcase.js';
 import { html, render } from '/web_modules/lit-html/lit-html.js';
 import sdk from './sdk.js';
 import { serializeForm , getFormInputKeys } from './serialize-form.js';
-import getData from './get-data-with-priority.js';
 import pageWrapper from './builtin-templates/page-wrapper.js';
 import inlineLoading from './builtin-templates/inline-loading.js';
 import flashError from './builtin-templates/flash-error.js';
 import * as Storage from './storage.js';
+import getDataForSection from './get-data-for-section.js';
 
 const VAULT_FORM_SELECTOR = '#ubio-vault-form';
 
@@ -64,60 +64,58 @@ class PageRenderer {
         if (!sdk.initiated) {
             return;
         }
-        console.log('elementName', elementName);
-        const submitBtn = document.querySelector(`#submit-btn-${elementName}`);
-        const inputForm = document.querySelector(`#section-form-${elementName}`);
 
-        const vaultListener = () => {
-            if (inputForm && !inputForm.reportValidity()) {
+        const submitBtn = document.querySelector(`#submit-btn-${elementName}`);
+        if (!submitBtn) {
+            console.warn(`submit button for ${elementName} section not found.`);
+        }
+
+        const sectionForm = document.querySelector(`#section-form-${elementName}`);
+
+        submitBtn.addEventListener('click', e => {
+            if (sectionForm && !sectionForm.reportValidity()) {
                 console.log('invalid form');
                 return;
             }
 
-            submitBtn.setAttribute('disabled', 'true');
+            e.target.setAttribute('disabled', 'true');
 
-            this.processVault()
+            this.submitVaultFormIfPresents()
                 .then(() => {
                     const inputs = serializeForm(`#section-form-${elementName}`);
                     return this.createInputs(inputs);
                 })
                 .then(() => {
-                    this.disableSection();
+                    this.disableSection(elementName);
                     this.next();
                 })
                 .catch(err => {
                     if (document.querySelector('#error')) {
                         render(flashError(err), document.querySelector('#error'));
                     }
-                    submitBtn.removeAttribute('disabled');
+                    e.target.removeAttribute('disabled');
                 });
-        };
-
-        if (submitBtn) {
-            submitBtn.addEventListener('click', vaultListener);
-        } else {
-            console.warn('no click/input submission listener added for the section');
-        }
+        });
     }
 
-    processVault() {
-        const vaultForm = document.querySelector(VAULT_FORM_SELECTOR);
+    submitVaultFormIfPresents() {
+        const vaultIframe = document.querySelector(VAULT_FORM_SELECTOR);
 
-        if (!vaultForm) {
+        if (!vaultIframe) {
             return Promise.resolve();
         }
 
-        if (vaultForm) {
-            return isVaultFormValid(vaultForm)
+        if (vaultIframe) {
+            return isVaultFormValid(vaultIframe)
                 .then(() => {
-                    return submitVaultForm(vaultForm);
+                    return submitVaultForm(vaultIframe);
                 })
                 .then(({ cardToken, panToken }) => {
                     Storage.del('_', 'otp');
                     Storage.set('_', 'cardToken', cardToken);
                     Storage.set('_', 'panToken', panToken);
 
-                    vaultForm.setAttribute('id', `${VAULT_FORM_SELECTOR}-submitted`);
+                    vaultIframe.setAttribute('id', `${VAULT_FORM_SELECTOR}-submitted`);
                 });
         }
     }
@@ -133,6 +131,10 @@ class PageRenderer {
             if (cardToken) {
                 inputs.payment['card'] = { '$token': cardToken };
                 cardTokenSent = true;
+            } else {
+                //TODO: include this part in doc:
+                //you need include payment form within same section or put the payment form in any previous sections so that cardToken can be included.
+                console.warn('cardToken not found while submitting payment input.');
             }
 
             if (panToken) {
@@ -156,24 +158,29 @@ class PageRenderer {
             });
     }
 
-    skipSection() {
-        this.disableSection();
+    skipSection(elementName) {
+        this.disableSection(elementName);
 
         const vaultForm = document.querySelector(VAULT_FORM_SELECTOR);
         if (vaultForm) {
             vaultForm.setAttribute('id', `${VAULT_FORM_SELECTOR}-submitted`);
         }
 
+        const submitButton = document.querySelector(`#submit-btn-${elementName}`);
+        if (submitButton) {
+            submitButton.setAttribute('disabled', 'disabled');
+        }
+
         this.next();
     }
 
-    disableSection() {
-        const inputForm = this.currentSection.inputForm;
-        if (inputForm) {
-            inputForm.classList.add('form--disabled');
+    disableSection(elementName) {
+        const sectionForm = document.querySelector(`#section-form-${elementName}`);
+        if (sectionForm) {
+            sectionForm.classList.add('form--disabled');
             const fields = [
-                ...inputForm.querySelectorAll('input'),
-                ...inputForm.querySelectorAll('select')
+                ...sectionForm.querySelectorAll('input'),
+                ...sectionForm.querySelectorAll('select')
             ];
             fields.forEach(_ => _.setAttribute('disabled', 'disabled'));
         }
@@ -181,7 +188,6 @@ class PageRenderer {
 
     renderSection({ elementName, waitFor, template }) {
         const sectionForm = document.querySelector(`#section-form-${elementName}`);
-        this.currentSection.inputForm = sectionForm;
 
         render(html`${inlineLoading()} `, sectionForm);
 
@@ -189,81 +195,19 @@ class PageRenderer {
             this.skipSection();
         };
 
-        this.getDataForSection(waitFor)
+        getDataForSection(waitFor)
             .then(res => {
                 render(html`${template(elementName, res, skip)} `, sectionForm);
                 this.addListeners(elementName);
-                this.skipIfSubmitted();
+                this.skipIfSubmitted(elementName);
             });
     }
 
-    getDataForSection(waitFor = []) {
-        if (!waitFor || waitFor.length === 0) {
-            return Promise.resolve({});
-        }
-
-        return new Promise(res => {
-            const results = waitFor.map(_ => {
-                const [type, sourceKey] = _.split('.');
-                if (type === 'input') {
-                    const data = Storage.get('input', sourceKey);
-                    return { data, wait: false, sourceKey };
-                }
-
-                const data = getData(type, sourceKey);
-                if (data === null) { // data is explicitly null
-                    return { data: null, wait: false, sourceKey };
-                }
-
-                if (data) {
-                    return { data, wait: false, sourceKey };
-                }
-
-                return { data: null, wait: true, sourceKey };
-            });
-
-            const keysToWaitFor = results.filter(r => r.wait === true).map(r => r.sourceKey);
-
-            if (keysToWaitFor.length === 0) {
-                const dataWaitFor = {};
-                results.forEach(result => { dataWaitFor[result.sourceKey] = result.data; });
-
-                return res(dataWaitFor);
-            }
-
-            const dataWaitFor = {};
-            results.forEach(result => { dataWaitFor[result.sourceKey] = result.data; });
-
-            this.waitForOutputs(keysToWaitFor).then(data => {
-                res({ ...dataWaitFor, ...data });
-            });
-        });
-    }
-
-    waitForOutputs(keysToWaitFor) {
-        return new Promise(resolve => {
-            window.addEventListener('newOutputs', trackOutput);
-
-            function trackOutput() {
-                const { outputs } = Storage.getAll();
-                const allAvailable = keysToWaitFor.every(k => outputs[k] !== undefined);
-
-                if (allAvailable) {
-                    const data = {};
-                    keysToWaitFor.forEach(k => data[k] = outputs[k]);
-
-                    window.removeEventListener('newOutputs', trackOutput);
-                    resolve(data);
-                }
-            }
-        });
-    }
-
-    skipIfSubmitted() {
+    skipIfSubmitted(elementName) {
         const { inputs } = Storage.getAll();
         const submittedInputKeys = Object.keys(inputs);
-        const inputKeysInSection = getFormInputKeys(`#section-form-${this.currentSection.elementName}`);
-        console.log(inputKeysInSection);
+        const inputKeysInSection = getFormInputKeys(`#section-form-${elementName}`);
+
         if (inputKeysInSection.length === 0) {
             return;
         }
@@ -276,7 +220,7 @@ class PageRenderer {
         const submittedKeysInSection = inputKeysInSection.map(k => submittedInputKeys.includes(k) ? k : null).filter(k => k);
         //all submitted
         if (submittedKeysInSection.length === inputKeysInSection.length) {
-            return this.skipSection();
+            return this.skipSection(elementName);
         }
 
         if (submittedKeysInSection.length > 0) {
@@ -291,13 +235,13 @@ class PageRenderer {
     }
 }
 
-function isVaultFormValid(vaultForm) {
+function isVaultFormValid(vaultIframe) {
     return new Promise((resolve, reject) => {
-        if (!vaultForm) {
+        if (!vaultIframe) {
             reject('vault form not found');
         }
         window.addEventListener('message', receiveValidation);
-        vaultForm.contentWindow.postMessage('vault.validate', '*');
+        vaultIframe.contentWindow.postMessage('vault.validate', '*');
 
         function receiveValidation({ data: message }) {
             if (message.name === 'vault.validation') {
@@ -313,14 +257,14 @@ function isVaultFormValid(vaultForm) {
     });
 }
 
-function submitVaultForm(vaultForm) {
+function submitVaultForm(vaultIframe) {
     return new Promise((resolve, reject) => {
-        if (!vaultForm) {
-            reject('vault form not found');
+        if (!vaultIframe) {
+            reject('vault iframe not found');
         }
 
         window.addEventListener('message', receiveOutput);
-        vaultForm.contentWindow.postMessage('vault.submit', '*');
+        vaultIframe.contentWindow.postMessage('vault.submit', '*');
 
         function receiveOutput({ data: message }) {
             if (message.name === 'vault.output') {

@@ -10,7 +10,8 @@ export default outputs => html`
                     type="radio"
                     id="${key}-${optionObj.coverName}"
                     name="${key}-$object"
-                    value="${JSON.stringify(optionObj)}">
+                    value="${JSON.stringify(optionObj)}"
+                    required>
 
                 <label for="${key}-${optionObj.coverName}" class="field__name">
                     <div>
