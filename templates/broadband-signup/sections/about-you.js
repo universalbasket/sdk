@@ -1,4 +1,4 @@
-import { html } from '/web_modules/lit-html/lit-html.js';
+import { html } from '/src/main.js';
 
 import { contactPerson, selectedMarketingContactOptions } from '../inputs/index.js';
 import account from '../../generic/account.js';

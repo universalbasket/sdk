@@ -1,4 +1,4 @@
-import { html } from '/web_modules/lit-html/lit-html.js';
+import { html } from '/src/main.js';
 
 export default covers => html`
     <div class="field field-set">

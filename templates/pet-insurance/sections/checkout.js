@@ -1,4 +1,4 @@
-import { html } from '/web_modules/lit-html/lit-html.js';
+import { html } from '/src/main.js';
 import payment from '../../generic/payment.js';
 
 export default (name, { otp }) => html`

@@ -1,4 +1,4 @@
-import { html } from '/web_modules/lit-html/lit-html.js';
+import { html } from '/src/main.js';
 const key = 'selected-voluntary-excess';
 
 export default output => html`

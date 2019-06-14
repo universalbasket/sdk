@@ -1,6 +1,7 @@
 import sdk from './sdk.js';
 import Router from './router.js';
-import { render } from '/web_modules/lit-html/lit-html.js';
+import { render, html } from '/web_modules/lit-html/lit-html.js';
+import { classMap } from '/web_modules/lit-html/directives/class-map.js';
 
 import * as Storage from './storage.js';
 import * as Cache from './cache.js';
@@ -32,6 +33,11 @@ export const templates = {
     priceDisplay,
     priceType,
     progressBar
+};
+
+export {
+    html,
+    classMap
 };
 
 function validatePages(pages) {

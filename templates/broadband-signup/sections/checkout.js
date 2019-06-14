@@ -1,4 +1,4 @@
-import { html, render } from '/web_modules/lit-html/lit-html.js';
+import { html, render } from '/src/main.js';
 import { payment, directDebit } from '../inputs/index.js';
 
 const onChange = {

@@ -1,4 +1,4 @@
-import { html } from '/web_modules/lit-html/lit-html.js';
+import { html } from '/src/main.js';
 import { selectedCoverType } from '../inputs/index.js';
 
 export default (name, { availableCoverTypes }) => html`
