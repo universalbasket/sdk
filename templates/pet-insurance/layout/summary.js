@@ -7,17 +7,6 @@ import {
     Documents
 } from '../../shared/summary.js';
 
-const keyInputs = [
-    'policyOptions',
-    'selectedCover',
-    'selectedCoverType',
-    'selectedCoverOptions',
-    'selectedVoluntaryExcess',
-    'selectedVetPaymentTerm',
-    'selectedVetFee',
-    'selectedPaymentTerm'
-];
-
 export default {
     MobileTemplate,
     DesktopTemplate
@@ -87,19 +76,6 @@ function SummaryTitle(_) {
     `;
 }
 
-function getPrice(outputs, cache) {
-    const priceObj = outputs.finalPrice ||
-        outputs.estimatedPrice ||
-        cache.finalPrice ||
-        cache.estimatedPrice;
-
-    return priceObj && priceObj.price;
-}
-
-function hasContent(inputs) {
-    return !!Object.keys(inputs).find(key => keyInputs.includes(key));
-}
-
 function VetFee(selectedVetFee) {
     if (!selectedVetFee) {
         return '';
@@ -133,6 +109,30 @@ function PetInformation(inputs, currencyCode = 'gbp') {
             <li>Paid/Donated: ${ templates.priceDisplay({ currencyCode, value: pets[0].petPrice })}</li>
         </ul>
     </article>`;
+}
+
+function getPrice(outputs, cache) {
+    const priceObj = outputs.finalPrice ||
+        outputs.estimatedPrice ||
+        cache.finalPrice ||
+        cache.estimatedPrice;
+
+    return priceObj && priceObj.price;
+}
+
+function hasContent(inputs) {
+    const keyInputs = [
+        'policyOptions',
+        'selectedCover',
+        'selectedCoverType',
+        'selectedCoverOptions',
+        'selectedVoluntaryExcess',
+        'selectedVetPaymentTerm',
+        'selectedVetFee',
+        'selectedPaymentTerm'
+    ];
+
+    return !!Object.keys(inputs).find(key => keyInputs.includes(key));
 }
 
 function DesktopTemplate(inputs, outputs, cache, _) {
