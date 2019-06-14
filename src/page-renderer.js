@@ -68,6 +68,7 @@ class PageRenderer {
         const submitBtn = document.querySelector(`#submit-btn-${elementName}`);
         if (!submitBtn) {
             console.warn(`submit button for ${elementName} section not found.`);
+            return;
         }
 
         const sectionForm = document.querySelector(`#section-form-${elementName}`);
