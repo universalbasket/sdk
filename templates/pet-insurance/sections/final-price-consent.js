@@ -1,5 +1,5 @@
 import finalPriceConsent from '../../generic/final-price-consent.js';
-import { createInputs, templates, html } from '/src/main.js';
+import { createInputs, cancelJob, templates, html } from '/src/main.js';
 
 export default (name, { estimatedPrice = {}, finalPrice = {} }, skip) => {
     const finalValue = finalPrice.price && finalPrice.price.value;
@@ -28,7 +28,11 @@ export default (name, { estimatedPrice = {}, finalPrice = {} }, skip) => {
         modal.show();
 
         document.querySelector(`#submit-btn-${name}`).addEventListener('click', modal.close);
-        document.querySelector('#cancel-btn').addEventListener('click', modal.close);
+        document.querySelector('#cancel-btn').addEventListener('click', () => {
+            cancelJob().then(() => {
+                modal.close();
+            });
+        });
 
         // return input field to the main form
         return finalPriceConsent(finalPrice);

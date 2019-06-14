@@ -32,8 +32,8 @@ export default (name, { oneOffCosts = {}, finalPrice = {} }, skip) => {
 
         modal.show();
 
-        document.querySelector(`submit-btn-${name}`).addEventListener('click', modal.close);
-        document.querySelector('cancel').addEventListener('click', () => {
+        document.querySelector(`#submit-btn-${name}`).addEventListener('click', modal.close);
+        document.querySelector('#cancel-btn').addEventListener('click', () => {
             cancelJob().then(() => {
                 modal.close();
             });
