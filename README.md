@@ -103,11 +103,13 @@ pages: [
 ### `data`: Object
 - `serverUrlPath`: This app is fully frontend and it uses end-user sdk which means you will need your server to initiate the job and create the EndUser auth. more information in [here](https://github.com/universalbasket/javascript-sdk#the-client-flow). So you need to specify the server url so that app can kick off the job. example server code look like [this](https://glitch.com/~ubio-application-bundle-dummy-server) (go to server.js and see one of the endpoint that creating a job)
 - `initialInputs`: initial inputs that you'd like to include when creating a job
+- `category(optional)`: determine the category of the job. default is `test`. We include this information when requesting the job creation to your server so you can either set it up in here or from your server.
 - `supportEmail(optional)` : support email displayed in the error page.
 - `local` : One of the type of [Data](#data) in the app. you can supply predefined input/output using this field. it can be useful when showing estimated finalPrice on summary panel until the live data is available.
 
-## Form name conventions for building input data
-To create input, you need to build a right structure from the form that our [protocol](https://protocol.automationcloud.net/) expects to get. For instance, you'd like to create the `PetInsurance.policyOptions` input, you will need to send json data like:
+## Name conventions for inputs in templates
+As you can see we have a name convention for the job inputs in our template. It is important to understand so that you don't get input validationError from automation cloud.
+To supply the input, you need to build a right structure of the json data that fits our [protocol](https://protocol.automationcloud.net/) definitions. For instance, you'd like to create the `PetInsurance.policyOptions` input, you will need to send json data like:
 ```
 {
     "policyOptions": {
@@ -118,34 +120,38 @@ To create input, you need to build a right structure from the form that our [pro
 }
 ```
 
-To build that structure, you just need to specify the right name for the input field in your form. Nest the object with brackets(`[]`), if you need to build an array, use numbers in the brackets such as `pets[0][name]`.
+We serialize the form from the given name for each inputs. let's build the name for above input.
+We use kebab-case for the elements so the input key `policyOptions` will be `policy-options`. This will be prefix for the input fields. Now we can create input elements for `policyOptions.coverStartDate`. Nest the object with brackets(`[]`), so it will be `policy-options[cover-start-date]`. If you need to build an array, use numbers in the brackets such as `pets[0][name]`. sometimes you need to parse some value from string to other type such as integer, boolean or object. in this case suffix the last nested key with `-$number`, `-$boolean` or `-$object` to let the form serializer know.
+> if it fails to convert to the specified type, it will just use string value but not throw an error. You will get 400 error from automation cloud so it is important for you to validate beforehand.
+
+Here's the final form with right name for the `PetInsurance.policyOptions`.
+
 ```html
 <div name="policy-options">
     <input
         type="date"
-        name="policy-options[cover-start-date]" value="2019-06-01">
+        name="policy-options[cover-start-date]" value="2019-06-01"
+        required />
 
     <input
         type="number"
         name="policy-options[number-of-pets-owned-$number]"
-        value="1"/>
+        value="1"
+        required />
 
     <input
         type="radio"
         name="policy-options[joint-policy-holder-$boolean]"
-        value="true">
+        value="true"
+        required />
 
     <input
         type="radio"
         name="policy-options[joint-policy-holder-$boolean]"
         value="false"
-        checked>
+        checked />
 </div>
 ```
-Also, if you need to convert the value to integer or boolean, suffix the name with `-$number`, `-$boolean` or `-$object` to let the form serializer know it needs to parse the value. (if it fails to convert to the specified type, it will just use string value)
-
-Then when you submitting form, it will camel-case the keys and serialize the form to json object which is ready to be posted to automation cloud.
-
 
 ## Glossaries
 
