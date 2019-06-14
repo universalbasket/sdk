@@ -17,23 +17,66 @@ You need npm installed
 
 ## Getting Started
 
-### /src/main.js
+### Methods
+#### `createApp(ubioConfig, callback)`
+Initiating app with config
 
+params:
+- ubioConfig: configs from [ubio.config.js](#ubioconfigjs)
+- callback: when user gets to the last page
+
+returns:
+- function: `init` which start the app.
+
+#### templates
+Useful built in templates that you can use.
+- modal: modal components
 ```
-list available feature and functions
+import { templates } from '/src/main.js';
+
+// default options:
+const options = {
+    closeOnOverlay: true, // close modal on overlay click
+    showClose: true // show close button
+};
+const modal = templates.modal(template, 'title', options);
+
+//show modal
+modal.show();
+
+//close modal
+modal.close();
 ```
 
-### ubio.config.js
+- priceDisplay: parse [Price](https://protocol.automationcloud.net/Generic#Price) object and display nicely
+- priceType
+
+#### createInputs(inputs)
+params:
+- inputs: inputs object i.e. { inputKey: value,... }
+
+returns:
+- Promise resolves created inputs.
+
+#### cancelJob()
+params: n/a
+returns: n/a
+
+
+
+## ubio.config.js
 This configuration file determines the flows of the application, rules for using cached data and some providing some useful data that you'd like to use.
 
-#### `pages`
-##### Array[{ name: String, route: String, title: String, sections: Array, excludeStep: Boolean(optional) }]
+### `layout`
+you must supply layout templates using them. you won't need to change anything from default configuration.
+
+### `pages`: Array[{ name: String, route: String, title: String, sections: Array, excludeStep: Boolean(optional) }]
 pages is about setting what pages you want to show in which order and what sections will be in that page. it is a array of object which has a properties of `name`, `route`, `title`, `sections` and `excludeStep`
 
 - name: Name of the page
 - route: Route that will be used by the router
 - title: page title which will be displayed in progress bar
-- sections: Sections that you want to include in the page. more about [Section](#section)
+- sections: Sections that you want to include in the page. See more about [Section](#section)
 - excludeStep: if it's true, we do not include it as a step in progress bar. it is useful when you want to exclude the confirmation page from progress
 
 ```
@@ -55,31 +98,15 @@ pages: [
 ```
 
 
-#### `cache`: Array[{ key: String, sourceInputKeys: Array[string]}]
-You can specify the rules for using [cache output](https://docs.automationcloud.net/docs/query-previous-outputs) to use it for your application. `key` property is the _output key_ that you want to retrieve. `sourceInputKeys` is array of input keys that will be used for applying [input criteria](https://docs.automationcloud.net/docs/query-previous-outputs#section-2-querying-previous-output-data-based-on-input-criteria) on your request. As soon as you submit the all of the input keys, it will fetch the cache data and save it locally. If you don't wish to apply any input criteria, leave it as an empty array.
+### `cache`: Array[{ key: String, sourceInputKeys: Array[string]}]
 
-example:
-```
-cache: [
-    {
-        key: 'oneOffCosts',
-        sourceInputKeys: ['selectedBroadbandPackage', 'selectedTvPackages', 'selectedPhonePackage']
-    },
-    ...
-]
-```
-#### `layout`
+### `data`: Object
+- `serverUrlPath`: This app is fully frontend and it uses end-user sdk which means you will need your server to initiate the job and create the EndUser auth. more information in [here](https://github.com/universalbasket/javascript-sdk#the-client-flow). So you need to specify the server url so that app can kick off the job. example server code look like [this](https://glitch.com/~ubio-application-bundle-dummy-server) (go to server.js and see one of the endpoint that creating a job)
+- `initialInputs`: initial inputs that you'd like to include when creating a job
+- `supportEmail(optional)` : support email displayed in the error page.
+- `local` : One of the type of [Data](#data) in the app. you can supply predefined input/output using this field. it can be useful when showing estimated finalPrice on summary panel until the live data is available.
 
-#### `data`: Object
-- serverUrlPath: This app is fully frontend and it uses end-user sdk which means you will need your server to initiate the job and create the EndUser auth. more information in [here](https://github.com/universalbasket/javascript-sdk#the-client-flow). So you need to specify the server url so that app can kick off the job. example server code look like [this](https://glitch.com/~ubio-application-bundle-dummy-server) (go to server.js and see one of the endpoint that creating a job)
-- initialInputs: initial inputs that you'd like to include when creating a job
-- supportEmail(optional): support email displayed in the error page.
-- local: One of the type of [Data](#data) in the app. you can supply predefined input/output using this field. it can be useful when showing estimated finalPrice on summary panel until the live data is available.
-
-#### `layout`
-you must supply layout templates using them. you won't need to change anything from default configuration.
-
-### Form name conventions for building input data
+## Form name conventions for building input data
 To create input, you need to build a right structure from the form that our [protocol](https://protocol.automationcloud.net/) expects to get. For instance, you'd like to create the `PetInsurance.policyOptions` input, you will need to send json data like:
 ```
 {
