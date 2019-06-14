@@ -1,5 +1,4 @@
-import { html, classMap } from '/src/main.js';
-import { templates } from '/src/main.js';
+import { html, classMap, templates } from '/src/main.js';
 
 const showModal = (...detail) => new CustomEvent('show-modal', { detail });
 const update = new CustomEvent('update');
