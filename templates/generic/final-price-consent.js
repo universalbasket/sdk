@@ -1,5 +1,4 @@
-import { html } from '/src/main.js';
-import priceDisplay from '../../src/builtin-templates/price-display.js';
+import { html, templates } from '/src/main.js';
 
 export default (finalPrice, hide = true) => {
     return html`
@@ -7,7 +6,10 @@ export default (finalPrice, hide = true) => {
             type=${hide ? 'hidden' : 'text'}
             id="final-price-consent"
             name="final-price-consent-$object"
-            value="${JSON.stringify(finalPrice)}" />
-        <label for="final-price-consent" style=${hide ? 'visibility: hidden' : ''}>${priceDisplay(finalPrice.price)}</label>
-        </div>`;
+            value="${ JSON.stringify(finalPrice) }" />
+        <label
+            for="final-price-consent"
+            style=${ hide ? 'visibility: hidden' : '' }>
+            ${ templates.priceDisplay(finalPrice.price) }
+        </label>`;
 };

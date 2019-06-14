@@ -67,7 +67,6 @@ function getContentsHtml(contents) {
     // TODO address:
     // Generic.File
     // Generic.StructuredPrice
-    // Generic.HTML
 
     return html`${
         contents.map(item => {
@@ -85,8 +84,8 @@ function getContentsHtml(contents) {
                 case 'Text': return html`<p>${item.text}</p>`;
                 case 'Link': return html`<a href="${item.url}" target="_blank">${item.name}</a>`;
                 case 'HTML': return unsafeHTML(item.html);
-                case 'NamedText': return html`<p><b>${item.name}</b> ${item.text}</p>`;
-                case 'NamedPrice': return html`<p><b>${item.name}</b> ${PriceDisplay(item.price)}</p>`;
+                case 'NamedText': return html`<p>${item.name} – ${item.text}</p>`;
+                case 'NamedPrice': return html`<p>${item.name} – ${PriceDisplay(item.price)}</p>`;
                 default: return '';
             }
         })

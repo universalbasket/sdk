@@ -1,22 +1,11 @@
-import { html } from '/src/main.js';
-import { templates } from '/src/main.js';
+import { html, templates } from '/src/main.js';
+
 import {
     OtherInformation,
     MobileSummaryWrapper,
     DesktopSummaryWrapper,
     Documents
 } from '../../shared/summary.js';
-
-const keyInputs = [
-    'policyOptions',
-    'selectedCover',
-    'selectedCoverType',
-    'selectedCoverOptions',
-    'selectedVoluntaryExcess',
-    'selectedVetPaymentTerm',
-    'selectedVetFee',
-    'selectedPaymentTerm'
-];
 
 export default {
     MobileTemplate,
@@ -80,24 +69,11 @@ function SummaryPreview(inputs, outputs, cache) {
 }
 
 function SummaryTitle(_) {
-    const title = _.serviceName || 'Your Package';
+    const title = _.serviceName || 'Your package';
     return html`
         <b class="large">${ title }</b>
         <span class="faint large">Pet Insurance</span>
     `;
-}
-
-function getPrice(outputs, cache) {
-    const priceObj = outputs.finalPrice ||
-        outputs.estimatedPrice ||
-        cache.finalPrice ||
-        cache.estimatedPrice;
-
-    return priceObj && priceObj.price;
-}
-
-function hasContent(inputs) {
-    return !!Object.keys(inputs).find(key => keyInputs.includes(key));
 }
 
 function VetFee(selectedVetFee) {
@@ -133,6 +109,30 @@ function PetInformation(inputs, currencyCode = 'gbp') {
             <li>Paid/Donated: ${ templates.priceDisplay({ currencyCode, value: pets[0].petPrice })}</li>
         </ul>
     </article>`;
+}
+
+function getPrice(outputs, cache) {
+    const priceObj = outputs.finalPrice ||
+        outputs.estimatedPrice ||
+        cache.finalPrice ||
+        cache.estimatedPrice;
+
+    return priceObj && priceObj.price;
+}
+
+function hasContent(inputs) {
+    const keyInputs = [
+        'policyOptions',
+        'selectedCover',
+        'selectedCoverType',
+        'selectedCoverOptions',
+        'selectedVoluntaryExcess',
+        'selectedVetPaymentTerm',
+        'selectedVetFee',
+        'selectedPaymentTerm'
+    ];
+
+    return !!Object.keys(inputs).find(key => keyInputs.includes(key));
 }
 
 function DesktopTemplate(inputs, outputs, cache, _) {

@@ -9,7 +9,8 @@ import {
     policyOptions,
     selectedAddress,
     selectedCoverType,
-    selectedCoverOptions
+    selectedCoverOptions,
+    summaryPage
 } from './pet-insurance/sections/index.js';
 
 export default {
@@ -88,6 +89,27 @@ export default {
                     waitFor: ['output.availableCoverOptions']
                 }
                 /* { name: 'selectedVetFee', waitFor: 'output.availableVetFees' } */
+            ]
+        },
+        {
+            name: 'summary',
+            route: '/summary',
+            title: 'Summary',
+            sections: [
+                {
+                    name: 'summary',
+                    template: summaryPage,
+                    waitFor: [
+                        'input.policyOptions',
+                        'input.selectedCoverOptions',
+                        'input.selectedCoverType',
+                        'input.selectedPaymentTerm',
+                        'input.selectedCover',
+                        'input.selectedAddress',
+                        'input.selectedBreedType',
+                        'output.estimatedPrice'
+                    ]
+                }
             ]
         },
         {
