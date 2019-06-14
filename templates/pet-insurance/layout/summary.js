@@ -1,5 +1,5 @@
-import { html } from '/src/main.js';
-import { templates } from '/src/main.js';
+import { html, templates } from '/src/main.js';
+
 import {
     OtherInformation,
     MobileSummaryWrapper,

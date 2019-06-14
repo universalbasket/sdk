@@ -1,6 +1,6 @@
-import { html } from '/web_modules/lit-html/lit-html.js';
+import { html, templates } from '/src/main.js';
 
-export default (name, { selectedBroadbandPackage, selectedTvPackages, selectedPhonePackage }) => {
+export default (name, { selectedBroadbandPackage, selectedTvPackages, selectedPhonePackage, oneOffCosts, monthlyCosts }) => {
     return html`
         <h2>Summary</h2>
 
@@ -18,6 +18,24 @@ export default (name, { selectedBroadbandPackage, selectedTvPackages, selectedPh
                 <th>Phone</th>
                 <td>${ selectedPhonePackage.name }</td>
             </tr>
+        </table>
+
+        <h3>${ oneOffCosts.name }</h3>
+        <table class="table">
+            ${ oneOffCosts.contents.map(i => html`
+                <tr>
+                    <th>${ i.name }</th>
+                    <td>${ templates.priceDisplay(i.price) }</td>
+                </tr>`) }
+        </table>
+
+        <h3>${ monthlyCosts.name }</h3>
+        <table class="table">
+            ${ monthlyCosts.contents.map(i => html`
+                <tr>
+                    <th>${ i.name }</th>
+                    <td>${ templates.priceDisplay(i.price) }</td>
+                </tr>`) }
         </table>
 
         <div class="section__actions">

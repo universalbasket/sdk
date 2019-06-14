@@ -44,7 +44,7 @@ function InstallationAddress(address, similarAddresses) {
     }
 
     return html`
-        <p style="color: red">Could not found exact installation address, please select from here:</p>
+        <p>Please select your installation address</p>
         <span class="field__name">Select Your Installation Address</span>
         <select name="selected-installation-address" required>
             <option>select address...</option>

@@ -104,7 +104,9 @@ export default {
                     waitFor: [
                         'input.selectedBroadbandPackage',
                         'input.selectedTvPackages',
-                        'input.selectedPhonePackage'
+                        'input.selectedPhonePackage',
+                        'output.oneOffCosts',
+                        'output.monthlyCosts'
                     ]
                 }
             ]

@@ -1,5 +1,4 @@
-import { html } from '/src/main.js';
-import PriceDisplay from '../../../src/builtin-templates/price-display.js';
+import { html, templates } from '/src/main.js';
 
 import {
     OtherInformation,
@@ -34,7 +33,7 @@ function SummaryDetails(inputs, outputs, cache) {
         html`
             <div class="summary__block summary__block--price">
                 <b class="large highlight">
-                    ${ PriceDisplay(price) }
+                    ${ templates.PriceDisplay(price) }
                 </b>
             </div>` :
         '' }
@@ -50,7 +49,7 @@ function SummaryPreview(inputs, outputs, cache) {
 
     return html`
         <b class="large summary__preview-price">
-            ${ PriceDisplay(price || { currencyCode: 'gbp' }) }
+            ${ templates.PriceDisplay(price || { currencyCode: 'gbp' }) }
         </b>
 
         ${ hasContent(inputs) ? html`

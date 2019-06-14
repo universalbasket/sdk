@@ -1,5 +1,4 @@
-import { html } from '/web_modules/lit-html/lit-html.js';
-import { templates } from '/src/main.js';
+import { html, templates } from '/src/main.js';
 
 export default (name, { selectedRooms, priceBreakdown }) => {
     return html`
