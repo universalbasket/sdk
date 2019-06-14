@@ -37,6 +37,7 @@ export const templates = {
 
 export {
     html,
+    render,
     classMap
 };
 
