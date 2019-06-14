@@ -104,6 +104,10 @@ class EndUserSdk {
         await this.createJobInputs({ panToken });
     }
 
+    async createOtp() {
+        return await this.sdk.createOtp();
+    }
+
     async resetJob(fromInputKey, preserveInputs) {
         await this.sdk.resetJob(fromInputKey, preserveInputs);
     }

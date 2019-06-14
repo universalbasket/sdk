@@ -1,5 +1,5 @@
 import { html } from '/src/main.js';
-import PaymentCard from '../../generic/payment-card.js';
+import PaymentCardIframe from '../../generic/payment-card-iframe.js';
 
 export default otp => html`
     <h2>Guest details</h2>
@@ -24,7 +24,7 @@ export default otp => html`
     </div>
 
     <h2>Card details</h2>
-    ${PaymentCard(otp)}
+    ${PaymentCardIframe(otp)}
 
     <input type="hidden" name="payment[address][line1]" value="na">
     <input type="hidden" name="payment[address][line2]" value="na">

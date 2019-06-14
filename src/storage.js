@@ -73,5 +73,19 @@ function set(type, key, data) {
     localStorage.setItem(`${type}.${key}`, JSON.stringify(data));
 }
 
+function del(type, key) {
+    if (!TYPES.includes(type)) {
+        throw new Error(`InputOutput.set(): type must be one of ${TYPES.join(', ')}`);
+    }
 
-export { getAll, get, set, objectToArray };
+    localStorage.removeItem(`${type}.${key}`);
+}
+
+
+export {
+    getAll,
+    get,
+    set,
+    del,
+    objectToArray
+};

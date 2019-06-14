@@ -164,6 +164,7 @@ export default {
                 name: 'Sky Talk Anytime Extra'
             }
         },
+        supportEmail: 'support@example.com',
         local: {
             currencyCode: 'gbp',
             landlineOptions: {

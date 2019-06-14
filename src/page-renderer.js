@@ -2,11 +2,11 @@ import kebabcase from '/web_modules/lodash.kebabcase.js';
 import { html, render } from '/web_modules/lit-html/lit-html.js';
 import sdk from './sdk.js';
 import { serializeForm , getFormInputKeys } from './serialize-form.js';
-import getData from './get-data-with-priority.js';
 import pageWrapper from './builtin-templates/page-wrapper.js';
 import inlineLoading from './builtin-templates/inline-loading.js';
 import flashError from './builtin-templates/flash-error.js';
 import * as Storage from './storage.js';
+import getDataForSection from './get-data-for-section.js';
 
 const VAULT_FORM_SELECTOR = '#ubio-vault-form';
 
@@ -18,32 +18,39 @@ const VAULT_FORM_SELECTOR = '#ubio-vault-form';
  */
 class PageRenderer {
     constructor(name, sections = [], selector, onFinish) {
+        if (sections.length === 0) {
+            throw new Error('PageRenderer constructor: sections is empty');
+        }
+
         this.name = name;
         this.selector = selector;
         this.sections = [...sections];
         this.onFinish = onFinish;
+
+        this.sectionsToRender = [];
         this.currentSection = null;
     }
 
     init() {
-        if (this.sections.length === 0) {
-            throw 'PageRenderer init: empty sections []';
-        }
+        this.sectionsToRender = this.sections.map(s => { return { elementName: kebabcase(s.name), ...s }; });
         this.renderWrapper();
     }
 
     renderWrapper() {
         render(pageWrapper(), document.querySelector(this.selector));
-        const wrappers = this.sections.map(section => kebabcase(section.name)).map(name => {
-            return html`<form id="section-form-${name}"></form>`;
-        });
+        const wrappers = this.sectionsToRender.map(s => html`<form id="section-form-${s.elementName}"></form>`);
 
         render(html`${wrappers.map(w => w)}`, document.querySelector('#target'));
         this.next();
     }
 
     next() {
-        const section = this.sections.shift();
+        const section = this.sectionsToRender.shift();
+        if (!section) {
+            console.info('PageRenderer next: no section to render.');
+            render(html``, document.querySelector(this.selector));
+            return this.onFinish();
+        }
 
         if (!section) {
             throw 'PageRenderer next: no section';
@@ -53,223 +60,153 @@ class PageRenderer {
         this.renderSection(section);
     }
 
-    addListeners(name) {
+    addListeners(elementName) {
         if (!sdk.initiated) {
             return;
         }
 
-        const submitBtn = document.querySelector(`#submit-btn-${name}`);
-        const cancelBtn = document.querySelector('#cancel-btn');
-        const vaultForm = document.querySelector(VAULT_FORM_SELECTOR);
-        const form = document.querySelector(`#section-form-${name}`);
+        const submitBtn = document.querySelector(`#submit-btn-${elementName}`);
+        if (!submitBtn) {
+            console.warn(`submit button for ${elementName} section not found.`);
+        }
 
-        const vaultListener = () => {
-            if (!form.reportValidity()) {
+        const sectionForm = document.querySelector(`#section-form-${elementName}`);
+
+        submitBtn.addEventListener('click', e => {
+            if (sectionForm && !sectionForm.reportValidity()) {
                 console.log('invalid form');
                 return;
             }
 
-            submitBtn.setAttribute('disabled', 'true');
+            e.target.setAttribute('disabled', 'true');
 
-            isVaultFormValid(vaultForm)
+            this.submitVaultFormIfPresents()
                 .then(() => {
-                    return submitVaultForm(vaultForm);
+                    const inputs = serializeForm(`#section-form-${elementName}`);
+                    return this.createInputs(inputs);
+                })
+                .then(() => {
+                    this.disableSection(elementName);
+                    this.next();
+                })
+                .catch(err => {
+                    if (document.querySelector('#error')) {
+                        render(flashError(err), document.querySelector('#error'));
+                    }
+                    e.target.removeAttribute('disabled');
+                });
+        });
+    }
+
+    submitVaultFormIfPresents() {
+        const vaultIframe = document.querySelector(VAULT_FORM_SELECTOR);
+
+        if (!vaultIframe) {
+            return Promise.resolve();
+        }
+
+        if (vaultIframe) {
+            return isVaultFormValid(vaultIframe)
+                .then(() => {
+                    return submitVaultForm(vaultIframe);
                 })
                 .then(({ cardToken, panToken }) => {
-                    submitBtn.setAttribute('disabled', 'true');
-                    const inputs = serializeForm(`#section-form-${name}`);
+                    Storage.del('_', 'otp');
+                    Storage.set('_', 'cardToken', cardToken);
+                    Storage.set('_', 'panToken', panToken);
 
-                    if (inputs.payment) {
-                        inputs.payment['card'] = { '$token': cardToken };
-                    }
-                    inputs['panToken'] = panToken;
-
-                    return sdk.createJobInputs(inputs);
-                })
-                .then(submittedInputs => {
-                    const event = new CustomEvent('newInputs', { detail: submittedInputs });
-                    window.dispatchEvent(event);
-
-                    if (this.sections.length === 0) {
-                        render(html``, document.querySelector(this.selector));
-                        this.onFinish();
-                    } else {
-                        form.classList.add('form--disabled');
-                        [...form.querySelectorAll('input')].forEach(_ => _.setAttribute('disabled', 'disabled'));
-                        vaultForm.setAttribute('id', `${VAULT_FORM_SELECTOR}-submitted`);
-                        this.next();
-                    }
-                })
-                .catch(err => {
-                    if (document.querySelector('#error')) {
-                        render(flashError(err), document.querySelector('#error'));
-                    }
-                    submitBtn.removeAttribute('disabled');
+                    vaultIframe.setAttribute('id', `${VAULT_FORM_SELECTOR}-submitted`);
                 });
-        };
+        }
+    }
 
-        const defaultListener = () => {
-            if (!form.reportValidity()) {
-                console.log('invalid form');
-                return;
+    createInputs(inputs) {
+        let cardTokenSent = false;
+        let panTokenSent = false;
+
+        if (inputs.payment) {
+            const cardToken = Storage.get('_', 'cardToken');
+            const panToken = Storage.get('_', 'panToken');
+
+            if (cardToken) {
+                inputs.payment['card'] = { '$token': cardToken };
+                cardTokenSent = true;
+            } else {
+                //TODO: include this part in doc:
+                //you need include payment form within same section or put the payment form in any previous sections so that cardToken can be included.
+                console.warn('cardToken not found while submitting payment input.');
             }
 
-            submitBtn.setAttribute('disabled', 'true');
-
-            const inputs = serializeForm(`#section-form-${name}`);
-
-            // send input sdk
-            sdk.createJobInputs(inputs)
-                .then(submittedInputs => {
-                    const event = new CustomEvent('newInputs', { detail: submittedInputs });
-                    window.dispatchEvent(event);
-
-                    if (this.sections.length === 0) {
-                        render(html``, document.querySelector(this.selector));
-                        this.onFinish();
-                    } else {
-                        form.classList.add('form--disabled');
-                        [...form.querySelectorAll('input')].forEach(_ => _.setAttribute('disabled', 'disabled'));
-                        this.next();
-                    }
-                })
-                .catch(err => {
-                    if (document.querySelector('#error')) {
-                        render(flashError(err), document.querySelector('#error'));
-                    }
-                    submitBtn.removeAttribute('disabled');
-                });
-        };
-
-        if (submitBtn) {
-            const listener = vaultForm ? vaultListener : defaultListener;
-            submitBtn.addEventListener('click', listener);
-        } else {
-            console.warn('no click/input submission listener added for the section');
+            if (panToken) {
+                inputs['panToken'] = panToken;
+                panTokenSent = true;
+            }
         }
 
-        if (cancelBtn) {
-            cancelBtn.addEventListener('click', () => {
-                sdk.cancelJob().then(_res => {
-                    window.location.hash = '/error';
-                });
+        return sdk.createJobInputs(inputs)
+            .then(submittedInputs => {
+                const event = new CustomEvent('newInputs', { detail: submittedInputs });
+                window.dispatchEvent(event);
+
+                if (cardTokenSent) {
+                    Storage.del('_', 'cardToken');
+                }
+
+                if (panTokenSent) {
+                    Storage.del('_', 'panToken');
+                }
             });
+    }
+
+    skipSection(elementName) {
+        this.disableSection(elementName);
+
+        const vaultForm = document.querySelector(VAULT_FORM_SELECTOR);
+        if (vaultForm) {
+            vaultForm.setAttribute('id', `${VAULT_FORM_SELECTOR}-submitted`);
+        }
+
+        const submitButton = document.querySelector(`#submit-btn-${elementName}`);
+        if (submitButton) {
+            submitButton.setAttribute('disabled', 'disabled');
+        }
+
+        this.next();
+    }
+
+    disableSection(elementName) {
+        const sectionForm = document.querySelector(`#section-form-${elementName}`);
+        if (sectionForm) {
+            sectionForm.classList.add('form--disabled');
+            const fields = [
+                ...sectionForm.querySelectorAll('input'),
+                ...sectionForm.querySelectorAll('select')
+            ];
+            fields.forEach(_ => _.setAttribute('disabled', 'disabled'));
         }
     }
 
-    skipSection() {
-        if (this.sections.length === 0) {
-            render(html``, document.querySelector(this.selector));
-            this.onFinish();
-        } else {
-            const kebabCaseName = kebabcase(this.currentSection.name);
-            const form = document.querySelector(`#section-form-${kebabCaseName}`);
-            if (form) {
-                form.classList.add('form--disabled');
-                [...form.querySelectorAll('input')].forEach(_ => _.setAttribute('disabled', 'disabled'));
-            }
+    renderSection({ elementName, waitFor, template }) {
+        const sectionForm = document.querySelector(`#section-form-${elementName}`);
 
-            const vaultForm = document.querySelector(VAULT_FORM_SELECTOR);
-            if (vaultForm) {
-                vaultForm.setAttribute('id', `${VAULT_FORM_SELECTOR}-submitted`);
-            }
+        render(html`${inlineLoading()} `, sectionForm);
 
-            this.next();
-        }
-    }
-
-    renderSection({ name, waitFor, template }) {
-        const sectionName = kebabcase(name);
-        const selector = document.querySelector(`#section-form-${sectionName}`);
         const skip = () => {
             this.skipSection();
         };
 
-        if (!waitFor) {
-            render(html`${template(sectionName, {}, skip)} `, selector);
-            this.addListeners(sectionName);
-
-            const { inputs } = Storage.getAll();
-            const submittedInputs = Object.keys(inputs);
-            this.skipIfSubmitted(submittedInputs);
-
-            return;
-        }
-
-        render(html`${inlineLoading()} `, selector);
-
-        this.getDataForSection(waitFor)
+        getDataForSection(waitFor)
             .then(res => {
-                render(html`${template(sectionName, res, skip)} `, selector);
-                this.addListeners(sectionName);
-
-                const { inputs } = Storage.getAll();
-                const submittedInputs = Object.keys(inputs);
-                this.skipIfSubmitted(submittedInputs);
+                render(html`${template(elementName, res, skip)} `, sectionForm);
+                this.addListeners(elementName);
+                this.skipIfSubmitted(elementName);
             });
     }
 
-    getDataForSection(waitFor) {
-        return new Promise(res => {
-            const results = waitFor.map(_ => {
-                const [type, sourceKey] = _.split('.');
-                if (type === 'input') {
-                    const data = Storage.get('input', sourceKey);
-                    return { data, wait: false, sourceKey };
-                }
-
-                const data = getData(type, sourceKey);
-                if (data === null) { // data is explicitly null
-                    return { data: null, wait: false, sourceKey };
-                }
-
-                if (data) {
-                    return { data, wait: false, sourceKey };
-                }
-
-                return { data: null, wait: true, sourceKey };
-            });
-
-            const keysToWaitFor = results.filter(r => r.wait === true).map(r => r.sourceKey);
-
-            if (keysToWaitFor.length === 0) {
-                const dataWaitFor = {};
-                results.forEach(result => { dataWaitFor[result.sourceKey] = result.data; });
-
-                return res(dataWaitFor);
-            }
-
-            const dataWaitFor = {};
-            results.forEach(result => { dataWaitFor[result.sourceKey] = result.data; });
-
-            this.waitForOutputs(keysToWaitFor).then(data => {
-                res({ ...dataWaitFor, ...data });
-            });
-        });
-    }
-
-    waitForOutputs(keysToWaitFor) {
-        return new Promise(resolve => {
-            const trackOutput = () => {
-                const { outputs } = Storage.getAll();
-                const allAvailable = keysToWaitFor.every(k => outputs[k] !== undefined);
-
-                if (allAvailable) {
-                    const data = {};
-                    keysToWaitFor.forEach(k => data[k] = outputs[k]);
-
-                    window.removeEventListener('newOutputs', trackOutput);
-                    resolve(data);
-                }
-            };
-
-            window.addEventListener('newOutputs', trackOutput);
-        });
-    }
-
-    skipIfSubmitted(submittedInputKeys) {
-        const kebabCaseName = kebabcase(this.currentSection.name);
-        const inputKeysInSection = getFormInputKeys(`#section-form-${kebabCaseName}`);
+    skipIfSubmitted(elementName) {
+        const { inputs } = Storage.getAll();
+        const submittedInputKeys = Object.keys(inputs);
+        const inputKeysInSection = getFormInputKeys(`#section-form-${elementName}`);
 
         if (inputKeysInSection.length === 0) {
             return;
@@ -283,7 +220,7 @@ class PageRenderer {
         const submittedKeysInSection = inputKeysInSection.map(k => submittedInputKeys.includes(k) ? k : null).filter(k => k);
         //all submitted
         if (submittedKeysInSection.length === inputKeysInSection.length) {
-            return this.skipSection();
+            return this.skipSection(elementName);
         }
 
         if (submittedKeysInSection.length > 0) {
@@ -298,13 +235,13 @@ class PageRenderer {
     }
 }
 
-function isVaultFormValid(vaultForm) {
+function isVaultFormValid(vaultIframe) {
     return new Promise((resolve, reject) => {
-        if (!vaultForm) {
+        if (!vaultIframe) {
             reject('vault form not found');
         }
         window.addEventListener('message', receiveValidation);
-        vaultForm.contentWindow.postMessage('vault.validate', '*');
+        vaultIframe.contentWindow.postMessage('vault.validate', '*');
 
         function receiveValidation({ data: message }) {
             if (message.name === 'vault.validation') {
@@ -320,14 +257,14 @@ function isVaultFormValid(vaultForm) {
     });
 }
 
-function submitVaultForm(vaultForm) {
+function submitVaultForm(vaultIframe) {
     return new Promise((resolve, reject) => {
-        if (!vaultForm) {
-            reject('vault form not found');
+        if (!vaultIframe) {
+            reject('vault iframe not found');
         }
 
         window.addEventListener('message', receiveOutput);
-        vaultForm.contentWindow.postMessage('vault.submit', '*');
+        vaultIframe.contentWindow.postMessage('vault.submit', '*');
 
         function receiveOutput({ data: message }) {
             if (message.name === 'vault.output') {
