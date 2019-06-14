@@ -5,13 +5,13 @@ const DEFAULT_OPTIONS = {
     fields: 'pan,name,expiry-select,cvv',
     brands: 'visa,mastercard,amex',
     validateOnInput: 'on',
-    css: 'https://kk-iframe-prd.glitch.me/style.css'
+    css: 'https://ubio-application-bundle-dummy-server.glitch.me/style.css'
 };
 
 export default (otp, options = {}, style = {}) => {
     const formOptions = {
         ...DEFAULT_OPTIONS,
-        options
+        ...options
     };
 
     const optionsString = Object.keys(formOptions)
