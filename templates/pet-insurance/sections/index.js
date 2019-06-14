@@ -8,6 +8,7 @@ import policyOptions from './policy-options.js';
 import checkout from './checkout.js';
 import directDebit from './direct-debit.js';
 import finalPriceConsent from './final-price-consent.js';
+import summaryPage from './summary.js';
 import confirmation from './confirmation.js';
 
 export {
@@ -21,5 +22,6 @@ export {
     checkout,
     directDebit,
     finalPriceConsent,
+    summaryPage,
     confirmation
 };

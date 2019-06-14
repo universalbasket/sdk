@@ -67,7 +67,6 @@ function getContentsHtml(contents) {
     // TODO address:
     // Generic.File
     // Generic.StructuredPrice
-    // Generic.HTML
 
     return html`${
         contents.map(item => {

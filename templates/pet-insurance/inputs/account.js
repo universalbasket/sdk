@@ -2,7 +2,6 @@ import { html } from '/src/main.js';
 
 export default () => html`
 <div name="account" class="filed-set">
-    Contact
     <div class="field filed-set">
         <label class="field__name" for="account[email]">Email</label>
         <input type="email" name="account[email]" placeholder="example@example.com" value="example@example.com" required>
