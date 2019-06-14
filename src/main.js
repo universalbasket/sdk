@@ -233,7 +233,7 @@ export async function createInputs(inputs) {
     window.dispatchEvent(event);
 }
 
-export async function cancel() {
+export async function cancelJob() {
     if (!sdk.initiated) {
         throw new Error('sdk not initiated');
     }
