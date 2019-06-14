@@ -75,6 +75,7 @@ export default {
                 searchRates: false
             }
         },
+        supportEmail: 'support@example.com',
         local: {
             currencyCode: 'gbp'
         }

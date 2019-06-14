@@ -79,7 +79,7 @@ export function createApp({ pages, cache = [], layout, data = {} }, callback) {
     const routingOrder = pages.map(page => page.route);
     const routes = {
         '/': loading(mainSelector),
-        '/error': { renderer: error(mainSelector), title: null, step: null }
+        '/error': { renderer: error(mainSelector, data.supportEmail), title: null, step: null }
     };
 
     pages.forEach((config, stepIndex) => {
