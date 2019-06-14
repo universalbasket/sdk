@@ -121,6 +121,8 @@ class EndUserSdk {
                 callback(null, error);
             }
         });
+
+        return stopTracking;
     }
 
     async cancelJob() {

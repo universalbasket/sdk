@@ -115,16 +115,22 @@ export function createApp({ pages, cache = [], layout, data = {} }, callback) {
 
             const { initialInputs: input, category, serverUrlPath } = data;
 
+            let tracker = null;
             window.addEventListener('hashchange', () => {
                 router.navigate();
                 Summary.update();
 
-                const isRoot = !window.location.hash || window.location.hash === '/';
+                const isRoot = router.isCurrentRoot();
                 if (isRoot) {
+                    if (tracker) {
+                        tracker.stop();
+                    }
+
                     sdk.create({ input, category, serverUrlPath })
                         .then(() => {
                             window.location.hash = entryPoint;
                             afterSdkInitiated(cache, data);
+                            tracker = addTracker();
                         })
                         .catch(err => {
                             console.error(err);
@@ -144,12 +150,14 @@ export function createApp({ pages, cache = [], layout, data = {} }, callback) {
             });
 
             router.navigate();
-            const isRoot = !window.location.hash || window.location.hash === '/';
+
+            const isRoot = router.isCurrentRoot();
             if (isRoot) {
                 sdk.create({ input, category, serverUrlPath })
                     .then(() => {
                         window.location.hash = entryPoint;
                         afterSdkInitiated(cache, data);
+                        tracker = addTracker();
                     })
                     .catch(err => {
                         console.error(err);
@@ -159,6 +167,7 @@ export function createApp({ pages, cache = [], layout, data = {} }, callback) {
                 sdk.retrieve()
                     .then(() => {
                         afterSdkInitiated(cache, data);
+                        tracker = addTracker();
                     })
                     .catch(() => {
                         window.location.hash = '';
@@ -177,11 +186,14 @@ function afterSdkInitiated(cacheConfig, data) {
 
     Cache.poll(cacheConfig);
     Summary.update();
+}
 
+function addTracker() {
     const newOutputsEvent = new CustomEvent('newOutputs');
     let loading = false;
 
-    sdk.trackJob(event => {
+    console.info('job tracker added');
+    const stop = sdk.trackJob(event => {
         if (event === 'fail') {
             window.location.hash = '/error';
         }
@@ -200,6 +212,8 @@ function afterSdkInitiated(cacheConfig, data) {
                 });
         }
     });
+
+    return { stop };
 }
 
 export async function createInputs(inputs) {

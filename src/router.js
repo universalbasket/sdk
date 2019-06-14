@@ -28,6 +28,10 @@ class Router {
         route.renderer.init();
         this.progressBar.update(route.step);
     }
+
+    isCurrentRoot() {
+        return !window.location.hash || window.location.hash.slice(1) === '/';
+    }
 }
 
 export default (routes, notFoundTemplate) => new Router(routes, notFoundTemplate);
