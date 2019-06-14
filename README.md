@@ -16,7 +16,11 @@ You need npm installed
 ```
 
 ## Getting Started
+1. Once the project is generated, open `ubio.config.js` then replace the `serverPathUrl` with your own server endpoint to [create the job](#data-object). You can try it with our dummy server, but you won't be able to track how's the job processing in your dashboard as it is not counted as your job. You will need the secret key, permission to access the service(talk to our team if you get authorization error), serviceId to create the job. more information is in [here](https://docs.automationcloud.net/docs/job-create#section-start-your-job)
+2. Customize `/layout/headers.js` and `/layout/footer.js` for your own branding.
+3. The default `ubio.config.js` contains optimized flows for the Domain and it's been tested with one of our service, but the optimized flow could be differ per service as each website have different flow. So try it with the default setting, then if you need to adjust order of the input forms, you could adjust the `pages` setting and templates in `/sections`.
 
+## src/main.js
 ### Methods
 #### `createApp(ubioConfig, callback)`
 Initiating app with config
@@ -61,7 +65,6 @@ returns:
 #### cancelJob()
 params: n/a
 returns: n/a
-
 
 
 ## ubio.config.js
