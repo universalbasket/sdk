@@ -19,9 +19,12 @@ You need npm installed
 1. Once the project is generated, open `ubio.config.js` then replace the `serverPathUrl` with your own server endpoint to [create the job](#data-object). You can try it with our dummy server, but you won't be able to track how's the job processing in your dashboard as it is not counted as your job. You will need the secret key, permission to access the service(talk to our team if you get authorization error), serviceId to create the job. more information is in [here](https://docs.automationcloud.net/docs/job-create#section-start-your-job)
 2. Customize `/layout/headers.js` and `/layout/footer.js` for your own branding.
 3. The default `ubio.config.js` contains optimized flows for the Domain and it's been tested with one of our service, but the optimized flow could be differ per service as each website have different flow. So try it with the default setting, then if you need to adjust order of the input forms, you could adjust the `pages` setting and templates in `/sections`.
+4. Remember that templates under `/sections` directory must contain button name `#submit-btn-${sectionName}`. Otherwise no event lister submitting inputs will be added. Templates under `/input` directory contains sub set of form that can be used by setions. It is not necessary to make each input template separately but it can be used when you wish to divide forms into chunks rather than putting all into one section template.
 
-## src/main.js
-### Methods
+> See index.html for usage. 
+
+
+## Methods(src/main.js)
 #### `createApp(ubioConfig, callback)`
 Initiating app with config
 
@@ -159,8 +162,14 @@ Here's the final form with right name for the `PetInsurance.policyOptions`.
 ## Glossaries
 
 ### Section
+Section is a template contains one or more of inputs form that you wish to submit together. Sections templates will always consist of forms and submit button. 
+Also section template gets 3 arguments, `name`, `data` and `skip` and returns html templates using lit-html. This template is rendered only when the specified data is available and meanwhile, inline-loading will be shown.
+- name: section name. Usually use it for submit button.
+- data:Object the data object you specified in ubio.config.js as _waitFor_
+- skip function that skip the section without submitting and render next section on page.
 
-### Data
+### Data 
+
 
 ## Built With
 
