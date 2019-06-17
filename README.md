@@ -164,12 +164,19 @@ Here's the final form with right name for the `PetInsurance.policyOptions`.
 ### Section
 Section is a template contains one or more of inputs form that you wish to submit together. Sections templates will always consist of forms and submit button. 
 Also section template gets 3 arguments, `name`, `data` and `skip` and returns html templates using lit-html. This template is rendered only when the specified data is available and meanwhile, inline-loading will be shown.
-- name: section name. Usually use it for submit button.
-- data:Object the data object you specified in ubio.config.js as _waitFor_
-- skip function that skip the section without submitting and render next section on page.
+- name: String - section name. Usually use it for submit button.
+- data: Object  the data object you specified in ubio.config.js as _waitFor_
+- skip: function - skip the section without submitting and render next section on page or navigate to next page if it is last section of the page
 
 ### Data 
+There are 5 kind of data that stored in localStorage and they can be used in ‘pages[n].sections[m].waitFor’ in ubio.config.js and Summary templates in layout directory.
+- `outputs`: output populated from live job.
+- `inputs`: inputs submitted to automation cloud.
+- `cache`: cache data retrieved from cache service.
+- `local`: hardcoded data provided in config file. 
+- `_`: data related to job such as otp, service name etc.
 
+> when you specify waitFor, you will need to specify which type of data as a prefix i.e ‘output.availableAddresses’. And there are priorities when you specify it among the output cache and local. (Output > cache > local)
 
 ## Built With
 
