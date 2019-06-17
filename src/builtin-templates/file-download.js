@@ -1,23 +1,21 @@
 import sdk from '../sdk.js';
 import { html } from '/web_modules/lit-html/lit-html.js';
 
-const template = async ({ filename, url }) => {
-    const a = document.createElement('a');
-    let blob, href;
+const template = ({ filename, url }) => {
+    console.info({ filename, url });
 
-    try {
-        blob = await sdk.getJobFile(url);
-    } catch (e) {
-        console.error(e);
-    }
-
-    if (blob) {
-        href = URL.createObjectURL(blob);
-        a.setAttribute('href', href);
-        a.innetText = filename;
-    }
-
-    return blob ? html`${ a }` : '';
+    return sdk.sdk.getJobFile(url)
+        .then(blob => {
+            const a = document.createElement('a');
+            const href = URL.createObjectURL(blob);
+            a.setAttribute('href', href);
+            a.innetText = filename;
+            return html`${ a }`;
+        })
+        .catch(e => {
+            console.warn('No blob for us', e);
+            return html`bummer`;
+        });
 };
 
 export default template;

@@ -1,4 +1,4 @@
-import { html, classMap, templates } from '/src/main.js';
+import { html, until, classMap, templates } from '/src/main.js';
 
 const showModal = (...detail) => new CustomEvent('show-modal', { detail });
 const update = new CustomEvent('update');
@@ -99,7 +99,7 @@ function Documents(outputs = {}) {
         .filter(o => o.type === 'File')
         .map(o => html`
             <li class="summary__file-icon">
-                ${ templates.file(o) }
+                ${ until(templates.file(o)) }
             </li>`);
 
     if (items.length === 0) {
