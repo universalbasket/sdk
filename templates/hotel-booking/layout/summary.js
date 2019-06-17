@@ -80,11 +80,11 @@ function hasContent(inputs) {
     return !!inputs.selectedRooms && inputs.selectedRooms[0];
 }
 
-function DesktopTemplate(inputs, outputs, cache, _) {
+function DesktopTemplate(inputs, outputs, cache, _local, _) {
     return DesktopSummaryWrapper(inputs, outputs, cache, _, SummaryTitle, SummaryDetails);
 }
 
-function MobileTemplate(inputs, outputs, cache, _) {
+function MobileTemplate(inputs, outputs, cache, _local, _) {
     return MobileSummaryWrapper(inputs, outputs, cache, _,
         SummaryPreview, SummaryTitle, SummaryDetails, hasContent);
 }
