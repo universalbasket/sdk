@@ -14,7 +14,7 @@ const template = ({ filename, url }) => {
         })
         .catch(e => {
             console.warn('No blob for us', e);
-            return html`bummer`;
+            return filename;
         });
 };
 
