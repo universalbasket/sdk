@@ -12,7 +12,6 @@ import Summary from './render-summary.js';
 import { installMediaQueryWatcher } from '/web_modules/pwa-helpers/media-query.js';
 import Layout from './layout.js';
 
-import error from './builtin-templates/error.js';
 import inlineLoading from './builtin-templates/inline-loading.js';
 import modal from './builtin-templates/modal.js';
 import notFound404 from './builtin-templates/not-found-404.js';
@@ -22,7 +21,6 @@ import priceType from './builtin-templates/price-type.js';
 import progressBar from './builtin-templates/progress-bar.js';
 
 export const templates = {
-    error,
     inlineLoading,
     modal,
     notFound404,
@@ -68,7 +66,7 @@ function validatePages(pages) {
     }
 }
 
-export function createApp({ pages, cache = [], layout, sdk, supportEmail, local }, callback) {
+export function createApp({ mountPoint, pages, cache = [], layout, error, sdk, local }, callback) {
     validatePages(pages);
 
     const mainSelector = '#main';
@@ -76,7 +74,7 @@ export function createApp({ pages, cache = [], layout, sdk, supportEmail, local 
     //setup router
     const routingOrder = pages.map(page => page.route);
     const routes = {
-        '/error': { renderer: error(mainSelector, supportEmail), title: null, step: null }
+        '/error': { renderer: error, title: null, step: null }
     };
 
     pages.forEach(({ title, sections, route, excludeStep }, stepIndex) => {
@@ -99,7 +97,7 @@ export function createApp({ pages, cache = [], layout, sdk, supportEmail, local 
     const entryPoint = routingOrder[0];
     const router = Router(routes, NotFound(mainSelector));
 
-    render(Layout(), document.querySelector('#app'));
+    render(Layout(), mountPoint);
     render(layout.header(), document.querySelector('#header'));
     render(layout.footer(), document.querySelector('#footer'));
 

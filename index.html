@@ -3,7 +3,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>ubio application bundle</title>
-        <link href="./src/css/index.css" rel="stylesheet">
+        <link href="/src/css/index.css" rel="stylesheet">
         <script type="module">
             window.location.hash = '';
             localStorage.clear();
@@ -30,13 +30,13 @@
                 this.disabled = true;
 
                 const domain = new URLSearchParams(window.location.search).get('domain') || 'pet-insurance';
-                const { pages, cache, layout } = (await import(`/templates/${domain}.config.js`)).default;
+                const { pages, cache, layout, error } = (await import(`/templates/${domain}.config.js`)).default;
                 const { token, jobId, serviceId, supportEmail, local } = await createJob(domain);
                 const sdk = createEndUserSdk({ token, jobId, serviceId });
 
                 this.remove();
 
-                const app = createApp({ pages, cache, layout, sdk, supportEmail, local });
+                const app = createApp({ mountPoint: window.app, pages, cache, layout, sdk, error, local });
             };
         </script>
     </head>

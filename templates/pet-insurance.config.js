@@ -12,6 +12,7 @@ import {
     selectedCoverOptions,
     summaryPage
 } from './pet-insurance/sections/index.js';
+import error from './shared/error.js';
 
 export default {
     layout: {
@@ -145,5 +146,6 @@ export default {
             ],
             excludeStep: true
         }
-    ]
+    ],
+    error
 };
