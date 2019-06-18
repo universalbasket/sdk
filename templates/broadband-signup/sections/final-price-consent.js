@@ -1,7 +1,7 @@
 import finalPriceConsent from '../../generic/final-price-consent.js';
 import { createInputs, cancelJob, templates, html } from '/src/main.js';
 
-export default (name, { oneOffCosts = {}, finalPrice = {} }, skip) => {
+export default (name, { oneOffCosts = {}, finalPrice = {} }, skip, sdk) => {
     const finalValue = finalPrice.price.value;
     const estimatedPrice = oneOffCosts.contents && oneOffCosts.contents.find(_ => _.name === 'Pay now');
     let estimatedValue = 0;
@@ -43,7 +43,7 @@ export default (name, { oneOffCosts = {}, finalPrice = {} }, skip) => {
         return finalPriceConsent(finalPrice);
     }
 
-    createInputs({ finalPriceConsent: finalPrice })
+    createInputs(sdk, { finalPriceConsent: finalPrice })
         .then(() => {
             skip();
             return '';
