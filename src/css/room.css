@@ -12,7 +12,7 @@
 
     display: grid;
     grid-gap: var(--gap);
-    grid-template-columns: auto 2fr 1fr;
+    grid-template-columns: auto 1fr auto;
     border-bottom: 1px solid var(--color--hr);
     padding: 15px 0;
 }
