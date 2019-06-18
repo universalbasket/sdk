@@ -7,6 +7,7 @@ import inlineLoading from './builtin-templates/inline-loading.js';
 import flashError from './builtin-templates/flash-error.js';
 import * as Storage from './storage.js';
 import getDataForSection from './get-data-for-section.js';
+import validateForm from './form-validator.js';
 
 const VAULT_FORM_SELECTOR = '#ubio-vault-form';
 
@@ -72,6 +73,7 @@ class PageRenderer {
         }
 
         const sectionForm = document.querySelector(`#section-form-${elementName}`);
+        validateForm(sectionForm);
 
         submitBtn.addEventListener('click', e => {
             if (sectionForm && !sectionForm.reportValidity()) {
