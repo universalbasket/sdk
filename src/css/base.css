@@ -14,6 +14,7 @@ input[type="date"],
 input[type="email"],
 input[type="tel"],
 input[type="password"],
+textarea,
 select {
     font-family: var(--font-family);
     font-size: var(--input-font-size);
@@ -25,6 +26,10 @@ select {
     max-width: 100%;
     height: var(--input-height);
     padding: var(--gap--small) var(--gap);
+}
+
+textarea {
+    height: 100px;
 }
 
 select {
