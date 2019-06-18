@@ -8,7 +8,6 @@
     --summary-background-color: #fff;
     --step-icon: #c7c7c7;
     --step-icon--active: #606060;
-    --input-border-radius: 2px;
     --font-family: 'Helvetica', 'Helvetica Neue', 'Arial', sans-serif;
     --font-size: 14px;
     --font-size--large: 18px;
@@ -16,12 +15,36 @@
     --color--error: #9a0013;
     --color--dim: #4a4a4a;
     --color--primary: #2a3c4f;
-    --color--accent: #333;
-    --color--focus: #31aade;
+    --color--accent: var(--color);
     --color--hr: #c7c7c7;
     --color--faint: #7e7e7e;
+    --color--placeholder: #9b9b9b;
     --highlight: #ffec84;
     --overlay: rgba(0, 0, 0, .5);
     --gap: 10px;
     --gap--small: 5px;
+
+    /*FIELD*/
+    --field-padding: 20px 0;
+
+    /*BUTTONS*/
+    --button-height: 26px;
+    --button-height--large: 31px;
+    --button-width: 85px;
+    --button-width--large: 121px;
+    --button-padding: var(--gap--small) var(--gap);
+    --button-font-size: 12px;
+    --button-font-size--large: 14.4px;
+    --button-border-width: 2px;
+
+    /*INPUT fields: input[type="text"], select;*/
+    --input-font-size: var(--font-size);
+    --input-width: 400px;
+    --input-height: 34px;
+    --input-border-radius: 2px;
+    --input-border-width: 3px;
+    --input-border-color: var(--color);
+    --input-border-color--invalid: var(--color--error);
+    --input-border-color--hover: var(--color);
+    --input-border-color--focus: #31aade;
 }

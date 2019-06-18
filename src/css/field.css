@@ -1,19 +1,54 @@
 .field {
-    margin: 1em 0;
-    border-bottom: 1px solid var(--color--hr);
-    padding-bottom: 1em;
+    margin: 0;
+    padding: var(--field-padding);
+    width: 100%;
 }
 
 .field-set {
-    border-bottom: solid 1px var(--color--hr);
+    margin-bottom: 30px;
+}
+
+.field-set .field:not(:last-child) {
+    border-bottom: solid 2px var(--color--hr);
 }
 
 .field__name {
-    font-size: 14px;
+    display: block;
+    font-size: 16px;
+    line-height: 18px;
     font-weight: 700;
     color: #333;
-    display: block;
     padding-bottom: 5px;
+    width: var(--input-width);
+    max-width: 100%;
+}
+
+.field--invalid .field__name {
+    color: var(--input-border-color--invalid);
+}
+
+.field__name::after {
+    content: attr(data-optional);
+    display: inline-block;
+    float: right;
+    font-style: italic;
+    font-size: var(--font-size);
+    font-weight: normal;
+}
+
+.field--invalid > input,
+.field--invalid > select,
+.field--invalid > .field__inputs {
+    border-color: var(--input-border-color--invalid);
+}
+
+.field--invalid::after {
+    content: attr(data-error);
+    display: block;
+    color: var(--input-border-color--invalid);
+    font-size: 1em;
+    height: 15px;
+    margin: 7px 0 0;
 }
 
 .field__inputs > input[type="radio"] {
