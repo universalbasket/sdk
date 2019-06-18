@@ -1,10 +1,8 @@
 import { html, templates } from '/src/main.js';
 
 import {
-    OtherInformation,
     MobileSummaryWrapper,
-    DesktopSummaryWrapper,
-    Documents
+    DesktopSummaryWrapper
 } from '../../shared/summary.js';
 
 export default {
@@ -49,9 +47,6 @@ function SummaryDetails(inputs, outputs) {
                 </table>
             </article>` :
         '' }
-
-        ${ Documents(outputs) }
-        ${ OtherInformation(outputs) }
     </div>`;
 }
 
