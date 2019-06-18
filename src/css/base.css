@@ -8,17 +8,51 @@ label {
     display: block;
 }
 
-input,
+input[type="text"],
+input[type="number"],
+input[type="date"],
+input[type="email"],
+input[type="tel"],
+input[type="password"],
 select {
     font-family: var(--font-family);
-    border: 2px solid var(--color--accent);
+    font-size: var(--input-font-size);
+    color: var(--color);
+    background-color: white;
+    border: var(--input-border-width) solid var(--input-border-color);
     border-radius: var(--input-border-radius);
-    width: 30ch;
-    padding: 1px 2px;
+    width: var(--input-width);
+    max-width: 100%;
+    height: var(--input-height);
+    padding: var(--gap--small) var(--gap);
 }
 
-input:focus {
-    border-color: var(--color--focus);
+select {
+    appearance: none;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="8" viewBox="0 0 14 8"><polygon points="12.4 0 14 1.5 7 8 0 1.5 1.6 0 7 4.9"/></svg>');
+    background-position: calc(100% - 10px) 50%;
+    background-repeat: no-repeat;
+    padding: 0 35px 0 var(--gap);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+input:placeholder,
+textarea::placeholder,
+select:placeholder {
+    color: var(--color--placeholder);
+}
+
+input:hover,
+textarea:hover,
+select:hover {
+    border-color: var(--input-border-color--hover);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+    border-color: var(--input-border-color--focus);
     outline: none;
 }
 

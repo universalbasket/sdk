@@ -33,7 +33,7 @@ function SummaryDetails(inputs, outputs, cache) {
         html`
             <div class="summary__block summary__block--price">
                 <b class="large highlight">
-                    ${ templates.PriceDisplay(price) }
+                    ${ templates.priceDisplay(price) }
                 </b>
             </div>` :
         '' }
@@ -49,7 +49,7 @@ function SummaryPreview(inputs, outputs, cache) {
 
     return html`
         <b class="large summary__preview-price">
-            ${ templates.PriceDisplay(price || { currencyCode: 'gbp' }) }
+            ${ templates.priceDisplay(price || { currencyCode: 'gbp' }) }
         </b>
 
         ${ hasContent(inputs) ? html`
