@@ -6,7 +6,7 @@ import inlineLoading from './builtin-templates/inline-loading.js';
 import flashError from './builtin-templates/flash-error.js';
 import * as Storage from './storage.js';
 import getDataForSection from './get-data-for-section.js';
-import * as main from './main';
+import * as main from './main.js';
 import validateForm from './form-validator.js';
 
 const VAULT_FORM_SELECTOR = '#ubio-vault-form';
@@ -18,23 +18,27 @@ const VAULT_FORM_SELECTOR = '#ubio-vault-form';
  * @param {Function} onFinish
  */
 class PageRenderer {
-    constructor(sdk, name, sections = [], selector, onFinish) {
+    constructor(sdk, sections = [], selector, onFinish) {
         if (sections.length === 0) {
             throw new Error('PageRenderer constructor: sections is empty');
         }
 
         this.sdk = sdk;
-        this.name = name;
         this.selector = selector;
         this.sections = [...sections];
         this.onFinish = onFinish;
 
         this.sectionsToRender = [];
+
+        for (const section of sections) {
+            const sectionToRender = { elementName: kebabcase(section.name), ...section };
+            this.sectionsToRender.push(sectionToRender);
+        }
+
         this.currentSection = null;
     }
 
     init() {
-        this.sectionsToRender = this.sections.map(s => ({ elementName: kebabcase(s.name), ...s }));
         this.renderWrapper();
     }
 
@@ -42,7 +46,7 @@ class PageRenderer {
         render(pageWrapper(), document.querySelector(this.selector));
         const wrappers = this.sectionsToRender.map(s => html`<form id="section-form-${s.elementName}"></form>`);
 
-        render(html`${wrappers.map(w => w)}`, document.querySelector('#target'));
+        render(html`${wrappers}`, document.querySelector('#target'));
         this.next();
     }
 
@@ -52,10 +56,6 @@ class PageRenderer {
             console.info('PageRenderer next: no section to render.');
             render(html``, document.querySelector(this.selector));
             return this.onFinish();
-        }
-
-        if (!section) {
-            throw 'PageRenderer next: no section';
         }
 
         this.currentSection = section;

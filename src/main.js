@@ -79,13 +79,10 @@ export function createApp({ pages, cache = [], layout, sdk, supportEmail, local 
         '/error': { renderer: error(mainSelector, supportEmail), title: null, step: null }
     };
 
-    for (const [stepIndex, { title, sections, route, excludeStep }] of Object.entries(pages)) {
-        let onFinish = null;
-        let step = stepIndex;
+    pages.forEach(({ title, sections, route, excludeStep }, stepIndex) => {
+        const step = excludeStep ? null : stepIndex;
 
-        if (excludeStep) {
-            step = null;
-        }
+        let onFinish;
 
         if (pages.length === stepIndex + 1) {
             onFinish = callback || (() => console.log('App complete.'));
@@ -94,17 +91,17 @@ export function createApp({ pages, cache = [], layout, sdk, supportEmail, local 
             onFinish = () => window.location.hash = nextRoute;
         }
 
-        const renderer = PageRenderer(sdk, name, sections, mainSelector, onFinish);
+        const renderer = PageRenderer(sdk, sections, mainSelector, onFinish);
 
         routes[route] = { renderer, title, step };
-    }
+    });
 
     const entryPoint = routingOrder[0];
     const router = Router(routes, NotFound(mainSelector));
 
     render(Layout(), document.querySelector('#app'));
-    render(layout['header'](), document.querySelector('#header'));
-    render(layout['footer'](), document.querySelector('#footer'));
+    render(layout.header(), document.querySelector('#header'));
+    render(layout.footer(), document.querySelector('#footer'));
 
     installMediaQueryWatcher('(max-width: 650px)', match => {
         Summary.init(match ? layout.summary.MobileTemplate : layout.summary.DesktopTemplate, match);
@@ -177,6 +174,7 @@ function addTracker(sdk) {
             return console.error(error);
 
         case 'fail':
+            stop();
             return void (window.location.hash = '/error');
 
         case 'createOutput':

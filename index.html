@@ -5,11 +5,15 @@
         <title>ubio application bundle</title>
         <link href="./src/css/index.css" rel="stylesheet">
         <script type="module">
-            import { createEndUserSdk } from '@ubio/sdk.js';
+            window.location.hash = '';
+            localStorage.clear();
+
+            import { createEndUserSdk } from '/web_modules/@ubio/sdk.js';
             import { createApp } from '/src/main.js';
 
             async function createJob(domain) {
-                const res = await fetch('https://ubio-application-bundle-test-server.glitch.me', {
+                const res = await fetch('https://ubio-application-bundle-test-server.glitch.me/create-job', {
+                    method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ domain })
                 });
@@ -21,19 +25,25 @@
                 return await res.json();
             }
 
-            async function init() {
+            window.begin.onclick = async function init() {
+                this.onclick = null;
+                this.disabled = true;
+
                 const domain = new URLSearchParams(window.location.search).get('domain') || 'pet-insurance';
                 const { pages, cache, layout } = (await import(`/templates/${domain}.config.js`)).default;
                 const { token, jobId, serviceId, supportEmail, local } = await createJob(domain);
                 const sdk = createEndUserSdk({ token, jobId, serviceId });
-                const app = createApp({ pages, cache, layout, sdk, supportEmail, local });
-            }
 
-            init();
+                this.remove();
+
+                const app = createApp({ pages, cache, layout, sdk, supportEmail, local });
+            };
         </script>
     </head>
 
     <body>
-        <div id="app"></div>
+        <div id="app">
+            <button id="begin">Begin!</button>
+        </div>
     </body>
 </html>
