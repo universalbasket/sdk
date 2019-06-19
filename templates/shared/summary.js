@@ -1,4 +1,4 @@
-import { html, classMap } from '/src/main.js';
+import { html, until, classMap, templates } from '/src/main.js';
 
 const showModal = (...detail) => new CustomEvent('show-modal', { detail });
 const update = new CustomEvent('update');
@@ -93,12 +93,13 @@ function OtherInformation(outputs = {}) {
         </div>`;
 }
 
+
 function Documents(outputs = {}) {
     const items = Object.values(outputs)
         .filter(o => o.type === 'File')
         .map(o => html`
-            <li class="summary__file-icon">
-                <a href="${o.url}" target="_blank">${o.filename}</a>
+            <li>
+                ${ until(templates.file(o)) }
             </li>`);
 
     if (items.length === 0) {
