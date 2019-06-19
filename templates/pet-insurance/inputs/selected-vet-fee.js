@@ -2,7 +2,7 @@ import { html } from '/src/main.js';
 const key = 'selected-vet-fee';
 
 export default output => html`
-    <div class="field field-set">
+    <div class="field">
         <span class="field__name">Vet Fee</span>
         <div class="field__inputs group group--merged">
             ${ output.map(optionObj => html`
