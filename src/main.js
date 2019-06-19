@@ -207,6 +207,8 @@ export async function createInputs(sdk, inputs) {
             { key: 'panToken', data: await sdk.vaultPan(rawData) } :
             { key: rawKey, data: rawData };
 
+        await sdk.createJobInput(key, data);
+
         Storage.set('input', key, data);
 
         submittedInputs.push({ key, data });
