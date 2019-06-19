@@ -3,24 +3,45 @@ import PaymentCardIframe from '../../generic/payment-card-iframe.js';
 
 export default otp => html`
     <h2>Guest details</h2>
-    <div class="field">
-        <label class="field__name" for="main-guest[person][first-name]">First name</label>
-        <input type="text" name="main-guest[person][first-name]" placeholder="" required/>
-    </div>
 
-    <div class="field">
-        <label class="field__name" for="main-guest[person][last-name]">Last name</label>
-        <input type="text" name="main-guest[person][last-name]" placeholder="" required/>
-    </div>
+    <div class="field-set">
+        <div class="field">
+            <label class="field__name" for="main-guest[person][first-name]">First name</label>
+            <input
+                type="text"
+                name="main-guest[person][first-name]"
+                required
+                pattern="^[A-Za-z]+$"
+                data-error="First name should only contain letters (A-Z and a-z)" />
+        </div>
 
-    <div class="field">
-        <label class="field__name" for="main-guest[contact][phone]">Phone number</label>
-        <input type="text" name="main-guest[contact][phone]" placeholder="" required/>
-    </div>
+        <div class="field">
+            <label class="field__name" for="main-guest[person][last-name]">Last name</label>
+            <input
+                type="text"
+                name="main-guest[person][last-name]"
+                required
+                pattern="^[A-Za-z]+$"
+                data-error="Last name should only contain letters (A-Z and a-z)" />
+        </div>
 
-    <div class="field">
-        <label class="field__name" for="main-guest[contact][email]">Email address</label>
-        <input type="email" name="main-guest[contact][email]" placeholder="" required/>
+        <div class="field">
+            <label class="field__name" for="main-guest[contact][phone]">Phone number</label>
+            <input
+                type="text"
+                name="main-guest[contact][phone]"
+                required
+                data-error="Please enter valid phone number" />
+        </div>
+
+        <div class="field">
+            <label class="field__name" for="main-guest[contact][email]">Email address</label>
+            <input
+                type="email"
+                name="main-guest[contact][email]"
+                required
+                data-error="Please enter valid email address" />
+        </div>
     </div>
 
     <h2>Card details</h2>

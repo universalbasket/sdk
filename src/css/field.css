@@ -17,7 +17,7 @@
     font-size: 16px;
     line-height: 18px;
     font-weight: 700;
-    color: #333;
+    color: var(--color);
     padding-bottom: 5px;
     width: var(--input-width);
     max-width: 100%;
@@ -36,9 +36,7 @@
     font-weight: normal;
 }
 
-.field--invalid > input,
-.field--invalid > select,
-.field--invalid > .field__inputs {
+.field--invalid :invalid {
     border-color: var(--input-border-color--invalid);
 }
 
@@ -47,7 +45,6 @@
     display: block;
     color: var(--input-border-color--invalid);
     font-size: 1em;
-    height: 15px;
     margin: 7px 0 0;
 }
 

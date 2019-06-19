@@ -3,14 +3,21 @@ function getCustomMessage(input) {
         return 'Please fill in this field.';
     }
 
-    if (input.validity.patternMismatch) {
+    if (input.validity.patternMismatch || input.validity.typeMismatch) {
         return input.getAttribute('data-error');
     }
 
     return '';
 }
 
+function focus() {
+    const formsToFill = document.querySelectorAll('form:invalid');
+    formsToFill[0] && formsToFill[0].querySelectorAll(':invalid')[0].focus();
+}
+
 function validate(form) {
+    focus();
+
     const invalidClassName = 'field--invalid';
     const fields = form.querySelectorAll('.field');
 
@@ -29,8 +36,9 @@ function validate(form) {
                 const defaultFieldErrorMessage = field.getAttribute('data-error');
                 const message = getCustomMessage(input) || defaultFieldErrorMessage;
 
-                field.setAttribute('data-error', message);
+                field.setAttribute('data-error', message || '');
                 field.classList.add(invalidClassName);
+                focus();
             });
 
             input.addEventListener('input', () => {

@@ -52,9 +52,10 @@
     font-size: var(--font-size);
 }
 
-.summary__block--price {
+.summary__price {
     border-top: dashed 1px var(--color--dim);
     padding: .5em 0;
+    margin: .5em 0;
 }
 
 .summary__block--bordered {
