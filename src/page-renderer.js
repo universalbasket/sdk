@@ -245,6 +245,7 @@ function isVaultFormValid(vaultIframe) {
                 if (message.data.isValid) {
                     resolve(message.data);
                 } else {
+                    console.warn(message.data);
                     reject('Please check payment details');
                 }
 

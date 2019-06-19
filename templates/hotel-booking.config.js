@@ -1,5 +1,5 @@
 import { header, summary, footer } from './hotel-booking/layout/index.js';
-import { checkout, confirmation, finalPriceConsent, rooms, summaryPage } from './hotel-booking/sections/index.js';
+import { checkout, confirmation, finalPriceConsent, rooms } from './hotel-booking/sections/index.js';
 import error from './shared/error.js';
 
 export default {
@@ -25,18 +25,6 @@ export default {
             ]
         },
         {
-            name: 'summary',
-            route: '/summary',
-            title: 'Summary',
-            sections: [
-                {
-                    name: 'summary',
-                    template: summaryPage,
-                    waitFor: ['input.selectedRooms', 'output.priceBreakdown']
-                }
-            ]
-        },
-        {
             name: 'checkout',
             route: '/checkout',
             title: 'Booking details',
@@ -45,11 +33,6 @@ export default {
                     name: 'checkout',
                     template: checkout,
                     waitFor: ['_.otp']
-                },
-                {
-                    name: 'final-price-consent',
-                    template: finalPriceConsent,
-                    waitFor: ['input.selectedRooms', 'outputs.finalPrice']
                 }
             ]
         },
@@ -59,6 +42,11 @@ export default {
             route: '/confirmation',
             title: '',
             sections: [
+                {
+                    name: 'final-price-consent',
+                    template: finalPriceConsent,
+                    waitFor: ['input.selectedRooms', 'outputs.finalPrice']
+                },
                 {
                     name: 'confirmation',
                     template: confirmation,

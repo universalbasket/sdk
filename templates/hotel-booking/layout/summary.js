@@ -1,10 +1,8 @@
 import { html, templates } from '/src/main.js';
 
 import {
-    OtherInformation,
     MobileSummaryWrapper,
-    DesktopSummaryWrapper,
-    Documents
+    DesktopSummaryWrapper
 } from '../../shared/summary.js';
 
 export default {
@@ -12,51 +10,56 @@ export default {
     DesktopTemplate
 };
 
-function SummaryDetails(inputs, outputs, cache) {
-    const price = getPrice(outputs, cache);
+function hasData(inputs) {
+    return inputs.selectedRooms && inputs.selectedRooms[0];
+}
 
+function SummaryDetails(inputs, outputs) {
     return html`
     <div class="summary__body">
-        ${ hasContent(inputs) ?
-        html`
+        ${ hasData(inputs) ? html`
             <article class="summary__block">
                 <header class="summary__block-title">
-                    Your room
+                    ${ inputs.selectedRooms[0].type }
                 </header>
                 <ul class="dim">
-                    ${ inputs.selectedRooms[0].type ? html`<li>${ inputs.selectedRooms[0].type }</li>` : '' }
-                    ${ inputs.selectedRooms[0].price ? html`<li>${ templates.priceDisplay(inputs.selectedRooms[0].price) }</li>` : '' }
+                    ${ inputs.selectedRooms[0].valueAdditions.map(i => html`<li>${ valueLabel(i) }</li>`) }
+                    <li class="summary__price">
+                        <b class="large highlight">
+                            ${ templates.priceDisplay(inputs.selectedRooms[0].price) }
+                        </b>
+                    </li>
                 </ul>
             </article>` :
         '' }
 
-        ${ price ? html`
-            <div class="summary__block summary__block--price">
-                <b class="large highlight">
-                    ${ templates.priceDisplay(price) }
-                </b>
-            </div>` :
+        ${ outputs.priceBreakdown ? html`
+            <article class="summary__block">
+                <header class="summary__block-title">
+                    Price Breakdown
+                </header>
+                <table class="table">
+                    ${ outputs.priceBreakdown.map(i => html`
+                        <tr>
+                            <th>${ i.description } ${ i.type ? '· ' + templates.priceType(i.type) : '' }</th>
+                            <td>${ templates.priceDisplay(i.price) }</td>
+                        </tr>`) }
+                </table>
+            </article>` :
         '' }
-
-        ${ Documents(outputs) }
-        ${ OtherInformation(outputs) }
     </div>`;
 }
 
-function SummaryPreview(inputs, outputs, cache) {
-    const price = getPrice(outputs, cache);
-
-    return html`
-        <b class="large summary__preview-price">
-            ${ templates.priceDisplay(price || { currencyCode: 'gbp' }) }
-        </b>
-
-        ${ hasContent(inputs) ? html`
+function SummaryPreview(inputs) {
+    return hasData(inputs) ?
+        html`
+            <b class="large summary__preview-price">
+                ${ templates.priceDisplay(inputs.selectedRooms[0].price) }
+            </b>
             <span class="faint summary__preview-info">
-                ${ inputs.selectedRooms[0].type ? html`<span>${ inputs.selectedRooms[0].type }</span>` : '' }
-                ${ inputs.selectedRooms[0].price ? html`<span>${ templates.priceDisplay(inputs.selectedRooms[0].price) }</span>` : '' }
+                ${ [inputs.selectedRooms[0].type, ...inputs.selectedRooms[0].valueAdditions.map(valueLabel)].join(', ') }
             </span>` :
-        '' }`;
+        '';
 }
 
 function SummaryTitle(_) {
@@ -67,17 +70,13 @@ function SummaryTitle(_) {
     `;
 }
 
-function getPrice(outputs, cache) {
-    const priceObj = outputs.finalPrice ||
-        outputs.estimatedPrice ||
-        cache.finalPrice ||
-        cache.estimatedPrice;
-
-    return priceObj && priceObj.price;
-}
-
-function hasContent(inputs) {
-    return !!inputs.selectedRooms && inputs.selectedRooms[0];
+function valueLabel(code) {
+    switch (code) {
+        case 'pay-later': return 'Pay later';
+        case 'free-breakfast': return 'Breakfast included';
+        case 'free-internet': return 'Wi-fi';
+        default: return code;
+    }
 }
 
 function DesktopTemplate(inputs, outputs, cache, _local, _) {
@@ -86,5 +85,5 @@ function DesktopTemplate(inputs, outputs, cache, _local, _) {
 
 function MobileTemplate(inputs, outputs, cache, _local, _) {
     return MobileSummaryWrapper(inputs, outputs, cache, _,
-        SummaryPreview, SummaryTitle, SummaryDetails, hasContent);
+        SummaryPreview, SummaryTitle, SummaryDetails, hasData);
 }

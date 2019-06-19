@@ -26,6 +26,7 @@
 .progress-bar__current-step {
     font-weight: 600;
     font-size: var(--font-size);
+    white-space: nowrap;
 }
 
 @media all and (max-width: 650px) {

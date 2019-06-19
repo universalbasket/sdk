@@ -1,0 +1,37 @@
+.field--room {
+    padding: 0;
+}
+
+.field--room + .section__actions {
+    margin-top: 0;
+}
+
+.room {
+    --img-width: 70px;
+    --img-height: 50px;
+
+    display: grid;
+    grid-gap: var(--gap);
+    grid-template-columns: auto 1fr auto;
+    border-bottom: 1px solid var(--color--hr);
+    padding: 15px 0;
+}
+
+.room:last-child {
+    border: 0;
+}
+
+.room__img {
+    background: var(--progress-bar-background-color);
+    border: 1px solid var(--color--hr);
+    width: var(--img-width);
+    height: var(--img-height);
+}
+
+.room__details li {
+    line-height: 1.35em;
+}
+
+.room__price {
+    padding: 1em 0 0;
+}
