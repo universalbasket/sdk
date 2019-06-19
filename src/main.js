@@ -74,7 +74,7 @@ export function createApp({ mountPoint, pages, cache = [], layout, error, sdk, l
     //setup router
     const routingOrder = pages.map(page => page.route);
     const routes = {
-        '/error': { renderer: error, title: null, step: null }
+        '/error': { renderer: error(mainSelector), title: null, step: null }
     };
 
     pages.forEach(({ title, sections, route, excludeStep }, stepIndex) => {
