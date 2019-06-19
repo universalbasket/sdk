@@ -28,17 +28,10 @@ function createTemplate(body, title, options = {}) {
     };
 
     switch (body.type) {
-    case 'html':
-        return showModal(body, title, modalOptions);
-
-    case 'HTML':
-        return showModal(unsafeHTML(body.html), body.name, modalOptions);
-
-    case 'StructuredText':
-        return showModal(getContentsHtml(body.contents), body.name, modalOptions);
-
-    default:
-        return '';
+        case 'html': return showModal(body, title, modalOptions);
+        case 'HTML': return showModal(unsafeHTML(body.html), body.name, modalOptions);
+        case 'StructuredText': return showModal(getContentsHtml(body.contents), body.name, modalOptions);
+        default: return '';
     }
 }
 
@@ -88,23 +81,12 @@ function getContentsHtml(contents) {
             }
 
             switch (item.type) {
-            case 'Text':
-                return html`<p>${item.text}</p>`;
-
-            case 'Link':
-                return html`<a href="${item.url}" target="_blank">${item.name}</a>`;
-
-            case 'HTML':
-                return unsafeHTML(item.html);
-
-            case 'NamedText':
-                return html`<p>${item.name} – ${item.text}</p>`;
-
-            case 'NamedPrice':
-                return html`<p>${item.name} – ${PriceDisplay(item.price)}</p>`;
-
-            default:
-                return '';
+                case 'Text': return html`<p>${item.text}</p>`;
+                case 'Link': return html`<a href="${item.url}" target="_blank">${item.name}</a>`;
+                case 'HTML': return unsafeHTML(item.html);
+                case 'NamedText': return html`<p>${item.name} – ${item.text}</p>`;
+                case 'NamedPrice': return html`<p>${item.name} – ${PriceDisplay(item.price)}</p>`;
+                default: return '';
             }
         })
     }`;

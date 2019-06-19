@@ -72,18 +72,10 @@ function SummaryTitle(_) {
 
 function valueLabel(code) {
     switch (code) {
-    case 'pay-later':
-        return 'Pay later';
-
-    case 'free-breakfast':
-        return 'Breakfast included';
-
-    case 'free-internet':
-        return 'Wi-fi';
-
-    default:
-        return code;
-
+        case 'pay-later': return 'Pay later';
+        case 'free-breakfast': return 'Breakfast included';
+        case 'free-internet': return 'Wi-fi';
+        default: return code;
     }
 }
 

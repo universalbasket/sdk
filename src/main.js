@@ -168,33 +168,33 @@ function addTracker(sdk) {
         console.log(`event ${event}`);
 
         switch (event) {
-        case 'error':
-            return console.error(error);
+            case 'error':
+                return console.error(error);
 
-        case 'fail':
-            stop();
-            return void (window.location.hash = '/error');
+            case 'fail':
+                stop();
+                return void (window.location.hash = '/error');
 
-        case 'createOutput':
-            if (loading) {
-                return;
-            }
+            case 'createOutput':
+                if (loading) {
+                    return;
+                }
 
-            loading = true;
+                loading = true;
 
-            return sdk.getJobOutputs()
-                .then(outputs => {
-                    for (const { key, data } of outputs.data) {
-                        Storage.set('output', key, data);
-                    }
+                return sdk.getJobOutputs()
+                    .then(outputs => {
+                        for (const { key, data } of outputs.data) {
+                            Storage.set('output', key, data);
+                        }
 
-                    window.dispatchEvent(new CustomEvent('newOutputs'));
-                    loading = false;
-                })
-                .catch(error => {
-                    console.error('Error getting job outputs.', error);
-                    loading = false;
-                });
+                        window.dispatchEvent(new CustomEvent('newOutputs'));
+                        loading = false;
+                    })
+                    .catch(error => {
+                        console.error('Error getting job outputs.', error);
+                        loading = false;
+                    });
         }
     });
 
