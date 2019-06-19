@@ -76,7 +76,7 @@ function OtherInformation(outputs = {}) {
         .map(o => html`
             <li>
                 <span
-                    class="popup-icon"
+                    class="summary__popup-icon"
                     @click=${() => window.dispatchEvent(showModal(o))}>
                     <span class="clickable">${o.name}</span>
                 </span>
@@ -97,7 +97,7 @@ function Documents(outputs = {}) {
     const items = Object.values(outputs)
         .filter(o => o.type === 'File')
         .map(o => html`
-            <li class="file-icon">
+            <li class="summary__file-icon">
                 <a href="${o.url}" target="_blank">${o.filename}</a>
             </li>`);
 
