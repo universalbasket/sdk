@@ -25,7 +25,7 @@ export default (otp, options = {}, style = {}) => {
         <iframe
             id="ubio-vault-form"
             width="${style.width ? style.width : '100%' }"
-            height="${style.height ? style.height : 280}"
+            height="${style.height ? style.height : 380}"
             scrolling="${style.scrolling ? style.scrolling : 'no'}"
             src="${src}">
         </iframe>`;

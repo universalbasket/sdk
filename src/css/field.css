@@ -5,7 +5,7 @@
 }
 
 .field--list {
-    padding: 0;
+    padding: 0 0 var(--gap);
 }
 
 .field--list + .section__actions {
