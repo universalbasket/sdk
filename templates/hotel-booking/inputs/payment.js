@@ -5,14 +5,13 @@ export default otp => html`
     <h2>Guest details</h2>
 
     <div class="field-set">
-        <div class="field">
+        <div class="field" data-error="Field error">
             <label class="field__name" for="main-guest[person][first-name]">First name</label>
             <input
                 type="text"
                 name="main-guest[person][first-name]"
                 required
-                pattern="^[A-Za-z]+$"
-                data-error="First name should only contain letters (A-Z and a-z)" />
+                pattern="^[A-Za-z]+$" />
         </div>
 
         <div class="field">

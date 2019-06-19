@@ -46,6 +46,10 @@
     padding: 1em 2.25em 2em;
 }
 
+.modal__body p:first-of-type {
+    margin-top: 0;
+}
+
 .modal__close {
     display: inline-block;
     width: 26px;

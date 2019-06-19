@@ -11,8 +11,8 @@ function valueLi(code) {
 
 export default (name, { availableRooms }) => {
     return html`
-        <h2>Select a room</h2>
         <div class="field field--list">
+            <span class="field__name">Select a room</span>
             ${ availableRooms.map((room, i) => html`
                 <div class="field-item field-item--room">
                     <div class="field-item__img"></div>

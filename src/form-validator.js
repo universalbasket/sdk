@@ -1,9 +1,10 @@
-function getCustomMessage(input) {
-    if (input.validity.patternMismatch || input.validity.typeMismatch) {
-        return input.getAttribute('data-error');
-    }
+function getCustomMessage(input, defaultFieldErrorMessage) {
+    const error = input.validity.patternMismatch || input.validity.typeMismatch ?
+        input.getAttribute('data-error') :
+        input.validationMessage;
 
-    return input.validationMessage;
+    console.info('error', error, defaultFieldErrorMessage);
+    return error || defaultFieldErrorMessage;
 }
 
 function focus() {
@@ -30,7 +31,7 @@ function validate(form) {
                 e.preventDefault();
 
                 const defaultFieldErrorMessage = field.getAttribute('data-error');
-                const message = defaultFieldErrorMessage || getCustomMessage(input);
+                const message = getCustomMessage(input, defaultFieldErrorMessage);
 
                 field.setAttribute('data-error', message || '');
                 field.classList.add(invalidClassName);
