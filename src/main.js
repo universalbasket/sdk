@@ -66,8 +66,18 @@ function validatePages(pages) {
     }
 }
 
-export function createApp({ mountPoint, pages, cache = [], layout, error, sdk, local }, callback) {
+export async function createApp({ mountPoint, pages, cache = [], layout, error, sdk, local }, callback) {
     validatePages(pages);
+
+    try {
+        const [job, otp] = await Promise.all([sdk.getJob(), sdk.createOtp()]);
+
+        Storage.set('_', 'serviceName', job.serviceName);
+        Storage.set('_', 'otp', otp);
+    } catch (err) {
+        console.error(err);
+        window.location.hash = '/error';
+    }
 
     const mainSelector = '#main';
 
@@ -105,7 +115,7 @@ export function createApp({ mountPoint, pages, cache = [], layout, error, sdk, l
         Summary.init(match ? layout.summary.MobileTemplate : layout.summary.DesktopTemplate, match);
     });
 
-    let tracker = null;
+    const tracker = addTracker(sdk);
 
     window.addEventListener('hashchange', async () => {
         router.navigate();
@@ -114,17 +124,6 @@ export function createApp({ mountPoint, pages, cache = [], layout, error, sdk, l
         if (router.isCurrentRoot()) {
             if (tracker) {
                 tracker.stop();
-            }
-
-            try {
-                const job = await sdk.getJob();
-                const otp = await sdk.createOtp();
-
-                Storage.set('_', 'serviceName', job.serviceName);
-                Storage.set('_', 'otp', otp);
-            } catch (err) {
-                console.error(err);
-                window.location.hash = '/error';
             }
         }
     });
@@ -146,8 +145,6 @@ export function createApp({ mountPoint, pages, cache = [], layout, error, sdk, l
     }
 
     afterSdkInitiated(sdk, cache, local);
-
-    tracker = addTracker(sdk);
 }
 
 function afterSdkInitiated(sdk, cacheConfig, local) {
