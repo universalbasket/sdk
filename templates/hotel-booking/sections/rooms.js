@@ -2,10 +2,18 @@ import { html, templates } from '/src/main.js';
 
 function valueLi(code) {
     switch (code) {
-        case 'pay-later': return html`<li>Pay later</li>`;
-        case 'free-breakfast': return html`<li>Breakfast included</li>`;
-        case 'free-internet': return html`<li>Wi-fi</li>`;
-        default: return html`<li>${ code }</li>`;
+    case 'pay-later':
+        return html`<li>Pay later</li>`;
+
+    case 'free-breakfast':
+        return html`<li>Breakfast included</li>`;
+
+    case 'free-internet':
+        return html`<li>Wi-fi</li>`;
+
+    default:
+        return html`<li>${ code }</li>`;
+
     }
 }
 
