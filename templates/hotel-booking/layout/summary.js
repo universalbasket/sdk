@@ -25,7 +25,7 @@ function SummaryDetails(inputs, outputs) {
                 <ul class="dim">
                     ${ inputs.selectedRooms[0].valueAdditions.map(i => html`<li>${ valueLabel(i) }</li>`) }
                     <li class="summary__price">
-                        <b class="large highlight">
+                        <b class="large summary__highlight">
                             ${ templates.priceDisplay(inputs.selectedRooms[0].price) }
                         </b>
                     </li>

@@ -6,6 +6,7 @@
 
 @import "./progress-bar.css";
 @import "./summary.css";
+@import "./header.css";
 
 /* main */
 @import "./section.css";
