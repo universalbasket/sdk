@@ -105,7 +105,7 @@ export async function createApp({ mountPoint, pages, cache = [], layout, error, 
     const entryPoint = routingOrder[0];
     const router = Router(routes, NotFound(mainSelector));
 
-    render(Layout(), mountPoint);
+    mountPoint.innerHTML = Layout();
     render(layout.header(), document.querySelector('#header'));
     render(layout.footer(), document.querySelector('#footer'));
 
