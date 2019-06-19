@@ -12,18 +12,14 @@ import Summary from './render-summary.js';
 import { installMediaQueryWatcher } from '/web_modules/pwa-helpers/media-query.js';
 import Layout from './layout.js';
 
-import inlineLoading from './builtin-templates/inline-loading.js';
 import modal from './builtin-templates/modal.js';
-import notFound404 from './builtin-templates/not-found-404.js';
 import pageWrapper from './builtin-templates/page-wrapper.js';
 import priceDisplay from './builtin-templates/price-display.js';
 import priceType from './builtin-templates/price-type.js';
 import progressBar from './builtin-templates/progress-bar.js';
 
 export const templates = {
-    inlineLoading,
     modal,
-    notFound404,
     pageWrapper,
     priceDisplay,
     priceType,

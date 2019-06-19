@@ -90,9 +90,8 @@ class PageRenderer {
                     this.next();
                 })
                 .catch(err => {
-                    if (document.querySelector('#error')) {
-                        render(flashError(err), document.querySelector('#error'));
-                    }
+                    const element = document.querySelector('#error');
+                    flashError(element, err);
                     e.target.removeAttribute('disabled');
                 });
         });
@@ -186,7 +185,7 @@ class PageRenderer {
     renderSection({ elementName, waitFor, template }) {
         const sectionForm = document.querySelector(`#section-form-${elementName}`);
 
-        render(html`${inlineLoading()} `, sectionForm);
+        inlineLoading(sectionForm);
 
         const skip = () => {
             this.skipSection();
