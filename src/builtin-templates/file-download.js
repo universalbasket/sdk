@@ -1,20 +1,18 @@
 import sdk from '../sdk.js';
-import { html } from '/web_modules/lit-html/lit-html.js';
 
 const template = ({ filename, url }) => {
-    console.info({ filename, url });
-
     return sdk.sdk.getJobFile(url)
         .then(blob => {
             const a = document.createElement('a');
             const href = URL.createObjectURL(blob);
+            const linkText = document.createTextNode(filename);
+
             a.setAttribute('href', href);
-            a.innetText = filename;
-            return html`${ a }`;
-        })
-        .catch(e => {
-            console.warn('No blob for us', e);
-            return filename;
+            a.setAttribute('target', '_blank');
+            a.setAttribute('class', 'summary__file-icon');
+            a.appendChild(linkText);
+
+            return a;
         });
 };
 

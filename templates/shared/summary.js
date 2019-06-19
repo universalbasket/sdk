@@ -98,7 +98,7 @@ function Documents(outputs = {}) {
     const items = Object.values(outputs)
         .filter(o => o.type === 'File')
         .map(o => html`
-            <li class="summary__file-icon">
+            <li>
                 ${ until(templates.file(o)) }
             </li>`);
 
