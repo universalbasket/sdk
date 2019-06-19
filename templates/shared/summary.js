@@ -41,7 +41,7 @@ function MobileSummaryWrapper(inputs, outputs, cache, _, SummaryPreview, Summary
                 ${ ToggableWrapper(SummaryTitle(_)) }
                 ${ SummaryDetails(inputs, outputs, cache) }
             </aside>
-            <div class="sticky-top__overlay" @click=${ toggleSummary }></div>`;
+            <div class="app__summary-overlay" @click=${ toggleSummary }></div>`;
         }
         return html`
         <aside class="summary">
