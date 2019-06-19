@@ -20,17 +20,6 @@
     text-decoration: none;
 }
 
-@keyframes yellowfade {
-    from {
-        background: var(--highlight);
-        box-shadow: 0 0 1px 5px var(--highlight);
-    }
-    to {
-        background: transparent;
-        box-shadow: none;
-    }
-}
-
 .large {
     font-size: var(--font-size--large);
 }
@@ -58,4 +47,31 @@
     background-repeat: no-repeat;
     background-position: center right;
     cursor: pointer;
+}
+
+.inline-loading {
+    display: inline-grid;
+    grid-template-columns: auto 1fr;
+    grid-gap: var(--gap);
+    justify-content: start;
+    align-items: center;
+    padding: var(--gap) 0;
+    font-weight: bold;
+}
+
+@media all and (max-width: 650px) {
+    .inline-loading {
+        padding: var(--gap);
+    }
+}
+
+@keyframes yellowfade {
+    from {
+        background: var(--highlight);
+        box-shadow: 0 0 1px 5px var(--highlight);
+    }
+    to {
+        background: transparent;
+        box-shadow: none;
+    }
 }

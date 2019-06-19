@@ -6,6 +6,8 @@
     --error-color: white;
     --progress-bar-background-color: #f1f1f1;
     --summary-background-color: #fff;
+    --footer-height: 60px;
+    --footer-background-color: #dedede;
     --step-icon: #c7c7c7;
     --step-icon--active: #606060;
     --font-family: 'Helvetica', 'Helvetica Neue', 'Arial', sans-serif;

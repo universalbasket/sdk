@@ -19,16 +19,17 @@ function valueLi(code) {
 
 export default (name, { availableRooms }) => {
     return html`
-        <div class="field field--room">
+        <h2>Select a room</h2>
+        <div class="field field--list">
             ${ availableRooms.map((room, i) => html`
-                <div class="room">
-                    <div class="room__img"></div>
-                    <div class="room__details">
+                <div class="field-item field-item--room">
+                    <div class="field-item__img"></div>
+                    <div class="field-item__details">
                         <ul class="dim">
                             <li><b>${ room.type }</b></li>
                             ${ room.valueAdditions.map(valueLi) }
                         </ul>
-                        <div class="room__price">
+                        <div class="field-item__price">
                             <b>${ templates.priceDisplay(room.price) }</b>
                         </div>
                     </div>

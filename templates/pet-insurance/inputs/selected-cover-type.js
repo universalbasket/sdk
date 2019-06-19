@@ -1,24 +1,28 @@
-import { html } from '/src/main.js';
+import { html, templates } from '/src/main.js';
 
 const key = 'selected-cover-type';
 export default outputs => html`
-    <div class="field field-set">
+    <div class="field field--list">
         <span class="field__name">Available Cover Type</span>
-        <div class="field__inputs group group--merged">
-            ${ outputs.map(optionObj => html`
-                <input
-                    type="radio"
-                    id="${key}-${optionObj.coverName}"
-                    name="${key}-$object"
-                    value="${JSON.stringify(optionObj)}"
-                    required>
-
-                <label for="${key}-${optionObj.coverName}" class="field__name">
-                    <div>
-                        <b>${optionObj.coverName}</b>
-                        <p>${(optionObj.price.value * 0.01).toFixed(2)} ${optionObj.price.currencyCode}</p>
-                    </div>
-                </label>`)}
-        </div>
+        ${ outputs.map(optionObj => html`
+            <div class="field-item field-item--select-one">
+                <div class="field-item__details">
+                    ${ optionObj.coverName }
+                    –
+                    ${ templates.priceDisplay(optionObj.price) }
+                </div>
+                <div class="field__inputs">
+                    <input
+                        type="radio"
+                        id="${ key }-${ optionObj.coverName }"
+                        name="${ key }-$object"
+                        value="${ JSON.stringify(optionObj) }"
+                        required />
+                    <label
+                        for="${ key }-${ optionObj.coverName }"
+                        class="button">Select</label>
+                </div>
+            </div>
+        `) }
     </div>
 `;

@@ -1,16 +1,20 @@
 import { html, render } from '/src/main.js';
 
 let availableBreedTypes;
+let animalType;
 
-const breedTypeOptions = options => html`
-    ${ options.map(o => html`<option value="${o}"> ${o}</option>`) }`;
+const updateBreedTypeOptions = options => {
+    const opts = options.map(o => html`<option value="${o}"> ${o}</option>`);
+    render(opts, document.querySelector('#selected-breed-type'));
+};
 
 const breedTypeHandler = {
     // handleEvent method is required.
     handleEvent(e) {
-        const animalType = e.target.value;
-        const options = availableBreedTypes[animalType] || [];
-        render(breedTypeOptions(options), document.querySelector('#selected-breed-type'));
+        animalType = e.target.value;
+        updateBreedTypeOptions(availableBreedTypes[animalType]);
+        // options
+        // const options = availableBreedTypes[animalType] || [];
     }
     // event listener objects can also define
     // zero or more of the event listener options:
@@ -22,7 +26,7 @@ export default data => {
 
     return html`
         <div class="pet" name="pets[0]">
-            <div class="field-set" data-error="here i am">
+            <div class="field-set">
                 <div class="field">
                     <label class="field__name" for="pets[0][name]">Pet Name</label>
                     <input
@@ -33,7 +37,7 @@ export default data => {
                         required />
                 </div>
 
-                <div class="field" data-error="here i am">
+                <div class="field">
                     <span class="field__name">Pet type</span>
                     <div class="field__inputs group group--merged">
                         <input
@@ -42,7 +46,6 @@ export default data => {
                             id="pets[0][animal-type]-dog"
                             value="dog"
                             @change="${breedTypeHandler}"
-                            checked
                             required />
                         <label for="pets[0][animal-type]-dog" class="button">Dog</label>
 
