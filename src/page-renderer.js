@@ -43,7 +43,7 @@ class PageRenderer {
     }
 
     renderWrapper() {
-        render(pageWrapper(), document.querySelector(this.selector));
+        document.querySelector(this.selector).innerHTML = pageWrapper();
         const wrappers = this.sectionsToRender.map(s => html`<form id="section-form-${s.elementName}"></form>`);
 
         render(html`${wrappers}`, document.querySelector('#target'));
