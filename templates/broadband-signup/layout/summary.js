@@ -32,7 +32,7 @@ function SummaryDetails(inputs, outputs, cache) {
         ${ price ?
         html`
             <div class="summary__block summary__block--price">
-                <b class="large highlight">
+                <b class="large summary__highlight">
                     ${ templates.priceDisplay(price) }
                 </b>
             </div>` :

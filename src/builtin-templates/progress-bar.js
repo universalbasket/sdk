@@ -57,7 +57,7 @@ function StepLabel(activeLabel, activeIndex, totalSteps) {
 
 export default (titles, activeLabel, activeStep) => html`
     <div class="progress-bar"
-        style="${ styleMap({ 'grid-template-columns': `repeat(${titles.length}, var(--step-icon-size))` }) }">
+        style="${ styleMap({ 'grid-template-columns': `repeat(${titles.length}, var(--progress-step-icon-size))` }) }">
         ${ titles.map((_title, index) => StepIcon(index, activeStep)) }
         ${ StepLabel(activeLabel, activeStep, titles.length) }
     </div>`;
