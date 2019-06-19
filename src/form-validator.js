@@ -1,13 +1,9 @@
 function getCustomMessage(input) {
-    if (input.validity.valueMissing) {
-        return 'Please fill in this field.';
-    }
-
     if (input.validity.patternMismatch || input.validity.typeMismatch) {
         return input.getAttribute('data-error');
     }
 
-    return '';
+    return input.validationMessage;
 }
 
 function focus() {
@@ -34,7 +30,7 @@ function validate(form) {
                 e.preventDefault();
 
                 const defaultFieldErrorMessage = field.getAttribute('data-error');
-                const message = getCustomMessage(input) || defaultFieldErrorMessage;
+                const message = defaultFieldErrorMessage || getCustomMessage(input);
 
                 field.setAttribute('data-error', message || '');
                 field.classList.add(invalidClassName);

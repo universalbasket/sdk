@@ -23,6 +23,10 @@
     max-width: 100%;
 }
 
+.field--invalid {
+    position: relative;
+}
+
 .field--invalid .field__name {
     color: var(--input-border-color--invalid);
 }
@@ -46,6 +50,8 @@
     color: var(--input-border-color--invalid);
     font-size: 1em;
     margin: 7px 0 0;
+    position: absolute;
+    left: 0;
 }
 
 .field__inputs > input[type="radio"] {
