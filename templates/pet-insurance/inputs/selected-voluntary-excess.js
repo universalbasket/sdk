@@ -2,8 +2,8 @@ import { html } from '/src/main.js';
 const key = 'selected-voluntary-excess';
 
 export default output => html`
-    <div class="field field-set">
-        <span class="field__name">Select voluntary excess </span>
+    <div class="field">
+        <span class="field__name">Select voluntary excess</span>
         <div class="field__inputs group group--merged">
         ${ output.map(optionObj => html`
             <div>
