@@ -108,6 +108,10 @@ class EndUserSdk {
         return await this.sdk.createOtp();
     }
 
+    async getJobFile(url) {
+        return await this.sdk.getJobFile(url);
+    }
+
     async resetJob(fromInputKey, preserveInputs) {
         await this.sdk.resetJob(fromInputKey, preserveInputs);
     }

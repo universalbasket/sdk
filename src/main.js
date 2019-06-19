@@ -2,6 +2,7 @@ import sdk from './sdk.js';
 import Router from './router.js';
 import { render, html } from '/web_modules/lit-html/lit-html.js';
 import { classMap } from '/web_modules/lit-html/directives/class-map.js';
+import { until } from '/web_modules/lit-html/directives/until.js';
 
 import * as Storage from './storage.js';
 import * as Cache from './cache.js';
@@ -22,6 +23,7 @@ import pageWrapper from './builtin-templates/page-wrapper.js';
 import priceDisplay from './builtin-templates/price-display.js';
 import priceType from './builtin-templates/price-type.js';
 import progressBar from './builtin-templates/progress-bar.js';
+import file from './builtin-templates/file-download.js';
 
 export const templates = {
     error,
@@ -32,13 +34,15 @@ export const templates = {
     pageWrapper,
     priceDisplay,
     priceType,
-    progressBar
+    progressBar,
+    file
 };
 
 export {
     html,
     render,
-    classMap
+    classMap,
+    until
 };
 
 function validatePages(pages) {
