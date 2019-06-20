@@ -61,6 +61,8 @@ async function run() {
         dependencies: {
             // '@ubio/sdk-application-bundle': `^${pkg.version}`,
             '@ubio/sdk-application-bundle': '..',
+            '@ubio/sdk': pkg.dependencies['@ubio/sdk'],
+            'lit-html': pkg.dependencies['lit-html'],
             'vendor-copy': pkg.dependencies['vendor-copy'],
             'rimraf': pkg.dependencies['rimraf']
         },
@@ -70,11 +72,15 @@ async function run() {
         vendorCopy: [
             {
                 from: 'node_modules/@ubio/sdk-application-bundle/bundle.js',
-                to: 'web_modules/@ubio/sdk-application-bundle/bundle.js'
+                to: 'web_modules/@ubio/sdk-application-bundle.js'
             },
             {
                 from: 'node_modules/@ubio/sdk-application-bundle/index.css',
-                to: 'web_modules/@ubio/sdk-application-bundle/index.css'
+                to: 'web_modules/@ubio/sdk-application-bundle.css'
+            },
+            {
+                from: 'node_modules/@ubio/sdk/index.js',
+                to: 'web_modules/@ubio/sdk.js'
             }
         ]
     }, null, 2));
@@ -86,7 +92,7 @@ async function run() {
     await replaceInFiles({
         files: ['src/**/*.js'],
         from: /\/src\/main.js/g,
-        to: '/web_modules/@ubio/sdk-application-bundle/bundle.js'
+        to: '/web_modules/@ubio/sdk-application-bundle.js'
     });
     await fs.copyFile(path.join(__dirname, 'templates', `${domain}.config.js`), path.join('src', 'ubio.config.js'));
 }
