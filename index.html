@@ -25,11 +25,11 @@
                 return await res.json();
             }
 
-            window.begin.onclick = async function init() {
+            async function init() {
                 this.onclick = null;
                 this.disabled = true;
 
-                const domain = new URLSearchParams(window.location.search).get('domain') || 'pet-insurance';
+                const domain = new URLSearchParams(window.location.search).get('domain') || 'hotel-booking';
                 const { pages, cache, layout, error } = (await import(`/templates/${domain}.config.js`)).default;
                 const { token, jobId, serviceId, supportEmail, local } = await createJob(domain);
                 const sdk = createEndUserSdk({ token, jobId, serviceId });
@@ -37,13 +37,13 @@
                 this.remove();
 
                 const app = createApp({ mountPoint: window.app, pages, cache, layout, sdk, error, local });
-            };
+            }
+
+            init();
         </script>
     </head>
 
     <body>
-        <div id="app">
-            <button id="begin">Begin!</button>
-        </div>
+        <div id="app"></div>
     </body>
 </html>
