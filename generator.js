@@ -59,8 +59,7 @@ async function run() {
             test: 'echo \'Error: no test specified\' && exit 1'
         },
         dependencies: {
-            // '@ubio/sdk-application-bundle': `^${pkg.version}`,
-            '@ubio/sdk-application-bundle': '..',
+            '@ubio/sdk-application-bundle': `^${pkg.version}`,
             '@ubio/sdk': pkg.dependencies['@ubio/sdk'],
             'lit-html': pkg.dependencies['lit-html'],
             'vendor-copy': pkg.dependencies['vendor-copy'],
