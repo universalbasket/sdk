@@ -70,6 +70,7 @@ export async function createApp({ mountPoint, pages, cache = [], layout, error, 
     try {
         const [job, otp] = await Promise.all([sdk.getJob(), sdk.createOtp()]);
 
+        Storage.set('_', 'jobId', job.id);
         Storage.set('_', 'serviceName', job.serviceName);
         Storage.set('_', 'otp', otp);
     } catch (err) {
