@@ -3,7 +3,6 @@ function getCustomMessage(input, defaultFieldErrorMessage) {
         input.getAttribute('data-error') :
         input.validationMessage;
 
-    console.info('error', error, defaultFieldErrorMessage);
     return error || defaultFieldErrorMessage;
 }
 

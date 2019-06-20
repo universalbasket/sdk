@@ -56,7 +56,7 @@ export default () => html`
                 <label class="field__name" for="owner[person][marital-status]">Marital Status</label>
                 <select
                     name="owner[person][marital-status]"
-                    required />
+                    required>
                     ${ MARITAL_STATUS.map(ms => html`<option value="${ ms }">${ ms }</option>`) }
                 </select>
             </div>
