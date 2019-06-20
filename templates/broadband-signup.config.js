@@ -10,6 +10,7 @@ import {
     confirmation,
     summaryPage
 } from './broadband-signup/sections/index.js';
+import error from './shared/error.js';
 
 export default {
     layout: {
@@ -142,43 +143,5 @@ export default {
             excludeStep: true
         }
     ],
-    data: {
-        serverUrlPath: 'https://ubio-application-bundle-dummy-server.glitch.me/create-job/sky',
-        initialInputs: {
-            url: 'https://www.moneysupermarket.com/broadband/goto/?linktrackerid=8307&productname=Sky+Entertainment+%2B+Broadband+Essential+%2B+Talk+Anytime+Extra&bundleid=58&clickout=00000000-0000-0000-0000-000000000003&dtluid=SqADhopj*6Q*eioD&location=',
-            options: {
-                marketingContact: true,
-                success: true,
-                directoryListing: true,
-                addressSelection: true,
-                moveInDateSelection: true,
-                keepLandlineNumber: false,
-                screenshots: false,
-                testingFlow: false
-            },
-            selectedBroadbandPackage: {
-                name: 'Sky Broadband Essential'
-            },
-            selectedTvPackages: [{
-                name: 'Sky Entertainment'
-            }],
-            selectedPhonePackage: {
-                name: 'Sky Talk Anytime Extra'
-            }
-        },
-        supportEmail: 'support@example.com',
-        local: {
-            currencyCode: 'gbp',
-            landlineOptions: {
-                'justMoved': true,
-                'sharedProperty': false,
-                'restartLine': false,
-                'additionalLine': false
-            },
-            finalPrice: {
-                value: 2000,
-                countryCode: 'gbp'
-            }
-        }
-    }
+    error
 };

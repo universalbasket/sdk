@@ -12,6 +12,7 @@ import {
     selectedCoverOptions,
     summaryPage
 } from './pet-insurance/sections/index.js';
+import error from './shared/error.js';
 
 export default {
     layout: {
@@ -146,27 +147,5 @@ export default {
             excludeStep: true
         }
     ],
-    data: {
-        serverUrlPath: 'https://ubio-application-bundle-dummy-server.glitch.me/create-job',
-        initialInputs: {
-            url: 'https://pet.morethan.com/h5/pet/step-1?path=%2FquoteAndBuy.do%3Fe%3De1s1%26curPage%3DcaptureDetails'
-        },
-        supportEmail: 'support@example.com',
-        local: {
-            currencyCode: 'gbp',
-            availableBreedTypes: {
-                cat: [
-                    'Pedigree',
-                    'Non-Pedigree'
-                ],
-                dog: [
-                    'Cross Breed',
-                    'Pedigree',
-                    'Small mixed breed (up to 10kg)',
-                    'Medium mixed breed (10 - 20kg)',
-                    'Large mixed breed (above 20kg)'
-                ]
-            }
-        }
-    }
+    error
 };
