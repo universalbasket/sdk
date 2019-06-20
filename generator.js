@@ -47,6 +47,8 @@ async function run() {
 
     process.chdir(name);
 
+    const cwd = process.cwd();
+
     await fs.writeFile('package.json', JSON.stringify({
         name,
         version: '1.0.0',
@@ -60,40 +62,40 @@ async function run() {
         },
         dependencies: {
             '@ubio/sdk-application-bundle': `^${pkg.version}`,
-            '@ubio/sdk': pkg.dependencies['@ubio/sdk'],
-            'lit-html': pkg.dependencies['lit-html'],
-            'vendor-copy': pkg.dependencies['vendor-copy'],
-            'rimraf': pkg.dependencies['rimraf']
+            '@ubio/sdk': pkg.devDependencies['@ubio/sdk'],
+            'lit-html': pkg.devDependencies['lit-html'],
+            'vendor-copy': pkg.devDependencies['vendor-copy'],
+            'rimraf': pkg.devDependencies['rimraf']
         },
         devDependencies: {
             'browser-sync': pkg.devDependencies['browser-sync']
         },
         vendorCopy: [
             {
-                from: 'node_modules/@ubio/sdk-application-bundle/bundle.js',
-                to: 'web_modules/@ubio/sdk-application-bundle.js'
+                from: path.join(cwd, 'node_modules', '@ubio', 'sdk-application-bundle', 'bundle.js'),
+                to: path.join(cwd, 'web_modules', '@ubio', 'sdk-application-bundle.js')
             },
             {
-                from: 'node_modules/@ubio/sdk-application-bundle/index.css',
-                to: 'web_modules/@ubio/sdk-application-bundle.css'
+                from: path.join(cwd, 'node_modules', '@ubio', 'sdk-application-bundle', 'index.css'),
+                to: path.join(cwd, 'web_modules', '@ubio', 'sdk-application-bundle.css')
             },
             {
-                from: 'node_modules/@ubio/sdk/index.js',
-                to: 'web_modules/@ubio/sdk.js'
+                from: path.join(cwd, 'node_modules', '@ubio', 'sdk' ,'index.js'),
+                to: path.join(cwd, 'web_modules', '@ubio', 'sdk.js')
             }
         ]
     }, null, 2));
 
     await exec('npm i', { env: process.env });
-    await copy(path.join(__dirname, 'templates', domain), path.join('src', domain));
-    await copy(path.join(__dirname, 'templates', 'generic'), path.join('src', 'generic'));
-    await copy(path.join(__dirname, 'templates', 'shared'), path.join('src', 'shared'));
+    await copy(path.join(__dirname, 'templates', domain), path.join(cwd, 'src', domain));
+    await copy(path.join(__dirname, 'templates', 'generic'), path.join(cwd, 'src', 'generic'));
+    await copy(path.join(__dirname, 'templates', 'shared'), path.join(cwd, 'src', 'shared'));
     await replaceInFiles({
         files: ['src/**/*.js'],
         from: /\/src\/main.js/g,
         to: '/web_modules/@ubio/sdk-application-bundle.js'
     });
-    await fs.copyFile(path.join(__dirname, 'templates', `${domain}.config.js`), path.join('src', 'ubio.config.js'));
+    await fs.copyFile(path.join(__dirname, 'templates', `${domain}.config.js`), path.join(cwd, 'src', 'ubio.config.js'));
 }
 
 run();
