@@ -1,7 +1,5 @@
-import sdk from '../sdk.js';
-
-const template = ({ filename, url }) => {
-    return sdk.sdk.getJobFile(url)
+const template = ({ filename, url, sdk }) => {
+    return sdk.getJobFile(url)
         .then(blob => {
             const a = document.createElement('a');
             const href = URL.createObjectURL(blob);

@@ -1,12 +1,12 @@
 import kebabcase from '/web_modules/lodash.kebabcase.js';
 import { html, render } from '/web_modules/lit-html/lit-html.js';
-import sdk from './sdk.js';
 import { serializeForm , getFormInputKeys } from './serialize-form.js';
 import pageWrapper from './builtin-templates/page-wrapper.js';
 import inlineLoading from './builtin-templates/inline-loading.js';
 import flashError from './builtin-templates/flash-error.js';
 import * as Storage from './storage.js';
 import getDataForSection from './get-data-for-section.js';
+import * as main from './main.js';
 import validateForm from './form-validator.js';
 
 const VAULT_FORM_SELECTOR = '#ubio-vault-form';
@@ -18,30 +18,35 @@ const VAULT_FORM_SELECTOR = '#ubio-vault-form';
  * @param {Function} onFinish
  */
 class PageRenderer {
-    constructor(name, sections = [], selector, onFinish) {
+    constructor(sdk, sections = [], selector, onFinish) {
         if (sections.length === 0) {
             throw new Error('PageRenderer constructor: sections is empty');
         }
 
-        this.name = name;
+        this.sdk = sdk;
         this.selector = selector;
         this.sections = [...sections];
         this.onFinish = onFinish;
 
         this.sectionsToRender = [];
+
+        for (const section of sections) {
+            const sectionToRender = { elementName: kebabcase(section.name), ...section };
+            this.sectionsToRender.push(sectionToRender);
+        }
+
         this.currentSection = null;
     }
 
     init() {
-        this.sectionsToRender = this.sections.map(s => { return { elementName: kebabcase(s.name), ...s }; });
         this.renderWrapper();
     }
 
     renderWrapper() {
-        render(pageWrapper(), document.querySelector(this.selector));
+        document.querySelector(this.selector).innerHTML = pageWrapper();
         const wrappers = this.sectionsToRender.map(s => html`<form id="section-form-${s.elementName}"></form>`);
 
-        render(html`${wrappers.map(w => w)}`, document.querySelector('#target'));
+        render(html`${wrappers}`, document.querySelector('#target'));
         this.next();
     }
 
@@ -53,19 +58,11 @@ class PageRenderer {
             return this.onFinish();
         }
 
-        if (!section) {
-            throw 'PageRenderer next: no section';
-        }
-
         this.currentSection = section;
         this.renderSection(section);
     }
 
     addListeners(elementName) {
-        if (!sdk.initiated) {
-            return;
-        }
-
         const submitBtn = document.querySelector(`#submit-btn-${elementName}`);
         if (!submitBtn) {
             console.warn(`submit button for ${elementName} section not found.`);
@@ -83,7 +80,7 @@ class PageRenderer {
 
             e.target.setAttribute('disabled', 'true');
 
-            this.submitVaultFormIfPresents()
+            this.submitVaultFormIfPresents(this.sdk)
                 .then(() => {
                     const inputs = serializeForm(`#section-form-${elementName}`);
                     return this.createInputs(inputs);
@@ -93,15 +90,14 @@ class PageRenderer {
                     this.next();
                 })
                 .catch(err => {
-                    if (document.querySelector('#error')) {
-                        render(flashError(err), document.querySelector('#error'));
-                    }
+                    const element = document.querySelector('#error');
+                    flashError(element, err);
                     e.target.removeAttribute('disabled');
                 });
         });
     }
 
-    submitVaultFormIfPresents() {
+    submitVaultFormIfPresents(sdk) {
         const vaultIframe = document.querySelector(VAULT_FORM_SELECTOR);
 
         if (!vaultIframe) {
@@ -111,7 +107,7 @@ class PageRenderer {
         if (vaultIframe) {
             return isVaultFormValid(vaultIframe)
                 .then(() => {
-                    return submitVaultForm(vaultIframe);
+                    return submitVaultForm(sdk, vaultIframe);
                 })
                 .then(({ cardToken, panToken }) => {
                     Storage.del('_', 'otp');
@@ -132,7 +128,7 @@ class PageRenderer {
             const panToken = Storage.get('_', 'panToken');
 
             if (cardToken) {
-                inputs.payment['card'] = { '$token': cardToken };
+                inputs.payment.card = { '$token': cardToken };
                 cardTokenSent = true;
             } else {
                 //TODO: include this part in doc:
@@ -141,16 +137,13 @@ class PageRenderer {
             }
 
             if (panToken) {
-                inputs['panToken'] = panToken;
+                inputs.panToken = panToken;
                 panTokenSent = true;
             }
         }
 
-        return sdk.createJobInputs(inputs)
-            .then(submittedInputs => {
-                const event = new CustomEvent('newInputs', { detail: submittedInputs });
-                window.dispatchEvent(event);
-
+        return main.createInputs(this.sdk, inputs)
+            .then(() => {
                 if (cardTokenSent) {
                     Storage.del('_', 'cardToken');
                 }
@@ -192,7 +185,7 @@ class PageRenderer {
     renderSection({ elementName, waitFor, template }) {
         const sectionForm = document.querySelector(`#section-form-${elementName}`);
 
-        render(html`${inlineLoading()} `, sectionForm);
+        inlineLoading(sectionForm);
 
         const skip = () => {
             this.skipSection();
@@ -200,7 +193,7 @@ class PageRenderer {
 
         getDataForSection(waitFor)
             .then(res => {
-                render(html`${template(elementName, res, skip)} `, sectionForm);
+                render(html`${template(elementName, res, skip, this.sdk)} `, sectionForm);
                 this.addListeners(elementName);
                 this.skipIfSubmitted(elementName);
             });
@@ -229,7 +222,7 @@ class PageRenderer {
         if (submittedKeysInSection.length > 0) {
             const preserveInputs = submittedInputKeys.filter(k => !submittedKeysInSection.includes(k));
 
-            sdk.resetJob(inputKeysInSection[0], preserveInputs)
+            this.sdk.resetJob(inputKeysInSection[0], preserveInputs)
                 .then(() => {
                     submittedKeysInSection.forEach(k => localStorage.removeItem(`input.${k}`));
                 })
@@ -261,7 +254,7 @@ function isVaultFormValid(vaultIframe) {
     });
 }
 
-function submitVaultForm(vaultIframe) {
+function submitVaultForm(sdk, vaultIframe) {
     return new Promise((resolve, reject) => {
         if (!vaultIframe) {
             reject('vault iframe not found');
@@ -291,8 +284,8 @@ function submitVaultForm(vaultIframe) {
     });
 }
 
-function getPageRenderer(name, sections, selector, onFinish) {
-    return new PageRenderer(name, sections, selector, onFinish);
+function getPageRenderer(sdk, name, sections, selector, onFinish) {
+    return new PageRenderer(sdk, name, sections, selector, onFinish);
 }
 
 export default getPageRenderer;

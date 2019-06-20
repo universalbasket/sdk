@@ -6,13 +6,11 @@ class Router {
         this.routes = routes;
         this.notFoundTemplate = notFoundTemplate;
 
-        const titles = Object.keys(routes)
-            .map(key => routes[key])
+        const steps = Object.values(routes)
             .filter(route => route.step != null && typeof route.step === 'number')
-            .sort((a, b) => a.step - b.step)
-            .map(r => r.title);
+            .sort((a, b) => a.step - b.step);
 
-        this.progressBar = ProgressBar('#progress-bar', titles);
+        this.progressBar = ProgressBar('#progress-bar', steps.map(s => s.title));
     }
 
     navigate() {
