@@ -21,6 +21,14 @@
     "test:update": "jest --updateSnapshot",
     "serve": "browser-sync start --index 'index.html' --server --files 'templates' 'web_modules' 'src'"
   },
+  "files": [
+    "bundle.js",
+    "bundle.umd.js",
+    "generate.js",
+    "index.css",
+    "templates",
+    "application-template"
+  ],
   "pre-commit": [
     "check",
     "stylelint",
