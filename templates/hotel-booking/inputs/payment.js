@@ -39,6 +39,7 @@ export default otp => html`
                 type="email"
                 name="main-guest[contact][email]"
                 required
+                pattern="\S+@\S+\.\S+"
                 data-error="Please enter valid email address" />
         </div>
     </div>
