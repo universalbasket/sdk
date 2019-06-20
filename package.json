@@ -24,7 +24,7 @@
   "files": [
     "bundle.js",
     "bundle.umd.js",
-    "generate.js",
+    "generator.js",
     "index.css",
     "templates",
     "application-template"
