@@ -43,12 +43,15 @@ function getArgs() {
 async function run() {
     const { name, domain } = getArgs();
 
+    process.stdout.write('Copying project template...');
     await copy(path.join(__dirname, 'application-template'), name);
+    process.stdout.write(' ✓\n');
 
     process.chdir(name);
 
     const cwd = process.cwd();
 
+    process.stdout.write('Creating package file...');
     await fs.writeFile('package.json', JSON.stringify({
         name,
         version: '1.0.0',
@@ -72,21 +75,26 @@ async function run() {
         },
         vendorCopy: [
             {
-                from: path.join(cwd, 'node_modules', '@ubio', 'sdk-application-bundle', 'bundle.js'),
-                to: path.join(cwd, 'web_modules', '@ubio', 'sdk-application-bundle.js')
+                from: path.join('node_modules', '@ubio', 'sdk-application-bundle', 'bundle.js'),
+                to: path.join('web_modules', '@ubio', 'sdk-application-bundle.js')
             },
             {
-                from: path.join(cwd, 'node_modules', '@ubio', 'sdk-application-bundle', 'index.css'),
-                to: path.join(cwd, 'web_modules', '@ubio', 'sdk-application-bundle.css')
+                from: path.join('node_modules', '@ubio', 'sdk-application-bundle', 'index.css'),
+                to: path.join('web_modules', '@ubio', 'sdk-application-bundle.css')
             },
             {
-                from: path.join(cwd, 'node_modules', '@ubio', 'sdk' ,'index.js'),
-                to: path.join(cwd, 'web_modules', '@ubio', 'sdk.js')
+                from: path.join('node_modules', '@ubio', 'sdk' ,'index.js'),
+                to: path.join('web_modules', '@ubio', 'sdk.js')
             }
         ]
     }, null, 2));
+    process.stdout.write(' ✓\n');
 
+    process.stdout.write('Running npm install...');
     await exec('npm i', { env: process.env });
+    process.stdout.write(' ✓\n');
+
+    process.stdout.write('Copying templates...');
     await copy(path.join(__dirname, 'templates', domain), path.join(cwd, 'src', domain));
     await copy(path.join(__dirname, 'templates', 'generic'), path.join(cwd, 'src', 'generic'));
     await copy(path.join(__dirname, 'templates', 'shared'), path.join(cwd, 'src', 'shared'));
@@ -95,7 +103,13 @@ async function run() {
         from: /\/src\/main.js/g,
         to: '/web_modules/@ubio/sdk-application-bundle.js'
     });
+    process.stdout.write(' ✓\n');
+
+    process.stdout.write('Copying config file...');
     await fs.copyFile(path.join(__dirname, 'templates', `${domain}.config.js`), path.join(cwd, 'src', 'ubio.config.js'));
+    process.stdout.write(' ✓\n');
+
+    console.log('Project created in directory:', cwd);
 }
 
 run();
