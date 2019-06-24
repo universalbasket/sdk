@@ -5,13 +5,13 @@
         <title>ubio application bundle</title>
         <link href="/src/css/index.css" rel="stylesheet">
         <script type="module">
-            window.location.hash = '';
-            localStorage.clear();
-
             import { createEndUserSdk } from '/web_modules/@ubio/sdk.js';
             import { createApp } from '/src/main.js';
 
             async function createJob(domain) {
+                //TODO: only clear localStorage associated with SDK and job
+                localStorage.clear();
+
                 const res = await fetch('https://ubio-application-bundle-test-server.glitch.me/create-job', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -25,13 +25,47 @@
                 return await res.json();
             }
 
-            async function init() {
-                const domain = new URLSearchParams(window.location.search).get('domain') || 'hotel-booking';
-                const { pages, cache, layout, error } = (await import(`/templates/${domain}.config.js`)).default;
-                const { token, jobId, serviceId, supportEmail, local } = await createJob(domain);
-                const sdk = createEndUserSdk({ token, jobId, serviceId });
+            async function cancelExistingJob() {
+                const token = JSON.parse(localStorage.getItem('_.token'));
+                if (token) {
+                    const jobId = JSON.parse(localStorage.getItem('_.jobId'));
+                    const serviceId = JSON.parse(localStorage.getItem('_.serviceId'));
+                    const sdk = createEndUserSdk({ token, jobId, serviceId });
+                    await sdk.cancelJob();
+                }
+            }
 
-                const app = createApp({ mountPoint: window.app, pages, cache, layout, sdk, error, local });
+            async function init() {
+                const domain = new URLSearchParams(window.location.search).get('domain') || 'motor-insurance';
+                const { pages, cache, layout, error } = (await import(`/templates/${domain}.config.js`)).default;
+
+                // create new job
+                if (window.location.hash === '') {
+                    // cancel the previous job, if there is one?
+                    await cancelExistingJob();
+
+                    const { token, jobId, serviceId, local } = await createJob(domain);
+                    const sdk = createEndUserSdk({ token, jobId, serviceId });
+                    const app = createApp({ mountPoint: window.app, pages, cache, layout, sdk, error, local });
+
+                    // save the token for later
+                    localStorage.setItem('_.token', JSON.stringify(token));
+                    localStorage.setItem('_.serviceId', JSON.stringify(serviceId));
+                }
+                // use existing job
+                else {
+                    const token = JSON.parse(localStorage.getItem('_.token'));
+                    const jobId = JSON.parse(localStorage.getItem('_.jobId'));
+                    const serviceId = JSON.parse(localStorage.getItem('_.serviceId'));
+
+                    if (!token) {
+                        window.location.hash = '';
+                        return;
+                    }
+
+                    const sdk = createEndUserSdk({ token, jobId, serviceId });
+                    const app = createApp({ mountPoint: window.app, pages, cache, layout, sdk, error });
+                }
             }
 
             init();

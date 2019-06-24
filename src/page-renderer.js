@@ -182,10 +182,15 @@ class PageRenderer {
         }
     }
 
-    renderSection({ elementName, waitFor, template }) {
+    renderSection({ elementName, waitFor, template, loadingTemplate }) {
         const sectionForm = document.querySelector(`#section-form-${elementName}`);
 
-        inlineLoading(sectionForm);
+        if (loadingTemplate) {
+            loadingTemplate(sectionForm);
+        }
+        else {
+            inlineLoading(sectionForm);
+        }
 
         const skip = () => {
             this.skipSection();

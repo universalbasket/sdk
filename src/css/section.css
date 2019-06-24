@@ -5,3 +5,10 @@
     border-top: var(--input-border-width) solid var(--color--hr);
     padding: 15px 0;
 }
+
+.form--disabled .section__hide-disabled {
+    border-bottom: 2px solid #ccc;
+    height: 0;
+    overflow: hidden;
+    margin-bottom: 1em;
+}
