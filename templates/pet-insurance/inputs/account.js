@@ -9,7 +9,8 @@ export default () => html`
             <input
                 type="email"
                 name="account[email]"
-                placeholder="example@email.com"
+                placeholder="example@example.com"
+                pattern="[a-zA-Z0-9.-_]{1,}@[a-zA-Z.-]{2,}[.]{1}[a-zA-Z]{2,}"
                 data-error="Please enter a valid email address"
                 required />
         </div>
