@@ -12,7 +12,7 @@ export default (name, { estimatedPrice = {}, finalPrice = {} }, skip, sdk) => {
     if (finalValue > estimatedValue) {
         //template to just display on modal
         const template = html`
-            <p class="dim">The final price has changed. and will be:</p>
+            <p class="dim">The final price has changed and will be:</p>
             <b class="large">${ templates.priceDisplay(finalPrice.price) }</b>
             <div class="section__actions">
                 <button
@@ -26,7 +26,7 @@ export default (name, { estimatedPrice = {}, finalPrice = {} }, skip, sdk) => {
             </div>
         `;
 
-        const modal = templates.modal(template, 'Price check', true);
+        const modal = templates.modal(template, { title: 'Price check', isLocked: true });
         modal.show();
 
         document.querySelector(`#submit-btn-${name}`).addEventListener('click', modal.close);

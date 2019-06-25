@@ -3,7 +3,7 @@ import { unsafeHTML } from '/web_modules/lit-html/directives/unsafe-html.js';
 
 import PriceDisplay from './price-display.js';
 
-export default function create(body, title, isLocked = false) {
+export default function create(body, { title = '', isLocked = false } = {}) {
     const templateResult = wrap(body, title, isLocked);
 
     return {
@@ -46,7 +46,7 @@ function wrapper(details, title, isLocked, isHidden) {
             </div>
             <div
                 class="modal-wrapper__overlay"
-                @click=${ !isLocked ? close : () => { return; }}></div>
+                @click=${ isLocked ? () => {} : close }></div>
         </div>`;
 }
 
@@ -61,7 +61,7 @@ function header(title) {
 
 function closeBtn(isLocked) {
     if (!isLocked) {
-        return html`<span class="modal__close" @click=${close}></span>`;
+        return html`<span class="modal__close" @click=${ close }></span>`;
     }
 }
 

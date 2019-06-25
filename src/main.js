@@ -157,38 +157,42 @@ function afterSdkInitiated(sdk, cacheConfig, local) {
     Summary.update();
 }
 
-let tdsTimeout;
-function handle3ds(sdk, event) {
-    if (event === 'tdsStart') {
-        clearTimeout(tdsTimeout);
-
-        sdk.getActiveTds()
-            .then(res => {
-                const iframeContent = modal(html`<iframe src="${res.url}"></iframe>`, '', true);
-                iframeContent.fake();
-                tdsTimeout = setTimeout(() => iframeContent.show(), 5000);
-            })
-            .catch(err => console.warn(err));
-    }
-
-    if (event === 'tdsFinish') {
-        clearTimeout(tdsTimeout);
-        modal().close();
-    }
-}
-
 function addTracker(sdk) {
     let loading = false;
+
+    let tdsTimeout;
+    async function handle3dsEvent(event) {
+        if (event === 'tdsStart') {
+            clearTimeout(tdsTimeout);
+            let res;
+
+            try {
+                res = await sdk.getActiveTds();
+            } catch (err) {
+                console.warn(err);
+                return;
+            }
+
+            const iframeContent = modal(html`<iframe src="${res.url}"></iframe>`, { isLocked: true });
+            iframeContent.fake();
+            tdsTimeout = setTimeout(() => iframeContent.show(), 5000);
+        }
+
+        if (event === 'tdsFinish') {
+            clearTimeout(tdsTimeout);
+            modal().close();
+        }
+    }
 
     const stop = sdk.trackJob((event, error) => {
         console.log(`event ${event}`);
 
         switch (event) {
             case 'tdsStart':
-                return handle3ds(sdk, 'tdsStart');
+                return handle3dsEvent('tdsStart');
 
             case 'tdsFinish':
-                return handle3ds(sdk, 'tdsFinish');
+                return handle3dsEvent('tdsFinish');
 
             case 'close':
                 return modal().close();

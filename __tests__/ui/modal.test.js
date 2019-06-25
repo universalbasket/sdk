@@ -30,7 +30,7 @@ describe('Modal UI', () => {
 
     it('renders template result and title', () => {
         const HTML = html`<p class="dim">Lorem ipsum dolor sit amet.</p>`;
-        const modal = createModal(HTML, 'title');
+        const modal = createModal(HTML, { title: 'title' });
 
         expect(modal.templateResult.values)
             .toEqual(expect.arrayContaining([
@@ -43,8 +43,7 @@ describe('Modal UI', () => {
 
     it('renders with .modal--locked', () => {
         const HTML = html`<p class="dim">Lorem ipsum dolor sit amet.</p>`;
-        const isLocked = true;
-        const modal = createModal(HTML, 'title', isLocked);
+        const modal = createModal(HTML, { title: 'title', isLocked: true });
 
         expect(modal.templateResult.values)
             .toEqual(expect.arrayContaining([
