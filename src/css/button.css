@@ -20,10 +20,31 @@
 
 .button--primary {
     height: var(--button-height--large);
-    width: var(--button-width--large);
+    min-width: var(--button-width--large);
     border-radius: 3.6px;
     font-size: var(--button-font-size--large);
     background: var(--color--primary);
     color: white;
+    border: 0;
+}
+
+.button--secondary {
+    height: var(--button-height--large);
+    min-width: var(--button-width--large);
+    border-radius: 3.6px;
+    font-size: var(--button-font-size--large);
+    background: white;
+    box-shadow: 0 0 0 var(--button-border-width) var(--color--primary) inset;
+    color: var(--color--primary);
+    border: 0;
+}
+
+.button--frameless {
+    height: var(--button-height--large);
+    min-width: var(--button-width--large);
+    border-radius: 3.6px;
+    font-size: var(--button-font-size--large);
+    background: white;
+    color: var(--color);
     border: 0;
 }
