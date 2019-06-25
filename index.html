@@ -45,7 +45,7 @@
 
                 const { token, jobId, serviceId, supportEmail, local } = await res.json();
 
-                localStorage.setItem(`job-session-${domain}`, JSON.stringify({ token, jobId, serviceId, supportEmail, local, domain }));
+                localStorage.setItem(`job-session`, JSON.stringify({ token, jobId, serviceId, supportEmail, local, domain }));
 
                 const sdk = createEndUserSdk({ token, jobId, serviceId });
 
@@ -76,21 +76,21 @@
                     job = await existing.sdk.getJob();
                 } catch (e) {}
 
-                if (job && (job.state === 'success' || job.state === 'fail')) {
+                if (job && job.finishedAt) {
                     console.log('Existing session found for job in end state.');
                     shouldClear = true;
                 }
 
                 if (shouldClear) {
-                    console.log('Clearing storage.');
-                    existing = null;
-                    localStorage.clear();
-
-                    if (job && job.state !== 'success' && job.state !== 'fail') {
+                    if (job && !job.finishedAt) {
                         console.log('Cancelling job.');
                         await existing.sdk.cancelJob();
                     }
-                } else
+
+                    console.log('Clearing storage.');
+                    existing = null;
+                    localStorage.clear();
+                }
 
                 if (hash !== '' && !existing) {
                     window.location.hash = '';
