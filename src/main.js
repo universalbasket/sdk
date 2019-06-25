@@ -157,6 +157,26 @@ function afterSdkInitiated(sdk, cacheConfig, local) {
     Summary.update();
 }
 
+let tdsTimeout;
+function handle3ds(sdk, event) {
+    if (event === 'tdsStart') {
+        clearTimeout(tdsTimeout);
+
+        sdk.getActiveTds()
+            .then(res => {
+                const iframeContent = modal(html`<iframe src="${res.url}"></iframe>`, '', true);
+                iframeContent.fake();
+                tdsTimeout = setTimeout(() => iframeContent.show(), 5000);
+            })
+            .catch(err => console.warn(err));
+    }
+
+    if (event === 'tdsFinish') {
+        clearTimeout(tdsTimeout);
+        modal().close();
+    }
+}
+
 function addTracker(sdk) {
     let loading = false;
 
@@ -164,6 +184,15 @@ function addTracker(sdk) {
         console.log(`event ${event}`);
 
         switch (event) {
+            case 'tdsStart':
+                return handle3ds(sdk, 'tdsStart');
+
+            case 'tdsFinish':
+                return handle3ds(sdk, 'tdsFinish');
+
+            case 'close':
+                return modal().close();
+
             case 'error':
                 return console.error(error);
 

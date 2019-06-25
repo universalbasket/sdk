@@ -9,19 +9,21 @@ export default (name, { selectedRooms, finalPrice }, skip, sdk) => {
     if (finalValue > estimatedValue) {
         //template to just display on modal
         const template = html`
-            <p>The final price has changed. and will be:</p>
-            <b class="large">${templates.priceDisplay(finalPrice.price)}</b>
-            <div class="section__actions field field-set">
-                <button type="button" class="button button--right button--secondary" id="cancel-btn">Cancel</button>
-                <button type="button" class="button button--right button--primary" id="submit-btn-${name}">Confirm and pay</button>
+            <p class="dim">The final price has changed. and will be:</p>
+            <b class="large">${ templates.priceDisplay(finalPrice.price) }</b>
+            <div class="section__actions">
+                <button
+                    type="button"
+                    class="button button--right button--frameless"
+                    id="cancel-btn">Cancel</button>
+                <button
+                    type="button"
+                    class="button button--right button--primary"
+                    id="submit-btn-${name}">Confirm and pay</button>
             </div>
         `;
 
-        const modal = templates.modal(template, 'Price check', {
-            closeOnOverlay: false,
-            showClose: false
-        });
-
+        const modal = templates.modal(template, 'Price check', true);
         modal.show();
 
         document.querySelector(`#submit-btn-${name}`).addEventListener('click', modal.close);
