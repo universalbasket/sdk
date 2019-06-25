@@ -105,6 +105,10 @@ async function run() {
     });
     process.stdout.write(' ✓\n');
 
+    process.stdout.write('Reticulating splines...');
+    await new Promise(r => setTimeout(r, 250));
+    process.stdout.write(' ✓\n');
+
     process.stdout.write('Copying config file...');
     await fs.copyFile(path.join(__dirname, 'templates', `${domain}.config.js`), path.join(cwd, 'src', 'ubio.config.js'));
     process.stdout.write(' ✓\n');

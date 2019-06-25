@@ -1,158 +1,204 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
 import createModal from '@/src/builtin-templates/modal.js';
+import priceDisplay from '@/src/builtin-templates/price-display.js';
 
 describe('Modal UI', () => {
     describe('Unhappy case', () => {
         it('renders empty when no args passed', () => {
             const modal = createModal();
-            const result = modal.template;
-
-            expect(result).toBe('');
-            expect(result.type).toBe(undefined);
+            expect(modal.templateResult).toBe('');
         });
 
-        it('renders empty when unsupported type of arg passed', () => {
+        it('doesn\'t render template string', () => {
             const modal = createModal(`
                 <p class="dim">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce posuere erat elit, sed tincidunt velit venenatis ac. Vivamus vel nulla orci. Etiam mattis, mauris eget tristique blandit, arcu tellus condimentum nisl, eget dictum libero dolor in erat. Quisque placerat mattis maximus. Cras et fringilla lorem. Vivamus sed rutrum neque. Aliquam pulvinar sem eros, accumsan eleifend est finibus in. Ut et nisl vitae est condimentum faucibus. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Ut at ex at lacus varius aliquam.</p>
                 <p class="dim">Morbi orci metus, commodo sit amet suscipit ac, pharetra eu mauris. Morbi sagittis lacus vel lacus finibus mollis. Phasellus arcu velit, viverra a eros ac, semper fringilla lectus. Sed varius sodales sapien nec auctor. Nam eget ornare lectus. Proin vehicula, urna nec congue rutrum, nunc odio pharetra nibh, eu dictum justo ante ut risus. Ut vulputate rhoncus dolor, id pharetra nisl semper quis. Nam tristique molestie lacinia. Aliquam vestibulum gravida ex id consequat. Suspendisse quis porta libero, cursus ultrices enim.</p>
             `);
-            const result = modal.template;
 
-            expect(result).toBe('');
-            expect(result.type).toBe(undefined);
+            expect(modal.templateResult).toBe('');
         });
     });
 
-    describe('Default use case: show any HTML', () => {
-        it('renders template result', () => {
-            const modal = createModal(html`
-                <p class="dim">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce posuere erat elit, sed tincidunt velit venenatis ac. Vivamus vel nulla orci. Etiam mattis, mauris eget tristique blandit, arcu tellus condimentum nisl, eget dictum libero dolor in erat. Quisque placerat mattis maximus. Cras et fringilla lorem. Vivamus sed rutrum neque. Aliquam pulvinar sem eros, accumsan eleifend est finibus in. Ut et nisl vitae est condimentum faucibus. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Ut at ex at lacus varius aliquam.</p>
-                <p class="dim">Morbi orci metus, commodo sit amet suscipit ac, pharetra eu mauris. Morbi sagittis lacus vel lacus finibus mollis. Phasellus arcu velit, viverra a eros ac, semper fringilla lectus. Sed varius sodales sapien nec auctor. Nam eget ornare lectus. Proin vehicula, urna nec congue rutrum, nunc odio pharetra nibh, eu dictum justo ante ut risus. Ut vulputate rhoncus dolor, id pharetra nisl semper quis. Nam tristique molestie lacinia. Aliquam vestibulum gravida ex id consequat. Suspendisse quis porta libero, cursus ultrices enim.</p>
-            `);
-            const result = modal.template;
-
-            expect(result).toMatchSnapshot({
-                processor: expect.any(Object),
-                strings: expect.any(Array),
-                type: 'html',
-                values: expect.any(Array)
-            });
-            expect(result.values[0]).toBe(undefined);
-            expect(result.values[1]).not.toBe(undefined);
-        });
-
-        it('renders with title when the second arg is provided', () => {
-            const modal = createModal(html`
-                <p class="dim">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce posuere erat elit, sed tincidunt velit venenatis ac. Vivamus vel nulla orci. Etiam mattis, mauris eget tristique blandit, arcu tellus condimentum nisl, eget dictum libero dolor in erat. Quisque placerat mattis maximus. Cras et fringilla lorem. Vivamus sed rutrum neque. Aliquam pulvinar sem eros, accumsan eleifend est finibus in. Ut et nisl vitae est condimentum faucibus. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Ut at ex at lacus varius aliquam.</p>
-                <p class="dim">Morbi orci metus, commodo sit amet suscipit ac, pharetra eu mauris. Morbi sagittis lacus vel lacus finibus mollis. Phasellus arcu velit, viverra a eros ac, semper fringilla lectus. Sed varius sodales sapien nec auctor. Nam eget ornare lectus. Proin vehicula, urna nec congue rutrum, nunc odio pharetra nibh, eu dictum justo ante ut risus. Ut vulputate rhoncus dolor, id pharetra nisl semper quis. Nam tristique molestie lacinia. Aliquam vestibulum gravida ex id consequat. Suspendisse quis porta libero, cursus ultrices enim.</p>
-            `, 'title');
-            const result = modal.template;
-
-            expect(result).toMatchSnapshot({
-                processor: expect.any(Object),
-                strings: expect.any(Array),
-                type: 'html',
-                values: expect.any(Array)
-            });
-            expect(result.values[0]).toBe('title');
-            expect(result.values[1]).not.toBe(undefined);
-        });
+    it('renders template result', () => {
+        const HTML = html`
+            <p class="dim">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce posuere erat elit, sed tincidunt velit venenatis ac. Vivamus vel nulla orci. Etiam mattis, mauris eget tristique blandit, arcu tellus condimentum nisl, eget dictum libero dolor in erat. Quisque placerat mattis maximus. Cras et fringilla lorem. Vivamus sed rutrum neque. Aliquam pulvinar sem eros, accumsan eleifend est finibus in. Ut et nisl vitae est condimentum faucibus. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Ut at ex at lacus varius aliquam.</p>
+            <p class="dim">Morbi orci metus, commodo sit amet suscipit ac, pharetra eu mauris. Morbi sagittis lacus vel lacus finibus mollis. Phasellus arcu velit, viverra a eros ac, semper fringilla lectus. Sed varius sodales sapien nec auctor. Nam eget ornare lectus. Proin vehicula, urna nec congue rutrum, nunc odio pharetra nibh, eu dictum justo ante ut risus. Ut vulputate rhoncus dolor, id pharetra nisl semper quis. Nam tristique molestie lacinia. Aliquam vestibulum gravida ex id consequat. Suspendisse quis porta libero, cursus ultrices enim.</p>
+        `;
+        const modal = createModal(HTML);
+        expect(modal.templateResult.values).toContain(HTML);
     });
 
-    describe('Job output use case: show HTML', () => {
-        it('renders with HTML contents', () => {
+    it('renders template result and title', () => {
+        const HTML = html`<p class="dim">Lorem ipsum dolor sit amet.</p>`;
+        const modal = createModal(HTML, { title: 'title' });
+
+        expect(modal.templateResult.values)
+            .toEqual(expect.arrayContaining([
+                expect.objectContaining({
+                    values: expect.arrayContaining(['title'])
+                }),
+                HTML
+            ]));
+    });
+
+    it('renders with .modal--locked', () => {
+        const HTML = html`<p class="dim">Lorem ipsum dolor sit amet.</p>`;
+        const modal = createModal(HTML, { title: 'title', isLocked: true });
+
+        expect(modal.templateResult.values)
+            .toEqual(expect.arrayContaining([
+                'modal--locked',
+                expect.objectContaining({
+                    values: expect.arrayContaining(['title']),
+                    type: 'html'
+                }),
+                HTML
+            ]));
+    });
+
+    describe('Job output', () => {
+        it('renders type: HTML', () => {
             const jobOutput = getOutput('eligibilityConditions');
             const modal = createModal(jobOutput);
-            const result = modal.template;
 
-            expect(result).toMatchSnapshot({
-                processor: expect.any(Object),
-                strings: expect.any(Array),
-                type: 'html',
-                values: expect.any(Array)
-            });
-            expect(result.values[0]).toBe(jobOutput.name);
-            expect(typeof result.values[1]).toBe('function');
-        });
-    });
-
-    describe('Job output use case: show StructuredText as HTML', () => {
-        it('renders with nested Text contents', () => {
-            const jobOutput = getOutput('termsAndConditions');
-            const modal = createModal(jobOutput);
-            const result = modal.template;
-
-            expect(result).toMatchSnapshot({
-                processor: expect.any(Object),
-                strings: expect.any(Array),
-                type: 'html',
-                values: expect.any(Array)
-            });
-            expect(result.values[0]).toBe(jobOutput.name);
-            expect(result.values[1].type).toBe('html');
+            expect(modal.templateResult.values)
+                .toEqual(expect.arrayContaining([
+                    expect.objectContaining({
+                        values: expect.arrayContaining([jobOutput.name]),
+                        type: 'html'
+                    })
+                ]));
         });
 
-        it('renders with nested NamedPrice contents', () => {
-            const jobOutput = getOutput('oneOffCosts');
-            const modal = createModal(jobOutput);
-            const result = modal.template;
+        describe('type: StructuredText nested contents', () => {
 
-            expect(result).toMatchSnapshot({
-                processor: expect.any(Object),
-                strings: expect.any(Array),
-                type: 'html',
-                values: expect.any(Array)
-            });
-            expect(result.values[0]).toBe(jobOutput.name);
-            expect(result.values[1].type).toBe('html');
-        });
+            it('renders type: Text', () => {
+                const jobOutput = getOutput('termsAndConditions');
+                const modal = createModal(jobOutput);
 
-        it('renders with nested NamedText contents', () => {
-            const modal = createModal({
-                type: 'StructuredText',
-                name: 'NamedText test',
-                contents: [
-                    {
-                        type: 'NamedText',
-                        text: 'Lorem ipsum dolor sit amet',
-                        name: 'Text Name'
-                    }
-                ]
-            });
-            const result = modal.template;
+                const { name } = jobOutput.contents[0];
 
-            expect(result).toMatchSnapshot({
-                processor: expect.any(Object),
-                strings: expect.any(Array),
-                type: 'html',
-                values: expect.any(Array)
+                expect(modal.templateResult.values)
+                    .toEqual(expect.arrayContaining([
+                        expect.objectContaining({
+                            values: expect.arrayContaining([
+                                jobOutput.name
+                            ])
+                        }),
+                        expect.objectContaining({
+                            values: expect.arrayContaining([
+                                expect.arrayContaining([
+                                    expect.objectContaining({
+                                        values: expect.arrayContaining([
+                                            name
+                                        ])
+                                    })
+                                ])
+                            ])
+                        })
+                    ]));
             });
-            expect(result.values[0]).toBe('NamedText test');
-            expect(result.values[1].type).toBe('html');
-        });
 
-        it('renders with nested Link contents', () => {
-            const modal = createModal({
-                type: 'StructuredText',
-                name: 'Link test',
-                contents: [
-                    {
-                        type: 'Link',
-                        url: 'linkurl',
-                        name: 'Link Name'
-                    }
-                ]
-            });
-            const result = modal.template;
+            it('renders type: NamedPrice', () => {
+                const jobOutput = getOutput('oneOffCosts');
+                const modal = createModal(jobOutput);
+                const { price, name } = jobOutput.contents[0];
 
-            expect(result).toMatchSnapshot({
-                processor: expect.any(Object),
-                strings: expect.any(Array),
-                type: 'html',
-                values: expect.any(Array)
+                expect(modal.templateResult.values)
+                    .toEqual(expect.arrayContaining([
+                        expect.objectContaining({
+                            values: expect.arrayContaining([
+                                jobOutput.name
+                            ])
+                        }),
+                        expect.objectContaining({
+                            values: expect.arrayContaining([
+                                expect.arrayContaining([
+                                    expect.objectContaining({
+                                        values: expect.arrayContaining([
+                                            name,
+                                            priceDisplay(price)
+                                        ])
+                                    })
+                                ])
+                            ])
+                        })
+                    ]));
             });
-            expect(result.values[0]).toBe('Link test');
-            expect(result.values[1].type).toBe('html');
+
+            it('renders type: NamedText', () => {
+                const jobOutput = {
+                    type: 'StructuredText',
+                    name: 'NamedText test',
+                    contents: [
+                        {
+                            type: 'NamedText',
+                            text: 'Lorem ipsum dolor sit amet',
+                            name: 'Text Name'
+                        }
+                    ]
+                };
+                const modal = createModal(jobOutput);
+                const { text, name } = jobOutput.contents[0];
+
+                expect(modal.templateResult.values)
+                    .toEqual(expect.arrayContaining([
+                        expect.objectContaining({
+                            values: expect.arrayContaining([
+                                jobOutput.name
+                            ])
+                        }),
+                        expect.objectContaining({
+                            values: expect.arrayContaining([
+                                expect.arrayContaining([
+                                    expect.objectContaining({
+                                        values: expect.arrayContaining([
+                                            name,
+                                            text
+                                        ])
+                                    })
+                                ])
+                            ])
+                        })
+                    ]));
+            });
+
+            it('renders type: Link', () => {
+                const jobOutput = {
+                    type: 'StructuredText',
+                    name: 'Link test',
+                    contents: [
+                        {
+                            type: 'Link',
+                            url: 'url',
+                            name: 'Link Name'
+                        }
+                    ]
+                };
+                const modal = createModal(jobOutput);
+                const { name, url } = jobOutput.contents[0];
+
+                expect(modal.templateResult.values)
+                    .toEqual(expect.arrayContaining([
+                        expect.objectContaining({
+                            values: expect.arrayContaining([
+                                jobOutput.name
+                            ])
+                        }),
+                        expect.objectContaining({
+                            values: expect.arrayContaining([
+                                expect.arrayContaining([
+                                    expect.objectContaining({
+                                        values: expect.arrayContaining([
+                                            name,
+                                            url
+                                        ])
+                                    })
+                                ])
+                            ])
+                        })
+                    ]));
+            });
         });
     });
 });
