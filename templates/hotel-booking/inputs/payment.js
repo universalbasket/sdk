@@ -6,22 +6,27 @@ export default otp => html`
 
     <div class="field-set">
         <div class="field" data-error="Field error">
-            <label class="field__name" for="main-guest[person][first-name]">First name</label>
+            <label
+                class="field__name"
+                for="main-guest[person][first-name]">First name</label>
             <input
                 type="text"
                 name="main-guest[person][first-name]"
-                required
-                pattern="^[A-Za-z]+$" />
+                pattern="^[A-Za-z]+$"
+                data-error="First name should only contain letters (A-Z and a-z)"
+                required />
         </div>
 
         <div class="field">
-            <label class="field__name" for="main-guest[person][last-name]">Last name</label>
+            <label
+                class="field__name"
+                for="main-guest[person][last-name]">Last name</label>
             <input
                 type="text"
                 name="main-guest[person][last-name]"
-                required
                 pattern="^[A-Za-z]+$"
-                data-error="Last name should only contain letters (A-Z and a-z)" />
+                data-error="Last name should only contain letters (A-Z and a-z)"
+                required />
         </div>
 
         <div class="field">
@@ -29,8 +34,9 @@ export default otp => html`
             <input
                 type="text"
                 name="main-guest[contact][phone]"
-                required
-                data-error="Please enter valid phone number" />
+                placeholder="07912341234"
+                data-error="Please enter a valid phone number"
+                required />
         </div>
 
         <div class="field">
@@ -38,9 +44,10 @@ export default otp => html`
             <input
                 type="email"
                 name="main-guest[contact][email]"
-                required
-                pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$"
-                data-error="Please enter valid email address" />
+                placeholder="example@example.com"
+                pattern="[a-zA-Z0-9.-_]{1,}@[a-zA-Z.-]{2,}[.]{1}[a-zA-Z]{2,}"
+                data-error="Please enter a valid email address"
+                required />
         </div>
     </div>
 
