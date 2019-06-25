@@ -1,10 +1,4 @@
-function getCustomMessage(input, defaultFieldErrorMessage) {
-    const error = input.validity.patternMismatch || input.validity.typeMismatch ?
-        input.getAttribute('data-error') :
-        input.validationMessage;
-
-    return error || defaultFieldErrorMessage;
-}
+import flashError from './builtin-templates/flash-error.js';
 
 function focus() {
     const formsToFill = document.querySelectorAll('form:invalid');
@@ -29,16 +23,21 @@ function validate(form) {
             input.addEventListener('invalid', e => {
                 e.preventDefault();
 
-                const defaultFieldErrorMessage = field.getAttribute('data-error');
-                const message = getCustomMessage(input, defaultFieldErrorMessage);
+                if (!field.getAttribute('data-error')) {
+                    const message = input.getAttribute('data-error') || input.validationMessage;
+                    field.setAttribute('data-error', message);
+                }
 
-                field.setAttribute('data-error', message || '');
                 field.classList.add(invalidClassName);
                 focus();
             });
 
             input.addEventListener('input', () => {
                 if (input.validity.valid) {
+                    const inputsToFill = document.querySelectorAll(':invalid');
+                    if (inputsToFill.length === 0) {
+                        flashError().hide();
+                    }
                     field.classList.remove(invalidClassName);
                 }
             });
