@@ -34,6 +34,7 @@ export default otp => html`
             <input
                 type="text"
                 name="main-guest[contact][phone]"
+                placeholder="07912341234"
                 data-error="Please enter a valid phone number"
                 required />
         </div>
@@ -43,6 +44,7 @@ export default otp => html`
             <input
                 type="email"
                 name="main-guest[contact][email]"
+                placeholder="example@example.com"
                 pattern="[a-zA-Z0-9.-_]{1,}@[a-zA-Z.-]{2,}[.]{1}[a-zA-Z]{2,}"
                 data-error="Please enter a valid email address"
                 required />

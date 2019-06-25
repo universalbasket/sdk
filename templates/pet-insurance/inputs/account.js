@@ -21,7 +21,7 @@ export default () => html`
             <input
                 type="tel"
                 name="account[phone][number]"
-                placeholder="07420000000"
+                placeholder="07912341234"
                 data-error="Please enter a valid phone number"
                 required />
         </div>
