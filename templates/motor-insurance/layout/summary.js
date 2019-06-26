@@ -45,21 +45,6 @@ function SummaryDetails(inputs, outputs) {
                 </ul>
             </article>` :
         '' }
-
-        ${ outputs.priceBreakdown ? html`
-            <article class="summary__block">
-                <header class="summary__block-title">
-                    Price Breakdown
-                </header>
-                <table class="table">
-                    ${ outputs.priceBreakdown.map(i => html`
-                        <tr>
-                            <th>${ i.description } ${ i.type ? '· ' + templates.priceType(i.type) : '' }</th>
-                            <td>${ templates.priceDisplay(i.price) }</td>
-                        </tr>`) }
-                </table>
-            </article>` :
-        '' }
     </div>`;
 }
 

@@ -22,6 +22,7 @@ export default {
                     template: quote,
                     waitFor: [
                         'output.availablePaymentTerms',
+                        'output.availableNoClaimsDiscountProtection',
                         'output.quoteReference',
                         'output.vehicleDetails',
                         'output.statutoryStatusDisclosure'

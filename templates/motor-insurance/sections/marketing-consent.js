@@ -1,8 +1,18 @@
 import { html, templates } from '/src/main.js';
-//import { } from '../inputs/index.js';
+
+const key = 'selected-marketing-contact-options';
+
+const onChange = {
+    handleEvent(e) {
+        const selectedInputs = document.querySelectorAll(`#${key} input[type="checkbox"]:checked`);
+
+        if (selectedInputs.length > 0) {
+            document.querySelector('#default-null-value').remove();
+        }
+    }
+};
 
 export default (name, { availableMarketingContactOptions }) => {
-    const key = 'selected-marketing-contact-options';
     window.scrollTo({ top: document.querySelectorAll('.page form:not(.form--disabled)')[0].offsetTop -110, behaviour: 'smooth' });
 
     return html`
@@ -19,6 +29,7 @@ export default (name, { availableMarketingContactOptions }) => {
                         <input
                             type="checkbox"
                             value="${JSON.stringify(o)}"
+                            @click="${onChange}"
                             name="${key}-$object[]"
                             id="${key}-${i}" />
                         <div>
@@ -28,6 +39,12 @@ export default (name, { availableMarketingContactOptions }) => {
                         </div>
                     </div>
                 `) }
+
+                <input
+                    type="hidden"
+                    value="${JSON.stringify(null)}"
+                    id="default-null-value"
+                    name="${key}-$object" />
             </div>
 
             <div class="section__actions">
