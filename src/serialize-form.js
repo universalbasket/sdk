@@ -17,9 +17,25 @@ function serializeForm(selector = 'form', options = {}) {
         throw new Error('specified form not found');
     }
 
-    const serialized = formSerialize(form, { empty: false, serializer: hashSerializer, ...options });
+    let serialized = formSerialize(form, { empty: false, serializer: hashSerializer, ...options });
+
+    // add empty checkboxes
+    serialized = fillEmptyInputs(form, serialized);
 
     return camelCaseKeys(serialized, { deep: true });
+}
+
+function fillEmptyInputs(form, data) {
+    const checkboxes = form.querySelectorAll('input[type=checkbox]');
+
+    checkboxes.forEach(c => {
+        const name = c.name.split('-$')[0];
+        if (name && !data[name]) {
+            data[name] = [];
+        }
+    });
+
+    return data;
 }
 
 function getFormInputKeys(formId) {
@@ -186,4 +202,3 @@ function hashAssign(result, keys, value) {
 
     return result;
 }
-
