@@ -19,17 +19,17 @@
     padding: 15px 0;
 }
 
-.field-item:first-of-type {
-    border-top: var(--input-border-width) solid var(--color--hr);
-}
-
 .field-item:last-child {
     border-bottom: 0;
 }
 
+.field--list .field-item:first-of-type {
+    border-top: var(--input-border-width) solid var(--color--hr);
+}
+
 .field-item--select-one {
     grid-template-columns: 1fr auto;
-    padding-left: var(--gap--small);
+    padding-left: var(--gap);
 }
 
 .field-item--multi-select {
@@ -51,7 +51,7 @@
 }
 
 .field-item__details {
-    line-height: var(--button-height);
+    line-height: 1.5;
 }
 
 .field-item__details li {

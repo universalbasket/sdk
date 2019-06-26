@@ -1,7 +1,7 @@
 import { html, render } from '/web_modules/lit-html/lit-html.js';
 import { unsafeHTML } from '/web_modules/lit-html/directives/unsafe-html.js';
 
-import PriceDisplay from './price-display.js';
+import markup from './get-markup.js';
 
 export default function create(body, { title = '', isLocked = false } = {}) {
     const templateResult = wrap(body, title, isLocked);
@@ -70,26 +70,5 @@ function getContentsHtml(contents) {
         return '';
     }
 
-    return html`${
-        contents.map(item => {
-            if (item.type === 'StructuredText') {
-                return html`
-                    <article>
-                        <header>
-                            <b>${item.name}</b>
-                        </header>
-                        <div class="dim">${getContentsHtml(item.contents)}</div>
-                    </article>`;
-            }
-
-            switch (item.type) {
-                case 'Text': return html`<p>${item.text}</p>`;
-                case 'Link': return html`<a href="${item.url}" target="_blank">${item.name}</a>`;
-                case 'HTML': return unsafeHTML(item.html);
-                case 'NamedText': return html`<p>${item.name} – ${item.text}</p>`;
-                case 'NamedPrice': return html`<p>${item.name} – ${PriceDisplay(item.price)}</p>`;
-                default: return '';
-            }
-        })
-    }`;
+    return html`${ contents.map(markup) }`;
 }

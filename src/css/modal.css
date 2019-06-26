@@ -28,7 +28,7 @@
     background: white;
     z-index: 2;
     box-shadow: 0 0 6px rgba(0, 0, 0, .21);
-    min-width: 40vw;
+    min-width: 45vw;
     max-width: 60ch;
     max-height: 90vh;
     overflow: hidden;
@@ -40,7 +40,7 @@
     position: sticky;
     top: 0;
     left: 0;
-    padding: 2em 40px 1em 2.25em;
+    padding: 2em 40px 0 2.25em;
     background: white;
 }
 

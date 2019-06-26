@@ -88,6 +88,28 @@
     animation: yellowfade 5s;
 }
 
+.summary .table {
+    border-top: 0;
+}
+
+.summary .table th {
+    width: 50%;
+    min-width: 250px;
+}
+
+.summary .table th,
+.summary .table td {
+    border: 0;
+    text-align: left;
+    padding-top: var(--gap--small);
+    padding-bottom: var(--gap--small);
+}
+
+.summary hr {
+    height: 1px;
+    margin-bottom: 0;
+}
+
 @keyframes yellowfade {
     from {
         background: var(--summary-highlight);
