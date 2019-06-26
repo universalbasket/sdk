@@ -19,7 +19,21 @@ function serializeForm(selector = 'form', options = {}) {
 
     const serialized = formSerialize(form, { empty: false, serializer: hashSerializer, ...options });
 
+    // add empty checkboxes
+    fillEmptyInputs(form, serialized);
+
     return camelCaseKeys(serialized, { deep: true });
+}
+
+function fillEmptyInputs(form, data) {
+    const checkboxes = form.querySelectorAll('input[type=checkbox]');
+
+    checkboxes.forEach(c => {
+        const name = c.name.split('-$')[0];
+        if (name && !data[name]) {
+            data[name] = [];
+        }
+    });
 }
 
 function getFormInputKeys(formId) {
@@ -186,4 +200,3 @@ function hashAssign(result, keys, value) {
 
     return result;
 }
-
