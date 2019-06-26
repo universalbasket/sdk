@@ -16,7 +16,8 @@ function validate(form) {
         const required = Array.from(inputs).some(i => i.required);
 
         if (!required) {
-            field.querySelector('.field__name').setAttribute('data-optional', 'optional');
+            const label = field.querySelector('.field__name');
+            label && label.setAttribute('data-optional', 'optional');
         }
 
         inputs.forEach(input => {

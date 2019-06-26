@@ -72,6 +72,7 @@ function MobileSummaryWrapper(inputs, outputs, cache, _, SummaryPreview, Summary
 
 function OtherInformation(outputs = {}) {
     const items = Object.values(outputs)
+        .filter(o => o !== null)
         .filter(o => ['StructuredText', 'HTML'].includes(o.type))
         .map(o => html`
             <li>
@@ -96,6 +97,7 @@ function OtherInformation(outputs = {}) {
 
 function Documents(outputs = {}) {
     const items = Object.values(outputs)
+        .filter(o => o !== null)
         .filter(o => o.type === 'File')
         .map(o => html`
             <li>
