@@ -15,7 +15,7 @@
 .field-item {
     display: grid;
     grid-gap: var(--gap);
-    border-bottom: 1px solid var(--color--hr);
+    border-bottom: 1px solid var(--hr-color);
     padding: 15px 0;
 }
 
@@ -24,7 +24,7 @@
 }
 
 .field--list .field-item:first-of-type {
-    border-top: var(--input-border-width) solid var(--color--hr);
+    border-top: var(--input-border-width) solid var(--hr-color);
 }
 
 .field-item--select-one {
@@ -45,7 +45,7 @@
 
 .field-item__img {
     background: var(--progress-bar-background-color);
-    border: 1px solid var(--color--hr);
+    border: 1px solid var(--hr-color);
     width: var(--img-width);
     height: var(--img-height);
 }
@@ -67,7 +67,7 @@
 }
 
 .field-set .field:not(:last-child) {
-    border-bottom: solid 2px var(--color--hr);
+    border-bottom: solid 2px var(--hr-color);
 }
 
 .field__name {

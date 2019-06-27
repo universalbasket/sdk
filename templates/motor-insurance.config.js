@@ -84,8 +84,9 @@ export default {
                     name: 'declarations',
                     template: declarations,
                     waitFor: [
-                        'output.statements',
-                        'output.feesSummary'
+                        'output.policyWording',
+                        'output.productInformation',
+                        'output.privacyPolicy'
                     ]
                 },
                 {

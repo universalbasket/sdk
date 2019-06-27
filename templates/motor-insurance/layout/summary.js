@@ -1,4 +1,4 @@
-import { html, until, classMap, templates } from '/src/main.js';
+import { html, classMap, templates } from '/src/main.js';
 
 export default {
     MobileTemplate: (inputs = {}, outputs = {}, cache = {}, _local = {}, _) => {
@@ -62,7 +62,6 @@ function SummaryDetails({ outputs }) {
                     </span>` : '' }
             </h4>
             <article class="summary__block summary__block--bordered">
-
                 <table class="table">
                     ${ outputs.excessBreakdown.contents.map(o => html`
                         <tr>
@@ -85,13 +84,11 @@ function SummaryDetails({ outputs }) {
                 </table>
             </article>` : '' }
 
-        ${ outputs.policyWording || outputs.productInformation || outputs.privacyPolicy ? html`
+        ${ outputs.faq ? html`
             <div class="summary__block summary__block--bordered">
-                <h4>Documents</h4>
+                <h4>Other information</h4>
                 <ul class="dim">
-                    ${ outputs.policyWording ? doc(outputs.policyWording) : '' }
-                    ${ outputs.productInformation ? doc(outputs.productInformation) : '' }
-                    ${ outputs.privacyPolicy ? doc(outputs.privacyPolicy) : '' }
+                    <li><a href="${ outputs.faq.url }" target="_blank">FAQ</a></li>
                 </ul>
             </div>` : '' }
     </div>`;
@@ -123,11 +120,6 @@ function SummaryTitle(_) {
         <b class="large">${ title }</b>
         <span class="faint large">Motor Insurance</span>
     `;
-}
-
-function doc(item) {
-    const link = item.contents && item.contents.find(i => i.type === 'Link');
-    return html`<li>${ until(templates.file(link)) }</li>`;
 }
 
 // UI wrappers
