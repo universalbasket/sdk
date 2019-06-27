@@ -10,9 +10,14 @@
     --color--dim: #4a4a4a;
     --color--primary: #2a3c4f;
     --color--accent: var(--color);
-    --color--hr: #c7c7c7;
     --color--faint: #7e7e7e;
     --color--placeholder: #9b9b9b;
+
+    /*DIVIDER*/
+    --hr-color: #c7c7c7;
+    --hr-width: 2px;
+    --hr-width--large: 3px;
+    --hr-width--small: 1px;
 
     /*GAPS*/
     --gap: 10px;

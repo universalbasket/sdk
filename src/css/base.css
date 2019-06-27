@@ -116,8 +116,8 @@ button:disabled {
 hr {
     margin: 10px 0;
     border: 0;
-    height: 2px;
-    background: var(--color--hr);
+    height: var(--hr-width--large);
+    background: var(--hr-color);
 }
 
 table {

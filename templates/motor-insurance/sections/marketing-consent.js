@@ -12,7 +12,7 @@ export default (name, { availableMarketingContactOptions }) => {
             We'd like to contact you every so often with offers. Please check the types of marketing material you wish to receive:
         </p>
 
-        <div class="section__hide-disabled">
+        <div class="form__section">
             <div id="${key}" class="field field--list">
                 ${ availableMarketingContactOptions.map((o, i) => html`
                     <div class="field-item field-item--multi-select">

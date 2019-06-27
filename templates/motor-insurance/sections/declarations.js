@@ -1,17 +1,17 @@
-import { html } from '/src/main.js';
+import { html, templates } from '/src/main.js';
 //import { } from '../inputs/index.js';
 
-export default name => {
+export default (name, { policyWording, productInformation, privacyPolicy }) => {
     window.scrollTo({ top: document.querySelectorAll('.page form:not(.form--disabled)')[0].offsetTop - 110, behaviour: 'smooth' });
 
     return html`
+        <hr />
         <h2>Declarations</h2>
-
-        <div class="section__hide-disabled">
+        <div class="form__section">
             <ul>
-                <li>I have checked the details in the <a href="#">statement of fact</a> are correct</li>
-                <li>I have reviewed the <a href="#">privacy policy</a></li>
-                <li>I have reviewed the <a href="#">product information</a></li>
+                <li>${ policyWording.contents.map(templates.markup) }</li>
+                <li>${ productInformation.contents.map(templates.markup) }</li>
+                <li>${ privacyPolicy.contents.map(templates.markup) }</li>
             </ul>
 
             <div class="field">
@@ -21,8 +21,8 @@ export default name => {
                         value=""
                         id="agree-terms"
                         required />
-                    <label class="field-name" for="agree-terms">
-                        I agree to all of the above terms
+                    <label for="agree-terms">
+                        <b>I agree to all of the above terms</b>
                     </label>
                 </div>
             </div>
@@ -31,7 +31,7 @@ export default name => {
                 <button
                     type="button"
                     class="button button--right button--primary"
-                    id="submit-btn-${name}">Continue</button>
+                    id="submit-btn-${ name }">Continue</button>
             </div>
         </div>`;
 };
