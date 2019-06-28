@@ -1,5 +1,5 @@
 import { header, summary, footer } from './motor-insurance/layout/index.js';
-import { quote, quoteLoading, options, assumptions, statements, feesSummary, declarations, marketingConsent, summaryPage, checkout } from './motor-insurance/sections/index.js';
+import { quote, quoteLoading, options, assumptions, statements, feesSummary, declarations, marketingConsent, summaryPage, checkout, finalPriceConsent, confirmation } from './motor-insurance/sections/index.js';
 import error from './shared/error.js';
 
 export default {
@@ -86,7 +86,8 @@ export default {
                     waitFor: [
                         'output.policyWording',
                         'output.productInformation',
-                        'output.privacyPolicy'
+                        'output.privacyPolicy',
+                        'output.statementOfFact'
                     ]
                 },
                 {
@@ -118,7 +119,7 @@ export default {
                 {
                     name: 'checkout',
                     template: checkout,
-                    waitFor: null
+                    waitFor: ['_.otp']
                 }
             ]
         },
@@ -128,9 +129,14 @@ export default {
             title: '',
             sections: [
                 {
-                    name: 'quote',
-                    template: quote,
-                    waitFor: ['output.availablePaymentTerms']
+                    name: 'final-price-consent',
+                    template: finalPriceConsent,
+                    waitFor: ['output.estimatedPrice', 'outputs.finalPrice']
+                },
+                {
+                    name: 'confirmation',
+                    template: confirmation,
+                    waitFor: ['output.purchaseConfirmation']
                 }
             ],
             excludeStep: true

@@ -3,15 +3,13 @@ import { html } from '/src/main.js';
 
 export default (name, { availableMarketingContactOptions }) => {
     const key = 'selected-marketing-contact-options';
-    window.scrollTo({ top: document.querySelectorAll('.page form:not(.form--disabled)')[0].offsetTop - 110, behaviour: 'smooth' });
-
     return html`
+        <hr>
         <h2>Marketing consent</h2>
-
         <p>
-            We'd like to contact you every so often with offers. Please check the types of marketing material you wish to receive:
+            We'd like to contact you every so often with offers.
+            Please check the types of marketing material you wish to receive:
         </p>
-
         <div class="form__section">
             <div id="${key}" class="field field--list">
                 ${ availableMarketingContactOptions.map((o, i) => html`

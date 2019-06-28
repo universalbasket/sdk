@@ -8,6 +8,8 @@ import declarations from './declarations.js';
 import marketingConsent from './marketing-consent.js';
 import summaryPage from './summary.js';
 import checkout from './checkout.js';
+import finalPriceConsent from './final-price-consent.js';
+import confirmation from './confirmation.js';
 
 export {
     quote,
@@ -19,5 +21,7 @@ export {
     declarations,
     marketingConsent,
     summaryPage,
-    checkout
+    checkout,
+    finalPriceConsent,
+    confirmation
 };

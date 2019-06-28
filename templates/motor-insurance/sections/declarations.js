@@ -1,17 +1,16 @@
 import { html, templates } from '/src/main.js';
 //import { } from '../inputs/index.js';
 
-export default (name, { policyWording, productInformation, privacyPolicy }) => {
-    window.scrollTo({ top: document.querySelectorAll('.page form:not(.form--disabled)')[0].offsetTop - 110, behaviour: 'smooth' });
-
+export default (name, { policyWording, productInformation, privacyPolicy, statementOfFact }) => {
     return html`
-        <hr />
+        <hr>
         <h2>Declarations</h2>
         <div class="form__section">
             <ul>
                 <li>${ policyWording.contents.map(templates.markup) }</li>
                 <li>${ productInformation.contents.map(templates.markup) }</li>
                 <li>${ privacyPolicy.contents.map(templates.markup) }</li>
+                <li>${ statementOfFact.contents.map(templates.markup) }</li>
             </ul>
 
             <div class="field">

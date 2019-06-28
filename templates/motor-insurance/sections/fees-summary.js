@@ -2,10 +2,8 @@ import { html, templates } from '/src/main.js';
 //import { } from '../inputs/index.js';
 
 export default (name, { feesSummary }) => {
-    window.scrollTo({ top: document.querySelectorAll('.page form:not(.form--disabled)')[0].offsetTop - 110, behaviour: 'smooth' });
-
     return html`
-        <hr />
+        <hr>
         <h2>Fees summary</h2>
         <div class="form__section">
             <ol>

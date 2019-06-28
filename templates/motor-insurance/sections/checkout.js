@@ -1,8 +1,8 @@
 import { html } from '/src/main.js';
 import { payment } from '../inputs/index.js';
 
-export default (name, data) => html`
-    ${payment(data.otp)}
+export default (name, { otp }) => html`
+    ${payment(otp)}
 
     <div class="section__actions">
         <button

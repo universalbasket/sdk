@@ -13,7 +13,7 @@ function label(key) {
 export default output => html`
     <div class="field field--list">
         <span class="field__name">How would you like to pay?</span>
-        ${ output.map(o => html`
+        ${output.map(o => html`
             <div class="field-item field-item--select-one">
                 <div class="field-item__details">
                     <strong>${label(o)}</strong>
@@ -31,7 +31,6 @@ export default output => html`
                         for="${key}-${o}"
                         class="button">Select</label>
                 </div>
-            </div>
-        `) }
+            </div>`)}
     </div>
 `;

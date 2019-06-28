@@ -9,115 +9,124 @@ export default {
     }
 };
 
-function SummaryDetails({ outputs }) {
+function SummaryDetails({ outputs, inputs }) {
+    const monthly = outputs.priceBreakdown &&
+        outputs.priceBreakdown.contents.find(NamedText => NamedText.name.match(/monthly/));
+
     const { make, model, yearOfManufacture, yearOfRegistration, registrationNumber } = outputs.vehicleDetails || {};
     const priceObj = outputs.estimatedPrice;
 
     return html`
     <div class="summary__body">
         <article class="summary__block">
-            <header class="summary__block-title">
-                Vehicle details
-            </header>
-            <ul class="dim">
-            ${ outputs.coverSummary ? html`` : '' }
+             <ul class="dim">
+                ${outputs.vehicleDetails ? html`
+                    <b>Vehicle details</b>
+                    ${make ? html`<li>Make: ${make}</li>` : ''}
+                    ${model ? html`<li>Model: ${model}</li>` : ''}
+                    ${yearOfManufacture ? html`<li>Year of manufacture: ${yearOfManufacture}</li>` : ''}
+                    ${yearOfRegistration ? html`<li>Year of registration: ${yearOfRegistration}</li>` : ''}
+                    ${registrationNumber ? html`<li>Registration number: ${registrationNumber}</li>` : ''}
+                    ` : ''}
 
-            ${ outputs.vehicleDetails ? html`
-                ${ make ? html`<li>Make: ${ make }</li>` : '' }
-                ${ model ? html`<li>Model: ${ model }</li>` : '' }
-                ${ yearOfManufacture ? html`<li>Year of manufacture: ${ yearOfManufacture }</li>` : '' }
-                ${ yearOfRegistration ? html`<li>Year of registration: ${ yearOfRegistration }</li>` : '' }
-                ${ registrationNumber ? html`<li>Registration number: ${ registrationNumber }</li>` : '' }
-                ` : '' }
-            ${ priceObj ? html`
-                <li class="summary__price">
-                    <b class="large">
-                        ${ templates.priceDisplay(priceObj.price) } today
-                        then £70.38 per month
-                    </b>
-                </li>` : '' }
+                ${priceObj ? html`
+                    <li class="summary__price">
+                        <b class="large">
+                            ${templates.priceDisplay(priceObj.price)}
+                            ${monthly ? html` today then ${monthly.text} per month` : ''}
+                        </b>
+                    </li>` : ''}
             </ul>
         </article>
 
-        ${ outputs.priceBreakdown ? html`
-            <h4>${ outputs.priceBreakdown.name }</h4>
+        ${outputs.priceBreakdown ? html`
+            <h4>${outputs.priceBreakdown.name}</h4>
             <article class="summary__block summary__block--bordered">
 
                 <table class="table">
-                    ${ outputs.priceBreakdown.contents.map(o => html`
+                    ${outputs.priceBreakdown.contents.map(o => html`
                         <tr>
-                            <th>${ o.name }</th>
-                            <td>${ o.text }</td>
-                        </tr>`) }
+                            <th>${o.name}</th>
+                            <td>${o.text}</td>
+                        </tr>`)}
                 </table>
-            </article>` : '' }
+            </article>` : ''}
 
-        ${ outputs.excessBreakdown ? html`
+        ${outputs.excessBreakdown ? html`
             <h4>
-                ${ outputs.excessInfo ? html`
+                ${outputs.excessInfo ? html`
                     <span
                         class="summary__popup-icon"
-                        @click=${ () => templates.modal(outputs.excessInfo, { title: outputs.excessBreakdown.name }).show() }>
-                        <span class="clickable">${ outputs.excessBreakdown.name }</span>
-                    </span>` : '' }
+                        @click=${ () => templates.modal(templates.markup(outputs.excessInfo), { title: outputs.excessBreakdown.name }).show() }>
+                        <span class="clickable">${outputs.excessBreakdown.name}</span>
+                    </span>` : ''}
             </h4>
             <article class="summary__block summary__block--bordered">
                 <table class="table">
-                    ${ outputs.excessBreakdown.contents.map(o => html`
+                    ${outputs.excessBreakdown.contents.map(o => html`
                         <tr>
-                            <th>${ o.name }</th>
-                            <td>${ o.text }</td>
-                        </tr>`) }
+                            <th>${o.name}</th>
+                            <td>${o.text}</td>
+                        </tr>`)}
                 </table>
-            </article>` : '' }
+            </article>` : ''}
 
-        ${ outputs.financialPromotionRepresentativeExample ? html`
-            <h4>${ outputs.financialPromotionRepresentativeExample.name }</h4>
+        <div class="dim">
+            ${inputs.selectedPaymentTerm ? html`<p>Payment term: <b>${inputs.selectedPaymentTerm}</b></p>` : ''}
+            ${inputs.selectedNoClaimsDiscountProtection ? html`<p>No claims discount protection: <b>${inputs.selectedNoClaimsDiscountProtection}</b></p>` : ''}
+        </div>
+
+        ${outputs.financialPromotionRepresentativeExample ? html`
+            <h4>${outputs.financialPromotionRepresentativeExample.name}</h4>
             <article class="summary__block summary__block--bordered">
 
                 <table class="table">
-                    ${ outputs.financialPromotionRepresentativeExample.contents.map(o => html`
+                    ${outputs.financialPromotionRepresentativeExample.contents.map(o => html`
                         <tr>
-                            <th>${ o.name }</th>
-                            <td>${ o.text }</td>
-                        </tr>`) }
+                            <th>${o.name}</th>
+                            <td>${o.text}</td>
+                        </tr>`)}
                 </table>
-            </article>` : '' }
+            </article>` : ''}
 
-        ${ outputs.faq ? html`
+        ${outputs.faq || outputs.insurerSpecificDocuments ? html`
             <div class="summary__block summary__block--bordered">
                 <h4>Other information</h4>
                 <ul class="dim">
-                    <li><a href="${ outputs.faq.url }" target="_blank">FAQ</a></li>
+                    <li>${templates.markup(outputs.faq)}</li>
+                    ${outputs.insurerSpecificDocuments ? outputs.insurerSpecificDocuments.map(doc => html`<li>${ templates.markup(doc) }</li>`) : ''}
                 </ul>
-            </div>` : '' }
+            </div>` : ''}
     </div>`;
 }
 
 function SummaryPreview({ outputs }) {
+    const monthly = outputs.priceBreakdown &&
+        outputs.priceBreakdown.contents.find(NamedText => NamedText.name.match(/monthly/));
+
     const { make, model, yearOfRegistration, registrationNumber } = outputs.vehicleDetails || {};
     const priceObj = outputs.estimatedPrice;
 
     return html`
-        ${ priceObj ? html`
+        ${priceObj ? html`
             <b class="large summary__preview-price">
-                ${ templates.priceDisplay(priceObj.price) } today
-                then £70.38 per month
-            </b>` : '' }
-        ${ outputs.vehicleDetails ? html`
+                ${templates.priceDisplay(priceObj.price)}
+                ${monthly ? html` today then ${monthly.text} per month` : ''}
+            </b>` : ''}
+        ${outputs.vehicleDetails ? html`
             <span class="faint summary__preview-info">
-                ${ make ? html`<span>Make: ${ make }</span>` : '' }
-                ${ model ? html`<span>Model: ${ model }</span>` : '' }
-                ${ yearOfRegistration ? html`<span>Year: ${ yearOfRegistration }</span>` : '' }
-                ${ registrationNumber ? html`<span>Reg: ${ registrationNumber }</span>` : '' }
-            </span>` : '' }
+                ${make ? html`<span>Make: ${make}</span>` : ''}
+                ${model ? html`<span>Model: ${model}</span>` : ''}
+                ${yearOfRegistration ? html`<span>Year: ${yearOfRegistration}</span>` : ''}
+                ${registrationNumber ? html`<span>Reg: ${registrationNumber}</span>` : ''}
+            </span>` : ''}
     `;
 }
 
 function SummaryTitle(_) {
     const title = _.serviceName || 'Your Package';
     return html`
-        <b class="large">${ title }</b>
+        <b class="large">${title}</b>
         <span class="faint large">Motor Insurance</span>
     `;
 }
@@ -140,20 +149,20 @@ function MobileSummaryWrapper(inputs, outputs, cache, _) {
         if (isExpanded) {
             return html`
             <aside class="summary">
-                ${ ToggableWrapper(SummaryTitle(_)) }
-                ${ SummaryDetails({ inputs, outputs, cache }) }
+                ${ToggableWrapper(SummaryTitle(_))}
+                ${SummaryDetails({ inputs, outputs, cache })}
             </aside>
-            <div class="app__summary-overlay" @click=${ toggleSummary }></div>`;
+            <div class="app__summary-overlay" @click=${toggleSummary}></div>`;
         }
         return html`
         <aside class="summary">
-            ${ ToggableWrapper(SummaryPreview({ inputs, outputs, cache })) }
+            ${ToggableWrapper(SummaryPreview({ inputs, outputs, cache }))}
         </aside>`;
     }
 
     return html`
     <aside class="summary">
-        <header class="summary__header">${ SummaryTitle(_) }</header>
+        <header class="summary__header">${SummaryTitle(_)}</header>
     </aside>`;
 
     function hasContent() {
@@ -169,9 +178,9 @@ function MobileSummaryWrapper(inputs, outputs, cache, _) {
         };
         return html`
             <header
-                class="${ classMap(classes) }"
-                @click=${ toggleSummary }>
-                <div class="summary__preview">${ template }</div>
+                class="${classMap(classes)}"
+                @click=${toggleSummary}>
+                <div class="summary__preview">${template}</div>
             </header>`;
     }
 }
@@ -180,8 +189,8 @@ function MobileSummaryWrapper(inputs, outputs, cache, _) {
 function DesktopSummaryWrapper(inputs, outputs, cache, _) {
     return html`
     <aside class="summary">
-        <header class="summary__header">${ SummaryTitle(_) }</header>
-        ${ showDetails() ? SummaryDetails({ inputs, outputs, cache }) : '' }
+        <header class="summary__header">${SummaryTitle(_)}</header>
+        ${showDetails() ? SummaryDetails({ inputs, outputs, cache }) : ''}
     </aside>`;
 }
 
