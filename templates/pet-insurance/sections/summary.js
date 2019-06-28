@@ -1,11 +1,6 @@
 import { templates, html } from '/src/main.js';
 
 export default (name, { policyOptions, selectedCoverOptions, selectedCoverType, selectedPaymentTerm, selectedCover, selectedAddress, selectedBreedType, estimatedPrice }) => {
-    // TODO
-    // selectedVoluntaryExcess
-    // selectedVetFee
-    // selectedVetPaymentTerm
-
     return html`
         <h2>Summary</h2>
 

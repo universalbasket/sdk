@@ -2,6 +2,7 @@ body {
     color: var(--color);
     font-size: var(--font-size);
     font-family: var(--font-family);
+    scroll-behavior: smooth;
 }
 
 label {

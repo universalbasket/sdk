@@ -1,6 +1,4 @@
 import { html, until, classMap, templates } from '/src/main.js';
-
-const showModal = (...detail) => new CustomEvent('show-modal', { detail });
 const update = new CustomEvent('update');
 
 export {
@@ -78,7 +76,7 @@ function OtherInformation(outputs = {}) {
             <li>
                 <span
                     class="summary__popup-icon"
-                    @click=${() => window.dispatchEvent(showModal(o))}>
+                    @click=${() => templates.modal(templates.markup(o), { title: o.name }).show()}>
                     <span class="clickable">${o.name}</span>
                 </span>
             </li>`);
