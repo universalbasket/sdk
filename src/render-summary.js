@@ -1,9 +1,7 @@
 import { render } from '/web_modules/lit-html/lit-html.js';
-import createModal from './builtin-templates/modal.js';
-
 import * as Storage from './storage.js';
 
-let BodyTemplate = null;
+let bodyTemplate = null;
 let initiated = false;
 let currentTarget, prevTarget;
 
@@ -13,19 +11,18 @@ export default {
             throw new Error('renderSummary: invalid template');
         }
 
-        BodyTemplate = template;
+        bodyTemplate = template;
         currentTarget = document.querySelector(isMobile ? '#summary-mobile' : '#summary-desktop');
         prevTarget = document.querySelector(!isMobile ? '#summary-mobile' : '#summary-desktop');
 
         _updateUI();
         window.addEventListener('update', _updateUI);
-        window.addEventListener('show-modal', showModal);
 
         initiated = true;
     },
 
     update() {
-        if (!initiated || !BodyTemplate) {
+        if (!initiated || !bodyTemplate) {
             throw new Error('renderSummary: not initiated');
         }
 
@@ -39,11 +36,6 @@ function _updateUI() {
     }
 
     const { inputs, outputs, cache, local, _ } = Storage.getAll();
-    render(BodyTemplate(inputs, outputs, cache, local, _), currentTarget);
+    render(bodyTemplate(inputs, outputs, cache, local, _), currentTarget);
     render('', prevTarget);
-}
-
-function showModal({ detail }) {
-    const modal = createModal(...detail);
-    modal.show();
 }

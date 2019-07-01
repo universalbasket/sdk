@@ -28,3 +28,18 @@
     opacity: .5;
     pointer-events: none;
 }
+
+.form__section {
+    border-top: var(--hr--width--large) solid var(--hr-color);
+}
+
+.form__section ul,
+.form__section ol {
+    list-style: initial;
+    margin-left: var(--gap);
+    padding-left: var(--gap);
+}
+
+.form--disabled .form__section {
+    display: none;
+}
