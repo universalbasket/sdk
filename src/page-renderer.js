@@ -74,7 +74,7 @@ class PageRenderer {
 
         submitBtn.addEventListener('click', e => {
             if (sectionForm && !sectionForm.reportValidity()) {
-                console.log('invalid form');
+                flashError().show();
                 return;
             }
 
@@ -90,8 +90,7 @@ class PageRenderer {
                     this.next();
                 })
                 .catch(err => {
-                    const element = document.querySelector('#error');
-                    flashError(element, err);
+                    flashError(err).show();
                     e.target.removeAttribute('disabled');
                 });
         });
@@ -245,7 +244,7 @@ function isVaultFormValid(vaultIframe) {
                     resolve(message.data);
                 } else {
                     console.warn(message.data);
-                    reject('Please check payment details');
+                    reject('Please check payment details.');
                 }
 
                 window.removeEventListener('message', receiveValidation);
@@ -276,9 +275,7 @@ function submitVaultForm(sdk, vaultIframe) {
 
             if (message.name === 'vault.error') {
                 reject(message.name);
-                sdk.cancelJob().then(() => {
-                    window.location.hash = '/error';
-                });
+                sdk.cancelJob().then(() => window.location.hash = '/error');
             }
         }
     });

@@ -18,6 +18,7 @@ import priceDisplay from './builtin-templates/price-display.js';
 import priceType from './builtin-templates/price-type.js';
 import progressBar from './builtin-templates/progress-bar.js';
 import file from './builtin-templates/file-download.js';
+import flashError from './builtin-templates/flash-error.js';
 
 export const templates = {
     modal,
@@ -64,7 +65,7 @@ function validatePages(pages) {
     }
 }
 
-export async function createApp({ mountPoint, pages, cache = [], layout, error, sdk, local }, callback) {
+export async function createApp({ mountPoint, pages, cache = [], layout, error, sdk, local, input = {} }, callback) {
     validatePages(pages);
 
     try {
@@ -76,6 +77,10 @@ export async function createApp({ mountPoint, pages, cache = [], layout, error, 
     } catch (err) {
         console.error(err);
         window.location.hash = '/error';
+    }
+
+    for (const [key, data] of Object.entries(input)) {
+        Storage.set('input', key, data);
     }
 
     const mainSelector = '#main';
@@ -202,6 +207,7 @@ function addTracker(sdk) {
 
             case 'fail':
                 stop();
+                flashError().hide();
                 return void (window.location.hash = '/error');
 
             case 'createOutput':

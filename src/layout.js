@@ -9,7 +9,7 @@ export default function() {
                 </div>
                 <div class="app__flash-error-wrapper">
                     <div
-                        id="error"
+                        id="flash-error"
                         class="app__container"></div>
                 </div>
                 <div
