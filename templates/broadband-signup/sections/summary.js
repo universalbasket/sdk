@@ -8,15 +8,15 @@ export default (name, { selectedBroadbandPackage, selectedTvPackages, selectedPh
         <table class="table">
             <tr>
                 <th>Broadband</th>
-                <td>${ selectedBroadbandPackage.name }</td>
+                <td>${ selectedBroadbandPackage && selectedBroadbandPackage.name }</td>
             </tr>
             <tr>
                 <th>TV</th>
-                <td>${ selectedTvPackages.map(_ => _.name).join(', ') }</td>
+                <td>${ selectedTvPackages && selectedTvPackages.map(_ => _.name).join(', ') }</td>
             </tr>
             <tr>
                 <th>Phone</th>
-                <td>${ selectedPhonePackage.name }</td>
+                <td>${ selectedPhonePackage && selectedPhonePackage.name }</td>
             </tr>
         </table>
 
