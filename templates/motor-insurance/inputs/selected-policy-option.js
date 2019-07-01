@@ -1,5 +1,16 @@
 import { html, templates } from '/src/main.js';
 
+function showCoverOptions(key) {
+    document.querySelector(`#${key}-options-list`).style.display = 'block';
+    document.querySelector(`#${key}-option-null`).checked = false;
+    console.info(`#${key}-options-list`, document.querySelector(`#${key}-options-list`));
+}
+
+function hideCoverOptions(key) {
+    document.querySelector(`#${key}-options-list`).style.display = 'none';
+    document.querySelector(`#${key}-option-null`).checked = true;
+}
+
 export default (name, key, output) => {
     if (!output) {
         return '';
@@ -13,21 +24,21 @@ export default (name, key, output) => {
                 type="radio"
                 name="_${key}-options"
                 id="${key}-yes"
-                value=""
-                required
-                onclick="document.querySelector('#${key}-options-list').style.display = 'block';  document.querySelector('#${key}-option-null').checked = false;"
-                />
-            <label for="${key}-yes" class="button">Show cover options</label>
+                @click="${ () => showCoverOptions(key) }"
+                required />
+            <label
+                for="${key}-yes"
+                class="button">Show cover options</label>
 
             <input
                 type="radio"
                 name="_${key}-options"
                 id="${key}-no"
-                value=""
                 checked
-                onclick="document.querySelector('#${key}-options-list').style.display = 'none'; document.querySelector('#${key}-option-null').checked = true;"
-                />
-            <label for="${key}-no" class="button">No thanks</label>
+                @click="${ () => hideCoverOptions(key) }" />
+            <label
+                for="${key}-no"
+                    class="button">No thanks</label>
         </div>
 
         <div

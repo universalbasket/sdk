@@ -1,9 +1,9 @@
 import { html } from '/src/main.js';
 
-export default (inputs, outputs, cache, local, _) => html`
+export default (inputs, outputs, cache, local, serviceName) => html`
     <div name="account" class="field-set">
         <span class="field__name">Your contact info</span>
-        <p>In order to complete your policy, ${_} requires your contact details</p>
+        <p>In order to complete your policy, ${serviceName} requires your contact details</p>
 
         <div class="field">
             <label class="field__name" for="account[email]">Email</label>
