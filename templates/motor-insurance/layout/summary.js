@@ -1,4 +1,5 @@
 import { html, classMap, templates } from '/src/main.js';
+import paymentTermLabel from '../inputs/selected-payment-term-label.js';
 
 export default {
     MobileTemplate: (inputs = {}, outputs = {}, cache = {}, _local = {}, _) => {
@@ -39,6 +40,11 @@ function SummaryDetails({ outputs, inputs }) {
             </ul>
         </article>
 
+        <div class="dim">
+            ${inputs.selectedPaymentTerm ? html`<p>Payment term: <b>${paymentTermLabel(inputs.selectedPaymentTerm)}</b></p>` : ''}
+            ${inputs.selectedNoClaimsDiscountProtection ? html`<p>No claims discount protection: <b>${inputs.selectedNoClaimsDiscountProtection}</b></p>` : ''}
+        </div>
+
         ${outputs.priceBreakdown ? html`
             <h4>${outputs.priceBreakdown.name}</h4>
             <article class="summary__block summary__block--bordered">
@@ -70,11 +76,6 @@ function SummaryDetails({ outputs, inputs }) {
                         </tr>`)}
                 </table>
             </article>` : ''}
-
-        <div class="dim">
-            ${inputs.selectedPaymentTerm ? html`<p>Payment term: <b>${inputs.selectedPaymentTerm}</b></p>` : ''}
-            ${inputs.selectedNoClaimsDiscountProtection ? html`<p>No claims discount protection: <b>${inputs.selectedNoClaimsDiscountProtection}</b></p>` : ''}
-        </div>
 
         ${outputs.financialPromotionRepresentativeExample ? html`
             <h4>${outputs.financialPromotionRepresentativeExample.name}</h4>

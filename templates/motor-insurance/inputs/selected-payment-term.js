@@ -1,14 +1,7 @@
 import { html } from '/src/main.js';
-const key = 'selected-payment-term';
+import label from './selected-payment-term-label.js';
 
-function label(key) {
-    return {
-        'annual-card': 'Annual',
-        'monthly-card': 'Monthly by credit/debit card',
-        'monthly-directdebit': 'Monthly by direct debit',
-        'monthly-directdebit-card': 'Monthly by direct debit'
-    }[key];
-}
+const key = 'selected-payment-term';
 
 export default output => html`
     <div class="field field--list">
