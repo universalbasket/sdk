@@ -67,7 +67,7 @@ function validatePages(pages) {
     }
 }
 
-export async function createApp({ mountPoint, pages, cache = [], layout, error, sdk, local }, callback) {
+export async function createApp({ mountPoint, pages, cache = [], layout, error, sdk, local, input = {} }, callback) {
     validatePages(pages);
 
     try {
@@ -79,6 +79,10 @@ export async function createApp({ mountPoint, pages, cache = [], layout, error, 
     } catch (err) {
         console.error(err);
         window.location.hash = '/error';
+    }
+
+    for (const [key, data] of Object.entries(input)) {
+        Storage.set('input', key, data);
     }
 
     const mainSelector = '#main';
