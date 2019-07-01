@@ -43,13 +43,13 @@
                     throw new Error(`Unexpected response from glitch: ${res.status}`);
                 }
 
-                const { token, jobId, serviceId, supportEmail, local } = await res.json();
+                const { token, jobId, serviceId, supportEmail, local, input } = await res.json();
 
                 localStorage.setItem(`job-session`, JSON.stringify({ token, jobId, serviceId, supportEmail, local, domain }));
 
                 const sdk = createEndUserSdk({ token, jobId, serviceId });
 
-                return { sdk, supportEmail, local };
+                return { sdk, supportEmail, local, input };
             }
 
             async function init() {
@@ -97,9 +97,9 @@
                 }
 
                 const { pages, cache, layout, error } = (await import(`/templates/${domain}.config.js`)).default;
-                const { sdk, supportEmail, local } = existing || await createJob(domain);
+                const { sdk, supportEmail, local, input } = existing || await createJob(domain);
 
-                const app = createApp({ mountPoint: window.app, pages, cache, layout, sdk, error, local });
+                const app = createApp({ mountPoint: window.app, pages, cache, layout, sdk, error, local, input });
             }
 
             init();
