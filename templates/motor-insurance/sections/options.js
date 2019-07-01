@@ -1,9 +1,9 @@
 import { html } from '/src/main.js';
 import { selectedPolicyOption, selectedNoClaimsDiscountProtection, selectedVoluntaryExcess } from '../inputs/index.js';
 
-export default (name, { _selectedPaymentTerm, availableNoClaimsDiscountProtection, availableVoluntaryExcesses, availableLegalCovers, availableExcessProtectCovers, availablePersonalInjuryCovers, availableCarHireCovers, availableBreakdownCovers, availableWindscreenCovers, availableKeyReplacementCovers, availableMisfuelCovers }) => {
+export default (name, { availableNoClaimsDiscountProtection, availableVoluntaryExcesses, availableLegalCovers, availableExcessProtectCovers, availablePersonalInjuryCovers, availableCarHireCovers, availableBreakdownCovers, availableWindscreenCovers, availableKeyReplacementCovers, availableMisfuelCovers, serviceName }) => {
     return html`
-        <p>Please select the options you are interested in adding to your motor insurance policy:</p>
+        <p>Please select the options you are interested in adding to your ${serviceName} motor insurance policy:</p>
 
         ${selectedVoluntaryExcess(availableVoluntaryExcesses)}
 

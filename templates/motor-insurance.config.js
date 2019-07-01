@@ -49,7 +49,8 @@ export default {
                         'output.availableBreakdownCovers',
                         'output.availableWindscreenCovers',
                         'output.availableKeyReplacementCovers',
-                        'output.availableMisfuelCovers'
+                        'output.availableMisfuelCovers',
+                        '_.serviceName'
                     ]
                 }
             ]
