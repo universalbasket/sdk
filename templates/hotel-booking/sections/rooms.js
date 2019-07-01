@@ -11,7 +11,7 @@ function valueLi(code) {
 
 export default (name, { availableRooms }) => {
     return html`
-        <div class="field field--list">
+        <div class="field field--list" data-error="Please select a room">
             <span class="field__name">Select a room</span>
             ${ availableRooms.map((room, i) => html`
                 <div class="field-item field-item--room">
@@ -30,7 +30,7 @@ export default (name, { availableRooms }) => {
                             type="radio"
                             name="selected-rooms-$object[]"
                             id="${ room.price.value + '_' + i }"
-                            value="${JSON.stringify(room)}"
+                            value="${ JSON.stringify(room) }"
                             required />
                         <label
                             for="${ room.price.value + '_' + i}"
@@ -44,6 +44,6 @@ export default (name, { availableRooms }) => {
             <button
                 type="button"
                 class="button button--right button--primary"
-                id="submit-btn-${name}">Continue</button>
+                id="submit-btn-${ name }">Continue</button>
         </div>`;
 };

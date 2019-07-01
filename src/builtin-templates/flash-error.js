@@ -1,20 +1,22 @@
-export default function(element, err) {
-    console.error(err);
+import { html, render } from '/web_modules/lit-html/lit-html.js';
 
-    if (!element) {
-        return;
+export default function create(error) {
+    const el = document.querySelector('#flash-error');
+
+    if (error) {
+        console.error(error);
     }
 
-    const message = (typeof err === 'string' ? err : 'Please check the items in red below.')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-
-    return element.innerHTML = `
-        <div class="flash-error">
-            <p><b class="large">We’re sorry, something is missing or wrong.</b></p>
-            <p>${message}</p>
-        </div>
-    `;
+    return {
+        show: () => { render(template(), el); },
+        hide: () => { render('', el); }
+    };
 }
 
+function template() {
+    return html`
+        <div class="flash-error">
+            <p><b class="large">We’re sorry, something is missing or wrong.</b></p>
+            <p>Please check the items in red below.</p>
+        </div>`;
+}
