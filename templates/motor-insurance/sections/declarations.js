@@ -1,7 +1,7 @@
 import { html, templates } from '/src/main.js';
-//import { } from '../inputs/index.js';
 
 export default (name, { policyWording, productInformation, privacyPolicy, statementOfFact }) => {
+    const statementOfFactFile = statementOfFact.contents.find(item => item.type === 'File');
     return html`
         <hr>
         <h2>Declarations</h2>
@@ -10,7 +10,10 @@ export default (name, { policyWording, productInformation, privacyPolicy, statem
                 <li>${ policyWording.contents.map(templates.markup) }</li>
                 <li>${ productInformation.contents.map(templates.markup) }</li>
                 <li>${ privacyPolicy.contents.map(templates.markup) }</li>
-                <li>${ statementOfFact.contents.map(templates.markup) }</li>
+                <li>
+                    <p>I have checked the details in the Statement of Fact are correct.</p>
+                    ${ templates.file({ statementOfFactFile, ...{ name: 'View document' } }) }
+                </li>
             </ul>
 
             <div class="field">
