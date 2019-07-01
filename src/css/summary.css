@@ -59,7 +59,7 @@
 }
 
 .summary__block--bordered {
-    border-top: 1px solid var(--color--hr);
+    border-top: 1px solid var(--hr-color);
 }
 
 .summary__body {
@@ -86,6 +86,28 @@
 
 .summary__highlight {
     animation: yellowfade 5s;
+}
+
+.summary .table {
+    border-top: 0;
+}
+
+.summary .table th {
+    width: 50%;
+    min-width: 240px;
+}
+
+.summary .table th,
+.summary .table td {
+    border: 0;
+    text-align: left;
+    padding-top: var(--gap--small);
+    padding-bottom: var(--gap--small);
+}
+
+.summary hr {
+    height: 1px;
+    margin-bottom: 0;
 }
 
 @keyframes yellowfade {

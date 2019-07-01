@@ -70,6 +70,12 @@ class PageRenderer {
         }
 
         const sectionForm = document.querySelector(`#section-form-${elementName}`);
+
+        window.scrollTo({
+            top: sectionForm.offsetTop - 110,
+            behaviour: 'smooth'
+        });
+
         validateForm(sectionForm);
 
         submitBtn.addEventListener('click', e => {

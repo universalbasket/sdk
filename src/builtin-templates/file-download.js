@@ -1,18 +1,39 @@
-const template = ({ filename, url, sdk }) => {
-    return sdk.getJobFile(url)
-        .then(blob => {
-            const a = document.createElement('a');
-            const href = URL.createObjectURL(blob);
-            const linkText = document.createTextNode(filename);
+// TODO fix getJobFile of undefined
 
-            a.setAttribute('href', href);
-            a.setAttribute('target', '_blank');
-            a.setAttribute('class', 'summary__file-icon');
-            a.appendChild(linkText);
+// function template({ filename, name, url, sdk }) {
+//     const linkText = document.createTextNode(name || filename);
+//     let blob;
 
-            return a;
-        });
-};
+//     try {
+//         blob = sdk.getJobFile(url);
+//     } catch (e) {
+//         console.warn(e);
+//         return linkText;
+//     }
+
+//     const a = document.createElement('a');
+//     const href = URL.createObjectURL(blob);
+
+//     a.setAttribute('href', href);
+//     a.setAttribute('target', '_blank');
+//     a.setAttribute('class', 'summary__file-icon');
+//     a.appendChild(linkText);
+
+//     return a;
+// };
+
+function template({ filename, name, url }) {
+    const linkText = document.createTextNode(name || filename);
+    const a = document.createElement('a');
+    const href = url;
+
+    a.setAttribute('href', href);
+    a.setAttribute('target', '_blank');
+    a.setAttribute('class', 'summary__file-icon');
+    a.appendChild(linkText);
+
+    return a;
+}
 
 export default template;
 
