@@ -2,7 +2,7 @@ import kebabcase from '/web_modules/lodash.kebabcase.js';
 import { html, render } from '/web_modules/lit-html/lit-html.js';
 import { serializeForm , getFormInputKeys } from './serialize-form.js';
 import pageWrapper from './builtin-templates/page-wrapper.js';
-import inlineLoading from './builtin-templates/inline-loading.js';
+import defaultLoadingTemplate from './builtin-templates/loading.js';
 import flashError from './builtin-templates/flash-error.js';
 import * as Storage from './storage.js';
 import getDataForSection from './get-data-for-section.js';
@@ -187,10 +187,14 @@ class PageRenderer {
         }
     }
 
-    renderSection({ elementName, waitFor, template }) {
+    renderSection({ elementName, waitFor, template, loadingTemplate }) {
         const sectionForm = document.querySelector(`#section-form-${elementName}`);
 
-        inlineLoading(sectionForm);
+        if (loadingTemplate) {
+            loadingTemplate(sectionForm);
+        } else {
+            defaultLoadingTemplate(sectionForm);
+        }
 
         const skip = () => {
             this.skipSection();
