@@ -1,60 +1,53 @@
-import { html, templates } from '/src/main.js';
-
-import {
-    OtherInformation,
-    MobileSummaryWrapper,
-    DesktopSummaryWrapper,
-    Documents
-} from '../../shared/summary.js';
+import { html, templates, classMap } from '/src/main.js';
 
 export default {
-    MobileTemplate,
-    DesktopTemplate
+    MobileTemplate: (inputs = {}, outputs = {}, cache = {}, _local = {}, _) => {
+        return MobileSummaryWrapper(inputs, outputs, cache, _);
+    },
+    DesktopTemplate: (inputs = {}, outputs = {}, cache = {}, _local = {}, _) => {
+        return DesktopSummaryWrapper(inputs, outputs, cache, _);
+    }
 };
 
-function SummaryDetails(inputs, outputs, cache) {
-    const price = getPrice(outputs, cache);
+function SummaryDetails({ outputs, inputs }) {
+    const priceObj = outputs.estimatedPrice;
 
     return html`
     <div class="summary__body">
-        ${ hasContent(inputs) ? html`
-            <article class="summary__block">
-                <ul class="dim">
-                    ${ inputs.policyOptions.coverStartDate ? html`<li>Starts on: ${ inputs.policyOptions.coverStartDate }</li>` : '' }
-                    ${ inputs.selectedCover ? html`<li>Cover: ${ inputs.selectedCover }</li>` : '' }
-                    ${ inputs.selectedVetPaymentTerm ? html`<li>Vet Payment Term: ${ inputs.selectedVetPaymentTerm }</li>` : '' }
-                    ${ inputs.selectedPaymentTerm ? html`<li>Payment term: ${ inputs.selectedPaymentTerm }</li>` : '' }
-                    ${ inputs.selectedCoverType ? html`<li>${ CoverType(inputs.selectedCoverType) }</li>` : '' }
-                    ${ inputs.selectedVetFee ? html`<li>${ VetFee(inputs.selectedVetFee) }</li>` : '' }
-                    ${ inputs.selectedVoluntaryExcess ? html`<li>Voluntary Excess: ${ inputs.selectedVoluntaryExcess.name }</li>` : '' }
-                    ${ inputs.selectedCoverOptions ? html`<li>Cover options: ${ inputs.selectedCoverOptions.map(_ => _.name).join(', ') }</li>` : '' }
-                </ul>
-            </article>` :
-        '' }
+        <article class="summary__block">
+             <ul class="dim">
 
-        ${ price ? html`
-            <div class="summary__block summary__price">
+        ${ dataIsProvided(inputs) ? html`
+            ${ inputs.policyOptions.coverStartDate ? html`<li>Starts on: ${ inputs.policyOptions.coverStartDate }</li>` : '' }
+            ${ inputs.selectedCover ? html`<li>Cover: ${ inputs.selectedCover }</li>` : '' }
+            ${ inputs.selectedVetPaymentTerm ? html`<li>Vet Payment Term: ${ inputs.selectedVetPaymentTerm }</li>` : '' }
+            ${ inputs.selectedPaymentTerm ? html`<li>Payment term: ${ inputs.selectedPaymentTerm }</li>` : '' }
+            ${ inputs.selectedCoverType ? html`<li>${ CoverType(inputs.selectedCoverType) }</li>` : '' }
+            ${ inputs.selectedVetFee ? html`<li>${ VetFee(inputs.selectedVetFee) }</li>` : '' }
+            ${ inputs.selectedVoluntaryExcess ? html`<li>Voluntary Excess: ${ inputs.selectedVoluntaryExcess.name }</li>` : '' }
+            ${ inputs.selectedCoverOptions ? html`<li>Cover options: ${ inputs.selectedCoverOptions.map(_ => _.name).join(', ') }</li>` : '' }
+            ` : ''}
+
+        ${priceObj ? html`
+            <li class="summary__price">
                 <b class="large">
-                    ${ templates.priceDisplay(price) }
+                    ${templates.priceDisplay(priceObj.price)}
                 </b>
-            </div>` :
-        '' }
+            </li>` : ''}
 
         ${ PetInformation(inputs) }
-        ${ Documents(outputs) }
-        ${ OtherInformation(outputs) }
     </div>`;
 }
 
-function SummaryPreview(inputs, outputs, cache) {
-    const price = getPrice(outputs, cache);
+function SummaryPreview({ outputs, inputs }) {
+    const priceObj = outputs.estimatedPrice;
 
     return html`
-        <b class="large summary__preview-price">
-            ${ templates.priceDisplay(price || { currencyCode: 'gbp' }) }
-        </b>
-
-        ${ hasContent(inputs) ? html`
+        ${priceObj ? html`
+            <b class="large summary__preview-price">
+                ${templates.priceDisplay(priceObj.price)}
+            </b>` : ''}
+        ${ dataIsProvided(inputs) ? html`
             <span class="faint summary__preview-info">
                 ${ inputs.policyOptions.coverStartDate ? html`<span>Starts on: ${ inputs.policyOptions.coverStartDate }</span>` : '' }
                 ${ inputs.selectedCover ? html`<span>Cover: ${ inputs.selectedCover }</span>` : '' }
@@ -64,8 +57,8 @@ function SummaryPreview(inputs, outputs, cache) {
                 ${ inputs.selectedVetFee ? html`<span>${ VetFee(inputs.selectedVetFee) }</span>` : '' }
                 ${ inputs.selectedVoluntaryExcess ? html`<span>Voluntary Excess: ${ inputs.selectedVoluntaryExcess.name }</span>` : '' }
                 ${ inputs.selectedCoverOptions ? html`<span>Cover options: ${ inputs.selectedCoverOptions.map(_ => _.name).join(', ') }</span>` : '' }
-            </span>` :
-        '' }`;
+            </span>` : ''}
+    `;
 }
 
 function SummaryTitle(_) {
@@ -111,16 +104,7 @@ function PetInformation(inputs, currencyCode = 'gbp') {
     </article>`;
 }
 
-function getPrice(outputs, cache) {
-    const priceObj = outputs.finalPrice ||
-        outputs.estimatedPrice ||
-        cache.finalPrice ||
-        cache.estimatedPrice;
-
-    return priceObj && priceObj.price;
-}
-
-function hasContent(inputs) {
+function dataIsProvided(inputs) {
     const keyInputs = [
         'policyOptions',
         'selectedCover',
@@ -135,11 +119,67 @@ function hasContent(inputs) {
     return !!Object.keys(inputs).find(key => keyInputs.includes(key));
 }
 
-function DesktopTemplate(inputs, outputs, cache, _local, _) {
-    return DesktopSummaryWrapper(inputs, outputs, cache, _, SummaryTitle, SummaryDetails);
+// UI wrappers
+
+// mobile
+let isExpanded = false;
+function MobileSummaryWrapper(inputs, outputs, cache, _) {
+    const update = new CustomEvent('update');
+    const toggleSummary = {
+        handleEvent() {
+            isExpanded = !isExpanded;
+            window.dispatchEvent(update);
+        },
+        capture: true
+    };
+
+    if (dataIsProvided(inputs) && showDetails()) {
+        if (isExpanded) {
+            return html`
+            <aside class="summary">
+                ${ToggableWrapper(SummaryTitle(_))}
+                ${SummaryDetails({ inputs, outputs, cache })}
+            </aside>
+            <div class="app__summary-overlay" @click=${toggleSummary}></div>`;
+        }
+        return html`
+        <aside class="summary">
+            ${ToggableWrapper(SummaryPreview({ inputs, outputs, cache }))}
+        </aside>`;
+    }
+
+    return html`
+    <aside class="summary">
+        <header class="summary__header">${SummaryTitle(_)}</header>
+    </aside>`;
+
+
+    function ToggableWrapper(template) {
+        const classes = {
+            'summary__header': true,
+            'summary__header--toggable': true,
+            'summary__header--toggled-down': isExpanded,
+            'summary__header--toggled-up': !isExpanded
+        };
+        return html`
+            <header
+                class="${classMap(classes)}"
+                @click=${toggleSummary}>
+                <div class="summary__preview">${template}</div>
+            </header>`;
+    }
 }
 
-function MobileTemplate(inputs, outputs, cache, _local, _) {
-    return MobileSummaryWrapper(inputs, outputs, cache, _,
-        SummaryPreview, SummaryTitle, SummaryDetails, hasContent);
+// deskop
+function DesktopSummaryWrapper(inputs, outputs, cache, _) {
+    return html`
+    <aside class="summary">
+        <header class="summary__header">${SummaryTitle(_)}</header>
+        ${showDetails() ? SummaryDetails({ inputs, outputs, cache }) : ''}
+    </aside>`;
+}
+
+function showDetails() {
+    const route = window.location.hash.slice(1);
+    return !['/error', '/confirmation'].includes(route);
 }
