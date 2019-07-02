@@ -1,8 +1,9 @@
 import { html } from '/src/main.js';
-import { SelectedBroadbandSetupDate } from '../inputs/index.js';
+import { SelectedBroadbandSetupDate, SelectedTvSetupDate } from '../inputs/index.js';
 
-export default (name, data) => html`
-    ${data.availableBroadbandSetupDates ? SelectedBroadbandSetupDate(data.availableBroadbandSetupDates) : '' }
+export default (name, { availableTvSetupDates, availableBroadbandSetupDates }) => html`
+    ${availableBroadbandSetupDates ? SelectedBroadbandSetupDate(availableBroadbandSetupDates) : '' }
+    ${availableTvSetupDates ? SelectedTvSetupDate(availableTvSetupDates) : '' }
 
     <div class="section__actions">
         <button

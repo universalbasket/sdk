@@ -87,7 +87,7 @@ export default {
                 {
                     name: 'setup-dates',
                     template: setupDates,
-                    waitFor: ['output.availableBroadbandSetupDates']
+                    waitFor: ['output.availableBroadbandSetupDates', 'output.availableTvSetupDates']
                 }
             ]
         },
