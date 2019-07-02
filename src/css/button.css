@@ -1,10 +1,11 @@
 .button {
-    height: var(--button-height);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: var(--button-height);
     min-width: var(--button-width);
     padding: var(--button-padding);
     box-sizing: border-box;
-    text-align: center;
-    vertical-align: middle;
     border-radius: 3px;
     font-size: var(--button-font-size);
     line-height: 1;
@@ -12,6 +13,7 @@
     background: white;
     color: var(--color);
     border: var(--button-border-width) solid var(--input-border-color);
+    text-decoration: none;
 }
 
 .button:hover {
@@ -19,7 +21,7 @@
 }
 
 .button--primary {
-    height: var(--button-height--large);
+    min-height: var(--button-height--large);
     min-width: var(--button-width--large);
     border-radius: 3.6px;
     font-size: var(--button-font-size--large);
@@ -29,7 +31,7 @@
 }
 
 .button--secondary {
-    height: var(--button-height--large);
+    min-height: var(--button-height--large);
     min-width: var(--button-width--large);
     border-radius: 3.6px;
     font-size: var(--button-font-size--large);
