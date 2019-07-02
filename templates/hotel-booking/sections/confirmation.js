@@ -2,8 +2,16 @@ import { html } from '/src/main.js';
 
 export default (name, { bookingConfirmation }) => html`
         <div>
-            <h2>Confirmation</h2>
-            <p>Thanks for your booking! Your booking reference is <strong>${bookingConfirmation.bookingReference}</strong></p>
+            <p class="large">
+                <b>Booking complete. Thank you.</b>
+            </p>
+            <p class="dim">
+                Your booking reference is <strong>${bookingConfirmation.bookingReference}</strong>.
+                You’ll recieve an email confirmation shortly.
+            </p>
+            <p>
+                <a href="/" class="button button--primary">Finish</a>
+            </p>
         </div>
     `
 ;
