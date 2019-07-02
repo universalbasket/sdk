@@ -5,6 +5,7 @@ import {
     aboutYou,
     installation,
     setupDates,
+    monthlyPaymentMethod,
     checkout,
     finalPriceConsent,
     confirmation,
@@ -33,10 +34,6 @@ export default {
         },
         {
             key: 'installationOptions',
-            sourceInputKeys: []
-        },
-        {
-            key: 'finalPrice',
             sourceInputKeys: []
         },
         {
@@ -118,14 +115,14 @@ export default {
             title: 'Payment details',
             sections: [
                 {
-                    name: 'checkout',
-                    template: checkout,
-                    waitFor: ['_.otp']
+                    name: 'monthly-payment-method',
+                    template: monthlyPaymentMethod,
+                    waitFor: []
                 },
                 {
-                    name: 'final-price-consent',
-                    template: finalPriceConsent,
-                    waitFor: ['output.oneOffCosts', 'output.finalPrice']
+                    name: 'checkout',
+                    template: checkout,
+                    waitFor: ['_.otp', 'input.monthlyPaymentMethod']
                 }
             ]
         },
@@ -134,6 +131,11 @@ export default {
             route: '/confirmation',
             title: 'Confirmation',
             sections: [
+                {
+                    name: 'final-price-consent',
+                    template: finalPriceConsent,
+                    waitFor: ['output.oneOffCosts', 'output.finalPrice']
+                },
                 {
                     name: 'confirmation',
                     template: confirmation,
