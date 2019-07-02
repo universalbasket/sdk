@@ -7,7 +7,7 @@ import flashError from './builtin-templates/flash-error.js';
 import * as Storage from './storage.js';
 import getDataForSection from './get-data-for-section.js';
 import * as main from './main.js';
-import validateForm from './form-validator.js';
+import setupForm from './setup-form.js';
 
 const VAULT_FORM_SELECTOR = '#ubio-vault-form';
 
@@ -64,6 +64,7 @@ class PageRenderer {
 
     addListeners(elementName) {
         const submitBtn = document.querySelector(`#submit-btn-${elementName}`);
+
         if (!submitBtn) {
             console.warn(`submit button for ${elementName} section not found.`);
             return;
@@ -71,14 +72,9 @@ class PageRenderer {
 
         const sectionForm = document.querySelector(`#section-form-${elementName}`);
 
-        window.scrollTo({
-            top: sectionForm.offsetTop - 110,
-            behaviour: 'smooth'
-        });
-
-        validateForm(sectionForm);
-
         submitBtn.addEventListener('click', e => {
+            flashError().hide();
+
             if (sectionForm && !sectionForm.reportValidity()) {
                 flashError().show();
                 return;
@@ -86,7 +82,7 @@ class PageRenderer {
 
             e.target.setAttribute('disabled', 'true');
 
-            this.submitVaultFormIfPresents(this.sdk)
+            this.submitVaultFormIfPresents()
                 .then(() => {
                     const inputs = serializeForm(`#section-form-${elementName}`);
                     return this.createInputs(inputs);
@@ -102,7 +98,7 @@ class PageRenderer {
         });
     }
 
-    submitVaultFormIfPresents(sdk) {
+    submitVaultFormIfPresents() {
         const vaultIframe = document.querySelector(VAULT_FORM_SELECTOR);
 
         if (!vaultIframe) {
@@ -112,7 +108,7 @@ class PageRenderer {
         if (vaultIframe) {
             return isVaultFormValid(vaultIframe)
                 .then(() => {
-                    return submitVaultForm(sdk, vaultIframe);
+                    return submitVaultForm(this.sdk, vaultIframe);
                 })
                 .then(({ cardToken, panToken }) => {
                     Storage.del('_', 'otp');
@@ -196,6 +192,8 @@ class PageRenderer {
             defaultLoadingTemplate(sectionForm);
         }
 
+        sectionForm.scrollIntoView(true);
+
         const skip = () => {
             this.skipSection();
         };
@@ -203,6 +201,8 @@ class PageRenderer {
         getDataForSection(waitFor)
             .then(res => {
                 render(html`${template(elementName, res, skip, this.sdk)} `, sectionForm);
+
+                setupForm(sectionForm);
                 this.addListeners(elementName);
                 this.skipIfSubmitted(elementName);
             });
