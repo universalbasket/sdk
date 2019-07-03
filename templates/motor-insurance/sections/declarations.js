@@ -1,7 +1,8 @@
 import { html, templates } from '/src/main.js';
 
-export default (name, { policyWording, productInformation, privacyPolicy, statementOfFact }) => {
+export default (name, { policyWording, productInformation, privacyPolicy, statementOfFact }, skip, sdk) => {
     const statementOfFactFile = statementOfFact.contents.find(item => item.type === 'File');
+
     return html`
         <hr>
         <h2>Declarations</h2>
@@ -12,7 +13,7 @@ export default (name, { policyWording, productInformation, privacyPolicy, statem
                 <li>${ privacyPolicy.contents.map(templates.markup) }</li>
                 <li>
                     <p>I have checked the details in the Statement of Fact are correct.</p>
-                    ${ templates.file({ statementOfFactFile, ...{ name: 'View document' } }) }
+                    ${ templates.file({ ...statementOfFactFile, name: 'View document' }, sdk) }
                 </li>
             </ul>
 

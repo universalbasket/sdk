@@ -1,6 +1,5 @@
 import getMarkup from '@/src/builtin-templates/get-markup.js';
 import priceDisplay from '@/src/builtin-templates/price-display.js';
-import file from '@/src/builtin-templates/file-download.js';
 
 const StructuredTextItems = {
     NamedPrice: {
@@ -209,15 +208,7 @@ describe('getMarkup', () => {
         }));
     });
 
-    it('turns File into a template result', () => {
-        const File = StructuredTextItems['File'];
-        const fileLink = file(File);
-
-        const result = getMarkup(File);
-        expect(result).toEqual(expect.objectContaining({
-            values: expect.arrayContaining([
-                fileLink
-            ])
-        }));
+    describe('File', () => {
+        // TODO
     });
 });

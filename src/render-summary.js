@@ -1,41 +1,40 @@
 import { render } from '/web_modules/lit-html/lit-html.js';
 import * as Storage from './storage.js';
 
-let bodyTemplate = null;
-let initiated = false;
-let currentTarget, prevTarget;
+function updateUi() {
+    if (this.bodyTemplate) {
+        const { inputs, outputs, cache, _ } = Storage.getAll();
 
-export default {
-    init(template, isMobile) {
+        render(this.bodyTemplate({ inputs, outputs, cache, sdk: this.sdk, _ }), this.currentTarget);
+        render('', this.prevTarget);
+    }
+}
+
+export default class Summary {
+    constructor(sdk) {
+        this.sdk = sdk;
+        this.bodyTemplate = null;
+    }
+
+    setTemplate(template, isMobile) {
         if (!template || typeof template !== 'function') {
             throw new Error('renderSummary: invalid template');
         }
 
-        bodyTemplate = template;
-        currentTarget = document.querySelector(isMobile ? '#summary-mobile' : '#summary-desktop');
-        prevTarget = document.querySelector(!isMobile ? '#summary-mobile' : '#summary-desktop');
+        this.bodyTemplate = template;
+        this.currentTarget = document.querySelector(isMobile ? '#summary-mobile' : '#summary-desktop');
+        this.prevTarget = document.querySelector(!isMobile ? '#summary-mobile' : '#summary-desktop');
 
-        _updateUI();
-        window.addEventListener('update', _updateUI);
+        updateUi.call(this);
 
-        initiated = true;
-    },
+        window.addEventListener('update', updateUi);
+    }
 
     update() {
-        if (!initiated || !bodyTemplate) {
+        if (!this.bodyTemplate) {
             throw new Error('renderSummary: not initiated');
         }
 
-        _updateUI();
+        updateUi.call(this);
     }
-};
-
-function _updateUI() {
-    if (!initiated) {
-        return;
-    }
-
-    const { inputs, outputs, cache, local, _ } = Storage.getAll();
-    render(bodyTemplate(inputs, outputs, cache, local, _), currentTarget);
-    render('', prevTarget);
 }

@@ -1,39 +1,26 @@
-// TODO fix getJobFile of undefined
+export default function fileDownloadTemplate({ filename, name, url }, sdk) {
+    const container = document.createElement('span');
+    const placeholder = document.createElement('p');
+    const anchor = document.createElement('a');
 
-// function template({ filename, name, url, sdk }) {
-//     const linkText = document.createTextNode(name || filename);
-//     let blob;
+    anchor.target = '_blank';
+    anchor.rel = 'noopener';
+    anchor.className = 'summary__file-icon';
+    anchor.appendChild(document.createTextNode(name || filename));
 
-//     try {
-//         blob = sdk.getJobFile(url);
-//     } catch (e) {
-//         console.warn(e);
-//         return linkText;
-//     }
+    placeholder.textContent = 'Preparing a download link...';
+    container.appendChild(placeholder);
 
-//     const a = document.createElement('a');
-//     const href = URL.createObjectURL(blob);
+    sdk.getJobFile(url).then(
+        blob => {
+            anchor.href = URL.createObjectURL(blob);
+            container.replaceChild(anchor, placeholder);
+        },
+        error => {
+            console.error('Error downloading file:', error.stack);
+            placeholder.textContent = 'Error downloading file.';
+        }
+    );
 
-//     a.setAttribute('href', href);
-//     a.setAttribute('target', '_blank');
-//     a.setAttribute('class', 'summary__file-icon');
-//     a.appendChild(linkText);
-
-//     return a;
-// };
-
-function template({ filename, name, url }) {
-    const linkText = document.createTextNode(name || filename);
-    const a = document.createElement('a');
-    const href = url;
-
-    a.setAttribute('href', href);
-    a.setAttribute('target', '_blank');
-    a.setAttribute('class', 'summary__file-icon');
-    a.appendChild(linkText);
-
-    return a;
+    return container;
 }
-
-export default template;
-
