@@ -1,5 +1,8 @@
 import { html, until } from '/src/main.js';
 
+const domain = new URLSearchParams(window.location.search).get('domain');
+const url = domain ? `/?domain=${domain}` : '/';
+
 const errorMessage = {
     InternalError: 'Internal error occurred.'
 };
@@ -12,7 +15,7 @@ async function Template(sdk) {
     return html`
         <p class="large"><b>We’re sorry. We can’t continue your purchase at the moment.</b></p>
         <p class="dim">${errorMessage[error.code] || defaultErrorMessage}</p>
-        <p><a href="/" class="button button--primary">Retry</a></p>
+        <p><a href="${url}" class="button button--primary">Retry</a></p>
     `;
 }
 
