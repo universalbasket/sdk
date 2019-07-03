@@ -1,7 +1,7 @@
 import summary from './summary.js';
+import header from './header.js';
+import footer from './footer.js';
 import notFound from '../../shared/not-found.js';
-import header from '../../shared/header.js';
-import footer from '../../shared/footer.js';
 
 export {
     summary,
