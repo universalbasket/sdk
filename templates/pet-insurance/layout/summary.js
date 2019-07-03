@@ -1,11 +1,11 @@
 import { html, templates, classMap } from '/src/main.js';
 
 export default {
-    MobileTemplate: (inputs = {}, outputs = {}, cache = {}, _local = {}, _) => {
-        return MobileSummaryWrapper(inputs, outputs, cache, _);
+    MobileTemplate: ({ inputs = {}, outputs = {}, cache = {}, /*local = {},*/ sdk, _ }) => {
+        return MobileSummaryWrapper({ inputs, outputs, cache, sdk, _ });
     },
-    DesktopTemplate: (inputs = {}, outputs = {}, cache = {}, _local = {}, _) => {
-        return DesktopSummaryWrapper(inputs, outputs, cache, _);
+    DesktopTemplate: ({ inputs = {}, outputs = {}, cache = {}, /*local = {},*/ sdk, _ }) => {
+        return DesktopSummaryWrapper({ inputs, outputs, cache, sdk, _ });
     }
 };
 
@@ -123,7 +123,7 @@ function dataIsProvided(inputs) {
 
 // mobile
 let isExpanded = false;
-function MobileSummaryWrapper(inputs, outputs, cache, _) {
+function MobileSummaryWrapper({ inputs, outputs, cache, sdk, _ }) {
     const update = new CustomEvent('update');
     const toggleSummary = {
         handleEvent() {
@@ -138,7 +138,7 @@ function MobileSummaryWrapper(inputs, outputs, cache, _) {
             return html`
             <aside class="summary">
                 ${ToggableWrapper(SummaryTitle(_))}
-                ${SummaryDetails({ inputs, outputs, cache })}
+                ${SummaryDetails({ inputs, outputs, cache, sdk })}
             </aside>
             <div class="app__summary-overlay" @click=${toggleSummary}></div>`;
         }
@@ -171,11 +171,11 @@ function MobileSummaryWrapper(inputs, outputs, cache, _) {
 }
 
 // deskop
-function DesktopSummaryWrapper(inputs, outputs, cache, _) {
+function DesktopSummaryWrapper({ inputs, outputs, cache, sdk, _ }) {
     return html`
     <aside class="summary">
         <header class="summary__header">${SummaryTitle(_)}</header>
-        ${showDetails() ? SummaryDetails({ inputs, outputs, cache }) : ''}
+        ${showDetails() ? SummaryDetails({ inputs, outputs, cache, sdk }) : ''}
     </aside>`;
 }
 
