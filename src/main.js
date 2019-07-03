@@ -117,15 +117,17 @@ export async function createApp({ mountPoint, pages, cache = [], layout, error, 
     render(layout.header(), document.querySelector('#header'));
     render(layout.footer(), document.querySelector('#footer'));
 
+    const summary = new Summary(sdk);
+
     installMediaQueryWatcher('(max-width: 650px)', match => {
-        Summary.init(match ? layout.summary.MobileTemplate : layout.summary.DesktopTemplate, match);
+        summary.setTemplate(match ? layout.summary.MobileTemplate : layout.summary.DesktopTemplate, match);
     });
 
     const tracker = addTracker(sdk);
 
     window.addEventListener('hashchange', async () => {
         router.navigate();
-        Summary.update();
+        summary.update();
 
         if (router.isCurrentRoot()) {
             if (tracker) {
@@ -137,11 +139,11 @@ export async function createApp({ mountPoint, pages, cache = [], layout, error, 
     //custom event when input submitted
     window.addEventListener('newInputs', e => {
         e.detail && e.detail.forEach(({ key }) => Cache.poll(sdk, cache, key));
-        Summary.update();
+        summary.update();
     });
 
     window.addEventListener('newOutputs', () => {
-        Summary.update();
+        summary.update();
     });
 
     router.navigate();
@@ -150,10 +152,10 @@ export async function createApp({ mountPoint, pages, cache = [], layout, error, 
         window.location.hash = entryPoint;
     }
 
-    afterSdkInitiated(sdk, cache, local);
+    afterSdkInitiated(sdk, summary, cache, local);
 }
 
-function afterSdkInitiated(sdk, cacheConfig, local) {
+function afterSdkInitiated(sdk, summary, cacheConfig, local) {
     if (local) {
         for (const [key, val] of Object.entries(local)) {
             Storage.set('local', key, val);
@@ -161,7 +163,7 @@ function afterSdkInitiated(sdk, cacheConfig, local) {
     }
 
     Cache.poll(sdk, cacheConfig);
-    Summary.update();
+    summary.update();
 }
 
 function addTracker(sdk) {

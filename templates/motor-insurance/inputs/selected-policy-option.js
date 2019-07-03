@@ -22,7 +22,7 @@ export default (name, key, output) => {
         <div class="field__inputs group group--merged">
             <input
                 type="radio"
-                name="_${key}-options"
+                name="_${key}-$object"
                 id="${key}-yes"
                 @click="${ () => showCoverOptions(key) }"
                 required />
@@ -32,7 +32,7 @@ export default (name, key, output) => {
 
             <input
                 type="radio"
-                name="_${key}-options"
+                name="_${key}-$object"
                 id="${key}-no"
                 checked
                 @click="${ () => hideCoverOptions(key) }" />

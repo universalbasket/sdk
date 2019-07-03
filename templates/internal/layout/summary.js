@@ -1,10 +1,10 @@
 import { html } from '/src/main.js';
 
 export default {
-    MobileTemplate: (_inputs = {}, _outputs = {}, _cache = {}, _local = {}, _) => {
+    MobileTemplate: ({ /*inputs = {}, outputs = {}, cache = {}, local = {}, sdk,*/ _ }) => {
         return SummaryTitle(_);
     },
-    DesktopTemplate: (_inputs = {}, _outputs = {}, _cache = {}, _local = {}, _) => {
+    DesktopTemplate: ({ /*inputs = {}, outputs = {}, cache = {}, local = {}, sdk,*/ _ }) => {
         return SummaryTitle(_);
     }
 };
