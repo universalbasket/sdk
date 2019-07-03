@@ -1,6 +1,6 @@
 import summary from './summary.js';
-import header from '../../shared/header.js';
-import footer from '../../shared/footer.js';
+import header from './header.js';
+import footer from './footer.js';
 
 export {
     summary,
