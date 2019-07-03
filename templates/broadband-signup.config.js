@@ -11,7 +11,7 @@ import {
     confirmation,
     summaryPage
 } from './broadband-signup/sections/index.js';
-import error from './shared/error.js';
+import error from './broadband-signup/error.js';
 
 export default {
     layout: {

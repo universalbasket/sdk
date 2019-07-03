@@ -12,7 +12,7 @@ import {
     selectedCoverOptions,
     summaryPage
 } from './pet-insurance/sections/index.js';
-import error from './shared/error.js';
+import error from './pet-insurance/error.js';
 
 export default {
     layout: {

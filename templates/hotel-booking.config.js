@@ -1,6 +1,6 @@
 import { header, summary, notFound, footer } from './hotel-booking/layout/index.js';
 import { checkout, confirmation, finalPriceConsent, rooms } from './hotel-booking/sections/index.js';
-import error from './shared/error.js';
+import error from './hotel-booking/error.js';
 
 export default {
     layout: {

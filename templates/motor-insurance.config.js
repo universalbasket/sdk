@@ -1,6 +1,6 @@
 import { header, summary, notFound, footer } from './motor-insurance/layout/index.js';
 import { quote, quoteLoading, options, assumptions, statements, feesSummary, declarations, marketingConsent, summaryPage, checkout, finalPriceConsent, confirmation } from './motor-insurance/sections/index.js';
-import error from './shared/error.js';
+import error from './motor-insurance/error.js';
 
 export default {
     layout: {
@@ -9,9 +9,7 @@ export default {
         notFound,
         footer
     },
-    cache: [
-
-    ],
+    cache: [],
     pages: [
         {
             name: 'payment-term',
