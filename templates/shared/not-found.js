@@ -1,4 +1,4 @@
-export default function(selector) {
+export default function notFound(selector) {
     return {
         renderer: {
             init: () => {
@@ -6,7 +6,7 @@ export default function(selector) {
 
                 element.innerHTML = `
                     <div class="page">
-                        <h2>Uh oh, We cannot find the page</h2>
+                        <h2>Uh oh, We can't find the page.</h2>
                         <button type="button" class="button button--right button--primary">Continue</button>
                     </div>
                 `;

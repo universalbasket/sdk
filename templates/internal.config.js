@@ -1,4 +1,4 @@
-import { header, summary, footer } from './internal/layout/index.js';
+import { header, summary, notFound, footer } from './internal/layout/index.js';
 import tdsTest from './internal/sections/tds-test.js';
 import error from './shared/error.js';
 
@@ -6,6 +6,7 @@ export default {
     layout: {
         header,
         summary,
+        notFound,
         footer
     },
     cache: [],
