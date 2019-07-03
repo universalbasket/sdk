@@ -1,37 +1,34 @@
-import { html, templates } from '/src/main.js';
-
-import {
-    MobileSummaryWrapper,
-    DesktopSummaryWrapper
-} from '../../shared/summary.js';
+import { html, templates, classMap } from '/src/main.js';
 
 export default {
-    MobileTemplate,
-    DesktopTemplate
+    MobileTemplate: (inputs = {}, outputs = {}, cache = {}, _local = {}, _) => {
+        return MobileSummaryWrapper(inputs, outputs, cache, _);
+    },
+    DesktopTemplate: (inputs = {}, outputs = {}, cache = {}, _local = {}, _) => {
+        return DesktopSummaryWrapper(inputs, outputs, cache, _);
+    }
 };
 
-function hasData(inputs) {
-    return inputs.selectedRooms && inputs.selectedRooms[0];
-}
+function SummaryDetails({ outputs, inputs }) {
+    const price = inputs.selectedRooms && inputs.selectedRooms[0].price;
 
-function SummaryDetails(inputs, outputs) {
     return html`
     <div class="summary__body">
-        ${ hasData(inputs) ? html`
-            <article class="summary__block">
-                <header class="summary__block-title">
-                    ${ inputs.selectedRooms[0].type }
-                </header>
-                <ul class="dim">
+        <article class="summary__block">
+             <ul class="dim">
+                ${ inputs.selectedRooms && inputs.selectedRooms[0] ? html`
+                    <b>${ inputs.selectedRooms[0].type }</b>
                     ${ inputs.selectedRooms[0].valueAdditions.map(i => html`<li>${ valueLabel(i) }</li>`) }
+                    ` : ''}
+
+                ${price ? html`
                     <li class="summary__price">
                         <b class="large">
-                            ${ templates.priceDisplay(inputs.selectedRooms[0].price) }
+                            ${templates.priceDisplay(price)}
                         </b>
-                    </li>
-                </ul>
-            </article>` :
-        '' }
+                    </li>` : ''}
+            </ul>
+        </article>
 
         ${ outputs.priceBreakdown ? html`
             <article class="summary__block">
@@ -50,16 +47,19 @@ function SummaryDetails(inputs, outputs) {
     </div>`;
 }
 
-function SummaryPreview(inputs) {
-    return hasData(inputs) ?
-        html`
+function SummaryPreview({ inputs }) {
+    const price = inputs.selectedRooms && inputs.selectedRooms[0].price;
+
+    return html`
+        ${price ? html`
             <b class="large summary__preview-price">
-                ${ templates.priceDisplay(inputs.selectedRooms[0].price) }
-            </b>
+                ${templates.priceDisplay(price)}
+            </b>` : ''}
+        ${inputs.selectedRooms && inputs.selectedRooms[0] ? html`
             <span class="faint summary__preview-info">
-                ${ [inputs.selectedRooms[0].type, ...inputs.selectedRooms[0].valueAdditions.map(valueLabel)].join(', ') }
-            </span>` :
-        '';
+                <span>${ [inputs.selectedRooms[0].type, ...inputs.selectedRooms[0].valueAdditions.map(valueLabel)].join(', ') }</span>
+            </span>` : ''}
+    `;
 }
 
 function SummaryTitle(_) {
@@ -79,11 +79,68 @@ function valueLabel(code) {
     }
 }
 
-function DesktopTemplate(inputs, outputs, cache, _local, _) {
-    return DesktopSummaryWrapper(inputs, outputs, cache, _, SummaryTitle, SummaryDetails);
+// UI wrappers
+
+// mobile
+let isExpanded = false;
+function MobileSummaryWrapper(inputs, outputs, cache, _) {
+    const update = new CustomEvent('update');
+    const toggleSummary = {
+        handleEvent() {
+            isExpanded = !isExpanded;
+            window.dispatchEvent(update);
+        },
+        capture: true
+    };
+
+    if (inputs.selectedRooms && inputs.selectedRooms[0] && showDetails()) {
+        if (isExpanded) {
+            return html`
+            <aside class="summary">
+                ${ToggableWrapper(SummaryTitle(_))}
+                ${SummaryDetails({ inputs, outputs, cache })}
+            </aside>
+            <div class="app__summary-overlay" @click=${toggleSummary}></div>`;
+        }
+        return html`
+        <aside class="summary">
+            ${ToggableWrapper(SummaryPreview({ inputs, outputs, cache }))}
+        </aside>`;
+    }
+
+    return html`
+    <aside class="summary">
+        <header class="summary__header">${SummaryTitle(_)}</header>
+    </aside>`;
+
+    function ToggableWrapper(template) {
+        const classes = {
+            'summary__header': true,
+            'summary__header--toggable': true,
+            'summary__header--toggled-down': isExpanded,
+            'summary__header--toggled-up': !isExpanded
+        };
+        return html`
+            <header
+                class="${classMap(classes)}"
+                @click=${toggleSummary}>
+                <div class="summary__preview">${template}</div>
+            </header>`;
+    }
 }
 
-function MobileTemplate(inputs, outputs, cache, _local, _) {
-    return MobileSummaryWrapper(inputs, outputs, cache, _,
-        SummaryPreview, SummaryTitle, SummaryDetails, hasData);
+// deskop
+function DesktopSummaryWrapper(inputs, outputs, cache, _) {
+    return html`
+    <aside class="summary">
+        <header class="summary__header">${SummaryTitle(_)}</header>
+        ${showDetails() ? SummaryDetails({ inputs, outputs, cache }) : ''}
+    </aside>`;
 }
+
+function showDetails() {
+    const route = window.location.hash.slice(1);
+    return !['/error', '/confirmation'].includes(route);
+}
+
+
