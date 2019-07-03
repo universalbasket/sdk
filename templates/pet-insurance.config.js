@@ -1,4 +1,4 @@
-import { header, summary, footer } from './pet-insurance/layout/index.js';
+import { header, summary, footer, notFound, error } from './pet-insurance/layout/index.js';
 import {
     aboutYou,
     checkout,
@@ -10,15 +10,16 @@ import {
     selectedAddress,
     selectedCoverType,
     selectedCoverOptions,
-    summaryPage,
-    error
+    summaryPage
 } from './pet-insurance/sections/index.js';
 
 export default {
     layout: {
         header,
         summary,
-        footer
+        footer,
+        notFound,
+        error
     },
     cache: [
         {
@@ -146,6 +147,5 @@ export default {
             ],
             excludeStep: true
         }
-    ],
-    error
+    ]
 };

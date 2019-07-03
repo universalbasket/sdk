@@ -1,12 +1,13 @@
-import { header, summary, footer } from './internal/layout/index.js';
+import { header, summary, footer, notFound, error } from './internal/layout/index.js';
 import tdsTest from './internal/sections/tds-test.js';
-import error from './internal/sections/error.js';
 
 export default {
     layout: {
         header,
         summary,
-        footer
+        footer,
+        notFound,
+        error
     },
     cache: [],
     pages: [
@@ -22,6 +23,5 @@ export default {
                 }
             ]
         }
-    ],
-    error
+    ]
 };

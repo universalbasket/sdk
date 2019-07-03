@@ -10,7 +10,6 @@ import directDebit from './direct-debit.js';
 import finalPriceConsent from './final-price-consent.js';
 import summaryPage from './summary.js';
 import confirmation from './confirmation.js';
-import error from './error.js';
 
 export {
     pets,
@@ -24,6 +23,5 @@ export {
     directDebit,
     finalPriceConsent,
     summaryPage,
-    confirmation,
-    error
+    confirmation
 };

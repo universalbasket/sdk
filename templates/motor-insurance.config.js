@@ -1,15 +1,27 @@
-import { header, summary, footer } from './motor-insurance/layout/index.js';
-import { quote, quoteLoading, options, assumptions, statements, feesSummary, declarations, marketingConsent, summaryPage, checkout, finalPriceConsent, confirmation, error } from './motor-insurance/sections/index.js';
+import { header, summary, footer, notFound, error } from './motor-insurance/layout/index.js';
+import {
+    quote,
+    quoteLoading,
+    options,
+    assumptions,
+    statements,
+    feesSummary,
+    declarations,
+    marketingConsent,
+    summaryPage,
+    checkout,
+    finalPriceConsent,
+    confirmation } from './motor-insurance/sections/index.js';
 
 export default {
     layout: {
         header,
         summary,
-        footer
+        footer,
+        notFound,
+        error
     },
-    cache: [
-
-    ],
+    cache: [],
     pages: [
         {
             name: 'payment-term',
@@ -141,6 +153,5 @@ export default {
             ],
             excludeStep: true
         }
-    ],
-    error
+    ]
 };

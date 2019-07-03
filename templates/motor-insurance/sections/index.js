@@ -10,7 +10,6 @@ import summaryPage from './summary.js';
 import checkout from './checkout.js';
 import finalPriceConsent from './final-price-consent.js';
 import confirmation from './confirmation.js';
-import error from './error.js';
 
 export {
     quote,
@@ -24,6 +23,5 @@ export {
     summaryPage,
     checkout,
     finalPriceConsent,
-    confirmation,
-    error
+    confirmation
 };

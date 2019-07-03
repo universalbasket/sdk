@@ -1,15 +1,15 @@
-import { header, summary, footer } from './hotel-booking/layout/index.js';
-import { checkout, confirmation, finalPriceConsent, rooms, error } from './hotel-booking/sections/index.js';
+import { header, summary, footer, notFound, error } from './hotel-booking/layout/index.js';
+import { checkout, confirmation, finalPriceConsent, rooms } from './hotel-booking/sections/index.js';
 
 export default {
     layout: {
         header,
         summary,
-        footer
+        footer,
+        notFound,
+        error
     },
-    cache: [
-
-    ],
+    cache: [],
     pages: [
         {
             name: 'rooms',
@@ -54,6 +54,5 @@ export default {
             ],
             excludeStep: true
         }
-    ],
-    error
+    ]
 };

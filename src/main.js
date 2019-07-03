@@ -7,7 +7,6 @@ import * as Storage from './storage.js';
 import * as Cache from './cache.js';
 
 import PageRenderer from './page-renderer.js';
-import NotFound from './render-not-found.js';
 import Summary from './render-summary.js';
 
 import { installMediaQueryWatcher } from '/web_modules/pwa-helpers/media-query.js';
@@ -120,7 +119,7 @@ export async function createApp({ mountPoint, pages, cache = [], layout, error, 
     });
 
     const entryPoint = routingOrder[0];
-    const router = Router(routes, NotFound(mainSelector));
+    const router = Router(routes, layout.notFound(mainSelector));
 
     mountPoint.innerHTML = Layout();
     render(layout.header(), document.querySelector('#header'));
