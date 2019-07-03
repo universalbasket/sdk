@@ -10,9 +10,9 @@ import {
     selectedAddress,
     selectedCoverType,
     selectedCoverOptions,
-    summaryPage
+    summaryPage,
+    error
 } from './pet-insurance/sections/index.js';
-import error from './shared/error.js';
 
 export default {
     layout: {

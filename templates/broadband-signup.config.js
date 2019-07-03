@@ -9,9 +9,9 @@ import {
     checkout,
     finalPriceConsent,
     confirmation,
-    summaryPage
+    summaryPage,
+    error
 } from './broadband-signup/sections/index.js';
-import error from './shared/error.js';
 
 export default {
     layout: {
