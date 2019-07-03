@@ -1,4 +1,4 @@
-import { header, summary, footer } from './motor-insurance/layout/index.js';
+import { header, summary, notFound, footer } from './motor-insurance/layout/index.js';
 import { quote, quoteLoading, options, assumptions, statements, feesSummary, declarations, marketingConsent, summaryPage, checkout, finalPriceConsent, confirmation } from './motor-insurance/sections/index.js';
 import error from './shared/error.js';
 
@@ -6,6 +6,7 @@ export default {
     layout: {
         header,
         summary,
+        notFound,
         footer
     },
     cache: [

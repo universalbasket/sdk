@@ -16,7 +16,7 @@
                 }
 
                 try {
-                    const { token, jobId, serviceId, supportEmail, local, domain } = JSON.parse(existingJob);
+                    const { token, jobId, serviceId, local, domain } = JSON.parse(existingJob);
                     const sdk = createEndUserSdk({ token, jobId, serviceId });
                     const job = await sdk.getJob();
 
@@ -25,7 +25,7 @@
                         return null;
                     }
 
-                    return { sdk, supportEmail, local, domain };
+                    return { sdk, local, domain };
                 } catch (error) {
                     console.error(error);
                     return null;
@@ -43,13 +43,13 @@
                     throw new Error(`Unexpected response from glitch: ${res.status}`);
                 }
 
-                const { token, jobId, serviceId, supportEmail, local, input } = await res.json();
+                const { token, jobId, serviceId, local, input } = await res.json();
 
-                localStorage.setItem(`job-session`, JSON.stringify({ token, jobId, serviceId, supportEmail, local, domain }));
+                localStorage.setItem(`job-session`, JSON.stringify({ token, jobId, serviceId, local, domain }));
 
                 const sdk = createEndUserSdk({ token, jobId, serviceId });
 
-                return { sdk, supportEmail, local, input };
+                return { sdk, local, input };
             }
 
             async function init() {
@@ -97,7 +97,7 @@
                 }
 
                 const { pages, cache, layout, error } = (await import(`/templates/${domain}.config.js`)).default;
-                const { sdk, supportEmail, local, input } = existing || await createJob(domain);
+                const { sdk, local, input } = existing || await createJob(domain);
 
                 const app = createApp({ mountPoint: window.app, pages, cache, layout, sdk, error, local, input });
             }
