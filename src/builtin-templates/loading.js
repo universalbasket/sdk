@@ -1,24 +1,18 @@
-import { html, render } from '/web_modules/lit-html/lit-html.js';
+export default function inlineLoading(element) {
+    element.innerHTML = `
+        <div class="app__loading">
+            <span class="spinner">
+                <span class="spinner__bar1 spinner__bar"></span>
+                <span class="spinner__bar2 spinner__bar"></span>
+                <span class="spinner__bar3 spinner__bar"></span>
+                <span class="spinner__bar4 spinner__bar"></span>
+                <span class="spinner__bar5 spinner__bar"></span>
+                <span class="spinner__bar6 spinner__bar"></span>
+                <span class="spinner__bar7 spinner__bar"></span>
+                <span class="spinner__bar8 spinner__bar"></span>
+            </span>
 
-const template = html`
-    <div class="loading">
-        <h2 id="loading-message">
-            We are preparing your form...
-        </h2>
-    </div>
-`;
-
-export default (selector = '#app') => {
-    return {
-        renderer: {
-            init: () => {
-                const target = document.querySelector(selector);
-                if (!target) {
-                    throw new Error(`loading: selector ${selector} not found`);
-                }
-
-                render(template, target);
-            }
-        }
-    };
-};
+            <span>Please wait a moment</span>
+        </div>
+    `;
+}

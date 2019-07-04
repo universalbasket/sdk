@@ -1,25 +1,25 @@
-import landlineCheck from './landline-check.js';
-import contactPerson from './contact-person.js';
-import payment from './payment.js';
-import directDebit from './direct-debit.js';
-import landlineOptions from './landline-options.js';
-import installation from './installation.js';
-import selectedMarketingContactOptions from './selected-marketing-contact-options.js';
-import selectedTvSetupDate from './selected-tv-setup-date.js';
-import selectedBroadbandSetupDate from './selected-broadband-setup-date.js';
-import selectedMoveInDate from './selected-move-in-date.js';
-import selectedAddress from './selected-address.js';
+import LandlineCheck from './landline-check.js';
+import LandlineOptions from './landline-options.js';
+import ContactPerson from './contact-person.js';
+import CardPayment from './payment-card.js';
+import DirectDebitPayment from './payment-direct-debit.js';
+import Installation from './installation.js';
+import SelectedMarketingContactOptions from './selected-marketing-contact-options.js';
+import SelectedTvSetupDate from './selected-tv-setup-date.js';
+import SelectedBroadbandSetupDate from './selected-broadband-setup-date.js';
+import SelectedMoveInDate from './selected-move-in-date.js';
+import SelectedAddress from './selected-address.js';
 
 export {
-    landlineCheck,
-    contactPerson,
-    payment,
-    directDebit,
-    landlineOptions,
-    installation,
-    selectedMarketingContactOptions,
-    selectedTvSetupDate,
-    selectedBroadbandSetupDate,
-    selectedMoveInDate,
-    selectedAddress
+    LandlineCheck,
+    LandlineOptions,
+    ContactPerson,
+    CardPayment,
+    DirectDebitPayment,
+    Installation,
+    SelectedMarketingContactOptions,
+    SelectedTvSetupDate,
+    SelectedBroadbandSetupDate,
+    SelectedMoveInDate,
+    SelectedAddress
 };

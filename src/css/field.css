@@ -1,19 +1,109 @@
 .field {
-    margin: 1em 0;
-    border-bottom: 1px solid var(--color--hr);
-    padding-bottom: 1em;
+    margin: 0;
+    padding: var(--field-padding);
+    width: 100%;
+}
+
+.field--list {
+    padding: 0 0 var(--gap);
+}
+
+.field--list + .section__actions {
+    margin-top: 0;
+}
+
+.field-item {
+    display: grid;
+    grid-gap: var(--gap);
+    border-bottom: 1px solid var(--hr-color);
+    padding: 15px 0;
+}
+
+.field-item:last-child {
+    border-bottom: 0;
+}
+
+.field--list .field-item:first-of-type {
+    border-top: var(--input-border-width) solid var(--hr-color);
+}
+
+.field-item--select-one {
+    grid-template-columns: 1fr auto;
+    padding-left: var(--gap);
+}
+
+.field-item--multi-select {
+    grid-template-columns: auto 1fr auto;
+}
+
+.field-item--room {
+    --img-width: 70px;
+    --img-height: 50px;
+
+    grid-template-columns: var(--img-width) 1fr auto;
+}
+
+.field-item__img {
+    background: var(--progress-bar-background-color);
+    border: 1px solid var(--hr-color);
+    width: var(--img-width);
+    height: var(--img-height);
+}
+
+.field-item__details {
+    line-height: 1.5;
+}
+
+.field-item__details li {
+    line-height: 1.35em;
+}
+
+.field-item__price {
+    padding: 1em 0 0;
 }
 
 .field-set {
-    border-bottom: solid 1px var(--color--hr);
+    margin-bottom: 30px;
+}
+
+.field-set .field:not(:last-child) {
+    border-bottom: solid 2px var(--hr-color);
 }
 
 .field__name {
-    font-size: 14px;
-    font-weight: 700;
-    color: #333;
     display: block;
+    font-size: 16px;
+    line-height: 18px;
+    font-weight: 700;
+    color: var(--color);
     padding-bottom: 5px;
+    width: var(--input-width);
+    max-width: 100%;
+}
+
+.field--invalid .field__name {
+    color: var(--input-border-color--invalid);
+}
+
+.field__name::after {
+    content: attr(data-optional);
+    display: inline-block;
+    float: right;
+    font-style: italic;
+    font-size: var(--font-size);
+    font-weight: normal;
+}
+
+.field--invalid :invalid {
+    border-color: var(--input-border-color--invalid);
+}
+
+.field--invalid::after {
+    content: attr(data-error);
+    display: block;
+    color: var(--input-border-color--invalid);
+    font-size: 1em;
+    margin: 7px 0 0;
 }
 
 .field__inputs > input[type="radio"] {

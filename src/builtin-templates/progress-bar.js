@@ -1,20 +1,25 @@
-import { html } from '/web_modules/lit-html/lit-html.js';
-import { classMap } from '/web_modules/lit-html/directives/class-map.js';
-import { styleMap } from '/web_modules/lit-html/directives/style-map.js';
-
 function StepIcon(i, activeIndex) {
-    const classes = {
-        'progress-bar__step': true,
-        'progress-bar__step--active': activeIndex != null && i === activeIndex
-    };
+    const div = document.createElement('div');
 
-    return html`<div class="${classMap(classes)}">${ i + 1 }</div>`;
+    div.className = 'progress-bar__step';
+
+    if (activeIndex != null && i === activeIndex) {
+        div.classList.add('progress-bar__step--active');
+    }
+
+    div.append(`${ i + 1 }`);
+
+    return div;
 }
 
 function StepLabel(activeLabel, activeIndex, totalSteps) {
     if (activeLabel == null || activeIndex == null) {
         return '';
     }
+
+    const span = document.createElement('span');
+    span.className = 'progress-bar__current-step';
+    span.append(activeLabel);
 
     let leftRuler = activeIndex;
     let rightRuler = activeIndex + 3;
@@ -43,21 +48,19 @@ function StepLabel(activeLabel, activeIndex, totalSteps) {
         leftRuler = 1;
     }
 
-    const styles = {
-        'grid-column-start': `${ leftRuler }`,
-        'grid-column-end': `${ rightRuler }`,
-        textAlign
-    };
+    span.style.gridColumnStart = `${leftRuler}`;
+    span.style.gridColumnEnd = `${rightRuler}`;
+    span.style.textAlign = textAlign;
 
-    return html`
-    <span class="progress-bar__current-step" style="${styleMap(styles)}">
-        ${ activeLabel }
-    </span>`;
+    return span;
 }
 
-export default (titles, activeLabel, activeStep) => html`
-    <div class="progress-bar"
-        style="${ styleMap({ 'grid-template-columns': `repeat(${titles.length}, var(--step-icon-size))` }) }">
-        ${ titles.map((_title, index) => StepIcon(index, activeStep)) }
-        ${ StepLabel(activeLabel, activeStep, titles.length) }
-    </div>`;
+export default function progressBar(titles, activeLabel, activeStep) {
+    const element = document.createElement('div');
+
+    element.className = 'progress-bar';
+    element.style.gridTemplateColumns = `repeat(${titles.length}, var(--progress-step-icon-size))`;
+    element.append(...titles.map((_, i) => StepIcon(i, activeStep)), StepLabel(activeLabel, activeStep, titles.length));
+
+    return element;
+}

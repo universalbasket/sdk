@@ -3,17 +3,103 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>ubio application bundle</title>
-        <link href="./src/css/index.css" rel="stylesheet">
+        <link href="/src/css/index.css" rel="stylesheet">
         <script type="module">
+            import { createEndUserSdk } from '/web_modules/@ubio/sdk.js';
+            import { createApp } from '/src/main.js';
+
+            async function getExisting() {
+                const existingJob = localStorage.getItem(`job-session`);
+
+                if (!existingJob) {
+                    return null;
+                }
+
+                try {
+                    const { token, jobId, serviceId, local, domain } = JSON.parse(existingJob);
+                    const sdk = createEndUserSdk({ token, jobId, serviceId });
+                    const job = await sdk.getJob();
+
+                    if (job.status === 'success' || job.status === 'fail') {
+                        console.log(`Stored session job status was: ${job.status}`);
+                        return null;
+                    }
+
+                    return { sdk, local, domain };
+                } catch (error) {
+                    console.error(error);
+                    return null;
+                }
+            }
+
+            async function createJob(domain) {
+                const res = await fetch('https://ubio-application-bundle-test-server.glitch.me/create-job', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ domain })
+                });
+
+                if (!res.ok) {
+                    throw new Error(`Unexpected response from glitch: ${res.status}`);
+                }
+
+                const { token, jobId, serviceId, local, input } = await res.json();
+
+                localStorage.setItem(`job-session`, JSON.stringify({ token, jobId, serviceId, local, domain }));
+
+                const sdk = createEndUserSdk({ token, jobId, serviceId });
+
+                return { sdk, local, input };
+            }
+
             async function init() {
-                const domain = new URLSearchParams(window.location.search).get('domain') || 'pet-insurance';
-                const config = (await import(`/templates/${domain}.config.js`)).default;
+                const domain = new URLSearchParams(window.location.search).get('domain') || 'hotel-booking';
+                const hash = window.location.hash;
 
-                console.log(config)
+                let existing = await getExisting();
+                let shouldClear = false;
 
-                const { createApp } = await import('/src/main.js');
-                const app = createApp(config, () => console.log('finished!'));
-                app.init();
+                if (!existing) {
+                    shouldClear = true;
+                    console.log('No existing session found.');
+                } else if (hash === '') {
+                    shouldClear = true;
+                    console.log('Hash is \'\'.');
+                } else  if (existing.domain !== domain) {
+                    shouldClear = true;
+                    console.log(`Mismatching domains: ${existing.domain} !== ${domain}`);
+                }
+
+                let job;
+
+                try {
+                    job = await existing.sdk.getJob();
+                } catch (e) {}
+
+                if (job && job.finishedAt) {
+                    console.log('Existing session found for job in end state.');
+                    shouldClear = true;
+                }
+
+                if (shouldClear) {
+                    if (job && !job.finishedAt) {
+                        console.log('Cancelling job.');
+                        await existing.sdk.cancelJob();
+                    }
+
+                    console.log('Clearing storage.');
+                    existing = null;
+                    localStorage.clear();
+                }
+
+                if (hash !== '' && !existing) {
+                    window.location.hash = '';
+                }
+
+                const { pages, cache, layout, error } = (await import(`/templates/${domain}.config.js`)).default;
+                const { sdk, local, input } = existing || await createJob(domain);
+
+                const app = createApp({ mountPoint: window.app, pages, cache, layout, sdk, error, local, input });
             }
 
             init();

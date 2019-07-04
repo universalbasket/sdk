@@ -1,28 +1,42 @@
-import { html } from '/web_modules/lit-html/lit-html.js';
+export default function() {
+    return `
+        <div class="app">
+            <header class="app__sticky-top">
+                <div class="app__header-wrapper">
+                    <div
+                        id="header"
+                        class="app__container"></div>
+                </div>
+                <div class="app__flash-error-wrapper">
+                    <div
+                        id="flash-error"
+                        class="app__container"></div>
+                </div>
+                <div
+                    id="summary-mobile"
+                    class="app__summary-wrapper app__summary-wrapper--mobile"></div>
+            </header>
 
-const Layout = () => html`
-    <header class="sticky-top">
-        <div class="header-wrapper">
-            <div id="header" class="container"></div>
+            <div class="app__progress-bar-wrapper">
+                <div
+                    id="progress-bar"
+                    class="app__container"></div>
+            </div>
+
+            <main class="app__container">
+                <section
+                    id="main"
+                    class="app__main-wrapper"></section>
+                <aside
+                    id="summary-desktop"
+                    class="app__summary-wrapper app__summary-wrapper--desktop"></aside>
+            </main>
+
+            <footer class="app__footer-wrapper">
+                <div class="app__container" id="footer"></div>
+            </footer>
+
+            <div id="modal"></div>
         </div>
-        <div class="flash-error-wrapper">
-            <div id="error" class="container"></div>
-        </div>
-        <div id="summary-mobile" class="summary-wrapper summary-wrapper--mobile"></div>
-    </header>
-
-    <div class="progress-bar-wrapper">
-        <div class="container" id="progress-bar"></div>
-    </div>
-
-    <main class="container">
-        <section id="main" class="main-wrapper"></section>
-        <aside id="summary-desktop" class="summary-wrapper summary-wrapper--desktop"></aside>
-    </main>
-
-    <footer id="footer"></footer>
-
-    <div id="modal"></div>
-`;
-
-export default Layout;
+    `;
+}

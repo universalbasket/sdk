@@ -1,6 +1,7 @@
-import { html } from '/src/main.js';
+export default function footer() {
+    const footer = document.createElement('div');
+    footer.className = 'footer';
+    footer.innerHTML = '<small>© [Client name]</small>';
 
-export default () => html`
-<div class="footer">
-    <span></span>
-</div>`;
+    return footer;
+}

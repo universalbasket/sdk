@@ -1,7 +1,7 @@
 import finalPriceConsent from '../../generic/final-price-consent.js';
-import { createInputs, cancelJob, templates, html } from '/src/main.js';
+import { createInputs, templates, html } from '/src/main.js';
 
-export default (name, { oneOffCosts = {}, finalPrice = {} }, skip) => {
+export default (name, { oneOffCosts = {}, finalPrice = {} }, skip, sdk) => {
     const finalValue = finalPrice.price.value;
     const estimatedPrice = oneOffCosts.contents && oneOffCosts.contents.find(_ => _.name === 'Pay now');
     let estimatedValue = 0;
@@ -17,24 +17,26 @@ export default (name, { oneOffCosts = {}, finalPrice = {} }, skip) => {
     if (finalValue > estimatedValue) {
         //template to just display on modal
         const template = html`
-            <p>The final price has changed. and will be:</p>
-            <b class="large">${templates.priceDisplay(finalPrice.price)}</b>
+            <p class="dim">The final price has changed and will be:</p>
+            <b class="large">${ templates.priceDisplay(finalPrice.price) }</b>
             <div class="section__actions field field-set">
-                <button type="button" class="button button--right button--secondary" id="cancel-btn">Cancel</button>
-                <button type="button" class="button button--right button--primary" id="submit-btn-${name}">Confirm and pay</button>
+                <button
+                    type="button"
+                    class="button button--right button--frameless"
+                    id="cancel-btn">Cancel</button>
+                <button
+                    type="button"
+                    class="button button--right button--primary"
+                    id="submit-btn-${name}">Confirm and pay</button>
             </div>
         `;
 
-        const modal = templates.modal(template, 'Price check', {
-            closeOnOverlay: false,
-            showClose: false
-        });
-
+        const modal = templates.modal(template, { title: 'Price check', isLocked: true });
         modal.show();
 
         document.querySelector(`#submit-btn-${name}`).addEventListener('click', modal.close);
         document.querySelector('#cancel-btn').addEventListener('click', () => {
-            cancelJob().then(() => {
+            sdk.cancelJob().then(() => {
                 modal.close();
             });
         });
@@ -43,7 +45,7 @@ export default (name, { oneOffCosts = {}, finalPrice = {} }, skip) => {
         return finalPriceConsent(finalPrice);
     }
 
-    createInputs({ finalPriceConsent: finalPrice })
+    createInputs(sdk, { finalPriceConsent: finalPrice })
         .then(() => {
             skip();
             return '';

@@ -1,5 +1,5 @@
 .progress-bar {
-    --step-icon-size: 33px;
+    --progress-step-icon-size: 33px;
 
     display: grid;
     grid-row-gap: 10px;
@@ -11,21 +11,22 @@
     display: inline-grid;
     justify-content: center;
     align-items: center;
-    background-color: var(--step-icon);
+    background-color: var(--progress-step-icon);
     color: white;
-    width: var(--step-icon-size);
-    height: var(--step-icon-size);
+    width: var(--progress-step-icon-size);
+    height: var(--progress-step-icon-size);
     border-radius: 50%;
     font-size: var(--font-size--large);
 }
 
 .progress-bar__step--active {
-    background-color: var(--step-icon--active);
+    background-color: var(--progress-step-icon--active);
 }
 
 .progress-bar__current-step {
     font-weight: 600;
     font-size: var(--font-size);
+    white-space: nowrap;
 }
 
 @media all and (max-width: 650px) {

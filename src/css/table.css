@@ -2,17 +2,18 @@
     border-top: 2px solid var(--color);
     margin: 0 0 1em;
     width: 100%;
+    line-height: 1.4;
 }
 
 .table th {
     text-align: left;
-    border-bottom: 1px solid var(--color--hr);
+    border-bottom: 1px solid var(--hr-color);
     padding: var(--gap) var(--gap) var(--gap) 0;
 }
 
 .table td {
     text-align: right;
-    border-bottom: 1px solid var(--color--hr);
+    border-bottom: 1px solid var(--hr-color);
     padding: var(--gap) 2px var(--gap) var(--gap);
 }
 

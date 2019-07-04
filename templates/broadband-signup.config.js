@@ -5,16 +5,20 @@ import {
     aboutYou,
     installation,
     setupDates,
+    monthlyPaymentMethod,
     checkout,
     finalPriceConsent,
     confirmation,
     summaryPage
 } from './broadband-signup/sections/index.js';
+import error from './broadband-signup/error.js';
+import notFound from './broadband-signup/not-found.js';
 
 export default {
     layout: {
         header,
         summary,
+        notFound,
         footer
     },
     cache: [
@@ -32,10 +36,6 @@ export default {
         },
         {
             key: 'installationOptions',
-            sourceInputKeys: []
-        },
-        {
-            key: 'finalPrice',
             sourceInputKeys: []
         },
         {
@@ -89,7 +89,7 @@ export default {
                 {
                     name: 'setup-dates',
                     template: setupDates,
-                    waitFor: ['output.availableBroadbandSetupDates']
+                    waitFor: ['output.availableBroadbandSetupDates', 'output.availableTvSetupDates']
                 }
             ]
         },
@@ -104,7 +104,9 @@ export default {
                     waitFor: [
                         'input.selectedBroadbandPackage',
                         'input.selectedTvPackages',
-                        'input.selectedPhonePackage'
+                        'input.selectedPhonePackage',
+                        'output.oneOffCosts',
+                        'output.monthlyCosts'
                     ]
                 }
             ]
@@ -115,14 +117,14 @@ export default {
             title: 'Payment details',
             sections: [
                 {
-                    name: 'checkout',
-                    template: checkout,
-                    waitFor: ['_.otp']
+                    name: 'monthly-payment-method',
+                    template: monthlyPaymentMethod,
+                    waitFor: []
                 },
                 {
-                    name: 'final-price-consent',
-                    template: finalPriceConsent,
-                    waitFor: ['output.oneOffCosts', 'output.finalPrice']
+                    name: 'checkout',
+                    template: checkout,
+                    waitFor: ['_.otp', 'input.monthlyPaymentMethod']
                 }
             ]
         },
@@ -132,6 +134,11 @@ export default {
             title: 'Confirmation',
             sections: [
                 {
+                    name: 'final-price-consent',
+                    template: finalPriceConsent,
+                    waitFor: ['output.oneOffCosts', 'output.finalPrice']
+                },
+                {
                     name: 'confirmation',
                     template: confirmation,
                     waitFor: ['outputs.confirmation']
@@ -140,44 +147,5 @@ export default {
             excludeStep: true
         }
     ],
-    data: {
-        serverUrlPath: 'https://ubio-application-bundle-dummy-server.glitch.me/create-job/sky',
-        initialInputs: {
-            url: 'https://www.moneysupermarket.com/broadband/goto/?linktrackerid=8307&productname=Sky+Entertainment+%2B+Broadband+Essential+%2B+Talk+Anytime+Extra&bundleid=58&clickout=00000000-0000-0000-0000-000000000003&dtluid=SqADhopj*6Q*eioD&location=',
-            options: {
-                marketingContact: true,
-                success: true,
-                directoryListing: true,
-                addressSelection: true,
-                moveInDateSelection: true,
-                keepLandlineNumber: false,
-                screenshots: false,
-                testingFlow: false
-            },
-            selectedBroadbandPackage: {
-                name: 'Sky Broadband Essential'
-            },
-            selectedTvPackages: [{
-                name: 'Sky Entertainment'
-            }],
-            selectedPhonePackage: {
-                name: 'Sky Talk Anytime Extra'
-            }
-        },
-        category: 'test',
-        supportEmail: 'support@example.com',
-        local: {
-            currencyCode: 'gbp',
-            landlineOptions: {
-                'justMoved': true,
-                'sharedProperty': false,
-                'restartLine': false,
-                'additionalLine': false
-            },
-            finalPrice: {
-                value: 2000,
-                countryCode: 'gbp'
-            }
-        }
-    }
+    error
 };

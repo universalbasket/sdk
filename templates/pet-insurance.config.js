@@ -9,13 +9,17 @@ import {
     policyOptions,
     selectedAddress,
     selectedCoverType,
-    selectedCoverOptions
+    selectedCoverOptions,
+    summaryPage
 } from './pet-insurance/sections/index.js';
+import error from './pet-insurance/error.js';
+import notFound from './pet-insurance/not-found.js';
 
 export default {
     layout: {
         header,
         summary,
+        notFound,
         footer
     },
     cache: [
@@ -91,6 +95,27 @@ export default {
             ]
         },
         {
+            name: 'summary',
+            route: '/summary',
+            title: 'Summary',
+            sections: [
+                {
+                    name: 'summary',
+                    template: summaryPage,
+                    waitFor: [
+                        'input.policyOptions',
+                        'input.selectedCoverOptions',
+                        'input.selectedCoverType',
+                        'input.selectedPaymentTerm',
+                        'input.selectedCover',
+                        'input.selectedAddress',
+                        'input.selectedBreedType',
+                        'output.estimatedPrice'
+                    ]
+                }
+            ]
+        },
+        {
             name: 'paymentDetail',
             route: '/payment',
             title: 'Payment Details',
@@ -124,28 +149,5 @@ export default {
             excludeStep: true
         }
     ],
-    data: {
-        serverUrlPath: 'https://ubio-application-bundle-dummy-server.glitch.me/create-job',
-        initialInputs: {
-            url: 'https://pet.morethan.com/h5/pet/step-1?path=%2FquoteAndBuy.do%3Fe%3De1s1%26curPage%3DcaptureDetails'
-        },
-        category: 'test',
-        supportEmail: 'support@example.com',
-        local: {
-            currencyCode: 'gbp',
-            availableBreedTypes: {
-                cat: [
-                    'Pedigree',
-                    'Non-Pedigree'
-                ],
-                dog: [
-                    'Cross Breed',
-                    'Pedigree',
-                    'Small mixed breed (up to 10kg)',
-                    'Medium mixed breed (10 - 20kg)',
-                    'Large mixed breed (above 20kg)'
-                ]
-            }
-        }
-    }
+    error
 };

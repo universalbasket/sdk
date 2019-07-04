@@ -1,5 +1,9 @@
 .section__actions {
-    display: flex;
-    justify-content: flex-end;
-    margin-bottom: 30px;
+    display: grid;
+    grid-auto-flow: column;
+    grid-gap: var(--gap--small);
+    justify-content: end;
+    margin: 30px 0 0;
+    border-top: var(--input-border-width) solid var(--hr-color);
+    padding: 15px 0;
 }

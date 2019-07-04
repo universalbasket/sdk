@@ -1,62 +1,65 @@
-import { html, templates } from '/src/main.js';
-
-import {
-    OtherInformation,
-    MobileSummaryWrapper,
-    DesktopSummaryWrapper,
-    Documents
-} from '../../shared/summary.js';
+import { html, templates, classMap } from '/src/main.js';
 
 export default {
-    MobileTemplate,
-    DesktopTemplate
+    MobileTemplate: ({ inputs = {}, outputs = {}, cache = {}, /*local = {},*/ sdk, _ }) => {
+        return MobileSummaryWrapper({ inputs, outputs, cache, sdk, _ });
+    },
+    DesktopTemplate: ({ inputs = {}, outputs = {}, cache = {}, /*local = {},*/ sdk, _ }) => {
+        return DesktopSummaryWrapper({ inputs, outputs, cache, sdk, _ });
+    }
 };
 
-function SummaryDetails(inputs, outputs, cache) {
-    const price = getPrice(outputs, cache);
+function SummaryDetails({ outputs, inputs }) {
+    const price = inputs.selectedRooms && inputs.selectedRooms[0].price;
 
     return html`
     <div class="summary__body">
-        ${ hasContent(inputs) ?
-        html`
+        <article class="summary__block">
+             <ul class="dim">
+                ${ inputs.selectedRooms && inputs.selectedRooms[0] ? html`
+                    <b>${ inputs.selectedRooms[0].type }</b>
+                    ${ inputs.selectedRooms[0].valueAdditions.map(i => html`<li>${ valueLabel(i) }</li>`) }
+                    ` : ''}
+
+                ${price ? html`
+                    <li class="summary__price">
+                        <b class="large">
+                            ${templates.priceDisplay(price)}
+                        </b>
+                    </li>` : ''}
+            </ul>
+        </article>
+
+        ${ outputs.priceBreakdown ? html`
             <article class="summary__block">
                 <header class="summary__block-title">
-                    Your room
+                    Price Breakdown
                 </header>
-                <ul class="dim">
-                    ${ inputs.selectedRooms[0].type ? html`<li>${ inputs.selectedRooms[0].type }</li>` : '' }
-                    ${ inputs.selectedRooms[0].price ? html`<li>${ templates.priceDisplay(inputs.selectedRooms[0].price) }</li>` : '' }
-                </ul>
+                <table class="table">
+                    ${ outputs.priceBreakdown.map(i => html`
+                        <tr>
+                            <th>${ i.description } ${ i.type ? '· ' + priceType(i.type) : '' }</th>
+                            <td>${ templates.priceDisplay(i.price) }</td>
+                        </tr>`) }
+                </table>
             </article>` :
         '' }
-
-        ${ price ? html`
-            <div class="summary__block summary__block--price">
-                <b class="large highlight">
-                    ${ templates.priceDisplay(price) }
-                </b>
-            </div>` :
-        '' }
-
-        ${ Documents(outputs) }
-        ${ OtherInformation(outputs) }
     </div>`;
 }
 
-function SummaryPreview(inputs, outputs, cache) {
-    const price = getPrice(outputs, cache);
+function SummaryPreview({ inputs }) {
+    const price = inputs.selectedRooms && inputs.selectedRooms[0].price;
 
     return html`
-        <b class="large summary__preview-price">
-            ${ templates.priceDisplay(price || { currencyCode: 'gbp' }) }
-        </b>
-
-        ${ hasContent(inputs) ? html`
+        ${price ? html`
+            <b class="large summary__preview-price">
+                ${templates.priceDisplay(price)}
+            </b>` : ''}
+        ${inputs.selectedRooms && inputs.selectedRooms[0] ? html`
             <span class="faint summary__preview-info">
-                ${ inputs.selectedRooms[0].type ? html`<span>${ inputs.selectedRooms[0].type }</span>` : '' }
-                ${ inputs.selectedRooms[0].price ? html`<span>${ templates.priceDisplay(inputs.selectedRooms[0].price) }</span>` : '' }
-            </span>` :
-        '' }`;
+                <span>${ [inputs.selectedRooms[0].type, ...inputs.selectedRooms[0].valueAdditions.map(valueLabel)].join(', ') }</span>
+            </span>` : ''}
+    `;
 }
 
 function SummaryTitle(_) {
@@ -67,24 +70,90 @@ function SummaryTitle(_) {
     `;
 }
 
-function getPrice(outputs, cache) {
-    const priceObj = outputs.finalPrice ||
-        outputs.estimatedPrice ||
-        cache.finalPrice ||
-        cache.estimatedPrice;
-
-    return priceObj && priceObj.price;
+function valueLabel(code) {
+    switch (code) {
+        case 'pay-later': return 'Pay later';
+        case 'free-breakfast': return 'Breakfast included';
+        case 'free-internet': return 'Wi-fi';
+        default: return code;
+    }
 }
 
-function hasContent(inputs) {
-    return !!inputs.selectedRooms && inputs.selectedRooms[0];
+function priceType(type) {
+    switch (type) {
+        case 'vat': return 'VAT';
+        case 'total-now': return 'pay now';
+        case 'total-later': return 'pay later';
+        case 'total-later-supplier': return 'pay later';
+        case 'total-overall': return 'TOTAL';
+        case 'total-overall-supplier': return 'TOTAL';
+        case 'others': return '';
+        default: return type.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    }
 }
 
-function DesktopTemplate(inputs, outputs, cache, _) {
-    return DesktopSummaryWrapper(inputs, outputs, cache, _, SummaryTitle, SummaryDetails);
+// UI wrappers
+
+// mobile
+let isExpanded = false;
+function MobileSummaryWrapper({ inputs, outputs, cache, sdk, _ }) {
+    const update = new CustomEvent('update');
+    const toggleSummary = {
+        handleEvent() {
+            isExpanded = !isExpanded;
+            window.dispatchEvent(update);
+        },
+        capture: true
+    };
+
+    if (inputs.selectedRooms && inputs.selectedRooms[0] && showDetails()) {
+        if (isExpanded) {
+            return html`
+            <aside class="summary">
+                ${ToggableWrapper(SummaryTitle(_))}
+                ${SummaryDetails({ inputs, outputs, cache, sdk })}
+            </aside>
+            <div class="app__summary-overlay" @click=${toggleSummary}></div>`;
+        }
+        return html`
+        <aside class="summary">
+            ${ToggableWrapper(SummaryPreview({ inputs, outputs, cache }))}
+        </aside>`;
+    }
+
+    return html`
+    <aside class="summary">
+        <header class="summary__header">${SummaryTitle(_)}</header>
+    </aside>`;
+
+    function ToggableWrapper(template) {
+        const classes = {
+            'summary__header': true,
+            'summary__header--toggable': true,
+            'summary__header--toggled-down': isExpanded,
+            'summary__header--toggled-up': !isExpanded
+        };
+        return html`
+            <header
+                class="${classMap(classes)}"
+                @click=${toggleSummary}>
+                <div class="summary__preview">${template}</div>
+            </header>`;
+    }
 }
 
-function MobileTemplate(inputs, outputs, cache, _) {
-    return MobileSummaryWrapper(inputs, outputs, cache, _,
-        SummaryPreview, SummaryTitle, SummaryDetails, hasContent);
+// deskop
+function DesktopSummaryWrapper({ inputs, outputs, cache, sdk, _ }) {
+    return html`
+    <aside class="summary">
+        <header class="summary__header">${SummaryTitle(_)}</header>
+        ${showDetails() ? SummaryDetails({ inputs, outputs, cache, sdk }) : ''}
+    </aside>`;
 }
+
+function showDetails() {
+    const route = window.location.hash.slice(1);
+    return !['/error', '/confirmation'].includes(route);
+}
+
+

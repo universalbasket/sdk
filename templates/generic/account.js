@@ -3,14 +3,32 @@ import { html } from '/src/main.js';
 export default () => html`
 <div name="account" class="filed-set">
     <div class="field filed-set">
-        <label class="field__name" for="account[email]">Email</label>
-        <input type="email" name="account[email]" placeholder="example@example.com" value="example@example.com" required>
+        <label
+            class="field__name"
+            for="account[email]">Email</label>
+        <input
+            type="email"
+            name="account[email]"
+            placeholder="example@example.com"
+            pattern="[a-zA-Z0-9.-_]{1,}@[a-zA-Z.-]{2,}[.]{1}[a-zA-Z]{2,}"
+            data-error="Please enter a valid email address"
+            required />
     </div>
 
     <div class="field filed-set">
-        <label class="field__name" for="account[phone]">Mobile</label>
-        <input type="hidden" name="account[phone][country-code]" value="gb">
-        <input type="tel" name="account[phone][number]" placeholder="phone number" value="07912341234" required>
+        <label
+            class="field__name"
+            for="account[phone]">Mobile</label>
+        <input
+            type="hidden"
+            name="account[phone][country-code]"
+            value="gb">
+        <input
+            type="tel"
+            name="account[phone][number]"
+            placeholder="07912341234"
+            data-error="Please enter a valid phone number"
+            required />
     </div>
 
     <div>

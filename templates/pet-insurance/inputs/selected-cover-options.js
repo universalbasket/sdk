@@ -1,19 +1,22 @@
-import { html } from '/src/main.js';
+import { html, templates } from '/src/main.js';
 const key = 'selected-cover-options';
 
 export default output => html`
-    <div id="${key}">
-        <div class="field field-set">
-            <span class="field__name">Select Covers</span>
-            ${ output.map(o => html`
-            <input type="checkbox" value="${JSON.stringify(o)}" name="${key}-$object[]" id="${key}-${o.name}"/>
-            <label for="${key}-${o.name}" class="button">
+    <div id="${key}" class="field field--list">
+        <span class="field__name">Select Covers</span>
+        ${ output.map(o => html`
+            <div class="field-item field-item--multi-select">
+                <input
+                    type="checkbox"
+                    value="${JSON.stringify(o)}"
+                    name="${key}-$object[]"
+                    id="${key}-${o.name}"
+                    required />
                 <div>
-                    <b>${o.name}</b>
-                    <pre>${o.detail}</pre>
-                    <p>${(o.price.value * 0.01).toFixed(2)} ${o.price.currencyCode}</p>
+                    <b>${o.name}</b><br />
+                    <b>${ templates.priceDisplay(o.price) }</b>
                 </div>
-            </label>`)}
-        </div>
+            </div>
+        `) }
     </div>
 `;

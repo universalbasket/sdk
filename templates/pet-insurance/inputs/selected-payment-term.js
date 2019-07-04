@@ -1,7 +1,7 @@
 import { html } from '/src/main.js';
 
 export default terms => html`
-    <div class="field field-set">
+    <div class="field">
         <span class="field__name">Select Payment term</span>
         <div class="field__inputs group group--merged">
         ${ terms.map(term => html`
