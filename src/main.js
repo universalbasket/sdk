@@ -87,16 +87,8 @@ export async function createApp({ mountPoint, pages, cache = [], layout, error, 
     //setup router
     const routingOrder = pages.map(page => page.route);
 
-    function errorPageRenderer(sdk) {
-        return {
-            init() {
-                render(html`<div class="page"><div class="page__body" id="target">${error(sdk)}</div></div>`, document.querySelector(mainSelector));
-            }
-        };
-    }
-
     const routes = {
-        '/error': { renderer: errorPageRenderer(sdk), title: null, step: null }
+        '/error': { renderer: error(mainSelector, sdk), title: null, step: null }
     };
 
     pages.forEach(({ title, sections, route, excludeStep }, stepIndex) => {
