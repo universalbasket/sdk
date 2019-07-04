@@ -1,6 +1,7 @@
-import { header, summary, notFound, footer } from './internal/layout/index.js';
+import { header, summary, footer } from './internal/layout/index.js';
 import tdsTest from './internal/sections/tds-test.js';
 import error from './internal/error.js';
+import notFound from './internal/not-found.js';
 
 export default {
     layout: {

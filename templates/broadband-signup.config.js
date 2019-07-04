@@ -1,4 +1,4 @@
-import { header, summary, notFound, footer } from './broadband-signup/layout/index.js';
+import { header, summary, footer } from './broadband-signup/layout/index.js';
 import {
     landline,
     selectedAddress,
@@ -12,6 +12,7 @@ import {
     summaryPage
 } from './broadband-signup/sections/index.js';
 import error from './broadband-signup/error.js';
+import notFound from './broadband-signup/not-found.js';
 
 export default {
     layout: {
