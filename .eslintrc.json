@@ -7,7 +7,8 @@
   },
   "rules": {
     "lit/no-invalid-html": "warn",
-    "no-warning-comments": ["warn", { "terms": ["todo"] }]
+    "no-warning-comments": ["warn", { "terms": ["todo"] }],
+    "require-atomic-updates": "off"
   },
   "env": {
     "node": true
