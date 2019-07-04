@@ -27,7 +27,7 @@ export default class Summary {
 
         updateUi.call(this);
 
-        window.addEventListener('update', updateUi);
+        window.addEventListener('update', () => updateUi.call(this));
     }
 
     update() {
