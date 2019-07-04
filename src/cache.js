@@ -7,7 +7,7 @@ export function poll(sdk, CACHE_CONFIG, newInputKey) {
 
     const { inputs } = Storage.getAll();
     CACHE_CONFIG.forEach(config => {
-        if (config.sourceInputKeys.includes[newInputKey]) {
+        if (config.sourceInputKeys.includes(newInputKey)) {
             const readyToFetch = config.sourceInputKeys.every(input => inputs[input]);
             if (readyToFetch) {
                 fetchAndSave(sdk, config);
