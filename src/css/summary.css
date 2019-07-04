@@ -6,7 +6,7 @@
 
 .summary__header {
     font-size: var(--font-size--large);
-    padding: 1em var(--gap);
+    padding: var(--gap);
     line-height: 1.5;
 }
 
@@ -68,7 +68,7 @@
 
 .summary__body {
     overflow: auto;
-    padding: 0 var(--gap);
+    padding: var(--gap);
 }
 
 .summary__file-icon {
@@ -98,7 +98,7 @@
 
 .summary .table th {
     width: 50%;
-    min-width: 240px;
+    min-width: 150px;
 }
 
 .summary .table th,
@@ -107,6 +107,11 @@
     text-align: left;
     padding-top: var(--gap--small);
     padding-bottom: var(--gap--small);
+}
+
+.summary .table tr:first-child th,
+.summary .table tr:first-child td {
+    padding-top: calc(.75 * var(--gap));
 }
 
 .summary hr {
@@ -128,5 +133,11 @@
 @media all and (max-width: 650px) {
     .summary {
         padding: var(--gap--small) 0;
+    }
+}
+
+@media all and (min-width: 650px) {
+    .summary__header {
+        /*padding: 1em var(--gap);*/
     }
 }
