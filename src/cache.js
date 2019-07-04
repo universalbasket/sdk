@@ -37,8 +37,8 @@ async function pollDefault(sdk, CACHE_CONFIG) {
 async function fetchAndSave(sdk, { key: outputKey, sourceInputKeys }) {
     try {
         const sourceInputs = sourceInputKeys.map(key => ({ key, data: Storage.get('input', key) }));
-        const { data: cacheData = null } = await sdk.getPreviousJobOutputs(sourceInputs) || {};
-        const cache = cacheData && cacheData.find(c => c.key === outputKey) || null;
+        const result = await sdk.getPreviousJobOutputs(sourceInputs, outputKey);
+        const cache = result.data && result.data[0];
 
         if (cache) {
             Storage.set('cache', cache.key, cache.data);

@@ -80,6 +80,7 @@ export async function createApp({ mountPoint, pages, cache = [], layout, error, 
 
     for (const [key, data] of Object.entries(input)) {
         Storage.set('input', key, data);
+        Cache.poll(sdk, cache, key);
     }
 
     const mainSelector = '#main';
