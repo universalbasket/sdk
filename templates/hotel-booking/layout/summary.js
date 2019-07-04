@@ -38,7 +38,7 @@ function SummaryDetails({ outputs, inputs }) {
                 <table class="table">
                     ${ outputs.priceBreakdown.map(i => html`
                         <tr>
-                            <th>${ i.description } ${ i.type ? '· ' + templates.priceType(i.type) : '' }</th>
+                            <th>${ i.description } ${ i.type ? '· ' + priceType(i.type) : '' }</th>
                             <td>${ templates.priceDisplay(i.price) }</td>
                         </tr>`) }
                 </table>
@@ -76,6 +76,19 @@ function valueLabel(code) {
         case 'free-breakfast': return 'Breakfast included';
         case 'free-internet': return 'Wi-fi';
         default: return code;
+    }
+}
+
+function priceType(type) {
+    switch (type) {
+        case 'vat': return 'VAT';
+        case 'total-now': return 'pay now';
+        case 'total-later': return 'pay later';
+        case 'total-later-supplier': return 'pay later';
+        case 'total-overall': return 'TOTAL';
+        case 'total-overall-supplier': return 'TOTAL';
+        case 'others': return '';
+        default: return type.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
     }
 }
 
