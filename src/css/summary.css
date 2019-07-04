@@ -7,6 +7,7 @@
 .summary__header {
     font-size: var(--font-size--large);
     padding: 1em var(--gap);
+    line-height: 1.5;
 }
 
 .summary__header--toggable {
@@ -43,13 +44,16 @@
 }
 
 .summary__block {
-    padding: .5em 0 1.5em;
+    padding: 0 0 1em;
     line-height: 1.6;
 }
 
 .summary__block-title {
     font-weight: bold;
     font-size: var(--font-size);
+    border-bottom: 1px solid var(--hr-color);
+    padding: var(--gap--small) 0;
+    line-height: 1.4;
 }
 
 .summary__price {

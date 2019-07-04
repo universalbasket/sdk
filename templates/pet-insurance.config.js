@@ -1,4 +1,4 @@
-import { header, summary, notFound, footer } from './pet-insurance/layout/index.js';
+import { header, summary, footer } from './pet-insurance/layout/index.js';
 import {
     aboutYou,
     checkout,
@@ -12,7 +12,8 @@ import {
     selectedCoverOptions,
     summaryPage
 } from './pet-insurance/sections/index.js';
-import error from './shared/error.js';
+import error from './pet-insurance/error.js';
+import notFound from './pet-insurance/not-found.js';
 
 export default {
     layout: {
