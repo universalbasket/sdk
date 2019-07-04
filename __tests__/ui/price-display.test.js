@@ -6,7 +6,7 @@ function wrap(price) {
     return wrapper;
 }
 
-describe.only('PriceDisplay UI', () => {
+describe('PriceDisplay UI', () => {
     describe('Unhappy case', () => {
         it('renders empty when no arg passed', () => {
             const result = wrap();
