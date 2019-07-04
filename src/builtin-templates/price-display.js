@@ -1,28 +1,27 @@
-import { html } from '/web_modules/lit-html/lit-html.js';
 import getSymbolFromCurrency from '/web_modules/currency-symbol-map.js';
 
 function template(price) {
     if (!price) {
-        return '';
+        return document.createTextNode('');
     }
 
     const currencySymbol = getSymbolFromCurrency(price.currencyCode);
 
     if (currencySymbol && typeof price.value === 'undefined') {
-        return html`${currencySymbol} &middot;`;
+        return document.createTextNode(`${currencySymbol} &middot;`);
     }
 
     if (isNaN(Number(price.value))) {
-        return '';
+        return document.createTextNode('');
     }
 
     const value = (price.value * 0.01).toFixed(2);
 
-    return price.value === 0 ?
-        html`FREE` :
-        currencySymbol ?
-            html`${currencySymbol}${value}` :
-            html`${value}${price.currencyCode}`;
+    if (price.value === 0) {
+        return document.createTextNode('FREE');
+    }
+
+    return document.createTextNode(currencySymbol ? `${currencySymbol}${value}` : `${value}${price.currencyCode}`);
 }
 
 export default template;

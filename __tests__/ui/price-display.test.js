@@ -1,100 +1,63 @@
 import PriceDisplay from '@/src/builtin-templates/price-display.js';
 
+function wrap(price) {
+    const wrapper = document.createElement('div');
+    wrapper.appendChild(PriceDisplay(price));
+    return wrapper;
+}
+
 describe('PriceDisplay UI', () => {
     describe('Unhappy case', () => {
         it('renders empty when no arg passed', () => {
-            const result = PriceDisplay();
-            expect(result).toBe('');
-            expect(result.type).toBe(undefined);
+            const result = wrap();
+
+            expect(result.textContent).toBe('');
         });
 
         it('renders empty when unexpected arg passed', () => {
-            const result = PriceDisplay(1000);
+            const result = wrap(1000);
 
-            expect(result).toBe('');
-            expect(result.type).toBe(undefined);
+            expect(result.textContent).toBe('');
         });
 
         it('renders empty; when value currency symbol both undefined', () => {
-            const result = PriceDisplay({
-                currencyCode: 'idk'
-            });
+            const result = wrap({ currencyCode: 'idk' });
 
-            expect(result).toBe('');
-            expect(result.type).toBe(undefined);
+            expect(result.textContent).toBe('');
         });
     });
 
     describe('Happy case', () => {
         it('renders currency symbol and price value', () => {
-            const result = PriceDisplay({
-                value: 999,
-                currencyCode: 'gbp'
-            });
+            const result = wrap({ value: 999, currencyCode: 'gbp' });
 
-            expect(result).toMatchSnapshot({
-                processor: expect.any(Object),
-                strings: ['', '', ''],
-                type: 'html',
-                values: ['£', '9.99']
-            });
+            expect(result.textContent).toBe('£9.99');
         });
 
         it('renders FREE when value is zero', () => {
-            const result = PriceDisplay({
-                value: 0,
-                currencyCode: 'gbp'
-            });
+            const result = wrap({ value: 0, currencyCode: 'gbp' });
 
-            expect(result).toMatchSnapshot({
-                processor: expect.any(Object),
-                strings: ['FREE'],
-                type: 'html',
-                values: []
-            });
+            expect(result.textContent).toBe('FREE');
         });
 
         it('renders 0.00 when value is \'zero\'', () => {
-            const result = PriceDisplay({
-                value: '0',
-                currencyCode: 'gbp'
-            });
+            const result = wrap({ value: '0', currencyCode: 'gbp' });
 
-            expect(result).toMatchSnapshot({
-                processor: expect.any(Object),
-                strings: ['', '', ''],
-                type: 'html',
-                values: ['£', '0.00']
-            });
+            expect(result.textContent).toBe('£0.00');
         });
     });
 
     describe('Partial case', () => {
         it('renders currency symbol with &middot; when value is undefined', () => {
-            const result = PriceDisplay({
-                currencyCode: 'gbp'
-            });
+            const result = wrap({ currencyCode: 'gbp' });
 
-            expect(result).toMatchSnapshot({
-                processor: expect.any(Object),
-                strings: ['', ' &middot;'],
-                type: 'html',
-                values: ['£']
-            });
+            expect(result.textContent).toBe('£ &middot;');
         });
 
         it('renders currencyCode; when currency symbol is undefined', () => {
-            const result = PriceDisplay({
-                currencyCode: 'idk',
-                value: 999
-            });
+            const result = PriceDisplay({ currencyCode: 'idk', value: 999 });
 
-            expect(result).toMatchSnapshot({
-                processor: expect.any(Object),
-                strings: ['', '', ''],
-                type: 'html',
-                values: ['9.99', 'idk']
-            });
+            expect(result.textContent).toBe('9.99idk');
         });
     });
 });
