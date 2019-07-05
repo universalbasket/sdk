@@ -80,8 +80,9 @@ export async function createApp({ mountPoint, pages, cache = [], layout, error, 
 
     for (const [key, data] of Object.entries(input)) {
         Storage.set('input', key, data);
-        Cache.poll(sdk, cache, key);
     }
+
+    Cache.populate(sdk, cache);
 
     const mainSelector = '#main';
 
@@ -137,7 +138,7 @@ export async function createApp({ mountPoint, pages, cache = [], layout, error, 
 
     //custom event when input submitted
     window.addEventListener('newInputs', e => {
-        e.detail && e.detail.forEach(({ key }) => Cache.poll(sdk, cache, key));
+        e.detail && e.detail.forEach(({ key }) => Cache.populate(sdk, cache, key));
         summary.update();
     });
 
@@ -161,7 +162,7 @@ function afterSdkInitiated(sdk, summary, cacheConfig, local) {
         }
     }
 
-    Cache.poll(sdk, cacheConfig);
+    Cache.populate(sdk, cacheConfig);
     summary.update();
 }
 
