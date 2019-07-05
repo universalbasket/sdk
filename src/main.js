@@ -15,13 +15,15 @@ import progressBar from './builtin-templates/progress-bar.js';
 import file from './builtin-templates/file-download.js';
 import flashError from './builtin-templates/flash-error.js';
 import markup from './builtin-templates/get-markup.js';
+import hostedPaymentCardForm from './builtin-templates/hosted-payment-card-form.js';
 
 export const templates = {
     modal,
     priceDisplay,
     progressBar,
     file,
-    markup
+    markup,
+    hostedPaymentCardForm
 };
 
 function validatePages(pages) {
