@@ -1,49 +1,34 @@
 import * as Storage from './storage.js';
 
-export function poll(sdk, CACHE_CONFIG, newInputKey) {
-    if (!newInputKey) {
-        pollDefault(sdk, CACHE_CONFIG);
-    }
+const fetchingKeys = new Set(); // Ensure that requests for a particular key aren't duplicated.
 
-    const { inputs } = Storage.getAll();
-    CACHE_CONFIG.forEach(config => {
-        if (config.sourceInputKeys.includes[newInputKey]) {
-            const readyToFetch = config.sourceInputKeys.every(input => inputs[input]);
-            if (readyToFetch) {
-                fetchAndSave(sdk, config);
-            }
-        }
-    });
+function has(obj, key) {
+    return Object.prototype.hasOwnProperty.call(obj, key);
 }
 
-async function pollDefault(sdk, CACHE_CONFIG) {
-    const DEFAULT_KEYS = CACHE_CONFIG.filter(config => config.sourceInputKeys.length === 0).map(config => config.key);
+export async function populate(sdk, CACHE_CONFIG) {
+    const { inputs, cache } = Storage.getAll();
 
-    try {
-        const previousJobOutputs = await sdk.getPreviousJobOutputs();
-        const previousJobOutputsData = previousJobOutputs && previousJobOutputs.data || [];
+    for (const { key: outputKey, sourceInputKeys } of CACHE_CONFIG) {
+        if (!has(cache, outputKey) && !fetchingKeys.has(outputKey) && sourceInputKeys.every(key => has(inputs, key))) {
+            try {
+                console.log('Fetching previous job outputs for:', outputKey);
 
-        for (const { key, data } of previousJobOutputsData) {
-            if (DEFAULT_KEYS.includes(key)) {
-                Storage.set('cache', key, data);
+                const sourceInputs = sourceInputKeys.map(key => ({ key, data: Storage.get('input', key) }));
+
+                fetchingKeys.add(outputKey);
+
+                const result = await sdk.getPreviousJobOutputs(sourceInputs, outputKey);
+                const cache = result.data && result.data[0];
+
+                if (cache) {
+                    Storage.set('cache', cache.key, cache.data);
+                }
+            } catch (error) {
+                console.error('failed to fetch cache', error);
+            } finally {
+                fetchingKeys.delete(outputKey);
             }
         }
-    } catch (error) {
-        console.error('failed to fetch default cache', error);
-    }
-}
-
-
-async function fetchAndSave(sdk, { key: outputKey, sourceInputKeys }) {
-    try {
-        const sourceInputs = sourceInputKeys.map(key => ({ key, data: Storage.get('input', key) }));
-        const { data: cacheData = null } = await sdk.getPreviousJobOutputs(sourceInputs) || {};
-        const cache = cacheData && cacheData.find(c => c.key === outputKey) || null;
-
-        if (cache) {
-            Storage.set('cache', cache.key, cache.data);
-        }
-    } catch (err) {
-        console.error('failed to fetch cache', err);
     }
 }
