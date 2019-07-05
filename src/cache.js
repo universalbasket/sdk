@@ -19,17 +19,15 @@ export async function populate(sdk, CACHE_CONFIG) {
                 fetchingKeys.add(outputKey);
 
                 const result = await sdk.getPreviousJobOutputs(sourceInputs, outputKey);
-
-                fetchingKeys.delete(outputKey);
-
                 const cache = result.data && result.data[0];
 
                 if (cache) {
                     Storage.set('cache', cache.key, cache.data);
                 }
             } catch (error) {
-                fetchingKeys.delete(outputKey);
                 console.error('failed to fetch cache', error);
+            } finally {
+                fetchingKeys.delete(outputKey);
             }
         }
     }
