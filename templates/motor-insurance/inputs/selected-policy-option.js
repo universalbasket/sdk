@@ -17,6 +17,12 @@ export default function selectedPolicyOption(name, key, output) {
         return '';
     }
 
+    function moreInfo(output) {
+        const fragment = document.createDocumentFragment();
+        fragment.append(...output.details.contents.map(output => templates.markup(output)));
+        templates.modal(fragment, { title: output.details.name }).show();
+    }
+
     return html`
     <div class="field">
         <span class="field__name">${name}</span>
@@ -59,7 +65,7 @@ export default function selectedPolicyOption(name, key, output) {
                     <div class="field-item__details">
                         <strong>${o.name}</strong>
                         <span
-                            @click=${ () => templates.modal(html`${ o.details.contents.map(templates.markup) }`, { title: o.details.name }).show() }
+                            @click=${ () => moreInfo(o) }
                             class="clickable">more info</span>
                         <br>
                         ${o.priceLine}
