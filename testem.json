@@ -1,0 +1,18 @@
+{
+  "test_page": "tests/test.html",
+  "launch_in_ci": [
+    "Chromium"
+  ],
+  "launch_in_dev": [
+    "Chrome"
+  ],
+  "browser_args": {
+    "Chromium": [
+      "--headless",
+      "--disable-gpu",
+      "--remote-debugging-port=9222",
+      "--privileged",
+      "--no-sandbox"
+    ]
+  }
+}
