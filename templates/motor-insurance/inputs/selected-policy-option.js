@@ -1,4 +1,5 @@
-import { html, templates } from '/src/main.js';
+import { html } from '/web_modules/lit-html/lit-html.js';
+import { templates } from '/src/main.js';
 
 function showCoverOptions(key) {
     document.querySelector(`#${key}-options-list`).style.display = 'block';
@@ -11,7 +12,7 @@ function hideCoverOptions(key) {
     document.querySelector(`#${key}-option-null`).checked = true;
 }
 
-export default (name, key, output) => {
+export default function selectedPolicyOption(name, key, output) {
     if (!output) {
         return '';
     }
@@ -79,4 +80,4 @@ export default (name, key, output) => {
         </div>
     </div>
     `;
-};
+}
