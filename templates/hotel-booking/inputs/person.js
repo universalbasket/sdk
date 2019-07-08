@@ -1,4 +1,4 @@
-import { html } from '/src/main.js';
+import { html } from '/web_modules/lit-html/lit-html.js';
 
 // https://protocol.automationcloud.net/HotelBooking#Person
 export default (prefix = '') => html`

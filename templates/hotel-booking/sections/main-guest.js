@@ -1,4 +1,4 @@
-import { html } from '/src/main.js';
+import { html } from '/web_modules/lit-html/lit-html.js';
 import { MainGuest } from '../inputs/index.js';
 
 // https://protocol.automationcloud.net/HotelBooking#MainGuest
