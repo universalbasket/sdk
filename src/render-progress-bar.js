@@ -16,7 +16,9 @@ class ProgressBar {
         if (!target) {
             throw new Error(`ProgressBar constructor: element for given ${this.selector} not found`);
         }
-        target.innerHTML = '';
+        while (target.lastChild) {
+            target.removeChild(target.lastChild);
+        }
         target.appendChild(progressBarTemplate(this.titles, activeLabel, activeStep));
     }
 }

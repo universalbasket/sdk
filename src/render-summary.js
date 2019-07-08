@@ -24,10 +24,15 @@ export default class Summary {
         if (this.bodyTemplate) {
             const { inputs, outputs, cache, _ } = Storage.getAll();
 
-            this.currentTarget.innerHTML = '';
+            while (this.currentTarget.lastChild) {
+                this.currentTarget.removeChild(this.currentTarget.lastChild);
+            }
+
             this.currentTarget.appendChild(this.bodyTemplate({ inputs, outputs, cache, sdk: this.sdk, _ }));
 
-            this.prevTarget.innerHTML = '';
+            while (this.prevTarget.lastChild) {
+                this.prevTarget.removeChild(this.prevTarget.lastChild);
+            }
         }
     }
 }

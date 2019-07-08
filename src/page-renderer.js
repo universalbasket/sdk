@@ -50,7 +50,11 @@ class PageRenderer {
             return form;
         });
         const target = document.querySelector('#target');
-        target.innerHTML = '';
+
+        while (target.lastChild) {
+            target.removeChild(target.lastChild);
+        }
+
         target.append(...wrappers);
 
         this.next();
@@ -60,7 +64,12 @@ class PageRenderer {
         const section = this.sectionsToRender.shift();
         if (!section) {
             console.info('PageRenderer next: no section to render.');
-            document.querySelector(this.selector).innerHTML = '';
+            const container = document.querySelector(this.selector);
+
+            while (container.lastChild) {
+                container.removeChild(container.lastChild);
+            }
+
             return this.onFinish();
         }
 
@@ -206,7 +215,10 @@ class PageRenderer {
 
         getDataForSection(waitFor)
             .then(res => {
-                sectionForm.innerHTML = '';
+                while (sectionForm.firstChild) {
+                    sectionForm.removeChild(sectionForm.firstChild);
+                }
+
                 sectionForm.appendChild(template(elementName, res, skip, this.sdk));
 
                 setupForm(sectionForm);
