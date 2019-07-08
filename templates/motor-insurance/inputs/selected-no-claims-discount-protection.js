@@ -1,4 +1,5 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
+
 const key = 'selected-no-claims-discount-protection';
 
 export default function selectedNoClaimsDiscountProtection(output) {
@@ -6,7 +7,6 @@ export default function selectedNoClaimsDiscountProtection(output) {
         return '';
     }
 
-    // TODO fix output's HTML and use SELECTEDPOLICYOPTION template instead
     const protection = output[0];
 
     return html`
