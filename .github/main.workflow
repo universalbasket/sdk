@@ -44,13 +44,13 @@ action "Pull request: npm install" {
 }
 
 action "Pull request: npm test" {
-  uses = "actions/npm@59b64a598378f31e49cb76f27d6f3312b582f680"
+  uses = "./.github/test-chrome"
   args = "test"
   needs = ["Pull request: npm install"]
 }
 
 action "Pull request: npm run check" {
   uses = "actions/npm@59b64a598378f31e49cb76f27d6f3312b582f680"
-  needs = ["Pull request: npm install"]
   args = "run check"
+  needs = ["Pull request: npm install"]
 }
