@@ -1,9 +1,9 @@
-import { html } from '/src/main.js';
-
+import { html } from '/web_modules/lit-html/lit-html.js';
+import render from '../render.js';
 import { Installation } from '../inputs/index.js';
 
-export default (name, data) => {
-    return html`
+export default function installation(name, data) {
+    return render(html`
         ${Installation(data.installationOptions)}
 
         <div class="section__actions">
@@ -11,5 +11,6 @@ export default (name, data) => {
                 type="button"
                 class="button button--right button--primary"
                 id="submit-btn-${name}">Continue</button>
-        </div>`;
-};
+        </div>
+    `);
+}
