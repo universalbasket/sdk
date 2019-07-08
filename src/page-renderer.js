@@ -1,12 +1,11 @@
 import kebabcase from '/web_modules/lodash.kebabcase.js';
-import { html, render } from '/web_modules/lit-html/lit-html.js';
 import { serializeForm , getFormInputKeys } from './serialize-form.js';
 import pageWrapper from './builtin-templates/page-wrapper.js';
 import defaultLoadingTemplate from './builtin-templates/loading.js';
 import flashError from './builtin-templates/flash-error.js';
 import * as Storage from './storage.js';
 import getDataForSection from './get-data-for-section.js';
-import * as main from './main.js';
+import { createInputs } from './main.js';
 import setupForm from './setup-form.js';
 
 const VAULT_FORM_SELECTOR = '#ubio-vault-form';
@@ -44,9 +43,16 @@ class PageRenderer {
 
     renderWrapper() {
         document.querySelector(this.selector).innerHTML = pageWrapper();
-        const wrappers = this.sectionsToRender.map(s => html`<form id="section-form-${s.elementName}"></form>`);
 
-        render(html`${wrappers}`, document.querySelector('#target'));
+        const wrappers = this.sectionsToRender.map(section => {
+            const form = document.createElement('form');
+            form.id = `section-form-${section.elementName}`;
+            return form;
+        });
+        const target = document.querySelector('#target');
+        target.innerHTML = '';
+        target.append(...wrappers);
+
         this.next();
     }
 
@@ -54,7 +60,7 @@ class PageRenderer {
         const section = this.sectionsToRender.shift();
         if (!section) {
             console.info('PageRenderer next: no section to render.');
-            render(html``, document.querySelector(this.selector));
+            document.querySelector(this.selector).innerHTML = '';
             return this.onFinish();
         }
 
@@ -143,7 +149,7 @@ class PageRenderer {
             }
         }
 
-        return main.createInputs(this.sdk, inputs)
+        return createInputs(this.sdk, inputs)
             .then(() => {
                 if (cardTokenSent) {
                     Storage.del('_', 'cardToken');
@@ -200,7 +206,8 @@ class PageRenderer {
 
         getDataForSection(waitFor)
             .then(res => {
-                render(html`${template(elementName, res, skip, this.sdk)} `, sectionForm);
+                sectionForm.innerHTML = '';
+                sectionForm.appendChild(template(elementName, res, skip, this.sdk));
 
                 setupForm(sectionForm);
                 this.addListeners(elementName);

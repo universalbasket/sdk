@@ -1,4 +1,3 @@
-import { render } from '/web_modules/lit-html/lit-html.js';
 import progressBarTemplate from './builtin-templates/progress-bar.js';
 
 class ProgressBar {
@@ -17,7 +16,8 @@ class ProgressBar {
         if (!target) {
             throw new Error(`ProgressBar constructor: element for given ${this.selector} not found`);
         }
-        render(progressBarTemplate(this.titles, activeLabel, activeStep), target);
+        target.innerHTML = '';
+        target.appendChild(progressBarTemplate(this.titles, activeLabel, activeStep));
     }
 }
 
