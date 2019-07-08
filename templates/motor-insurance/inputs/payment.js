@@ -1,16 +1,16 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
-import Person from './payment-person.js';
-import Address from './payment-address.js';
-import PaymentCardIframe from '../../generic/payment-card-iframe.js';
+import PaymentCard from './payment-card.js';
+import Address from './address.js';
+import Person from './person.js';
 
 export default function payment(otp) {
     return html`
         <h2>Billing address</h2>
-        ${Person()}
-        ${Address()}
+        ${Person('payment')}
+        ${Address('payment')}
 
         <hr>
         <h2>Card details</h2>
-        ${PaymentCardIframe(otp)}
+        ${PaymentCard(otp)}
     `;
 }

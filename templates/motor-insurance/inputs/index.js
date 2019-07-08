@@ -1,15 +1,15 @@
-import account from './account.js';
-import selectedPaymentTerm from './selected-payment-term.js';
-import selectedNoClaimsDiscountProtection from './selected-no-claims-discount-protection.js';
-import selectedPolicyOption from './selected-policy-option.js';
-import selectedVoluntaryExcess from './selected-voluntary-excess.js';
-import payment from './payment.js';
+import Account from './account.js';
+import SelectedPaymentTerm from './selected-payment-term.js';
+import SelectedNoClaimsDiscountProtection from './selected-no-claims-discount-protection.js';
+import SelectedPolicyOption from './selected-policy-option.js';
+import SelectedVoluntaryExcess from './selected-voluntary-excess.js';
+import Payment from './payment.js';
 
 export {
-    account,
-    selectedPaymentTerm,
-    selectedNoClaimsDiscountProtection,
-    selectedPolicyOption,
-    selectedVoluntaryExcess,
-    payment
+    Account,
+    SelectedPaymentTerm,
+    SelectedNoClaimsDiscountProtection,
+    SelectedPolicyOption,
+    SelectedVoluntaryExcess,
+    Payment
 };

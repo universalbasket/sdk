@@ -1,6 +1,6 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
 import render from '../render.js';
-import { selectedPaymentTerm, selectedNoClaimsDiscountProtection } from '../inputs/index.js';
+import { SelectedPaymentTerm, SelectedNoClaimsDiscountProtection } from '../inputs/index.js';
 
 export default function quote(name, options) {
     const {
@@ -22,8 +22,8 @@ export default function quote(name, options) {
 
         <br>
 
-        ${selectedPaymentTerm(availablePaymentTerms)}
-        ${selectedNoClaimsDiscountProtection(availableNoClaimsDiscountProtection)}
+        ${SelectedPaymentTerm(availablePaymentTerms)}
+        ${SelectedNoClaimsDiscountProtection(availableNoClaimsDiscountProtection)}
 
         <div class="section__actions">
             <button
