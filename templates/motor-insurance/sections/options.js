@@ -1,8 +1,23 @@
-import { html } from '/src/main.js';
+import { html } from '/web_modules/lit-html/lit-html.js';
+import render from '../render.js';
 import { selectedPolicyOption, selectedNoClaimsDiscountProtection, selectedVoluntaryExcess } from '../inputs/index.js';
 
-export default (name, { availableNoClaimsDiscountProtection, availableVoluntaryExcesses, availableLegalCovers, availableExcessProtectCovers, availablePersonalInjuryCovers, availableCarHireCovers, availableBreakdownCovers, availableWindscreenCovers, availableKeyReplacementCovers, availableMisfuelCovers, serviceName }) => {
-    return html`
+export default function options(name, options) {
+    const {
+        availableNoClaimsDiscountProtection,
+        availableVoluntaryExcesses,
+        availableLegalCovers,
+        availableExcessProtectCovers,
+        availablePersonalInjuryCovers,
+        availableCarHireCovers,
+        availableBreakdownCovers,
+        availableWindscreenCovers,
+        availableKeyReplacementCovers,
+        availableMisfuelCovers,
+        serviceName
+    } = options;
+
+    return render(html`
         <p>Please select the options you are interested in adding to your ${serviceName} motor insurance policy:</p>
 
         ${selectedVoluntaryExcess(availableVoluntaryExcesses)}
@@ -24,5 +39,6 @@ export default (name, { availableNoClaimsDiscountProtection, availableVoluntaryE
                 type="button"
                 class="button button--right button--primary"
                 id="submit-btn-${name}">Continue</button>
-        </div>`;
-};
+        </div>
+    `);
+}

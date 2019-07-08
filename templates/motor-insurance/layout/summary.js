@@ -1,12 +1,15 @@
-import { html, classMap, templates } from '/src/main.js';
+import { html } from '/web_modules/lit-html/lit-html.js';
+import { classMap } from '/web_modules/lit-html/directives/class-map.js';
+import render from '../render.js';
+import { templates } from '/src/main.js';
 import paymentTermLabel from '../inputs/selected-payment-term-label.js';
 
 export default {
     MobileTemplate: ({ inputs = {}, outputs = {}, cache = {}, /*local = {},*/ sdk, _ }) => {
-        return MobileSummaryWrapper({ inputs, outputs, cache, sdk, _ });
+        return render(MobileSummaryWrapper({ inputs, outputs, cache, sdk, _ }));
     },
     DesktopTemplate: ({ inputs = {}, outputs = {}, cache = {}, /*local = {},*/ sdk, _ }) => {
-        return DesktopSummaryWrapper({ inputs, outputs, cache, sdk, _ });
+        return render(DesktopSummaryWrapper({ inputs, outputs, cache, sdk, _ }));
     }
 };
 

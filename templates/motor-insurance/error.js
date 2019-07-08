@@ -12,7 +12,7 @@ const errorMessage = {
 
 const defaultErrorMessage = `You can retry or get in touch with us at ${emailAddress}.`;
 
-export default (selector, sdk) => {
+export default function error(selector, sdk) {
     return {
         init() {
             const element = document.querySelector(selector);
@@ -32,4 +32,4 @@ export default (selector, sdk) => {
             );
         }
     };
-};
+}

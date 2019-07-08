@@ -1,14 +1,16 @@
-import finalPriceConsent from '../../generic/final-price-consent.js';
-import { createInputs, templates, html } from '/src/main.js';
+import finalPriceConsentGeneric from '../../generic/final-price-consent.js';
+import { createInputs, templates } from '/src/main.js';
+import { html } from '/web_modules/lit-html/lit-html.js';
+import render from '../render.js';
 
-export default (name, { selectedRooms, finalPrice }, skip, sdk) => {
+export default function finalPriceConcent(name, { selectedRooms, finalPrice }, skip, sdk) {
     const finalValue = finalPrice.price.value;
     const estimatedPrice = selectedRooms[0] && selectedRooms[0].price || {};
     const estimatedValue = estimatedPrice.value || 0;
 
     if (finalValue > estimatedValue) {
         //template to just display on modal
-        const template = html`
+        const template = render(html`
             <p class="dim">The final price has changed and will be:</p>
             <b class="large">${ templates.priceDisplay(finalPrice.price) }</b>
             <div class="section__actions">
@@ -21,7 +23,7 @@ export default (name, { selectedRooms, finalPrice }, skip, sdk) => {
                     class="button button--right button--primary"
                     id="submit-btn-${name}">Confirm and pay</button>
             </div>
-        `;
+        `);
 
         const modal = templates.modal(template, { title: 'Price check', isLocked: true });
         modal.show();
@@ -34,7 +36,7 @@ export default (name, { selectedRooms, finalPrice }, skip, sdk) => {
         });
 
         // return input field to the main form
-        return finalPriceConsent(finalPrice);
+        return render(finalPriceConsentGeneric(finalPrice));
     }
 
     createInputs(sdk, { finalPriceConsent: finalPrice })
@@ -42,4 +44,4 @@ export default (name, { selectedRooms, finalPrice }, skip, sdk) => {
             skip();
             return '';
         });
-};
+}

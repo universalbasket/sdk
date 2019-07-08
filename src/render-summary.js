@@ -1,4 +1,3 @@
-import { render } from '/web_modules/lit-html/lit-html.js';
 import * as Storage from './storage.js';
 
 export default class Summary {
@@ -25,9 +24,15 @@ export default class Summary {
         if (this.bodyTemplate) {
             const { inputs, outputs, cache, _ } = Storage.getAll();
 
-            render(this.bodyTemplate({ inputs, outputs, cache, sdk: this.sdk, _ }), this.currentTarget);
+            while (this.currentTarget.lastChild) {
+                this.currentTarget.removeChild(this.currentTarget.lastChild);
+            }
 
-            this.prevTarget.innerHTML = '';
+            this.currentTarget.appendChild(this.bodyTemplate({ inputs, outputs, cache, sdk: this.sdk, _ }));
+
+            while (this.prevTarget.lastChild) {
+                this.prevTarget.removeChild(this.prevTarget.lastChild);
+            }
         }
     }
 }

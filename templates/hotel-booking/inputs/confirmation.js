@@ -1,7 +1,10 @@
-import { html } from '/src/main.js';
+import { html } from '/web_modules/lit-html/lit-html.js';
 
-export default () => html`
-    <div>
-        <h4>Confirmation</h4>
-        <p>Thanks for your booking!</p>
-    </div>`;
+export default function configmation() {
+    return html`
+        <div>
+            <h4>Confirmation</h4>
+            <p>Thanks for your booking!</p>
+        </div>
+    `;
+}

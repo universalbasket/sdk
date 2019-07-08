@@ -1,8 +1,10 @@
-import { html, templates } from '/src/main.js';
+import { html } from '/web_modules/lit-html/lit-html.js';
+import render from '../render.js';
+import { templates } from '/src/main.js';
 //import { } from '../inputs/index.js';
 
-export default (name, { statements }) => {
-    return html`
+export default function statements(name, { statements }) {
+    return render(html`
         <hr>
         <h2>Statements</h2>
         <div class="form__section">
@@ -13,5 +15,6 @@ export default (name, { statements }) => {
                     class="button button--right button--primary"
                     id="submit-btn-${ name }">Continue</button>
             </div>
-        </div>`;
-};
+        </div>
+    `);
+}

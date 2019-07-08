@@ -1,6 +1,8 @@
-import { html } from '/src/main.js';
+import { html } from '/web_modules/lit-html/lit-html.js';
+import render from '../render.js';
 
-export default (name, { confirmation }) => html`
+export default function confirmation(_name, { confirmation }) {
+    return render(html`
         <div>
             <p class="large">
                 <b>Purchase complete. Thank you.</b>
@@ -13,5 +15,5 @@ export default (name, { confirmation }) => html`
                 <a href="/" class="button button--primary">Finish</a>
             </p>
         </div>
-    `
-;
+    `);
+}

@@ -1,4 +1,4 @@
-import { html } from '/src/main.js';
+import { html } from '/web_modules/lit-html/lit-html.js';
 
 export default (prefix = 'address') => html`
 <div name="${prefix}" class="filed-set">

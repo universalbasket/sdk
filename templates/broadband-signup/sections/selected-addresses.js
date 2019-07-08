@@ -1,9 +1,10 @@
-import { html, render } from '/src/main.js';
+import { html } from '/web_modules/lit-html/lit-html.js';
+import render from '../render.js';
 let installationAddresses = [];
 
-export default (name, { availableAddresses, availableInstallationAddresses }) => {
+export default function selectedAddresses(name, { availableAddresses, availableInstallationAddresses }) {
     installationAddresses = availableInstallationAddresses;
-    return html`
+    return render(html`
         <div class="field field-set">
             <span class="field__name">Select Your Address</span>
             <select name="selected-address" @change="${onChange}" required>
@@ -15,8 +16,9 @@ export default (name, { availableAddresses, availableInstallationAddresses }) =>
 
         <div class="section__actions">
             <button type="button" class="button button--right button--primary" id="submit-btn-${name }">Continue</button>
-        </div>`;
-};
+        </div>
+    `);
+}
 
 function onChange(e) {
     const selectedAddress = e.target.value;
@@ -50,5 +52,5 @@ function InstallationAddress(address, similarAddresses) {
             <option>select address...</option>
             ${ similarAddresses.map(address => html`<option value="${ address }"> ${ address }</option>`) }
         </select>
-        `;
+    `;
 }

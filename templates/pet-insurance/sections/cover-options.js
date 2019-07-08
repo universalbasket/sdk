@@ -1,10 +1,13 @@
-import { html } from '/src/main.js';
+import { html } from '/web_modules/lit-html/lit-html.js';
+import render from '../render.js';
 import { selectedCoverOptions } from '../inputs/index.js';
 
-export default (name, { availableCoverOptions }) => html`
-    ${selectedCoverOptions(availableCoverOptions)}
+export default function coverOptions(name, { availableCoverOptions }) {
+    return render(html`
+        ${selectedCoverOptions(availableCoverOptions)}
 
-    <div class="section__actions">
-        <button type="button" class="button button--right button--primary" id="submit-btn-${name}">Continue</button>
-    </div>
-`;
+        <div class="section__actions">
+            <button type="button" class="button button--right button--primary" id="submit-btn-${name}">Continue</button>
+        </div>
+    `);
+}

@@ -1,7 +1,4 @@
 import Router from './router.js';
-import { render, html } from '/web_modules/lit-html/lit-html.js';
-import { classMap } from '/web_modules/lit-html/directives/class-map.js';
-import { until } from '/web_modules/lit-html/directives/until.js';
 
 import * as Storage from './storage.js';
 import * as Cache from './cache.js';
@@ -25,13 +22,6 @@ export const templates = {
     progressBar,
     file,
     markup
-};
-
-export {
-    html,
-    render,
-    classMap,
-    until
 };
 
 function validatePages(pages) {

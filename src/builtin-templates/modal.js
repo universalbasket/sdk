@@ -24,7 +24,11 @@ export default function create(body, { title = '', isLocked = false } = {}) {
 }
 
 function close() {
-    document.getElementById('modal').innerHTML = '';
+    const $modal = document.getElementById('modal');
+
+    while ($modal.lastChild) {
+        $modal.removeChild($modal.lastChild);
+    }
 }
 
 function wrap(details, title, isLocked) {
