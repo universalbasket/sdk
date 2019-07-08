@@ -223,6 +223,9 @@ describe('get-markup', () => {
             expect(result).toBeInstanceOf(HTMLSpanElement);
             expect(result.children.length).toBe(1);
             expect(result.firstChild).toBeInstanceOf(HTMLAnchorElement);
+            // This only "works" in jsdom. A working implementation will create
+            // a different URL for the same blob each time it is called, so this
+            // can only be tested by fetching the URL and comparing the blobs.
             expect(result.firstChild.href).toBe(URL.createObjectURL(blob));
             expect(result.firstChild.target).toBe('_blank');
             expect(result.firstChild.rel).toBe('noopener');
