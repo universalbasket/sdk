@@ -1,53 +1,96 @@
-import { html } from '/web_modules/lit-html/lit-html.js';
 import createModal from '@/src/builtin-templates/modal.js';
 
-describe('Modal UI', () => {
-    it('has empty templateResult when no args passed', () => {
-        const modal = createModal();
-        expect(modal).toEqual(expect.objectContaining({
-            close: expect.any(Function),
-            fake: expect.any(Function),
-            templateResult: undefined
-        }));
+describe('modal', () => {
+    let $modal;
+
+    beforeEach(() => {
+        $modal = document.createElement('div');
+        $modal.id = 'modal';
+
+        document.body.appendChild($modal);
     });
 
-    it('renders a string', () => {
-        const string = '<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>';
-        const modal = createModal(string);
-        expect(modal.templateResult.values).toContain(string);
+    afterEach(() => {
+        $modal.remove();
     });
 
-    it('renders template result', () => {
-        const HTML = html`<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce posuere erat elit, sed tincidunt velit venenatis ac. Vivamus vel nulla orci. Etiam mattis, mauris eget tristique blandit, arcu tellus condimentum nisl, eget dictum libero dolor in erat. Quisque placerat mattis maximus. Cras et fringilla lorem. Vivamus sed rutrum neque. Aliquam pulvinar sem eros, accumsan eleifend est finibus in. Ut et nisl vitae est condimentum faucibus. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Ut at ex at lacus varius aliquam.</p>`;
-        const modal = createModal(HTML);
-        expect(modal.templateResult.values).toContain(HTML);
+    it('does nothing when given no content', () => {
+        createModal().show();
+
+        expect($modal.children.length).toBe(0);
     });
 
-    it('renders template result and title', () => {
-        const HTML = html`<p>Lorem ipsum dolor sit amet.</p>`;
-        const modal = createModal(HTML, { title: 'title' });
+    it('renders a given DOM element within a wrapper', () => {
+        const el = document.createElement('p');
 
-        expect(modal.templateResult.values)
-            .toEqual(expect.arrayContaining([
-                expect.objectContaining({
-                    values: expect.arrayContaining(['title'])
-                }),
-                HTML
-            ]));
+        createModal(el).show();
+
+        const wrapper = $modal.querySelector('.modal-wrapper');
+
+        expect(wrapper).toBeInstanceOf(HTMLDivElement);
+
+        expect(wrapper.contains(el)).toBe(true);
     });
 
-    it('renders with .modal--locked', () => {
-        const HTML = html`<p>Lorem ipsum dolor sit amet.</p>`;
-        const modal = createModal(HTML, { title: 'title', isLocked: true });
+    it('renders a given title to an h2 element in the wrapper', () => {
+        const el = document.createElement('p');
 
-        expect(modal.templateResult.values)
-            .toEqual(expect.arrayContaining([
-                'modal--locked',
-                expect.objectContaining({
-                    values: expect.arrayContaining(['title']),
-                    type: 'html'
-                }),
-                HTML
-            ]));
+        createModal(el, { title: 'a title' }).show();
+
+        const header = $modal.querySelector('.modal-wrapper h2');
+
+        expect(header.textContent).toBe('a title');
+    });
+
+
+    it('does not add the "modal-wrapper--hidden" class when the hidden option to show is not truthy', () => {
+        const el = document.createElement('p');
+
+        createModal(el).show();
+
+        const wrapper = $modal.querySelector('.modal-wrapper');
+
+        expect(wrapper.classList.contains('modal-wrapper--hidden')).toBe(false);
+    });
+
+    it('adds the "modal-wrapper--hidden" class when the hidden option to show is truthy', () => {
+        const el = document.createElement('p');
+
+        createModal(el).show({ hidden: true });
+
+        const wrapper = $modal.querySelector('.modal-wrapper');
+
+        expect(wrapper.classList.contains('modal-wrapper--hidden')).toBe(true);
+    });
+
+    it('removes the modal content when close is called', () => {
+        const el = document.createElement('p');
+
+        const modal = createModal(el);
+
+        modal.show();
+        modal.close();
+
+        expect($modal.innerHTML).toBe('');
+    });
+
+    it('removes the modal when the overlay element is clicked', () => {
+        const el = document.createElement('p');
+
+        createModal(el).show({ hidden: true });
+
+        $modal.querySelector('.modal-wrapper__overlay').click();
+
+        expect($modal.innerHTML).toBe('');
+    });
+
+    it('removes the modal when the close button is clicked', () => {
+        const el = document.createElement('p');
+
+        createModal(el).show({ hidden: true });
+
+        $modal.querySelector('.modal__close').click();
+
+        expect($modal.innerHTML).toBe('');
     });
 });

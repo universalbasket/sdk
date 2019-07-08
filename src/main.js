@@ -114,8 +114,8 @@ export async function createApp({ mountPoint, pages, cache = [], layout, error, 
     const router = Router(routes, layout.notFound(mainSelector));
 
     mountPoint.innerHTML = Layout();
-    render(layout.header(), document.querySelector('#header'));
-    render(layout.footer(), document.querySelector('#footer'));
+    document.querySelector('#header').appendChild(layout.header());
+    document.querySelector('#footer').appendChild(layout.footer());
 
     const summary = new Summary(sdk);
 
@@ -182,8 +182,10 @@ function addTracker(sdk) {
                 return;
             }
 
-            const iframeContent = modal(html`<iframe src="${res.url}"></iframe>`, { isLocked: true });
-            iframeContent.fake();
+            const iframe = document.createElement('iframe');
+            iframe.src = res.url;
+            const iframeContent = modal(iframe, { isLocked: true });
+            iframeContent.show({ hidden: true });
             tdsTimeout = setTimeout(() => iframeContent.show(), 5000);
         }
 
