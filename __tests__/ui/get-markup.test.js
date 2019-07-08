@@ -231,5 +231,24 @@ describe('get-markup', () => {
             expect(result.firstChild.rel).toBe('noopener');
             expect(result.firstChild.textContent).toBe(file.name);
         });
+
+        it('defaults to using the filename when the name field is not given', async () => {
+            delete file.name;
+            const result = getMarkup(file, sdkMock);
+            const blob = new Blob(['Hello, world!'], { type : 'text/plain' });
+
+            await fileDeferred.resolve(blob);
+
+            expect(result).toBeInstanceOf(HTMLSpanElement);
+            expect(result.children.length).toBe(1);
+            expect(result.firstChild).toBeInstanceOf(HTMLAnchorElement);
+            // This only "works" in jsdom. A working implementation will create
+            // a different URL for the same blob each time it is called, so this
+            // can only be tested by fetching the URL and comparing the blobs.
+            expect(result.firstChild.href).toBe(URL.createObjectURL(blob));
+            expect(result.firstChild.target).toBe('_blank');
+            expect(result.firstChild.rel).toBe('noopener');
+            expect(result.firstChild.textContent).toBe(file.filename);
+        });
     });
 });
