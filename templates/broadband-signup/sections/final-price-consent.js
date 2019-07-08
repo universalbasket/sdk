@@ -1,4 +1,4 @@
-import finalPriceConsentGeneric from '../../generic/final-price-consent.js';
+import finalPriceConsentGeneric from '../inputs/final-price-consent.js';
 import { html } from '/web_modules/lit-html/lit-html.js';
 import render from '../render.js';
 import { createInputs, templates } from '/src/main.js';
