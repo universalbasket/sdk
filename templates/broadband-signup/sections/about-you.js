@@ -1,8 +1,7 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
 import render from '../render.js';
 
-import { ContactPerson, SelectedMarketingContactOptions } from '../inputs/index.js';
-import Account from '../../generic/account.js';
+import { ContactPerson, Account, SelectedMarketingContactOptions } from '../inputs/index.js';
 
 export default function aboutYou(name, _data = {}) {
     return render(html`
