@@ -1,4 +1,4 @@
-import { html } from '/src/main.js';
+import { html } from '/web_modules/lit-html/lit-html.js';
 import Person from './payment-person.js';
 import Address from './payment-address.js';
 import PaymentCardIframe from '../../generic/payment-card-iframe.js';
