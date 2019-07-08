@@ -1,5 +1,3 @@
-import { html } from '/web_modules/lit-html/lit-html.js';
-
 const BASE_URL = 'https://vault.automationcloud.net/forms/index.html';
 const DEFAULT_OPTIONS = {
     fields: 'pan,name,expiry-select,cvv',
@@ -19,14 +17,13 @@ export default (otp, formOptions = {}, formStyles = {}) => {
         .map(key => `&${key}=${options[key]}`)
         .join('');
 
-    const src = `${BASE_URL}?otp=${otp}${optionsString}`;
+    const iframe = document.createElement('iframe');
+    iframe.src = `${BASE_URL}?otp=${otp}${optionsString}`;
 
-    return html`
-        <iframe
-            id="ubio-vault-form"
-            width="${formStyles.width ? formStyles.width : '100%' }"
-            height="${formStyles.height ? formStyles.height : 380}"
-            scrolling="${formStyles.scrolling ? formStyles.scrolling : 'no'}"
-            src="${src}">
-        </iframe>`;
+    iframe.id = 'ubio-vault-form';
+    iframe.width = formStyles.width ? formStyles.width : '100%';
+    iframe.height = formStyles.height ? formStyles.height : 380;
+    iframe.scrolling = formStyles.scrolling ? formStyles.scrolling : 'no';
+
+    return iframe;
 };
