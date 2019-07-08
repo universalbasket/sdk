@@ -1,7 +1,7 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
 import render from '../render.js';
-import finalPriceConsentGeneric from '../../generic/final-price-consent.js';
-import { createInputs, templates } from '/src/main.js';
+import finalPriceConsentGeneric from '../inputs/final-price-consent.js';
+import { createInputs, templates, html } from '/src/main.js';
 
 export default function finalPriceConsent(name, { estimatedPrice = {}, finalPrice = {} }, skip, sdk) {
     const finalValue = finalPrice.price && finalPrice.price.value;
