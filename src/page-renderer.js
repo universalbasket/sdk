@@ -92,6 +92,12 @@ class PageRenderer {
 
             if (sectionForm && !sectionForm.reportValidity()) {
                 flashError().show();
+
+                const vaultIframe = document.querySelector(VAULT_FORM_SELECTOR);
+                if (vaultIframe) {
+                    vaultIframe.contentWindow.postMessage('vault.submit', '*');
+                }
+
                 return;
             }
 
@@ -268,11 +274,9 @@ function submitVaultForm(sdk, vaultIframe) {
         function receiveOutput({ data: message }) {
             if (message.name === 'vault.validation') {
                 if (message.data.isValid) {
-                    flashError().hide();
-                } else {
-                    flashError().show();
+                    window.removeEventListener('message', receiveOutput);
                 }
-                window.removeEventListener('message', receiveOutput);
+                flashError().hide();
                 return;
             }
 
@@ -282,7 +286,6 @@ function submitVaultForm(sdk, vaultIframe) {
             }
 
             if (message.name === 'vault.validationError') {
-                window.removeEventListener('message', receiveOutput);
                 return reject(message.name);
             }
 
