@@ -45,10 +45,57 @@ Then when you submitting a form, it will camel-case the keys and serialize the f
 
 ### Using the hosted payment card form
 
-Plase see [docs](https://docs.automationcloud.net/docs/vaulting-payment-card#section-using-the-hosted-payment-card-form) for more information.
+All payment cards must be vaulted and tokenised before you can use them with the Automation Cloud services. For more details, please read our [docs](https://docs.automationcloud.net/docs/vaulting-payment-card).
 
-The embedded card form's URL is https://vault.automationcloud.net/forms/index.html.
-You must provide valid OTP as a parameter when you embed the form. Consider the following example:
+We've integrated our [hosted payment form](https://docs.automationcloud.net/docs/vaulting-payment-card#section-using-the-hosted-payment-card-form) as a template for your convenience. Consider the following example:
+
+```
+import { templates } from '/src/main.js';
+
+function hostedForm(otp) {
+    // Styling and configuring the form
+    // https://docs.automationcloud.net/docs/vaulting-payment-card#section-styling-and-configuring-the-form
+    const formConfiguration = {
+        // css (optional). An absolute URL
+        //
+        // https://docs.automationcloud.net/docs/vaulting-payment-card#section-css-optional-
+        css: 'https://ubio-application-bundle-dummy-server.glitch.me/style.css',
+
+        // fields (optional)
+        // https://docs.automationcloud.net/docs/vaulting-payment-card#section-fields-optional-
+        // https://docs.automationcloud.net/docs/vaulting-payment-card#section-interacting-with-the-form
+        //
+        // The form has 4 fields: name, pan (card number), expiry date, cvv.
+        // - change the order of fields
+        // - change the labels for fields
+        // - specify expiry date fields to be input (expiry) or select (expiry-select)
+        fields: 'pan,name,expiry-select,cvv',
+
+        // brands (optional).
+        //
+        // restricts aaceptable card brands list
+        brands: 'visa,mastercard,amex',
+
+        // validateOnInput (optional).
+        //
+        // 'on' to ebables form validation on input: whenever each field is updated, you receive the validation result message and an .invalid class gets added or removed accordingly
+        // 'off' disables form validation on user input, form will still be validated on submit
+        // Any other values will be ignored and the value will be set to 'off'.
+        validateOnInput: 'on'
+    };
+
+    const iframeStyles = {
+        width: '100%',
+        height: 380,
+        scrolling: 'no'
+    };
+
+    return templates.hostedPaymentCardForm(otp, formConfiguration, iframeStyles);
+}
+```
+
+You must provide valid OTP as a parameter when you embed the form.
+Consider the following example. Here, `waitFor: ['_.otp']` insures that the `checkout` template receives the `otp`.
 ```
     pages: [
         ...,
@@ -67,9 +114,3 @@ You must provide valid OTP as a parameter when you embed the form. Consider the 
         ...
     ]
 ```
-
-You need to style and configure your payment form separately, by providing the options via query parameters.
-The `css` parameter takes the absolute URL to your CSS file, you need to host it separately.
-See [doc](https://docs.automationcloud.net/docs/vaulting-payment-card#section-styling-and-configuring-the-form) for more details.
-
-
