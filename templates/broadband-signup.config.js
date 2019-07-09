@@ -36,7 +36,7 @@ export default {
         },
         {
             key: 'installationOptions',
-            sourceInputKeys: []
+            sourceInputKeys: ['selectedTvPackages']
         },
         {
             key: 'oneOffCosts',

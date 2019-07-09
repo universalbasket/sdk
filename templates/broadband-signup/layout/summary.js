@@ -12,9 +12,9 @@ export default {
     }
 };
 
-function SummaryDetails({ outputs, inputs, sdk }) {
-    const priceObj = outputs.oneOffCosts && outputs.oneOffCosts.contents.find(o => o.name.match(/pay now/i));
-    const next = outputs.oneOffCosts && outputs.oneOffCosts.contents.find(o => o.name.match(/next bill/i));
+function SummaryDetails({ outputs, inputs, cache, sdk }) {
+    const priceObj = cache.oneOffCosts && cache.oneOffCosts.contents.find(o => o.name.match(/pay now/i));
+    const next = cache.oneOffCosts && cache.oneOffCosts.contents.find(o => o.name.match(/next bill/i));
     const selectedTvPackages = inputs.selectedTvPackages && inputs.selectedTvPackages.map(_ => _.name).join(', ');
 
     return html`
@@ -46,12 +46,12 @@ function SummaryDetails({ outputs, inputs, sdk }) {
             </ul>
         </article>
 
-        ${outputs.oneOffCosts ? html`
-            <h4>${outputs.oneOffCosts.name}</h4>
+        ${cache.oneOffCosts ? html`
+            <h4>${cache.oneOffCosts.name}</h4>
             <article class="summary__block summary__block--bordered">
 
                 <table class="table">
-                    ${outputs.oneOffCosts.contents.map(o => html`
+                    ${cache.oneOffCosts.contents.map(o => html`
                         <tr>
                             <th>${o.name}</th>
                             <td>${templates.priceDisplay(o.price)}</td>
@@ -60,12 +60,12 @@ function SummaryDetails({ outputs, inputs, sdk }) {
             </article>` : ''}
 
 
-        ${outputs.monthlyCosts ? html`
-            <h4>${outputs.monthlyCosts.name}</h4>
+        ${cache.monthlyCosts ? html`
+            <h4>${cache.monthlyCosts.name}</h4>
             <article class="summary__block summary__block--bordered">
 
                 <table class="table">
-                    ${outputs.monthlyCosts.contents.map(o => html`
+                    ${cache.monthlyCosts.contents.map(o => html`
                         <tr>
                             <th>${o.name}</th>
                             <td>${templates.priceDisplay(o.price)}</td>
