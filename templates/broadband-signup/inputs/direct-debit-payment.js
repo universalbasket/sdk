@@ -12,8 +12,7 @@ export default function paymentDirectDebit() {
                 <input
                     type="text"
                     name="direct-debit[sort-code]"
-                    placeholder="56-00-29"
-                    pattern="\d{2}-?\d{2}-?\d{2}"
+                    placeholder="560029"
                     required />
             </div>
 
@@ -25,7 +24,6 @@ export default function paymentDirectDebit() {
                     type="text"
                     name="direct-debit[account-number]"
                     placeholder="26207729"
-                    pattern="\d{8}"
                     required />
             </div>
 
