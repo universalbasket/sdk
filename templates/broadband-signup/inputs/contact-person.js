@@ -1,5 +1,5 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
-import Person from '../../generic/person.js';
+import Person from './person.js';
 
 export default function contactPerson() {
     return html`

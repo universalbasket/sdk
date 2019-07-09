@@ -1,5 +1,5 @@
 import { header, summary, footer } from './hotel-booking/layout/index.js';
-import { checkout, confirmation, finalPriceConsent, rooms } from './hotel-booking/sections/index.js';
+import { checkout, mainGuest, confirmation, finalPriceConsent, rooms } from './hotel-booking/sections/index.js';
 import error from './hotel-booking/error.js';
 import notFound from './hotel-booking/not-found.js';
 
@@ -21,6 +21,18 @@ export default {
                     name: 'rooms',
                     template: rooms,
                     waitFor: ['output.availableRooms']
+                }
+            ]
+        },
+        {
+            name: 'main-guest',
+            route: '/main-guest',
+            title: 'Main guest details',
+            sections: [
+                {
+                    name: 'main-guest',
+                    template: mainGuest,
+                    waitFor: []
                 }
             ]
         },

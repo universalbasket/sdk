@@ -92,6 +92,12 @@ class PageRenderer {
 
             if (sectionForm && !sectionForm.reportValidity()) {
                 flashError().show();
+
+                const vaultIframe = document.querySelector(VAULT_FORM_SELECTOR);
+                if (vaultIframe) {
+                    vaultIframe.contentWindow.postMessage('vault.submit', '*');
+                }
+
                 return;
             }
 
@@ -121,10 +127,7 @@ class PageRenderer {
         }
 
         if (vaultIframe) {
-            return isVaultFormValid(vaultIframe)
-                .then(() => {
-                    return submitVaultForm(this.sdk, vaultIframe);
-                })
+            return submitVaultForm(this.sdk, vaultIframe)
                 .then(({ cardToken, panToken }) => {
                     Storage.del('_', 'otp');
                     Storage.set('_', 'cardToken', cardToken);
@@ -259,29 +262,6 @@ class PageRenderer {
     }
 }
 
-function isVaultFormValid(vaultIframe) {
-    return new Promise((resolve, reject) => {
-        if (!vaultIframe) {
-            reject('vault form not found');
-        }
-        window.addEventListener('message', receiveValidation);
-        vaultIframe.contentWindow.postMessage('vault.validate', '*');
-
-        function receiveValidation({ data: message }) {
-            if (message.name === 'vault.validation') {
-                if (message.data.isValid) {
-                    resolve(message.data);
-                } else {
-                    console.warn(message.data);
-                    reject('Please check payment details.');
-                }
-
-                window.removeEventListener('message', receiveValidation);
-            }
-        }
-    });
-}
-
 function submitVaultForm(sdk, vaultIframe) {
     return new Promise((resolve, reject) => {
         if (!vaultIframe) {
@@ -292,13 +272,20 @@ function submitVaultForm(sdk, vaultIframe) {
         vaultIframe.contentWindow.postMessage('vault.submit', '*');
 
         function receiveOutput({ data: message }) {
+            if (message.name === 'vault.validation') {
+                if (message.data.isValid) {
+                    window.removeEventListener('message', receiveOutput);
+                }
+                flashError().hide();
+                return;
+            }
+
             if (message.name === 'vault.output') {
                 window.removeEventListener('message', receiveOutput);
                 return resolve(message.data);
             }
 
             if (message.name === 'vault.validationError') {
-                window.removeEventListener('message', receiveOutput);
                 return reject(message.name);
             }
 

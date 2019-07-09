@@ -23,6 +23,15 @@ function SummaryDetails({ outputs, inputs, sdk }) {
     return html`
     <div class="summary__body">
         <article class="summary__block">
+            <div class="dim">
+                ${inputs.selectedPaymentTerm ? html`Payment term: <b>${paymentTermLabel(inputs.selectedPaymentTerm)}</b>` : ''}
+                ${inputs.selectedNoClaimsDiscountProtection ? html`
+                    <p>
+                        ${inputs.selectedNoClaimsDiscountProtection.name}:<br>
+                        <b>${inputs.selectedNoClaimsDiscountProtection.priceLine}</b>
+                    </p>` : ''}
+            </div>
+        <article class="summary__block">
              <ul class="dim">
                 ${outputs.vehicleDetails ? html`
                     <b>Vehicle details</b>
@@ -42,11 +51,6 @@ function SummaryDetails({ outputs, inputs, sdk }) {
                     </li>` : ''}
             </ul>
         </article>
-
-        <div class="dim">
-            ${inputs.selectedPaymentTerm ? html`<p>Payment term: <b>${paymentTermLabel(inputs.selectedPaymentTerm)}</b></p>` : ''}
-            ${inputs.selectedNoClaimsDiscountProtection ? html`<p>No claims discount protection: <b>${inputs.selectedNoClaimsDiscountProtection}</b></p>` : ''}
-        </div>
 
         ${outputs.priceBreakdown ? html`
             <h4>${outputs.priceBreakdown.name}</h4>

@@ -1,7 +1,7 @@
-import payment from './payment.js';
-import confirmation from './confirmation.js';
+import Payment from './payment.js';
+import MainGuest from './main-guest.js';
 
 export {
-    payment,
-    confirmation
+    Payment,
+    MainGuest
 };

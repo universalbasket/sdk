@@ -1,6 +1,6 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
-import Person from '../../generic/person.js';
-import Address from '../../generic/address.js';
+import Person from './person.js';
+import Address from './address.js';
 
 export default function directDebit() {
     return html`
@@ -16,7 +16,6 @@ export default function directDebit() {
             </div>
 
             ${Person('direct-debit[account-holder]')}
-
             ${Address('direct-debit[account-holder-address]')}
 
             <div class="field">

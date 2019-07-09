@@ -1,53 +1,53 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
 
-export default function paymentAddress() {
+export default function paymentAddress(prefix = '') {
     return html`
         <div class="field">
             <label
                 class="field__name"
-                for="payment[address][postcode]">Post Code</label>
+                for="${prefix}[address][postcode]">Post Code</label>
             <input
                 type="text"
-                name="payment[address][postcode]"
+                name="${prefix}[address][postcode]"
                 required />
         </div>
         <div class="field">
             <label
                 class="field__name"
-                for="payment[address][line1]">Line 1</label>
+                for="${prefix}[address][line1]">Line 1</label>
             <input
                 type="text"
                 placeholder="Clerkenwell Close"
-                name="payment[address][line1]"
+                name="${prefix}[address][line1]"
                 required />
         </div>
         <div class="field">
             <label
                 class="field__name"
-                for="payment[address][line2]">Line 2</label>
+                for="${prefix}[address][line2]">Line 2</label>
             <input
                 type="text"
-                name="payment[address][line2]" />
+                name="${prefix}[address][line2]" />
         </div>
         <div class="field">
             <label
                 class="field__name"
-                for="payment[address][city]">City</label>
+                for="${prefix}[address][city]">City</label>
             <input
                 type="text"
-                name="payment[address][city]"
+                name="${prefix}[address][city]"
                 required />
         </div>
         <div class="field">
             <label
                 class="field__name"
-                for="payment[address][countrySubdivision]">County</label>
+                for="${prefix}[address][countrySubdivision]">County</label>
             <input
                 type="text"
-                name="payment[address][countrySubdivision]"
+                name="${prefix}[address][countrySubdivision]"
                 required />
         </div>
 
-        <input type="hidden" name="payment[address][countryCode]" value="gb">
+        <input type="hidden" name="${prefix}[address][countryCode]" value="gb">
     `;
 }

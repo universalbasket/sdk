@@ -42,7 +42,7 @@
     grid-gap: var(--gap);
     justify-content: start;
     align-items: center;
-    padding: var(--gap) 0;
+    padding: var(--gap--small) 0;
     margin: var(--gap) 0;
     font-weight: bold;
     line-height: 1.5;

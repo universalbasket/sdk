@@ -1,6 +1,6 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
-import Person from '../../generic/person.js';
-import Address from './payment-address.js';
+import Person from './person.js';
+import Address from './address.js';
 
 export default function paymentDirectDebit() {
     return html`

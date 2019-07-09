@@ -1,5 +1,6 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
 import render from '../render.js';
+
 let installationAddresses = [];
 
 export default function selectedAddresses(name, { availableAddresses, availableInstallationAddresses }) {
@@ -42,7 +43,7 @@ function onChange(e) {
 
 function InstallationAddress(address, similarAddresses) {
     if (address) {
-        return html`<input type="hidden" name="selected-installation-address" value="${address }" />`;
+        return html`<input type="hidden" name="selected-installation-address" value="${address}" />`;
     }
 
     return html`
