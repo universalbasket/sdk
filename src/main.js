@@ -1,7 +1,4 @@
 import Router from './router.js';
-import { render, html } from '/web_modules/lit-html/lit-html.js';
-import { classMap } from '/web_modules/lit-html/directives/class-map.js';
-import { until } from '/web_modules/lit-html/directives/until.js';
 
 import * as Storage from './storage.js';
 import * as Cache from './cache.js';
@@ -18,20 +15,15 @@ import progressBar from './builtin-templates/progress-bar.js';
 import file from './builtin-templates/file-download.js';
 import flashError from './builtin-templates/flash-error.js';
 import markup from './builtin-templates/get-markup.js';
+import hostedPaymentCardForm from './builtin-templates/hosted-payment-card-form.js';
 
 export const templates = {
     modal,
     priceDisplay,
     progressBar,
     file,
-    markup
-};
-
-export {
-    html,
-    render,
-    classMap,
-    until
+    markup,
+    hostedPaymentCardForm
 };
 
 function validatePages(pages) {

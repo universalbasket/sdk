@@ -1,4 +1,4 @@
-import { html, render } from '/src/main.js';
+import { html, render } from '/web_modules/lit-html/lit-html.js';
 
 let availableBreedTypes;
 let animalType;
@@ -21,7 +21,7 @@ const breedTypeHandler = {
     // capture, passive, and once.
 };
 
-export default data => {
+export default function petsSelectedBreedType(data) {
     availableBreedTypes = data;
 
     return html`
@@ -273,5 +273,6 @@ export default data => {
                     </div>
                 </div>
             </div>
-        </div>`;
-};
+        </div>
+    `;
+}

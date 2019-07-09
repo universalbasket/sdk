@@ -1,4 +1,6 @@
-import { html, templates } from '/src/main.js';
+import { html } from '/web_modules/lit-html/lit-html.js';
+import { templates } from '/src/main.js';
+import render from '../render.js';
 
 function valueLi(code) {
     switch (code) {
@@ -9,8 +11,8 @@ function valueLi(code) {
     }
 }
 
-export default (name, { availableRooms }) => {
-    return html`
+export default function rooms(name, { availableRooms }) {
+    return render(html`
         <div class="field field--list" data-error="Please select a room">
             <span class="field__name">Select a room</span>
             ${ availableRooms.map((room, i) => html`
@@ -45,5 +47,6 @@ export default (name, { availableRooms }) => {
                 type="button"
                 class="button button--right button--primary"
                 id="submit-btn-${ name }">Continue</button>
-        </div>`;
-};
+        </div>
+    `);
+}

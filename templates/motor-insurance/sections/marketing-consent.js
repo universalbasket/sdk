@@ -1,9 +1,11 @@
-import { html } from '/src/main.js';
+import { html } from '/web_modules/lit-html/lit-html.js';
+import render from '../render.js';
 //import { } from '../inputs/index.js';
 
-export default (name, { availableMarketingContactOptions }) => {
+export default function marketingConsent(name, { availableMarketingContactOptions }) {
     const key = 'selected-marketing-contact-options';
-    return html`
+
+    return render(html`
         <hr>
         <h2>Marketing consent</h2>
         <p>
@@ -36,5 +38,6 @@ export default (name, { availableMarketingContactOptions }) => {
                     class="button button--right button--primary"
                     id="submit-btn-${name}">Continue</button>
             </div>
-        </div>`;
-};
+        </div>
+    `);
+}

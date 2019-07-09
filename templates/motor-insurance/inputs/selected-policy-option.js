@@ -1,9 +1,9 @@
-import { html, templates } from '/src/main.js';
+import { html } from '/web_modules/lit-html/lit-html.js';
+import { templates } from '/src/main.js';
 
 function showCoverOptions(key) {
     document.querySelector(`#${key}-options-list`).style.display = 'block';
     document.querySelector(`#${key}-option-null`).checked = false;
-    console.info(`#${key}-options-list`, document.querySelector(`#${key}-options-list`));
 }
 
 function hideCoverOptions(key) {
@@ -11,9 +11,15 @@ function hideCoverOptions(key) {
     document.querySelector(`#${key}-option-null`).checked = true;
 }
 
-export default (name, key, output) => {
+export default function selectedPolicyOption(name, key, output) {
     if (!output) {
         return '';
+    }
+
+    function moreInfo(output) {
+        const fragment = document.createDocumentFragment();
+        fragment.append(...output.details.contents.map(output => templates.markup(output)));
+        templates.modal(fragment, { title: output.details.name }).show();
     }
 
     return html`
@@ -58,7 +64,7 @@ export default (name, key, output) => {
                     <div class="field-item__details">
                         <strong>${o.name}</strong>
                         <span
-                            @click=${ () => templates.modal(html`${ o.details.contents.map(templates.markup) }`, { title: o.details.name }).show() }
+                            @click=${ () => moreInfo(o) }
                             class="clickable">more info</span>
                         <br>
                         ${o.priceLine}
@@ -79,4 +85,4 @@ export default (name, key, output) => {
         </div>
     </div>
     `;
-};
+}

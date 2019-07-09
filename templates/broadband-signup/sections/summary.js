@@ -1,7 +1,9 @@
-import { html, templates } from '/src/main.js';
+import { html } from '/web_modules/lit-html/lit-html.js';
+import render from '../render.js';
+import { templates } from '/src/main.js';
 
-export default (name, { selectedBroadbandPackage, selectedTvPackages, selectedPhonePackage, oneOffCosts, monthlyCosts }) => {
-    return html`
+export default function summary(name, { selectedBroadbandPackage, selectedTvPackages, selectedPhonePackage, oneOffCosts, monthlyCosts }) {
+    return render(html`
         <h2>Summary</h2>
 
         <h3>Your package</h3>
@@ -43,5 +45,6 @@ export default (name, { selectedBroadbandPackage, selectedTvPackages, selectedPh
                 type="button"
                 class="button button--right button--primary"
                 id="submit-btn-${name}">Continue</button>
-        </div>`;
-};
+        </div>
+    `);
+}

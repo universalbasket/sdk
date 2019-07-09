@@ -1,52 +1,53 @@
-import { html } from '/src/main.js';
+import { html } from '/web_modules/lit-html/lit-html.js';
 
-export default (prefix = 'address') => html`
-    <div name="${prefix}" class="filed-set">
+export default function paymentAddress(prefix = '') {
+    return html`
         <div class="field">
             <label
                 class="field__name"
-                for="${prefix}[postcode]">Post Code</label>
+                for="${prefix}[address][postcode]">Post Code</label>
             <input
                 type="text"
-                name="${prefix}[postcode]"
+                name="${prefix}[address][postcode]"
                 required />
         </div>
         <div class="field">
             <label
                 class="field__name"
-                for="${prefix}[line1]">Line 1</label>
+                for="${prefix}[address][line1]">Line 1</label>
             <input
                 type="text"
                 placeholder="Clerkenwell Close"
-                name="${prefix}[line1]"
+                name="${prefix}[address][line1]"
                 required />
         </div>
         <div class="field">
             <label
                 class="field__name"
-                for="${prefix}[line2]">Line 2</label>
+                for="${prefix}[address][line2]">Line 2</label>
             <input
                 type="text"
-                name="${prefix}[line2]" />
+                name="${prefix}[address][line2]" />
         </div>
         <div class="field">
             <label
                 class="field__name"
-                for="${prefix}[city]">City</label>
+                for="${prefix}[address][city]">City</label>
             <input
                 type="text"
-                name="${prefix}[city]"
+                name="${prefix}[address][city]"
                 required />
         </div>
         <div class="field">
             <label
                 class="field__name"
-                for="${prefix}[countrySubdivision]">County</label>
+                for="${prefix}[address][countrySubdivision]">County</label>
             <input
                 type="text"
-                name="${prefix}[countrySubdivision]"
+                name="${prefix}[address][countrySubdivision]"
                 required />
         </div>
 
-        <input type="hidden" name="${prefix}[countryCode]" value="gb">
-    </div>`;
+        <input type="hidden" name="${prefix}[address][countryCode]" value="gb">
+    `;
+}

@@ -1,12 +1,15 @@
-import { html, classMap, templates } from '/src/main.js';
+import { html } from '/web_modules/lit-html/lit-html.js';
+import { classMap } from '/web_modules/lit-html/directives/class-map.js';
+import render from '../render.js';
+import { templates } from '/src/main.js';
 import paymentTermLabel from '../inputs/selected-payment-term-label.js';
 
 export default {
     MobileTemplate: ({ inputs = {}, outputs = {}, cache = {}, /*local = {},*/ sdk, _ }) => {
-        return MobileSummaryWrapper({ inputs, outputs, cache, sdk, _ });
+        return render(MobileSummaryWrapper({ inputs, outputs, cache, sdk, _ }));
     },
     DesktopTemplate: ({ inputs = {}, outputs = {}, cache = {}, /*local = {},*/ sdk, _ }) => {
-        return DesktopSummaryWrapper({ inputs, outputs, cache, sdk, _ });
+        return render(DesktopSummaryWrapper({ inputs, outputs, cache, sdk, _ }));
     }
 };
 
@@ -19,6 +22,15 @@ function SummaryDetails({ outputs, inputs, sdk }) {
 
     return html`
     <div class="summary__body">
+        <article class="summary__block">
+            <div class="dim">
+                ${inputs.selectedPaymentTerm ? html`Payment term: <b>${paymentTermLabel(inputs.selectedPaymentTerm)}</b>` : ''}
+                ${inputs.selectedNoClaimsDiscountProtection ? html`
+                    <p>
+                        ${inputs.selectedNoClaimsDiscountProtection.name}:<br>
+                        <b>${inputs.selectedNoClaimsDiscountProtection.priceLine}</b>
+                    </p>` : ''}
+            </div>
         <article class="summary__block">
              <ul class="dim">
                 ${outputs.vehicleDetails ? html`
@@ -39,11 +51,6 @@ function SummaryDetails({ outputs, inputs, sdk }) {
                     </li>` : ''}
             </ul>
         </article>
-
-        <div class="dim">
-            ${inputs.selectedPaymentTerm ? html`<p>Payment term: <b>${paymentTermLabel(inputs.selectedPaymentTerm)}</b></p>` : ''}
-            ${inputs.selectedNoClaimsDiscountProtection ? html`<p>No claims discount protection: <b>${inputs.selectedNoClaimsDiscountProtection}</b></p>` : ''}
-        </div>
 
         ${outputs.priceBreakdown ? html`
             <h4>${outputs.priceBreakdown.name}</h4>

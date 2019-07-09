@@ -1,7 +1,9 @@
-import finalPriceConsent from '../../generic/final-price-consent.js';
-import { createInputs, templates, html } from '/src/main.js';
+import { html } from '/web_modules/lit-html/lit-html.js';
+import render from '../render.js';
+import finalPriceConsentGeneric from '../inputs/final-price-consent.js';
+import { createInputs, templates } from '/src/main.js';
 
-export default (name, { estimatedPrice = {}, finalPrice = {} }, skip, sdk) => {
+export default function finalPriceConsent(name, { estimatedPrice = {}, finalPrice = {} }, skip, sdk) {
     const finalValue = finalPrice.price && finalPrice.price.value;
     const estimatedValue = estimatedPrice.price && estimatedPrice.price.value;
 
@@ -11,7 +13,7 @@ export default (name, { estimatedPrice = {}, finalPrice = {} }, skip, sdk) => {
 
     if (finalValue > estimatedValue) {
         //template to just display on modal
-        const template = html`
+        const template = render(html`
             <p class="dim">The final price has changed and will be:</p>
             <b class="large">${ templates.priceDisplay(finalPrice.price) }</b>
             <div class="section__actions">
@@ -24,7 +26,7 @@ export default (name, { estimatedPrice = {}, finalPrice = {} }, skip, sdk) => {
                     class="button button--right button--primary"
                     id="submit-btn-${name}">Confirm and pay</button>
             </div>
-        `;
+        `);
 
         const modal = templates.modal(template, { title: 'Price check', isLocked: true });
         modal.show();
@@ -37,7 +39,7 @@ export default (name, { estimatedPrice = {}, finalPrice = {} }, skip, sdk) => {
         });
 
         // return input field to the main form
-        return finalPriceConsent(finalPrice);
+        return render(finalPriceConsentGeneric(finalPrice));
     }
 
     createInputs(sdk, { finalPriceConsent: finalPrice })
@@ -45,4 +47,4 @@ export default (name, { estimatedPrice = {}, finalPrice = {} }, skip, sdk) => {
             skip();
             return '';
         });
-};
+}

@@ -1,9 +1,17 @@
-import { html, templates } from '/src/main.js';
+import { html } from '/web_modules/lit-html/lit-html.js';
+import render from '../render.js';
+import { templates } from '/src/main.js';
 
-export default (name, { policyWording, productInformation, privacyPolicy, statementOfFact }, skip, sdk) => {
+export default function declarations(name, options, _skip, sdk) {
+    const {
+        policyWording,
+        productInformation,
+        privacyPolicy,
+        statementOfFact
+    } = options;
     const statementOfFactFile = statementOfFact.contents.find(item => item.type === 'File');
 
-    return html`
+    return render(html`
         <hr>
         <h2>Declarations</h2>
         <div class="form__section">
@@ -36,5 +44,6 @@ export default (name, { policyWording, productInformation, privacyPolicy, statem
                     class="button button--right button--primary"
                     id="submit-btn-${ name }">Continue</button>
             </div>
-        </div>`;
-};
+        </div>
+    `);
+}

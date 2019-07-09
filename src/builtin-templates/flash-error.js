@@ -15,7 +15,9 @@ export default function create(error) {
             `;
         },
         hide() {
-            el.innerHTML = '';
+            while (el.lastChild) {
+                el.removeChild(el.lastChild);
+            }
         }
     };
 }

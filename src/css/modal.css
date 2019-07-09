@@ -79,3 +79,20 @@
     right: 1em;
     top: 1em;
 }
+
+.modal table {
+    margin: 0;
+    width: 100%;
+    line-height: 1.4;
+}
+
+.modal table th,
+.modal table td {
+    /*    border: 0;
+    text-align: left;
+    padding-top: var(--gap--small);
+    padding-bottom: var(--gap--small);*/
+
+    text-align: left;
+    padding: var(--gap--small) var(--gap);
+}

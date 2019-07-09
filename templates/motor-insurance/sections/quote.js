@@ -1,8 +1,17 @@
-import { html } from '/src/main.js';
-import { selectedPaymentTerm, selectedNoClaimsDiscountProtection } from '../inputs/index.js';
+import { html } from '/web_modules/lit-html/lit-html.js';
+import render from '../render.js';
+import { SelectedPaymentTerm, SelectedNoClaimsDiscountProtection } from '../inputs/index.js';
 
-export default (name, { availablePaymentTerms, availableNoClaimsDiscountProtection, quoteReference, vehicleDetails, statutoryStatusDisclosure }) => {
-    return html`
+export default function quote(name, options) {
+    const {
+        availablePaymentTerms,
+        availableNoClaimsDiscountProtection,
+        quoteReference,
+        vehicleDetails,
+        statutoryStatusDisclosure
+    } = options;
+
+    return render(html`
         <p>
             You're insuring your
             <strong>${vehicleDetails.yearOfManufacture + ' ' + vehicleDetails.make + ' ' + vehicleDetails.model}</strong>
@@ -13,8 +22,8 @@ export default (name, { availablePaymentTerms, availableNoClaimsDiscountProtecti
 
         <br>
 
-        ${selectedPaymentTerm(availablePaymentTerms)}
-        ${selectedNoClaimsDiscountProtection(availableNoClaimsDiscountProtection)}
+        ${SelectedPaymentTerm(availablePaymentTerms)}
+        ${SelectedNoClaimsDiscountProtection(availableNoClaimsDiscountProtection)}
 
         <div class="section__actions">
             <button
@@ -23,5 +32,6 @@ export default (name, { availablePaymentTerms, availableNoClaimsDiscountProtecti
                 id="submit-btn-${name}">Continue</button>
         </div>
 
-        <small><em>${statutoryStatusDisclosure.text}</em></small>`;
-};
+        <small><em>${statutoryStatusDisclosure.text}</em></small>
+    `);
+}

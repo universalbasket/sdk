@@ -1,7 +1,8 @@
-import { html } from '/src/main.js';
+import { html } from '/web_modules/lit-html/lit-html.js';
+import render from '../render.js';
 
-export default (name, { coverSummary }) => {
-    return html`
+export default function summary(name, { coverSummary }) {
+    return render(html`
         <h2>${ coverSummary.name }</h2>
 
         ${ coverSummary.contents.map(part => html`
@@ -20,5 +21,6 @@ export default (name, { coverSummary }) => {
                 type="button"
                 class="button button--right button--primary"
                 id="submit-btn-${name}">Continue</button>
-        </div>`;
-};
+        </div>
+    `);
+}

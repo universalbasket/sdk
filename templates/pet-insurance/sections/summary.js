@@ -1,7 +1,20 @@
-import { templates, html } from '/src/main.js';
+import { html } from '/web_modules/lit-html/lit-html.js';
+import render from '../render.js';
+import { templates } from '/src/main.js';
 
-export default (name, { policyOptions, selectedCoverOptions, selectedCoverType, selectedPaymentTerm, selectedCover, selectedAddress, selectedBreedType, estimatedPrice }) => {
-    return html`
+export default function summary(name, options) {
+    const {
+        policyOptions,
+        selectedCoverOptions,
+        selectedCoverType,
+        selectedPaymentTerm,
+        selectedCover,
+        selectedAddress,
+        selectedBreedType,
+        estimatedPrice
+    } = options;
+
+    return render(html`
         <h2>Summary</h2>
 
         <h3>Your package</h3>
@@ -55,5 +68,6 @@ export default (name, { policyOptions, selectedCoverOptions, selectedCoverType, 
                 type="button"
                 class="button button--right button--primary"
                 id="submit-btn-${name}">Continue</button>
-        </div>`;
-};
+        </div>
+    `);
+}

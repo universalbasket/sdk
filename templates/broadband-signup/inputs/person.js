@@ -1,32 +1,32 @@
-import { html } from '/src/main.js';
+import { html } from '/web_modules/lit-html/lit-html.js';
 
 const TITLES = ['mr', 'ms', 'mrs', 'miss'];
 
-export default () => html`
+export default (prefix = 'person') => html`
     <div class="field">
         <label class="field__name">Title</label>
         <select
-            name="payment[person][title]"
+            name="${prefix}[title]"
             required>
             ${ TITLES.map(t => html`<option value="${ t }">${ t.toUpperCase() }</option>`) }
         </select>
     </div>
 
     <div class="field">
-        <label class="field__name" for="payment[person][first-name]">First Name</label>
+        <label class="field__name" for="${prefix}[first-name]">First Name</label>
         <input
             type="text"
-            name="payment[person][first-name]"
+            name="${prefix}[first-name]"
             pattern="^[A-Za-z]+$"
             data-error="First name should only contain letters (A-Z and a-z)"
             required />
     </div>
 
     <div class="field">
-        <label class="field__name" for="payment[person][last-name]">Last Name</label>
+        <label class="field__name" for="${prefix}[last-name]">Last Name</label>
         <input
             type="text"
-            name="payment[person][last-name]"
+            name="${prefix}[last-name]"
             pattern="^[A-Za-z]+$"
             data-error="Last name should only contain letters (A-Z and a-z)"
             required />
