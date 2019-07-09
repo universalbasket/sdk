@@ -4,7 +4,6 @@ import { templates } from '/src/main.js';
 function showCoverOptions(key) {
     document.querySelector(`#${key}-options-list`).style.display = 'block';
     document.querySelector(`#${key}-option-null`).checked = false;
-    console.info(`#${key}-options-list`, document.querySelector(`#${key}-options-list`));
 }
 
 function hideCoverOptions(key) {
