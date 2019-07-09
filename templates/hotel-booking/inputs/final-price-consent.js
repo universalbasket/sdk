@@ -1,5 +1,5 @@
-import { templates } from '/src/main.js';
 import { html } from '/web_modules/lit-html/lit-html.js';
+import { templates } from '/src/main.js';
 
 export default (finalPrice, hide = true) => {
     return html`

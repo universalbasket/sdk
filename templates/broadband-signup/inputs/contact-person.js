@@ -4,7 +4,7 @@ import Person from './person.js';
 export default function contactPerson() {
     return html`
         <div name="contact-person">
-            ${Person('contact-person[person]')}
+            ${Person('contact-person')}
 
             <div class="field">
                 <label

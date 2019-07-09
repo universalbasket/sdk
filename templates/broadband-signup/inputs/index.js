@@ -1,6 +1,7 @@
 import LandlineCheck from './landline-check.js';
 import LandlineOptions from './landline-options.js';
 import ContactPerson from './contact-person.js';
+import Account from './account.js';
 import CardPayment from './card-payment.js';
 import DirectDebitPayment from './direct-debit-payment.js';
 import Installation from './installation.js';
@@ -14,6 +15,7 @@ export {
     LandlineCheck,
     LandlineOptions,
     ContactPerson,
+    Account,
     CardPayment,
     DirectDebitPayment,
     Installation,
