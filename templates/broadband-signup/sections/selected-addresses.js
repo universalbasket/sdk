@@ -38,7 +38,14 @@ function onChange(e) {
             similarAddresses = installationAddresses;
         }
     }
-    render(InstallationAddress(match, similarAddresses), document.querySelector('#selected-installation-address'));
+
+    const selectedInstallationAddress = document.querySelector('#selected-installation-address');
+
+    while (selectedInstallationAddress.lastChild) {
+        selectedInstallationAddress.removeChild(selectedInstallationAddress.lastChild);
+    }
+
+    selectedInstallationAddress.appendChild(render(InstallationAddress(match, similarAddresses)));
 }
 
 function InstallationAddress(address, similarAddresses) {

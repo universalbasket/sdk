@@ -49,8 +49,7 @@ export default function finalPriceConsent(name, { oneOffCosts = {}, finalPrice =
     }
 
     createInputs(sdk, { finalPriceConsent: finalPrice })
-        .then(() => {
-            skip();
-            return '';
-        });
+        .then(() => skip());
+
+    return render('');
 }
