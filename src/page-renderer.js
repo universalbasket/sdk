@@ -87,6 +87,8 @@ class PageRenderer {
 
         const sectionForm = document.querySelector(`#section-form-${elementName}`);
 
+        sectionForm.scrollIntoView(true);
+
         submitBtn.addEventListener('click', e => {
             flashError().hide();
 
