@@ -1,4 +1,4 @@
-import createModal from '@/src/builtin-templates/modal.js';
+import createModal from '/src/builtin-templates/modal.js';
 
 describe('modal', () => {
     let $modal;
@@ -17,7 +17,7 @@ describe('modal', () => {
     it('does nothing when given no content', () => {
         createModal().show();
 
-        expect($modal.children.length).toBe(0);
+        expect($modal.children.length).to.equal(0);
     });
 
     it('renders a given DOM element within a wrapper', () => {
@@ -27,9 +27,9 @@ describe('modal', () => {
 
         const wrapper = $modal.querySelector('.modal-wrapper');
 
-        expect(wrapper).toBeInstanceOf(HTMLDivElement);
+        expect(wrapper).instanceof(HTMLDivElement);
 
-        expect(wrapper.contains(el)).toBe(true);
+        expect(wrapper.contains(el)).to.equal(true);
     });
 
     it('renders a given title to an h2 element in the wrapper', () => {
@@ -39,7 +39,7 @@ describe('modal', () => {
 
         const header = $modal.querySelector('.modal-wrapper h2');
 
-        expect(header.textContent).toBe('a title');
+        expect(header.textContent).to.equal('a title');
     });
 
 
@@ -50,7 +50,7 @@ describe('modal', () => {
 
         const wrapper = $modal.querySelector('.modal-wrapper');
 
-        expect(wrapper.classList.contains('modal-wrapper--hidden')).toBe(false);
+        expect(wrapper.classList.contains('modal-wrapper--hidden')).to.equal(false);
     });
 
     it('adds the "modal-wrapper--hidden" class when the hidden option to show is truthy', () => {
@@ -60,7 +60,7 @@ describe('modal', () => {
 
         const wrapper = $modal.querySelector('.modal-wrapper');
 
-        expect(wrapper.classList.contains('modal-wrapper--hidden')).toBe(true);
+        expect(wrapper.classList.contains('modal-wrapper--hidden')).to.equal(true);
     });
 
     it('removes the modal content when close is called', () => {
@@ -71,7 +71,7 @@ describe('modal', () => {
         modal.show();
         modal.close();
 
-        expect($modal.innerHTML).toBe('');
+        expect($modal.innerHTML).to.equal('');
     });
 
     it('removes the modal when the overlay element is clicked', () => {
@@ -81,7 +81,7 @@ describe('modal', () => {
 
         $modal.querySelector('.modal-wrapper__overlay').click();
 
-        expect($modal.innerHTML).toBe('');
+        expect($modal.innerHTML).to.equal('');
     });
 
     it('removes the modal when the close button is clicked', () => {
@@ -91,6 +91,6 @@ describe('modal', () => {
 
         $modal.querySelector('.modal__close').click();
 
-        expect($modal.innerHTML).toBe('');
+        expect($modal.innerHTML).to.equal('');
     });
 });
