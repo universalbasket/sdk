@@ -74,8 +74,6 @@ export async function createApp({ mountPoint, pages, cache = [], layout, error, 
         Storage.set('input', key, data);
     }
 
-    Cache.populate(sdk, cache);
-
     const mainSelector = '#main';
 
     //setup router
@@ -115,6 +113,9 @@ export async function createApp({ mountPoint, pages, cache = [], layout, error, 
         summary.setTemplate(match ? layout.summary.MobileTemplate : layout.summary.DesktopTemplate, match);
     });
 
+    Cache.populate(sdk, cache)
+        .then(() => summary.update());
+
     const tracker = addTracker(sdk);
 
     window.addEventListener('hashchange', async () => {
@@ -148,6 +149,7 @@ export async function createApp({ mountPoint, pages, cache = [], layout, error, 
 }
 
 function afterSdkInitiated(sdk, summary, cacheConfig, local) {
+    console.info('afterSdkInitiated');
     if (local) {
         for (const [key, val] of Object.entries(local)) {
             Storage.set('local', key, val);

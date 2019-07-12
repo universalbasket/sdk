@@ -1,4 +1,4 @@
-import flashError from '@/src/builtin-templates/flash-error.js';
+import flashError from '/src/builtin-templates/flash-error.js';
 
 describe('flash-error', () => {
     let flashErrorEl;
@@ -16,19 +16,19 @@ describe('flash-error', () => {
     });
 
     it('appends nothing by default', () => {
-        expect(flashErrorEl.querySelector('.flash-error')).toBe(null);
+        expect(flashErrorEl.querySelector('.flash-error')).to.equal(null);
     });
 
     it('appends the flash error to the #flash-error element when show is called', () => {
         flash.show();
 
-        expect(flashErrorEl.querySelector('.flash-error')).toBeInstanceOf(HTMLElement);
+        expect(flashErrorEl.querySelector('.flash-error')).instanceof(HTMLElement);
     });
 
     it('removes the flash error from the #flash-error element when hide is called', () => {
         flash.show();
         flash.hide();
 
-        expect(flashErrorEl.querySelector('.flash-error')).toBe(null);
+        expect(flashErrorEl.querySelector('.flash-error')).to.equal(null);
     });
 });

@@ -3,7 +3,7 @@ import { createInputs, templates } from '/src/main.js';
 import { html } from '/web_modules/lit-html/lit-html.js';
 import render from '../render.js';
 
-export default function finalPriceConcent(name, { selectedRooms, finalPrice }, skip, sdk) {
+export default function finalPriceConsent(name, { selectedRooms, finalPrice }, skip, sdk) {
     const finalValue = finalPrice.price.value;
     const estimatedPrice = selectedRooms[0] && selectedRooms[0].price || {};
     const estimatedValue = estimatedPrice.value || 0;
@@ -40,8 +40,7 @@ export default function finalPriceConcent(name, { selectedRooms, finalPrice }, s
     }
 
     createInputs(sdk, { finalPriceConsent: finalPrice })
-        .then(() => {
-            skip();
-            return '';
-        });
+        .then(() => skip());
+
+    return render('');
 }

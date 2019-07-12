@@ -1,4 +1,4 @@
-import PriceDisplay from '@/src/builtin-templates/price-display.js';
+import PriceDisplay from '/src/builtin-templates/price-display.js';
 
 function wrap(price) {
     const wrapper = document.createElement('div');
@@ -11,19 +11,19 @@ describe('PriceDisplay UI', () => {
         it('renders empty when no arg passed', () => {
             const result = wrap();
 
-            expect(result.textContent).toBe('');
+            expect(result.textContent).to.equal('');
         });
 
         it('renders empty when unexpected arg passed', () => {
             const result = wrap(1000);
 
-            expect(result.textContent).toBe('');
+            expect(result.textContent).to.equal('');
         });
 
         it('renders empty; when value currency symbol both undefined', () => {
             const result = wrap({ currencyCode: 'idk' });
 
-            expect(result.textContent).toBe('');
+            expect(result.textContent).to.equal('');
         });
     });
 
@@ -31,19 +31,19 @@ describe('PriceDisplay UI', () => {
         it('renders currency symbol and price value', () => {
             const result = wrap({ value: 999, currencyCode: 'gbp' });
 
-            expect(result.textContent).toBe('£9.99');
+            expect(result.textContent).to.equal('£9.99');
         });
 
         it('renders FREE when value is zero', () => {
             const result = wrap({ value: 0, currencyCode: 'gbp' });
 
-            expect(result.textContent).toBe('FREE');
+            expect(result.textContent).to.equal('FREE');
         });
 
         it('renders 0.00 when value is \'zero\'', () => {
             const result = wrap({ value: '0', currencyCode: 'gbp' });
 
-            expect(result.textContent).toBe('£0.00');
+            expect(result.textContent).to.equal('£0.00');
         });
     });
 
@@ -51,13 +51,13 @@ describe('PriceDisplay UI', () => {
         it('renders currency symbol with &middot; when value is undefined', () => {
             const result = wrap({ currencyCode: 'gbp' });
 
-            expect(result.textContent).toBe('£ &middot;');
+            expect(result.textContent).to.equal('£ &middot;');
         });
 
         it('renders currencyCode; when currency symbol is undefined', () => {
             const result = PriceDisplay({ currencyCode: 'idk', value: 999 });
 
-            expect(result.textContent).toBe('9.99idk');
+            expect(result.textContent).to.equal('9.99idk');
         });
     });
 });

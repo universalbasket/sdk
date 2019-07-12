@@ -43,8 +43,7 @@ export default function finalPriceConsent(name, { estimatedPrice = {}, finalPric
     }
 
     createInputs(sdk, { finalPriceConsent: finalPrice })
-        .then(() => {
-            skip();
-            return '';
-        });
+        .then(() => skip());
+
+    return render('');
 }

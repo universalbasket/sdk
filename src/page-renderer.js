@@ -87,6 +87,8 @@ class PageRenderer {
 
         const sectionForm = document.querySelector(`#section-form-${elementName}`);
 
+        sectionForm.scrollIntoView(true);
+
         submitBtn.addEventListener('click', e => {
             flashError().hide();
 
@@ -222,7 +224,13 @@ class PageRenderer {
                     sectionForm.removeChild(sectionForm.firstChild);
                 }
 
-                sectionForm.appendChild(template(elementName, res, skip, this.sdk));
+                const rendered = template(elementName, res, skip, this.sdk);
+
+                if (!(rendered instanceof Node)) {
+                    throw new TypeError(`Invalid template result. Should return a Node, returned: ${rendered}`);
+                }
+
+                sectionForm.appendChild(rendered);
 
                 setupForm(sectionForm);
                 this.addListeners(elementName);

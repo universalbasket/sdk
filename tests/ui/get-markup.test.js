@@ -1,14 +1,14 @@
-import getMarkup from '@/src/builtin-templates/get-markup.js';
-import priceDisplay from '@/src/builtin-templates/price-display.js';
-import Deferred from 'es2015-deferred';
+import getMarkup from '/src/builtin-templates/get-markup.js';
+import priceDisplay from '/src/builtin-templates/price-display.js';
+import Deferred from '/node_modules/es2015-deferred/index.js';
 
 describe('get-markup', () => {
     describe('unknown item type', () => {
         it('renders an empty text node', () => {
             const result = getMarkup({});
 
-            expect(result).toBeInstanceOf(Text);
-            expect(result.length).toBe(0);
+            expect(result).instanceof(Text);
+            expect(result.length).to.equal(0);
         });
     });
 
@@ -22,9 +22,9 @@ describe('get-markup', () => {
 
             const result = getMarkup({ type: 'NamedPrice', name, price });
 
-            expect(result).toBeInstanceOf(HTMLElement);
-            expect(result.textContent).toContain(name);
-            expect(result.textContent).toContain(priceDisplay(price).textContent);
+            expect(result).instanceof(HTMLElement);
+            expect(result.textContent).to.contain(name);
+            expect(result.textContent).to.contain(priceDisplay(price).textContent);
         });
     });
 
@@ -35,9 +35,9 @@ describe('get-markup', () => {
 
             const result = getMarkup({ type: 'NamedText', text, name });
 
-            expect(result).toBeInstanceOf(HTMLElement);
-            expect(result.textContent).toContain(name);
-            expect(result.textContent).toContain(text);
+            expect(result).instanceof(HTMLElement);
+            expect(result.textContent).to.contain(name);
+            expect(result.textContent).to.contain(text);
         });
     });
 
@@ -48,12 +48,12 @@ describe('get-markup', () => {
                 html: '<p>a paragraph</p><span>a span</span>'
             });
 
-            expect(result).toBeInstanceOf(DocumentFragment);
-            expect(result.children.length).toBe(2);
-            expect(result.firstChild).toBeInstanceOf(HTMLParagraphElement);
-            expect(result.firstChild.textContent).toBe('a paragraph');
-            expect(result.lastChild).toBeInstanceOf(HTMLSpanElement);
-            expect(result.lastChild.textContent).toBe('a span');
+            expect(result).instanceof(DocumentFragment);
+            expect(result.children.length).to.equal(2);
+            expect(result.firstChild).instanceof(HTMLParagraphElement);
+            expect(result.firstChild.textContent).to.equal('a paragraph');
+            expect(result.lastChild).instanceof(HTMLSpanElement);
+            expect(result.lastChild.textContent).to.equal('a span');
         });
     });
 
@@ -64,11 +64,11 @@ describe('get-markup', () => {
 
             const result = getMarkup({ type: 'Link', url, name });
 
-            expect(result).toBeInstanceOf(HTMLAnchorElement);
-            expect(result.href).toBe(url);
-            expect(result.target).toBe('_blank');
-            expect(result.rel).toBe('noopener');
-            expect(result.textContent).toBe(name);
+            expect(result).instanceof(HTMLAnchorElement);
+            expect(result.href).to.equal(url);
+            expect(result.target).to.equal('_blank');
+            expect(result.rel).to.equal('noopener');
+            expect(result.textContent).to.equal(name);
         });
     });
 
@@ -78,8 +78,8 @@ describe('get-markup', () => {
 
             const result = getMarkup({ type: 'Text', text });
 
-            expect(result).toBeInstanceOf(HTMLParagraphElement);
-            expect(result.textContent).toBe(text);
+            expect(result).instanceof(HTMLParagraphElement);
+            expect(result.textContent).to.equal(text);
         });
     });
 
@@ -108,20 +108,20 @@ describe('get-markup', () => {
             const result = getMarkup(structuredPrice);
             const header = result.querySelector('header');
 
-            expect(header.textContent).toContain(structuredPrice.name);
-            expect(header.textContent).toContain(priceDisplay(price).textContent);
+            expect(header.textContent).to.contain(structuredPrice.name);
+            expect(header.textContent).to.contain(priceDisplay(price).textContent);
 
             const content = result.querySelector('.dim');
 
-            expect(content.children.length).toBe(2);
-            expect(content.firstChild).toBeInstanceOf(HTMLParagraphElement);
-            expect(content.firstChild.textContent).toBe(text.text);
+            expect(content.children.length).to.equal(2);
+            expect(content.firstChild).instanceof(HTMLParagraphElement);
+            expect(content.firstChild.textContent).to.equal(text.text);
 
-            expect(content.lastChild).toBeInstanceOf(HTMLAnchorElement);
-            expect(content.lastChild.href).toBe(link.url);
-            expect(content.lastChild.target).toBe('_blank');
-            expect(content.lastChild.rel).toBe('noopener');
-            expect(content.lastChild.textContent).toBe(link.name);
+            expect(content.lastChild).instanceof(HTMLAnchorElement);
+            expect(content.lastChild.href).to.equal(link.url);
+            expect(content.lastChild.target).to.equal('_blank');
+            expect(content.lastChild.rel).to.equal('noopener');
+            expect(content.lastChild.textContent).to.equal(link.name);
         });
     });
 
@@ -145,31 +145,36 @@ describe('get-markup', () => {
             const result = getMarkup(structuredText);
             const header = result.querySelector('header');
 
-            expect(header.textContent).toContain(structuredText.name);
+            expect(header.textContent).to.contain(structuredText.name);
 
             const content = result.querySelector('.dim');
 
-            expect(content.children.length).toBe(2);
-            expect(content.firstChild).toBeInstanceOf(HTMLParagraphElement);
-            expect(content.firstChild.textContent).toBe(text.text);
+            expect(content.children.length).to.equal(2);
+            expect(content.firstChild).instanceof(HTMLParagraphElement);
+            expect(content.firstChild.textContent).to.equal(text.text);
 
-            expect(content.lastChild).toBeInstanceOf(HTMLAnchorElement);
-            expect(content.lastChild.href).toBe(link.url);
-            expect(content.lastChild.target).toBe('_blank');
-            expect(content.lastChild.rel).toBe('noopener');
-            expect(content.lastChild.textContent).toBe(link.name);
+            expect(content.lastChild).instanceof(HTMLAnchorElement);
+            expect(content.lastChild.href).to.equal(link.url);
+            expect(content.lastChild.target).to.equal('_blank');
+            expect(content.lastChild.rel).to.equal('noopener');
+            expect(content.lastChild.textContent).to.equal(link.name);
         });
     });
 
     describe('file', () => {
         let fileDeferred;
         let sdkMock;
+        let sdkJobFileCalls;
         let file;
 
         beforeEach(() => {
+            sdkJobFileCalls = [];
             fileDeferred = new Deferred();
             sdkMock = {
-                getJobFile: jest.fn(() => fileDeferred.promise)
+                getJobFile() {
+                    sdkJobFileCalls.push([...arguments]);
+                    return fileDeferred.promise;
+                }
             };
             file = {
                 type: 'File',
@@ -177,23 +182,22 @@ describe('get-markup', () => {
                 name: 'a-name',
                 url: 'https://example.com/a-file'
             };
-            global.URL.createObjectURL = jest.fn(blob => `blob:${blob.length}`); // JSDom...
         });
 
         it('calls sdk.getJobFile with the url', () => {
             getMarkup(file, sdkMock);
 
-            expect(sdkMock.getJobFile.mock.calls.length).toBe(1);
-            expect(sdkMock.getJobFile.mock.calls[0][0]).toBe(file.url);
+            expect(sdkJobFileCalls.length).to.equal(1);
+            expect(sdkJobFileCalls[0][0]).to.equal(file.url);
         });
 
         it('renders a placeholder paragraph', () => {
             const result = getMarkup(file, sdkMock);
 
-            expect(result).toBeInstanceOf(HTMLSpanElement);
-            expect(result.children.length).toBe(1);
-            expect(result.firstChild).toBeInstanceOf(HTMLParagraphElement);
-            expect(result.firstChild.textContent).toBe('Preparing a download link...');
+            expect(result).instanceof(HTMLSpanElement);
+            expect(result.children.length).to.equal(1);
+            expect(result.firstChild).instanceof(HTMLParagraphElement);
+            expect(result.firstChild.textContent).to.equal('Preparing a download link...');
         });
 
         it('updates the placeholder paragraph with an error message when the file download fails', async () => {
@@ -208,10 +212,10 @@ describe('get-markup', () => {
 
             console.error = error;
 
-            expect(result).toBeInstanceOf(HTMLSpanElement);
-            expect(result.children.length).toBe(1);
-            expect(result.firstChild).toBeInstanceOf(HTMLParagraphElement);
-            expect(result.firstChild.textContent).toBe('Error downloading file.');
+            expect(result).instanceof(HTMLSpanElement);
+            expect(result.children.length).to.equal(1);
+            expect(result.firstChild).instanceof(HTMLParagraphElement);
+            expect(result.firstChild.textContent).to.equal('Error downloading file.');
         });
 
         it('replaces the placeholder with an anchor to a data URL when the file download succeeds', async () => {
@@ -220,16 +224,20 @@ describe('get-markup', () => {
 
             await fileDeferred.resolve(blob);
 
-            expect(result).toBeInstanceOf(HTMLSpanElement);
-            expect(result.children.length).toBe(1);
-            expect(result.firstChild).toBeInstanceOf(HTMLAnchorElement);
-            // This only "works" in jsdom. A working implementation will create
-            // a different URL for the same blob each time it is called, so this
-            // can only be tested by fetching the URL and comparing the blobs.
-            expect(result.firstChild.href).toBe(URL.createObjectURL(blob));
-            expect(result.firstChild.target).toBe('_blank');
-            expect(result.firstChild.rel).toBe('noopener');
-            expect(result.firstChild.textContent).toBe(file.name);
+            expect(result).instanceof(HTMLSpanElement);
+            expect(result.children.length).to.equal(1);
+            expect(result.firstChild).instanceof(HTMLAnchorElement);
+            expect(result.firstChild.target).to.equal('_blank');
+            expect(result.firstChild.rel).to.equal('noopener');
+            expect(result.firstChild.textContent).to.equal(file.name);
+
+            const res = await fetch(result.firstChild.href);
+
+            expect(res.status).to.equal(200);
+
+            const recoveredText = await res.text();
+
+            expect(recoveredText).to.equal('Hello, world!');
         });
 
         it('defaults to using the filename when the name field is not given', async () => {
@@ -239,16 +247,20 @@ describe('get-markup', () => {
 
             await fileDeferred.resolve(blob);
 
-            expect(result).toBeInstanceOf(HTMLSpanElement);
-            expect(result.children.length).toBe(1);
-            expect(result.firstChild).toBeInstanceOf(HTMLAnchorElement);
-            // This only "works" in jsdom. A working implementation will create
-            // a different URL for the same blob each time it is called, so this
-            // can only be tested by fetching the URL and comparing the blobs.
-            expect(result.firstChild.href).toBe(URL.createObjectURL(blob));
-            expect(result.firstChild.target).toBe('_blank');
-            expect(result.firstChild.rel).toBe('noopener');
-            expect(result.firstChild.textContent).toBe(file.filename);
+            expect(result).instanceof(HTMLSpanElement);
+            expect(result.children.length).to.equal(1);
+            expect(result.firstChild).instanceof(HTMLAnchorElement);
+            expect(result.firstChild.target).to.equal('_blank');
+            expect(result.firstChild.rel).to.equal('noopener');
+            expect(result.firstChild.textContent).to.equal(file.filename);
+
+            const res = await fetch(result.firstChild.href);
+
+            expect(res.status).to.equal(200);
+
+            const recoveredText = await res.text();
+
+            expect(recoveredText).to.equal('Hello, world!');
         });
     });
 });

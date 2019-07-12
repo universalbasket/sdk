@@ -1,7 +1,7 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
 
 export default function paymentAddress(prefix = 'address') {
-    html`
+    return html`
         <div name="${prefix}" class="filed-set">
             <div class="field">
                 <label
