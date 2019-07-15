@@ -1,6 +1,5 @@
 import kebabcase from '/web_modules/lodash.kebabcase.js';
 import { serializeForm , getFormInputKeys } from './serialize-form.js';
-import pageWrapper from './builtin-templates/page-wrapper.js';
 import defaultLoadingTemplate from './builtin-templates/loading.js';
 import flashError from './builtin-templates/flash-error.js';
 import * as Storage from './storage.js';
@@ -8,7 +7,7 @@ import getDataForSection from './get-data-for-section.js';
 import { createInputs } from './main.js';
 import setupForm from './setup-form.js';
 
-const VAULT_FORM_SELECTOR = '#ubio-vault-form';
+const VAULT_FORM_SELECTOR = '.vault-form';
 
 /**
  * @param {String} name
@@ -42,20 +41,20 @@ class PageRenderer {
     }
 
     renderWrapper() {
-        document.querySelector(this.selector).innerHTML = pageWrapper();
+        const target = document.createElement('div');
+        target.className = 'page__body';
 
-        const wrappers = this.sectionsToRender.map(section => {
+        for (const section of this.sectionsToRender) {
             const form = document.createElement('form');
             form.id = `section-form-${section.elementName}`;
-            return form;
-        });
-        const target = document.querySelector('#target');
-
-        while (target.lastChild) {
-            target.removeChild(target.lastChild);
+            target.appendChild(form);
         }
 
-        target.append(...wrappers);
+        const page = document.createElement('div');
+        page.className = 'page';
+
+        page.appendChild(target);
+        document.querySelector(this.selector).appendChild(page);
 
         this.next();
     }
@@ -134,8 +133,7 @@ class PageRenderer {
                     Storage.del('_', 'otp');
                     Storage.set('_', 'cardToken', cardToken);
                     Storage.set('_', 'panToken', panToken);
-
-                    vaultIframe.setAttribute('id', `${VAULT_FORM_SELECTOR}-submitted`);
+                    vaultIframe.classList.add('submitted');
                 });
         }
     }
@@ -180,7 +178,7 @@ class PageRenderer {
 
         const vaultForm = document.querySelector(VAULT_FORM_SELECTOR);
         if (vaultForm) {
-            vaultForm.setAttribute('id', `${VAULT_FORM_SELECTOR}-submitted`);
+            vaultForm.classList.add('submitted');
         }
 
         const submitButton = document.querySelector(`#submit-btn-${elementName}`);
