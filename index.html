@@ -96,10 +96,10 @@
                     window.location.hash = '';
                 }
 
-                const { pages, cache, layout, error } = (await import(`/templates/${domain}.config.js`)).default;
+                const { pages, cache, layout, notFound, error } = (await import(`/templates/${domain}.config.js`)).default;
                 const { sdk, local, input } = existing || await createJob(domain);
 
-                const app = createApp({ mountPoint: window.app, pages, cache, layout, sdk, error, local, input });
+                const app = createApp({ mountPoint: window.app, pages, cache, layout, sdk, notFound, error, local, input });
             }
 
             init();

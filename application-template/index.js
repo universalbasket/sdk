@@ -10,8 +10,8 @@ function createJob() {
 createJob()
     .then(({ token, jobId, serviceId }) => {
         const sdk = createEndUserSdk({ token, jobId, serviceId });
-        const { pages, cache, layout, error } = CONFIG;
+        const { pages, cache, layout, notFound, error } = CONFIG;
 
-        createApp({ mountPoint: window.app, pages, cache, layout, sdk, error });
+        createApp({ mountPoint: window.app, pages, cache, layout, sdk, notFound, error });
     })
     .catch(error => console.error(error));
