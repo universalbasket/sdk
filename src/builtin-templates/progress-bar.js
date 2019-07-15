@@ -14,7 +14,7 @@ function StepIcon(i, activeIndex) {
 
 function StepLabel(activeLabel, activeIndex, totalSteps) {
     if (activeLabel == null || activeIndex == null) {
-        return '';
+        return document.createTextNode('');
     }
 
     const span = document.createElement('span');
