@@ -1,5 +1,9 @@
 import * as Storage from './storage.js';
 
+const desktopSelector = '.sdk-app-bundle-layout-summary-desktop';
+const mobileSelector = '.sdk-app-bundle-layout-summary-mobile';
+
+
 export default class Summary {
     constructor(sdk) {
         this.sdk = sdk;
@@ -12,8 +16,8 @@ export default class Summary {
         }
 
         this.bodyTemplate = template;
-        this.currentTarget = document.querySelector(isMobile ? '#summary-mobile' : '#summary-desktop');
-        this.prevTarget = document.querySelector(!isMobile ? '#summary-mobile' : '#summary-desktop');
+        this.currentTarget = document.querySelector(isMobile ? mobileSelector : desktopSelector);
+        this.prevTarget = document.querySelector(!isMobile ? mobileSelector : desktopSelector);
 
         this.update();
 
