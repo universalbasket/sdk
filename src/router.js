@@ -1,4 +1,4 @@
-import ProgressBar from './render-progress-bar.js';
+import renderProgressBar from './render-progress-bar.js';
 
 // The router code. Takes a URL, checks against the list of supported routes and then renders the corresponding content page.
 class Router {
@@ -10,7 +10,7 @@ class Router {
             .filter(route => route.step != null && typeof route.step === 'number')
             .sort((a, b) => a.step - b.step);
 
-        this.progressBar = ProgressBar('#progress-bar', steps.map(s => s.title));
+        this.progressBar = renderProgressBar('.sdk-app-bundle-layout-progress-bar', steps.map(s => s.title));
     }
 
     navigate() {
