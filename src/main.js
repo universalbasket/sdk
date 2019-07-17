@@ -116,6 +116,23 @@ export async function createApp({ mountPoint, sdk, layout, pages, input = {}, er
 
     const tracker = addTracker(sdk);
 
+    //custom event when input submitted
+    window.addEventListener('newInputs', e => {
+        e.detail && e.detail.forEach(({ key }) => Cache.populate(sdk, cache, key));
+        summary.update();
+    });
+
+    window.addEventListener('newOutputs', () => {
+        summary.update();
+    });
+
+    let shouldNavigate = true;
+
+    if (router.isCurrentRoot()) {
+        window.location.hash = entryPoint;
+        shouldNavigate = false;
+    }
+
     window.addEventListener('hashchange', async () => {
         router.navigate();
         summary.update();
@@ -127,21 +144,9 @@ export async function createApp({ mountPoint, sdk, layout, pages, input = {}, er
         }
     });
 
-    //custom event when input submitted
-    window.addEventListener('newInputs', e => {
-        e.detail && e.detail.forEach(({ key }) => Cache.populate(sdk, cache, key));
-        summary.update();
-    });
-
-    window.addEventListener('newOutputs', () => {
-        summary.update();
-    });
-
-    if (router.isCurrentRoot()) {
-        window.location.hash = entryPoint;
+    if (shouldNavigate) {
+        router.navigate();
     }
-
-    router.navigate();
 
     afterSdkInitiated(sdk, summary, cache, local);
 }
