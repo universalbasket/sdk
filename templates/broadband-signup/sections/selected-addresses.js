@@ -24,10 +24,16 @@ export default function selectedAddresses(name, { availableAddresses, availableI
 function onChange(e) {
     const selectedAddress = e.target.value;
     const [numberOrName] = selectedAddress.split(',');
-    const matches = installationAddresses.filter(addr => {
-        const [firstPart] = addr.split(' ');
-        return numberOrName === firstPart;
+    let matches = installationAddresses.filter(addr => {
+        return addr === selectedAddress;
     });
+
+    if (matches.length === 0) {
+        matches = installationAddresses.filter(addr => {
+            const [firstPart] = addr.split(' ');
+            return numberOrName === firstPart;
+        });
+    }
 
     const match = matches.length === 1 ? matches[0] : null;
     let similarAddresses = [];

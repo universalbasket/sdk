@@ -2,7 +2,11 @@ import { html } from '/web_modules/lit-html/lit-html.js';
 import render from '../render.js';
 import { SelectedBroadbandSetupDate, SelectedTvSetupDate } from '../inputs/index.js';
 
-export default function setupDates(name, { availableTvSetupDates, availableBroadbandSetupDates }) {
+export default function setupDates(name, { availableTvSetupDates, availableBroadbandSetupDates }, skip) {
+    if (!availableBroadbandSetupDates && !availableTvSetupDates) {
+        return skip();
+    }
+
     return render(html`
         ${availableBroadbandSetupDates ? SelectedBroadbandSetupDate(availableBroadbandSetupDates) : '' }
         ${availableTvSetupDates ? SelectedTvSetupDate(availableTvSetupDates) : '' }

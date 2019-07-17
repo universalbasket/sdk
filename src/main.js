@@ -141,9 +141,9 @@ export async function createApp({ mountPoint, sdk, layout, pages, input = {}, er
         window.location.hash = entryPoint;
     }
 
-    router.navigate();
-
     afterSdkInitiated(sdk, summary, cache, local);
+
+    router.navigate();
 }
 
 function afterSdkInitiated(sdk, summary, cacheConfig, local) {

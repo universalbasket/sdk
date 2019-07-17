@@ -32,11 +32,11 @@
                 }
             }
 
-            async function createJob(domain) {
+            async function createJob(domain, useServiceId) {
                 const res = await fetch('https://ubio-application-bundle-test-server.glitch.me/create-job', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ domain })
+                    body: JSON.stringify({ domain, serviceId: useServiceId })
                 });
 
                 if (!res.ok) {
@@ -54,6 +54,7 @@
 
             async function init() {
                 const domain = new URLSearchParams(window.location.search).get('domain') || 'hotel-booking';
+                const serviceId = new URLSearchParams(window.location.search).get('serviceId') || null;
                 const hash = window.location.hash;
 
                 let existing = await getExisting();
@@ -97,7 +98,7 @@
                 }
 
                 const { pages, cache, layout, notFound, error } = (await import(`/templates/${domain}.config.js`)).default;
-                const { sdk, local, input } = existing || await createJob(domain);
+                const { sdk, local, input } = existing || await createJob(domain, serviceId);
 
                 const app = createApp({ mountPoint: window.app, pages, cache, layout, sdk, notFound, error, local, input });
             }

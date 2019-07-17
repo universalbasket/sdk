@@ -118,7 +118,7 @@ export default {
                 {
                     name: 'monthly-payment-method',
                     template: monthlyPaymentMethod,
-                    waitFor: []
+                    waitFor: ['input.options']
                 },
                 {
                     name: 'checkout',
