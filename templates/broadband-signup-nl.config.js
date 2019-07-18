@@ -7,8 +7,8 @@ import {
     aboutYou,
     directDebit,
     setupDates,
-    finalPriceConsent,
-    confirmation
+    confirmation,
+    loading
 } from './broadband-signup-nl/sections/index.js';
 import error from './broadband-signup-nl/error.js';
 import notFound from './broadband-signup-nl/not-found.js';
@@ -37,7 +37,8 @@ export default {
                 {
                     name: 'selected-address',
                     template: selectedAddress,
-                    waitFor: ['output.availableAddresses']
+                    waitFor: ['output.availableAddresses'],
+                    loadingTemplate: loading('Looking up your address...')
                 }
             ]
         },
@@ -49,12 +50,14 @@ export default {
                 {
                     name: 'broadbandAndPhone',
                     template: broadbandAndPhone,
-                    waitFor: ['output.availableBroadbandPackages', 'output.availableBroadbandExtras', 'output.availablePhonePackages', 'output.availablePhoneExtras']
+                    waitFor: ['output.availableBroadbandPackages', 'output.availableBroadbandExtras', 'output.availablePhonePackages', 'output.availablePhoneExtras'],
+                    loadingTemplate: loading('Checking broadband availability...')
                 },
                 {
                     name: 'tv',
                     template: tv,
-                    waitFor: ['output.availableTvPackages', 'output.availableTvExtras']
+                    waitFor: ['output.availableTvPackages', 'output.availableTvExtras'],
+                    loadingTemplate: loading('Checking TV availability...')
                 }
             ]
         },
@@ -82,7 +85,8 @@ export default {
                 {
                     name: 'setup-dates',
                     template: setupDates,
-                    waitFor: ['output.availableBroadbandSetupDates']
+                    waitFor: ['output.availableBroadbandSetupDates'],
+                    loadingTemplate: loading('Checking for available installation dates...')
                 }
             ]
         },
@@ -94,7 +98,8 @@ export default {
                 {
                     name: 'confirmation',
                     template: confirmation,
-                    waitFor: ['outputs.confirmation']
+                    waitFor: ['outputs.confirmation'],
+                    loadingTemplate: loading('Finalising your order...')
                 }
             ],
             excludeStep: true

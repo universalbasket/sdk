@@ -9,6 +9,7 @@ import setupDates from './setup-dates.js';
 import finalPriceConsent from './final-price-consent.js';
 import confirmation from './confirmation.js';
 import summaryPage from './summary.js';
+import loading from './loading.js';
 
 export {
     landline,
@@ -21,5 +22,6 @@ export {
     setupDates,
     finalPriceConsent,
     confirmation,
-    summaryPage
+    summaryPage,
+    loading
 };
