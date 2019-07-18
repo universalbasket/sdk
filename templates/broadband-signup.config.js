@@ -81,7 +81,7 @@ export default {
                     waitFor: ['output.installationOptions']
                 }
             ]
-        },    
+        },
         {
             name: 'summary',
             route: '/summary',

@@ -1,5 +1,5 @@
 export default function loading(message) {
-    return function (element) {
+    return function(element) {
         element.innerHTML = `
             <div class="app__loading">
                 <span class="spinner">
@@ -16,5 +16,5 @@ export default function loading(message) {
                 <span>${message}</span>
             </div>
         `;
-    }
+    };
 }
