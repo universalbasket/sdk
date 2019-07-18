@@ -8,6 +8,7 @@ import checkout from './checkout.js';
 import finalPriceConsent from './final-price-consent.js';
 import confirmation from './confirmation.js';
 import summaryPage from './summary.js';
+import loading from './loading.js';
 
 export {
     landline,
@@ -19,5 +20,6 @@ export {
     checkout,
     finalPriceConsent,
     confirmation,
-    summaryPage
+    summaryPage,
+    loading
 };

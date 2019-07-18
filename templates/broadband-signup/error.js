@@ -5,7 +5,7 @@ const url = domain ? `/?domain=${domain}` : '/';
 
 const errorMessage = {
     TdsTimeout: '3D Secure was not completed in time.',
-    PaymentRejected: 'Payment was rejected due to a problem with the card.',
+    PaymentRejected: 'Payment was rejected.',
     SystemUnavailable: 'Website system is down at the moment.',
     ContactUsToContinue: `Please call us on ${phoneNumber} to continue.`,
     PackageNotAvailable: 'The package is not avaialbe.',
@@ -37,4 +37,3 @@ export default function error(selector, sdk) {
         }
     };
 }
-

@@ -9,7 +9,8 @@ import {
     checkout,
     finalPriceConsent,
     confirmation,
-    summaryPage
+    summaryPage,
+    loading
 } from './broadband-signup/sections/index.js';
 import error from './broadband-signup/error.js';
 import notFound from './broadband-signup/not-found.js';
@@ -60,7 +61,8 @@ export default {
                 {
                     name: 'selected-address',
                     template: selectedAddress,
-                    waitFor: ['output.availableAddresses', 'output.availableInstallationAddresses']
+                    waitFor: ['output.availableAddresses', 'output.availableInstallationAddresses'],
+                    loadingTemplate: loading('Looking up your address...')
                 }
             ]
         },
@@ -79,19 +81,7 @@ export default {
                     waitFor: ['output.installationOptions']
                 }
             ]
-        },
-        {
-            name: 'setup-dates',
-            route: '/setup-dates',
-            title: 'Setup dates for your packages',
-            sections: [
-                {
-                    name: 'setup-dates',
-                    template: setupDates,
-                    waitFor: ['output.availableBroadbandSetupDates', 'output.availableTvSetupDates']
-                }
-            ]
-        },
+        },    
         {
             name: 'summary',
             route: '/summary',
@@ -107,6 +97,19 @@ export default {
                         'output.oneOffCosts',
                         'output.monthlyCosts'
                     ]
+                }
+            ]
+        },
+        {
+            name: 'setup-dates',
+            route: '/setup-dates',
+            title: 'Setup dates for your packages',
+            sections: [
+                {
+                    name: 'setup-dates',
+                    template: setupDates,
+                    waitFor: ['output.availableBroadbandSetupDates', 'output.availableTvSetupDates'],
+                    loadingTemplate: loading('Checking your address for an active line...')
                 }
             ]
         },
@@ -135,12 +138,14 @@ export default {
                 {
                     name: 'final-price-consent',
                     template: finalPriceConsent,
-                    waitFor: ['output.oneOffCosts', 'output.finalPrice']
+                    waitFor: ['output.oneOffCosts', 'output.finalPrice'],
+                    loadingTemplate: loading('Finalising your order...')
                 },
                 {
                     name: 'confirmation',
                     template: confirmation,
-                    waitFor: ['outputs.confirmation']
+                    waitFor: ['outputs.confirmation'],
+                    loadingTemplate: loading('Finalising your order...')
                 }
             ],
             excludeStep: true
