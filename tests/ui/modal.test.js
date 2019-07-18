@@ -5,7 +5,7 @@ describe('modal', () => {
 
     beforeEach(() => {
         $modal = document.createElement('div');
-        $modal.id = 'modal';
+        $modal.className = 'sdk-app-bundle-layout-modal';
 
         document.body.appendChild($modal);
     });

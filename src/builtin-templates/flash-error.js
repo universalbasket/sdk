@@ -1,5 +1,5 @@
 export default function create(error) {
-    const el = document.querySelector('#flash-error');
+    const el = document.querySelector('.sdk-app-bundle-layout-flash-error');
 
     if (error) {
         console.error(error);

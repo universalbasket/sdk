@@ -1,9 +1,13 @@
 import progressBarTemplate from './builtin-templates/progress-bar.js';
 
 class ProgressBar {
-    constructor(selector = '#progress-bar', titles = []) {
-        if (titles.length === 0) {
-            throw new Error('ProgressBar constructor: titles can not be empty');
+    constructor(selector, titles) {
+        if (typeof selector !== 'string') {
+            throw new Error('Progress bar requires a selector.');
+        }
+
+        if (!titles || titles.length === 0) {
+            throw new Error('Progress bar requires a titles array which is not empty.');
         }
 
         this.selector = selector;

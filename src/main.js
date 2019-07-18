@@ -7,7 +7,7 @@ import PageRenderer from './page-renderer.js';
 import Summary from './render-summary.js';
 
 import { installMediaQueryWatcher } from '/web_modules/pwa-helpers/media-query.js';
-import Layout from './layout.js';
+import createLayout from './layout.js';
 
 import modal from './builtin-templates/modal.js';
 import priceDisplay from './builtin-templates/price-display.js';
@@ -56,7 +56,7 @@ function validatePages(pages) {
     }
 }
 
-export async function createApp({ mountPoint, pages, cache = [], layout, error, sdk, local, input = {} }, callback) {
+export async function createApp({ mountPoint, sdk, layout, pages, input = {}, error, notFound, cache = [], local }, callback) {
     validatePages(pages);
 
     try {
@@ -74,7 +74,7 @@ export async function createApp({ mountPoint, pages, cache = [], layout, error, 
         Storage.set('input', key, data);
     }
 
-    const mainSelector = '#main';
+    const mainSelector = '.sdk-app-bundle-layout-main';
 
     //setup router
     const routingOrder = pages.map(page => page.route);
@@ -101,11 +101,9 @@ export async function createApp({ mountPoint, pages, cache = [], layout, error, 
     });
 
     const entryPoint = routingOrder[0];
-    const router = Router(routes, layout.notFound(mainSelector));
+    const router = Router(routes, notFound(mainSelector));
 
-    mountPoint.innerHTML = Layout();
-    document.querySelector('#header').appendChild(layout.header());
-    document.querySelector('#footer').appendChild(layout.footer());
+    mountPoint.appendChild(createLayout(layout));
 
     const summary = new Summary(sdk);
 
@@ -118,6 +116,23 @@ export async function createApp({ mountPoint, pages, cache = [], layout, error, 
 
     const tracker = addTracker(sdk);
 
+    //custom event when input submitted
+    window.addEventListener('newInputs', e => {
+        e.detail && e.detail.forEach(({ key }) => Cache.populate(sdk, cache, key));
+        summary.update();
+    });
+
+    window.addEventListener('newOutputs', () => {
+        summary.update();
+    });
+
+    let shouldNavigate = true;
+
+    if (router.isCurrentRoot()) {
+        window.location.hash = entryPoint;
+        shouldNavigate = false;
+    }
+
     window.addEventListener('hashchange', async () => {
         router.navigate();
         summary.update();
@@ -129,20 +144,8 @@ export async function createApp({ mountPoint, pages, cache = [], layout, error, 
         }
     });
 
-    //custom event when input submitted
-    window.addEventListener('newInputs', e => {
-        e.detail && e.detail.forEach(({ key }) => Cache.populate(sdk, cache, key));
-        summary.update();
-    });
-
-    window.addEventListener('newOutputs', () => {
-        summary.update();
-    });
-
-    router.navigate();
-
-    if (router.isCurrentRoot()) {
-        window.location.hash = entryPoint;
+    if (shouldNavigate) {
+        router.navigate();
     }
 
     afterSdkInitiated(sdk, summary, cache, local);

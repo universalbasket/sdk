@@ -1,3 +1,5 @@
+const modalSelector = '.sdk-app-bundle-layout-modal';
+
 export default function create(body, { title = '', isLocked = false } = {}) {
     const container = wrap(body, title, isLocked);
 
@@ -13,7 +15,7 @@ export default function create(body, { title = '', isLocked = false } = {}) {
                 container.classList.remove('modal-wrapper--hidden');
             }
 
-            const modal = document.getElementById('modal');
+            const modal = document.querySelector(modalSelector);
 
             if (!modal.contains(container)) {
                 modal.appendChild(container);
@@ -24,7 +26,7 @@ export default function create(body, { title = '', isLocked = false } = {}) {
 }
 
 function close() {
-    const $modal = document.getElementById('modal');
+    const $modal = document.querySelector(modalSelector);
 
     while ($modal.lastChild) {
         $modal.removeChild($modal.lastChild);

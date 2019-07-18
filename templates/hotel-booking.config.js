@@ -7,7 +7,6 @@ export default {
     layout: {
         header,
         summary,
-        notFound,
         footer
     },
     cache: [],
@@ -68,5 +67,6 @@ export default {
             excludeStep: true
         }
     ],
+    notFound,
     error
 };
