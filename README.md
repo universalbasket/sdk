@@ -101,7 +101,7 @@ A template here is a function with parameters in the order: `name`, `options`, `
 
  - `name`: The name of the template.
  - `options`: Various data fields used to render the template.
- - `skip`: A skip function. ???
+ - `skip`: A skip function. renderer will render next section without waiting for end-user's input submission.
  - `sdk`: The sdk instance.
 
 As mentioned, the template must return an element or a document fragment. This
