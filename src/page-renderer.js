@@ -40,6 +40,16 @@ class PageRenderer {
         this.renderWrapper();
     }
 
+    scrollIntoView(target, offset) {
+        if (typeof offset === 'undefined') {
+            offset = - target.parentElement.offsetTop - 40; // 40px is a bit of space to show where we've come from
+        }
+
+        setTimeout(() => {
+            window.scrollTo(0, target.offsetTop + offset);
+        }, 300);
+    }
+
     renderWrapper() {
         const target = document.createElement('div');
         target.className = 'page__body';
@@ -86,7 +96,7 @@ class PageRenderer {
 
         const sectionForm = document.querySelector(`#section-form-${elementName}`);
 
-        sectionForm.scrollIntoView(true);
+        this.scrollIntoView(sectionForm);
 
         submitBtn.addEventListener('click', e => {
             flashError().hide();
@@ -210,7 +220,7 @@ class PageRenderer {
             defaultLoadingTemplate(sectionForm);
         }
 
-        sectionForm.scrollIntoView(true);
+        this.scrollIntoView(sectionForm);
 
         const skip = () => {
             this.skipSection();
