@@ -1,6 +1,6 @@
 # SDK application bundle
 
-Application bundle using @ubio/sdk.
+Application bundle using @ubio/client-library.
 
 This repository contains an example application which uses the ubio API with the
 JavaScript SDK. It is split into two broad parts:
@@ -16,7 +16,7 @@ This project also contains a CLI which can be used to generate a fresh project.
 With Node.js installed, you can run the following in a terminal:
 
 ```shell
-npx @ubio/sdk-application-bundle --domain hotel-booking --name my-integration
+npx @ubio/sdk --domain hotel-booking --name my-integration
 ```
 
 where `hotel-booking` should be replaced with the domain of your choice, and
