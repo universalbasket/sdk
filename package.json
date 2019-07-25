@@ -4,7 +4,7 @@
   "description": "ubio sdk application bundle (prototype)",
   "module": "bundle.js",
   "main": "bundle.umd.js",
-  "repository": "github:universalbasket/sdk-application-bundle",
+  "repository": "github:universalbasket/sdk",
   "scripts": {
     "prepublishOnly": "npm run build",
     "prepare": "rimraf web_modules && vendor-copy && node hack-wrap.js",
