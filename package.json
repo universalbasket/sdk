@@ -1,5 +1,5 @@
 {
-  "name": "@ubio/sdk-application-bundle",
+  "name": "@ubio/sdk",
   "version": "0.1.4",
   "description": "ubio sdk application bundle (prototype)",
   "module": "bundle.js",
