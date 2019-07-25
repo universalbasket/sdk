@@ -1,5 +1,5 @@
-import { createApp } from '/web_modules/@ubio/sdk-application-bundle.js';
-import { createEndUserSdk } from '/web_modules/@ubio/sdk.js';
+import { createApp } from '/web_modules/@ubio/sdk.js';
+import { createEndUserSdk } from '/web_modules/@ubio/client-library.js';
 import CONFIG from './src/ubio.config.js';
 
 function createJob() {
