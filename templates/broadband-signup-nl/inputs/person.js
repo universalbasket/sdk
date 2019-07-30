@@ -22,6 +22,17 @@ export default (prefix = 'person') => html`
             required />
     </div>
 
+
+    <div class="field">
+        <label class="field__name" for="${prefix}[first-name]">Middle Name</label>
+        <input
+            type="text"
+            name="${prefix}[middle-name]"
+            pattern="^[A-Za-z]+$"
+            data-error="Middle name should only contain letters (A-Z and a-z)"
+            required />
+    </div>
+
     <div class="field">
         <label class="field__name" for="${prefix}[last-name]">Last Name</label>
         <input

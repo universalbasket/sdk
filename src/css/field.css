@@ -19,6 +19,10 @@
     padding: 15px 0;
 }
 
+.field-item-disabled {
+    opacity: 0.3;
+}
+
 .field-item:last-child {
     border-bottom: 0;
 }
