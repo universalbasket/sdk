@@ -1,10 +1,10 @@
 {
-  "name": "@ubio/sdk-application-bundle",
-  "version": "0.1.4",
+  "name": "@ubio/sdk",
+  "version": "0.9.1",
   "description": "ubio sdk application bundle (prototype)",
   "module": "bundle.js",
   "main": "bundle.umd.js",
-  "repository": "github:universalbasket/sdk-application-bundle",
+  "repository": "github:universalbasket/sdk",
   "scripts": {
     "prepublishOnly": "npm run build",
     "prepare": "rimraf web_modules && vendor-copy && node hack-wrap.js",
@@ -46,7 +46,7 @@
     "@babel/cli": "^7.4.4",
     "@babel/core": "^7.4.5",
     "@babel/preset-env": "^7.4.5",
-    "@ubio/sdk": "^0.8.0",
+    "@ubio/client-library": "^0.9.1",
     "autoprefixer": "^9.6.0",
     "babel-jest": "^24.8.0",
     "browser-sync": "^2.26.7",
@@ -54,14 +54,14 @@
     "chai": "^4.2.0",
     "currency-symbol-map": "^4.0.4",
     "es2015-deferred": "^3.0.0",
-    "eslint": "^6.0.1",
+    "eslint": "^6.1.0",
     "eslint-config-ub": "^3.0.0",
     "eslint-plugin-lit": "^1.0.0",
     "form-serialize": "^0.7.2",
     "jest-transform-stub": "^2.0.0",
     "lit-html": "^1.1.0",
     "lodash.kebabcase": "^4.1.1",
-    "mocha": "^6.1.4",
+    "mocha": "^6.2.0",
     "postcss": "^7.0.17",
     "postcss-cli": "^6.1.2",
     "postcss-import": "^12.0.1",
@@ -83,8 +83,8 @@
       "to": "web_modules/lit-html"
     },
     {
-      "from": "node_modules/@ubio/sdk/index.js",
-      "to": "web_modules/@ubio/sdk.js"
+      "from": "node_modules/@ubio/client-library/index.js",
+      "to": "web_modules/@ubio/client-library.js"
     }
   ],
   "hack-wrap": [

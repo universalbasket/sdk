@@ -64,8 +64,8 @@ async function run() {
             test: 'echo \'Error: no test specified\' && exit 1'
         },
         dependencies: {
-            '@ubio/sdk-application-bundle': `^${pkg.version}`,
-            '@ubio/sdk': pkg.devDependencies['@ubio/sdk'],
+            '@ubio/sdk': `^${pkg.version}`,
+            '@ubio/client-library': pkg.devDependencies['@ubio/client-library'],
             'lit-html': pkg.devDependencies['lit-html'],
             'vendor-copy': pkg.devDependencies['vendor-copy'],
             'rimraf': pkg.devDependencies['rimraf']
@@ -75,12 +75,12 @@ async function run() {
         },
         vendorCopy: [
             {
-                from: path.join('node_modules', '@ubio', 'sdk-application-bundle', 'bundle.js'),
-                to: path.join('web_modules', '@ubio', 'sdk-application-bundle.js')
+                from: path.join('node_modules', '@ubio', 'sdk', 'bundle.js'),
+                to: path.join('web_modules', '@ubio', 'sdk.js')
             },
             {
-                from: path.join('node_modules', '@ubio', 'sdk-application-bundle', 'index.css'),
-                to: path.join('web_modules', '@ubio', 'sdk-application-bundle.css')
+                from: path.join('node_modules', '@ubio', 'sdk', 'index.css'),
+                to: path.join('web_modules', '@ubio', 'sdk.css')
             },
             {
                 from: path.join('node_modules', '@ubio', 'sdk' ,'index.js'),
@@ -101,7 +101,7 @@ async function run() {
     await replaceInFiles({
         files: ['src/**/*.js'],
         from: /\/src\/main.js/g,
-        to: '/web_modules/@ubio/sdk-application-bundle.js'
+        to: '/web_modules/@ubio/sdk.js'
     });
     process.stdout.write(' ✓\n');
 
