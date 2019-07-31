@@ -20,7 +20,7 @@
 }
 
 .field-item-disabled {
-    opacity: 0.3;
+    opacity: .3;
 }
 
 .field-item:last-child {
