@@ -122,7 +122,7 @@ export async function createApp({ mountPoint, sdk, layout, pages, input = {}, er
         summary.update();
     });
 
-    window.addEventListener('newOutputs', () => {
+    window.addEventListener('newOutput', () => {
         summary.update();
     });
 
@@ -164,9 +164,8 @@ function afterSdkInitiated(sdk, summary, cacheConfig, local) {
 }
 
 function addTracker(sdk) {
-    let loading = false;
-
     let tdsTimeout;
+
     async function handle3dsEvent(event) {
         if (event === 'tdsStart') {
             clearTimeout(tdsTimeout);
@@ -192,10 +191,10 @@ function addTracker(sdk) {
         }
     }
 
-    const stop = sdk.trackJob((event, error) => {
-        console.log(`event ${event}`);
+    const stop = sdk.trackJob(async (eventName, jobEvent) => {
+        console.log(`event ${eventName}`);
 
-        switch (event) {
+        switch (eventName) {
             case 'tdsStart':
                 return handle3dsEvent('tdsStart');
 
@@ -206,7 +205,7 @@ function addTracker(sdk) {
                 return modal().close();
 
             case 'error':
-                return console.error(error);
+                return console.error(jobEvent);
 
             case 'fail':
                 stop();
@@ -214,25 +213,18 @@ function addTracker(sdk) {
                 return void (window.location.hash = '/error');
 
             case 'createOutput':
-                if (loading) {
+                if (jobEvent.stage) {
+                    console.warn('An output was created with a stage. Ignoring.');
                     return;
                 }
 
-                loading = true;
-
-                return sdk.getJobOutputs()
-                    .then(outputs => {
-                        for (const { key, data } of outputs.data) {
-                            Storage.set('output', key, data);
-                        }
-
-                        window.dispatchEvent(new CustomEvent('newOutputs'));
-                        loading = false;
-                    })
-                    .catch(error => {
-                        console.error('Error getting job outputs.', error);
-                        loading = false;
-                    });
+                try {
+                    const output = await sdk.getJobOutput(jobEvent.key);
+                    Storage.set('output', output.key, output.data);
+                    window.dispatchEvent(new CustomEvent('newOutput', { detail: { output } }));
+                } catch (error) {
+                    console.error('Error getting job outputs.', error);
+                }
         }
     });
 

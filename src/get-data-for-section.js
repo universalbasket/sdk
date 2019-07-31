@@ -40,7 +40,7 @@ export default async function getDataForSection(waitFor = []) {
 
 function waitForOutputs(keysToWaitFor) {
     return new Promise(resolve => {
-        window.addEventListener('newOutputs', trackOutput);
+        window.addEventListener('newOutput', trackOutput);
 
         function trackOutput() {
             const { outputs } = Storage.getAll();
@@ -50,7 +50,7 @@ function waitForOutputs(keysToWaitFor) {
                 const data = {};
                 keysToWaitFor.forEach(k => data[k] = outputs[k]);
 
-                window.removeEventListener('newOutputs', trackOutput);
+                window.removeEventListener('newOutput', trackOutput);
                 resolve(data);
             }
         }
