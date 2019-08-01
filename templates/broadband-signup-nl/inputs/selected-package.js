@@ -30,6 +30,18 @@ export default function selectedPackage(name, key, output, optional, multi) {
         return '';
     }
 
+    // fix metadata.hide
+    output.forEach(p => {
+        if (p.metadata) {
+            p.metadata.hide.forEach(h => {
+                const o = output.find(p => p.metadata && p.metadata.id === h);
+                if (o && o.metadata) {
+                    o.metadata.hide.push(p.metadata.id);
+                }
+            });
+        }
+    });
+
     return html`
     <div class="field">
         <span class="field__name">
