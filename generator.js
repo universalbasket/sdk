@@ -83,8 +83,8 @@ async function run() {
                 to: path.join('web_modules', '@ubio', 'sdk.css')
             },
             {
-                from: path.join('node_modules', '@ubio', 'sdk' ,'index.js'),
-                to: path.join('web_modules', '@ubio', 'sdk.js')
+                from: path.join('node_modules', '@ubio', 'client-library' ,'index.js'),
+                to: path.join('web_modules', '@ubio', 'client-library.js')
             }
         ]
     }, null, 2));
@@ -96,8 +96,6 @@ async function run() {
 
     process.stdout.write('Copying templates...');
     await copy(path.join(__dirname, 'templates', domain), path.join(cwd, 'src', domain));
-    await copy(path.join(__dirname, 'templates', 'generic'), path.join(cwd, 'src', 'generic'));
-    await copy(path.join(__dirname, 'templates', 'shared'), path.join(cwd, 'src', 'shared'));
     await replaceInFiles({
         files: ['src/**/*.js'],
         from: /\/src\/main.js/g,
