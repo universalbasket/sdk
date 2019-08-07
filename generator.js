@@ -85,6 +85,10 @@ async function run() {
             {
                 from: path.join('node_modules', '@ubio', 'client-library' ,'index.js'),
                 to: path.join('web_modules', '@ubio', 'client-library.js')
+            },
+            {
+                from: path.join('node_modules', 'lit-html'),
+                to: path.join('web_modules', 'lit-html')
             }
         ]
     }, null, 2));
