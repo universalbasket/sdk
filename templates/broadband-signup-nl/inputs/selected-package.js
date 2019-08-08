@@ -90,7 +90,7 @@ export default function selectedPackage(name, key, output, optional, multi) {
                             <img
                                 style="margin-top: 15px;"
                                 width="100"
-                                src="${ o.image }" />
+                                src="${ o.image.url }" />
                             ` : '' }
                     </div>
                 </div>
