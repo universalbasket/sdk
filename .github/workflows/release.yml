@@ -1,0 +1,21 @@
+name: release
+on: [push]
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@master
+    - name: use node 10
+      uses: actions/setup-node@v1
+      with:
+        version: 10.x
+    - run: npm ci
+    - run: npm run build
+    - name: create release
+      if: github.event.ref_type == 'tag' # should be at the job level, but that's currently broken
+      uses: ./.github/actions/create-release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        args: "bundle.js bundle.umd.js index.css"

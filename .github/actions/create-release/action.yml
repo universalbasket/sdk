@@ -1,0 +1,5 @@
+name: create-release
+description: 'Creates a release from a tag and uploads files listed in args to it.'
+runs:
+  using: docker
+  image: ./Dockerfile
