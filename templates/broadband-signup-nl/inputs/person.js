@@ -17,7 +17,6 @@ export default (prefix = 'person') => html`
         <input
             type="text"
             name="${prefix}[first-name]"
-            pattern="^[A-Za-z\\s]+$"
             data-error="First name should only contain letters (A-Z and a-z)"
             required />
     </div>
@@ -28,7 +27,6 @@ export default (prefix = 'person') => html`
         <input
             type="text"
             name="${prefix}[middle-name]"
-            pattern="^[A-Za-z\\s]+$"
             data-error="Middle name should only contain letters (A-Z and a-z)"/>
     </div>
 
@@ -37,7 +35,6 @@ export default (prefix = 'person') => html`
         <input
             type="text"
             name="${prefix}[last-name]"
-            pattern="^[A-Za-z\\s]+$"
             data-error="Last name should only contain letters (A-Z and a-z)"
             required />
     </div>
