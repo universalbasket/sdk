@@ -21,12 +21,13 @@ export default {
                     name: 'selected-outbound-flight',
                     template: selectFlights,
                     waitFor: ['output.availableOutboundFlights'],
-                    loadingTemplate: loading('Searching for outbound flights ...')
+                    loadingTemplate: loading('Searching for outbound flights. Please wait ...')
                 },
                 {
                     name: 'selected-outbound-fare',
                     template: selectFares,
-                    waitFor: ['output.availableOutboundFares']
+                    waitFor: ['output.availableOutboundFares'],
+                    loadingTemplate: loading('Gathering fares. Please wait ...')
                 },
                 {
                     name: 'selected-inbound-flight',
@@ -37,7 +38,8 @@ export default {
                 {
                     name: 'selected-inbound-fare',
                     template: selectFares,
-                    waitFor: ['output.availableInboundFares']
+                    waitFor: ['output.availableInboundFares'],
+                    loadingTemplate: loading('Gathering fares. Please wait ...')
                 }
             ]
         },
@@ -66,7 +68,7 @@ export default {
                 {
                     name: 'checkout',
                     template: checkout,
-                    waitFor: ['_.otp']
+                    waitFor: ['_.otp', 'output.estimatedPrice']
                 }
             ]
         },
@@ -79,12 +81,14 @@ export default {
                 {
                     name: 'final-price-consent',
                     template: finalPriceConsent,
-                    waitFor: ['outputs.finalPrice']
+                    waitFor: ['outputs.finalPrice'],
+                    loadingTemplate: loading('Finalising your booking ...')
                 },
                 {
                     name: 'confirmation',
                     template: confirmation,
-                    waitFor: ['outputs.bookingConfirmation']
+                    waitFor: ['outputs.bookingConfirmation'],
+                    loadingTemplate: loading('Getting booking confirmation. Please wait ...')
                 }
             ],
             excludeStep: true

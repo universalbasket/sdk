@@ -14,14 +14,26 @@ export default {
 
 function SummaryDetails({ outputs, inputs }) {
     const price = outputs && outputs.estimatedPrice && outputs.estimatedPrice.price;
+    console.log(inputs)
 
     return html`
     <div class="summary__body">
         <article class="summary__block">
              <ul class="dim">
+                ${ inputs.search ? html`
+                    <li>
+                        <b>${ inputs.search.passengerAges.length } passenger${ inputs.search.passengerAges.length > 1 ? 's':'' }</b>
+                        <br>
+                        Flights from ${ inputs.search.outbound.origin.airportCode } to ${ inputs.search.outbound.destination.airportCode }
+                        leaving on ${ inputs.search.outbound.origin.date }
+                        ${ inputs.search.inbound ? html`
+                            returning on ${ inputs.search.inbound.origin.date }
+                        ` : '' }
+                        <br><br>
+                    </li>` : '' }
                 ${ inputs.selectedOutboundFlight ? html`
                     <li>
-                        <b>Outbound</b>
+                        <b>Outbound flight</b>
                         <br>
                         ${ inputs.selectedOutboundFlight.origin.airportCode }
                         ${ inputs.selectedOutboundFlight.origin.dateTime }
@@ -30,10 +42,10 @@ function SummaryDetails({ outputs, inputs }) {
                         ${ inputs.selectedOutboundFlight.destination.dateTime }
                     </li>` : ''}
                 ${ inputs.selectedOutboundFare ? html`
-                    <li>${ inputs.selectedOutboundFare.fareName } ${ templates.priceDisplay(inputs.selectedOutboundFare.price) }</li>` : ''}
+                    <li>${ inputs.selectedOutboundFare.fareName } ${ inputs.selectedOutboundFare.cabinClass }: ${ templates.priceDisplay(inputs.selectedOutboundFare.price) }<br><br></li>` : ''}
                 ${ inputs.selectedInboundFlight ? html`
                     <li>
-                        <b>Inbound</b>
+                        <b>Inbound flight</b>
                         <br>
                         ${ inputs.selectedInboundFlight.origin.airportCode }
                         ${ inputs.selectedInboundFlight.origin.dateTime }
@@ -42,7 +54,9 @@ function SummaryDetails({ outputs, inputs }) {
                         ${ inputs.selectedInboundFlight.destination.dateTime }
                     </li>` : ''}
                 ${ inputs.selectedInboundFare ? html`
-                    <li>${ inputs.selectedInboundFare.fareName } ${ templates.priceDisplay(inputs.selectedInboundFare.price) }</li>` : ''}
+                    <li>${ inputs.selectedInboundFare.fareName } ${ inputs.selectedInboundFare.cabinClass }: ${ templates.priceDisplay(inputs.selectedInboundFare.price) }<br><br></li>` : ''}
+                ${ outputs.estimatedPrice ? html`
+                    <li><b>TOTAL PRICE:</b> ${ templates.priceDisplay(outputs.estimatedPrice.price) }<br><br></li>` : ''}
             </ul>
         </article>
 

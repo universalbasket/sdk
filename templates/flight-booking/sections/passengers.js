@@ -6,17 +6,18 @@ import { Passenger } from '../inputs/index.js';
 
 export default function guest(name, { search }) {
     return render(html`
-        <h2>Passengers</h2>
-
         ${ search.passengerAges.map((age, i) => {
-            return Passenger(i, age)
+            return html `
+                ${ i > 0 ? html`<hr><br>`:'' }
+                <h2>Passenger ${ i+1 } (${ age >= 18 ? 'Adult':'Child' })</h2>
+                ${ Passenger(i, age) }`;
         })}
 
         <div class="section__actions">
             <button
                 type="button"
                 class="button button--right button--primary"
-                id="submit-btn-${name}">Submit</button>
+                id="submit-btn-${name}">Continue</button>
         </div>
     `);
 }

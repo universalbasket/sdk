@@ -60,7 +60,7 @@ export default function guest(name) {
             <button
                 type="button"
                 class="button button--right button--primary"
-                id="submit-btn-${name}">Submit</button>
+                id="submit-btn-${name}">Continue</button>
         </div>
     `);
 }
