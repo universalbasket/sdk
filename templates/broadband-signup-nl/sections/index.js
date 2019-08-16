@@ -10,6 +10,7 @@ import finalPriceConsent from './final-price-consent.js';
 import confirmation from './confirmation.js';
 import summaryPage from './summary.js';
 import loading from './loading.js';
+import directoryListing from './directory-listing.js';
 
 export {
     landline,
@@ -23,5 +24,6 @@ export {
     finalPriceConsent,
     confirmation,
     summaryPage,
+    directoryListing,
     loading
 };

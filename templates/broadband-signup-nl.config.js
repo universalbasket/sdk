@@ -6,6 +6,7 @@ import {
     tv,
     aboutYou,
     directDebit,
+    directoryListing,
     setupDates,
     confirmation,
     loading
@@ -73,6 +74,11 @@ export default {
                     name: 'directDebit',
                     template: directDebit,
                     waitFor: []
+                },
+                {
+                    name: 'directoryListing',
+                    template: directoryListing,
+                    waitFor: ['output.availableDirectoryListingOptions']
                 }
             ]
         },
