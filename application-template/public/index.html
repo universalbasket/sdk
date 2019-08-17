@@ -1,0 +1,32 @@
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>ubio application bundle</title>
+        <link href="./index.css" rel="stylesheet">
+        <script type="module">
+            import { createJob, runJob } from './index.js';
+
+            window['kick-off'].onsubmit = async evt => {
+                evt.preventDefault();
+
+                const form = new FormData(evt.target); // Not used yet.
+                const { token, jobId, serviceId, input, local } = await createJob();
+
+                // You may want to use this later to resume handling of existing
+                // jobs (or to cancel them).
+                localStorage.setItem(`job-session`, JSON.stringify({ token, jobId, serviceId, local }));
+
+                evt.target.remove();
+
+                runJob({ token, jobId, serviceId, input, local });
+            };
+        </script>
+    </head>
+    <body>
+        <form id="kick-off">
+            <button type="submit">start</button>
+        </form>
+        <div id="app"></div>
+    </body>
+</html>
