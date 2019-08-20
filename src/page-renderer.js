@@ -32,7 +32,7 @@ class PageRenderer {
         this.sectionsToRender = [];
 
         for (const section of sections) {
-            const sectionToRender = { elementName: kebabcase(section.name), ...section };
+            const sectionToRender = { name: kebabcase(section.name), ...section };
             this.sectionsToRender.push(sectionToRender);
         }
 
@@ -59,7 +59,7 @@ class PageRenderer {
 
         for (const section of this.sectionsToRender) {
             const form = document.createElement('form');
-            form.id = `section-form-${section.elementName}`;
+            form.id = `section-form-${section.name}`;
             target.appendChild(form);
         }
 
@@ -89,15 +89,15 @@ class PageRenderer {
         this.renderSection(section);
     }
 
-    addListeners(elementName) {
-        const submitBtn = document.querySelector(`#submit-btn-${elementName}`);
+    addListeners(name) {
+        const submitBtn = document.querySelector(`#submit-btn-${name}`);
 
         if (!submitBtn) {
-            console.warn(`submit button for ${elementName} section not found.`);
+            console.warn(`submit button for ${name} section not found.`);
             return;
         }
 
-        const sectionForm = document.querySelector(`#section-form-${elementName}`);
+        const sectionForm = document.querySelector(`#section-form-${name}`);
 
         this.scrollIntoView(sectionForm);
 
@@ -119,11 +119,11 @@ class PageRenderer {
 
             this.submitVaultFormIfPresents()
                 .then(() => {
-                    const inputs = serializeForm(`#section-form-${elementName}`);
+                    const inputs = serializeForm(`#section-form-${name}`);
                     return this.createInputs(inputs);
                 })
                 .then(() => {
-                    this.disableSection(elementName);
+                    this.disableSection(name);
                     this.next();
                 })
                 .catch(err => {
@@ -186,17 +186,17 @@ class PageRenderer {
             });
     }
 
-    skipSection(elementName) {
-        console.log(`Section ${elementName} skipped.`);
+    skipSection(name) {
+        console.log(`Section ${name} skipped.`);
 
-        this.disableSection(elementName);
+        this.disableSection(name);
 
         const vaultForm = document.querySelector(VAULT_FORM_SELECTOR);
         if (vaultForm) {
             vaultForm.classList.add('submitted');
         }
 
-        const submitButton = document.querySelector(`#submit-btn-${elementName}`);
+        const submitButton = document.querySelector(`#submit-btn-${name}`);
         if (submitButton) {
             submitButton.setAttribute('disabled', 'disabled');
         }
@@ -204,8 +204,8 @@ class PageRenderer {
         this.next();
     }
 
-    disableSection(elementName) {
-        const sectionForm = document.querySelector(`#section-form-${elementName}`);
+    disableSection(name) {
+        const sectionForm = document.querySelector(`#section-form-${name}`);
         if (sectionForm) {
             sectionForm.classList.add('form--disabled');
             const fields = [
@@ -216,8 +216,8 @@ class PageRenderer {
         }
     }
 
-    renderSection({ elementName, waitFor, template, loadingTemplate }) {
-        const sectionForm = document.querySelector(`#section-form-${elementName}`);
+    renderSection({ name, waitFor, template, loadingTemplate }) {
+        const sectionForm = document.querySelector(`#section-form-${name}`);
 
         if (loadingTemplate) {
             loadingTemplate(sectionForm);
@@ -228,7 +228,7 @@ class PageRenderer {
         this.scrollIntoView(sectionForm);
 
         getDataForSection(waitFor)
-            .then(res => {
+            .then(data => {
                 while (sectionForm.firstChild) {
                     sectionForm.removeChild(sectionForm.firstChild);
                 }
@@ -238,11 +238,11 @@ class PageRenderer {
                 const skip = () => {
                     if (!skipped) {
                         skipped = true;
-                        this.skipSection(elementName);
+                        this.skipSection(name);
                     }
                 };
 
-                const rendered = template(elementName, res, skip, this.sdk, this.inputKeys, this.inputFields, this.outputKeys);
+                const rendered = template({ name, data, skip, sdk: this.sdk, inputFields: this.inputFields });
 
                 // Synchronous skipping means we can avoid rendering this section.
                 if (skipped) {
@@ -250,21 +250,21 @@ class PageRenderer {
                 }
 
                 if (!(rendered instanceof Node)) {
-                    throw new TypeError(`Invalid template result for ${elementName}. Should return a Node, returned: ${rendered} (${typeof rendered})`);
+                    throw new TypeError(`Invalid template result for ${name}. Should return a Node, returned: ${rendered} (${typeof rendered})`);
                 }
 
                 sectionForm.appendChild(rendered);
 
                 setupForm(sectionForm);
-                this.addListeners(elementName);
-                this.skipIfSubmitted(elementName);
+                this.addListeners(name);
+                this.skipIfSubmitted(name);
             });
     }
 
-    skipIfSubmitted(elementName) {
+    skipIfSubmitted(name) {
         const { inputs } = Storage.getAll();
         const submittedInputKeys = Object.keys(inputs);
-        const inputKeysInSection = getFormInputKeys(`#section-form-${elementName}`);
+        const inputKeysInSection = getFormInputKeys(`#section-form-${name}`);
 
         if (inputKeysInSection.length === 0) {
             return;
@@ -278,7 +278,7 @@ class PageRenderer {
         const submittedKeysInSection = inputKeysInSection.map(k => submittedInputKeys.includes(k) ? k : null).filter(k => k);
         //all submitted
         if (submittedKeysInSection.length === inputKeysInSection.length) {
-            return this.skipSection(elementName);
+            return this.skipSection(name);
         }
 
         if (submittedKeysInSection.length > 0) {
