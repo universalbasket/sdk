@@ -29,3 +29,14 @@ jobs:
         version: 10.x
     - run: npm ci
     - run: npm run check
+  generator:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@master
+    - name: use node 10
+      uses: actions/setup-node@v1
+      with:
+        version: 10.x
+    - run: npm i -g .
+    - run: npx --no-install @ubio/sdk --name application-build --domain hotel-booking
