@@ -8,6 +8,7 @@ import Summary from './render-summary.js';
 
 import { installMediaQueryWatcher } from '/web_modules/pwa-helpers/media-query.js';
 import createLayout from './layout.js';
+import InputFields from './input-fields.js';
 
 import modal from './builtin-templates/modal.js';
 import priceDisplay from './builtin-templates/price-display.js';
@@ -74,6 +75,8 @@ export async function createApp({ mountPoint, sdk, layout, pages, input = {}, er
         Storage.set('input', key, data);
     }
 
+    const { attributes: { inputKeys = [], inputFields, outputKeys = [] } } = await sdk.getService();
+
     const mainSelector = '.sdk-app-bundle-layout-main';
 
     //setup router
@@ -95,7 +98,15 @@ export async function createApp({ mountPoint, sdk, layout, pages, input = {}, er
             onFinish = () => window.location.hash = nextRoute;
         }
 
-        const renderer = PageRenderer(sdk, sections, mainSelector, onFinish);
+        const renderer = PageRenderer({
+            sdk,
+            sections,
+            mainSelector,
+            onFinish,
+            inputKeys,
+            inputFields: new InputFields(!!inputFields, inputFields),
+            outputKeys
+        });
 
         routes[route] = { renderer, title, step };
     });
