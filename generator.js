@@ -44,7 +44,7 @@ async function run() {
     const { name, domain } = getArgs();
 
     process.stdout.write('Copying project template...');
-    await copy(path.join(__dirname, 'application-template'), name);
+    await copy(path.join(__dirname, 'application-template'), name, { dot: true });
     process.stdout.write(' ✓\n');
 
     process.chdir(name);
@@ -56,12 +56,14 @@ async function run() {
         name,
         version: '1.0.0',
         description: '',
-        main: 'index.js',
+        main: 'public/index.js',
         private: true,
         scripts: {
             install: 'rimraf web_modules && vendor-copy',
-            start: 'browser-sync start --index \'index.html\' --server --files \'index.html\' \'index.js\' \'src\' \'web_modules\'',
-            test: 'echo \'Error: no test specified\' && exit 1'
+            start: 'node -r dotenv/config serve.js',
+            test: 'echo \'Error: no test specified\' && exit 1',
+            lint: 'eslint .',
+            build: 'rimraf dist && rollup -c && postcss src/index.css -o dist/bundle.css'
         },
         dependencies: {
             '@ubio/sdk': `^${pkg.version}`,
@@ -71,7 +73,16 @@ async function run() {
             'rimraf': pkg.devDependencies['rimraf']
         },
         devDependencies: {
-            'browser-sync': pkg.devDependencies['browser-sync']
+            'body-parser': pkg.devDependencies['body-parser'],
+            cors: pkg.devDependencies.cors,
+            dotenv: pkg.devDependencies.dotenv,
+            eslint: pkg.devDependencies.eslint,
+            'eslint-config-ub': pkg.devDependencies['eslint-config-ub'],
+            express: pkg.devDependencies.express,
+            'node-fetch': pkg.devDependencies['node-fetch'],
+            'postcss-cli': pkg.devDependencies['postcss-cli'],
+            'postcss-import': pkg.devDependencies['postcss-import'],
+            rollup: pkg.devDependencies.rollup
         },
         vendorCopy: [
             {
@@ -99,9 +110,9 @@ async function run() {
     process.stdout.write(' ✓\n');
 
     process.stdout.write('Copying templates...');
-    await copy(path.join(__dirname, 'templates', domain), path.join(cwd, 'src', domain));
+    await copy(path.join(__dirname, 'templates', domain), path.join(cwd, 'public', 'templates'));
     await replaceInFiles({
-        files: ['src/**/*.js'],
+        files: ['public/**/*.js'],
         from: /\/src\/main.js/g,
         to: '/web_modules/@ubio/sdk.js'
     });
@@ -112,7 +123,12 @@ async function run() {
     process.stdout.write(' ✓\n');
 
     process.stdout.write('Copying config file...');
-    await fs.copyFile(path.join(__dirname, 'templates', `${domain}.config.js`), path.join(cwd, 'src', 'ubio.config.js'));
+    await fs.copyFile(path.join(__dirname, 'templates', `${domain}.config.js`), path.join(cwd, 'public', 'ubio.config.js'));
+    await replaceInFiles({
+        files: ['public/ubio.config.js'],
+        from: new RegExp(`/${domain}/`, 'g'),
+        to: '/templates/'
+    });
     process.stdout.write(' ✓\n');
 
     console.log('Project created in directory:', cwd);
