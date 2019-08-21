@@ -75,7 +75,7 @@ export async function createApp({ mountPoint, sdk, layout, pages, input = {}, er
         Storage.set('input', key, data);
     }
 
-    const { attributes: { inputKeys = [], inputFields, outputKeys = [] } } = await sdk.getService();
+    const { attributes: { inputKeys = [], inputFields, outputKeys = [] } = {} } = await sdk.getService();
 
     const mainSelector = '.sdk-app-bundle-layout-main';
 
@@ -101,7 +101,7 @@ export async function createApp({ mountPoint, sdk, layout, pages, input = {}, er
         const renderer = PageRenderer({
             sdk,
             sections,
-            mainSelector,
+            selector: mainSelector,
             onFinish,
             inputKeys,
             inputFields: new InputFields(!!inputFields, inputFields),
