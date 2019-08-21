@@ -13,8 +13,8 @@
     "build:rollup": "rollup --config",
     "build:umd": "rollup -n UBIO_BUNDLE -f umd bundle.js | babel -f bundle.umd.js > bundle.umd.js",
     "build:css": "postcss src/css/index.css -o index.css",
-    "stylelint": "stylelint src/css/**/* --fix",
-    "check": "eslint --ext=js .",
+    "lint:js": "eslint --ext=js .",
+    "lint:css": "stylelint src/css/**/*",
     "test": "testem ci",
     "serve": "browser-sync start --index 'index.html' --server --files 'templates' 'web_modules' 'src'"
   },
@@ -27,8 +27,8 @@
     "application-template"
   ],
   "pre-commit": [
-    "check",
-    "stylelint",
+    "lint:js",
+    "lint:css",
     "test"
   ],
   "keywords": [
