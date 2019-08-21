@@ -16,7 +16,7 @@ const VAULT_FORM_SELECTOR = '.vault-form';
  * @param {Function} onFinish
  */
 class PageRenderer {
-    constructor(sdk, sections = [], selector, onFinish) {
+    constructor({ sdk, sections = [], selector, onFinish, inputKeys, inputFields, outputKeys }) {
         if (sections.length === 0) {
             throw new Error('PageRenderer constructor: sections is empty');
         }
@@ -25,6 +25,9 @@ class PageRenderer {
         this.selector = selector;
         this.sections = [...sections];
         this.onFinish = onFinish;
+        this.inputKeys = inputKeys;
+        this.inputFields = inputFields;
+        this.outputKeys = outputKeys;
 
         this.sectionsToRender = [];
 
@@ -232,7 +235,7 @@ class PageRenderer {
                     sectionForm.removeChild(sectionForm.firstChild);
                 }
 
-                const rendered = template(elementName, res, skip, this.sdk);
+                const rendered = template(elementName, res, skip, this.sdk, this.inputKeys, this.inputFields, this.outputKeys);
 
                 if (!(rendered instanceof Node)) {
                     throw new TypeError(`Invalid template result. Should return a Node, returned: ${rendered}`);
@@ -313,8 +316,8 @@ function submitVaultForm(sdk, vaultIframe) {
     });
 }
 
-function getPageRenderer(sdk, name, sections, selector, onFinish) {
-    return new PageRenderer(sdk, name, sections, selector, onFinish);
+function getPageRenderer({ sdk, name, sections, selector, onFinish, inputKeys, inputFields, outputKeys }) {
+    return new PageRenderer({ sdk, name, sections, selector, onFinish, inputKeys, inputFields, outputKeys });
 }
 
 export default getPageRenderer;
