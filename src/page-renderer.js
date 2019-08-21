@@ -238,7 +238,7 @@ class PageRenderer {
                 const rendered = template(elementName, res, skip, this.sdk, this.inputKeys, this.inputFields, this.outputKeys);
 
                 if (!(rendered instanceof Node)) {
-                    throw new TypeError(`Invalid template result. Should return a Node, returned: ${rendered}`);
+                    throw new TypeError(`Invalid template result for ${elementName}. Should return a Node, returned: ${rendered} (${typeof rendered})`);
                 }
 
                 sectionForm.appendChild(rendered);

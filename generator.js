@@ -59,17 +59,17 @@ async function run() {
         main: 'public/index.js',
         private: true,
         scripts: {
-            install: 'rimraf web_modules && vendor-copy',
+            prepare: 'pika-web --clean',
             start: 'node -r dotenv/config serve.js',
             test: 'echo \'Error: no test specified\' && exit 1',
             lint: 'eslint .',
             build: 'rimraf dist && rollup -c && postcss src/index.css -o dist/bundle.css'
         },
         dependencies: {
+            '@pika/web': pkg.devDependencies['@pika/web'],
             '@ubio/sdk': `^${pkg.version}`,
             '@ubio/client-library': pkg.devDependencies['@ubio/client-library'],
             'lit-html': pkg.devDependencies['lit-html'],
-            'vendor-copy': pkg.devDependencies['vendor-copy'],
             'rimraf': pkg.devDependencies['rimraf']
         },
         devDependencies: {
@@ -84,24 +84,15 @@ async function run() {
             'postcss-import': pkg.devDependencies['postcss-import'],
             rollup: pkg.devDependencies.rollup
         },
-        vendorCopy: [
-            {
-                from: path.join('node_modules', '@ubio', 'sdk', 'bundle.js'),
-                to: path.join('web_modules', '@ubio', 'sdk.js')
-            },
-            {
-                from: path.join('node_modules', '@ubio', 'sdk', 'index.css'),
-                to: path.join('web_modules', '@ubio', 'sdk.css')
-            },
-            {
-                from: path.join('node_modules', '@ubio', 'client-library' ,'index.js'),
-                to: path.join('web_modules', '@ubio', 'client-library.js')
-            },
-            {
-                from: path.join('node_modules', 'lit-html'),
-                to: path.join('web_modules', 'lit-html')
-            }
-        ]
+        '@pika/web': {
+            webDependencies: [
+                '@ubio/client-library',
+                '@ubio/sdk',
+                '@ubio/sdk/index.css',
+                'lit-html/lit-html.js',
+                'lit-html/directives/class-map.js'
+            ]
+        }
     }, null, 2));
     process.stdout.write(' ✓\n');
 

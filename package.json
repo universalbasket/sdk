@@ -7,14 +7,14 @@
   "repository": "github:universalbasket/sdk",
   "scripts": {
     "prepublishOnly": "npm run build",
-    "prepare": "rimraf web_modules && vendor-copy && node hack-wrap.js",
+    "prepare": "pika-web --clean",
     "start": "npm run serve",
     "build": "npm run build:rollup && npm run build:umd && npm run build:css",
     "build:rollup": "rollup --config",
-    "build:umd": "rollup -n UBIO_BUNDLE -f umd bundle.js | babel -f bundle.umd.js > bundle.umd.js",
+    "build:umd": "rollup -n UBIO_BUNDLE -f umd bundle.js",
     "build:css": "postcss src/css/index.css -o index.css",
-    "stylelint": "stylelint src/css/**/* --fix",
-    "check": "eslint --ext=js .",
+    "lint:js": "eslint --ext=js .",
+    "lint:css": "stylelint src/css/**/*",
     "test": "testem ci",
     "serve": "browser-sync start --index 'index.html' --server --files 'templates' 'web_modules' 'src'"
   },
@@ -27,8 +27,8 @@
     "application-template"
   ],
   "pre-commit": [
-    "check",
-    "stylelint",
+    "lint:js",
+    "lint:css",
     "test"
   ],
   "keywords": [
@@ -43,27 +43,24 @@
     "replace-in-files": "^1.1.4"
   },
   "devDependencies": {
-    "@babel/cli": "^7.4.4",
-    "@babel/core": "^7.4.5",
-    "@babel/preset-env": "^7.4.5",
+    "@pika/web": "^0.5.3",
     "@ubio/client-library": "^0.10.0",
     "autoprefixer": "^9.6.0",
-    "babel-jest": "^24.8.0",
     "body-parser": "^1.19.0",
     "browser-sync": "^2.26.7",
-    "camelcase-keys": "^6.0.0",
+    "camelcase-keys": "^6.0.1",
     "chai": "^4.2.0",
     "cors": "^2.8.5",
     "currency-symbol-map": "^4.0.4",
     "dotenv": "^8.0.0",
     "es2015-deferred": "^3.0.0",
-    "eslint": "^6.1.0",
+    "eslint": "^6.2.1",
     "eslint-config-ub": "^3.0.0",
-    "eslint-plugin-lit": "^1.0.0",
+    "eslint-plugin-lit": "^1.2.0",
     "express": "^4.17.1",
     "form-serialize": "^0.7.2",
     "jest-transform-stub": "^2.0.0",
-    "lit-html": "^1.1.0",
+    "lit-html": "^1.1.2",
     "lodash.kebabcase": "^4.1.1",
     "mocha": "^6.2.0",
     "node-fetch": "^2.6.0",
@@ -72,31 +69,25 @@
     "postcss-import": "^12.0.1",
     "pre-commit": "^1.2.2",
     "pwa-helpers": "^0.9.1",
-    "rimraf": "^2.6.3",
-    "rollup": "^1.15.4",
+    "rimraf": "^3.0.0",
+    "rollup": "^1.19.4",
     "rollup-plugin-babel": "^4.3.2",
-    "rollup-plugin-commonjs": "^10.0.0",
+    "rollup-plugin-commonjs": "^10.0.2",
     "rollup-plugin-node-resolve": "^5.0.2",
     "stylelint": "^10.1.0",
     "stylelint-config-standard": "^18.3.0",
-    "testem": "^2.16.0",
-    "vendor-copy": "^2.0.0"
+    "testem": "^2.16.0"
   },
-  "vendorCopy": [
-    {
-      "from": "node_modules/lit-html",
-      "to": "web_modules/lit-html"
-    },
-    {
-      "from": "node_modules/@ubio/client-library/index.js",
-      "to": "web_modules/@ubio/client-library.js"
-    }
-  ],
-  "hack-wrap": [
-    "form-serialize",
-    "camelcase-keys",
-    "lodash.kebabcase",
-    "pwa-helpers/media-query",
-    "currency-symbol-map"
-  ]
+  "@pika/web": {
+    "webDependencies": [
+      "@ubio/client-library",
+      "lit-html/lit-html.js",
+      "lit-html/directives/class-map.js",
+      "form-serialize",
+      "camelcase-keys",
+      "lodash.kebabcase",
+      "pwa-helpers/media-query.js",
+      "currency-symbol-map"
+    ]
+  }
 }

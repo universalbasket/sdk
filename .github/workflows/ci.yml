@@ -18,7 +18,7 @@ jobs:
         version: 10.x
     - run: npm ci
     - run: npm test
-  check:
+  lint-js:
     runs-on: ubuntu-latest
     steps:
     - name: checkout
@@ -28,7 +28,18 @@ jobs:
       with:
         version: 10.x
     - run: npm ci
-    - run: npm run check
+    - run: npm run lint:js
+  lint-css:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@master
+    - name: use node 10
+      uses: actions/setup-node@v1
+      with:
+        version: 10.x
+    - run: npm ci
+    - run: npm run lint:css
   generator:
     runs-on: ubuntu-latest
     steps:
