@@ -5,28 +5,59 @@
         <title>ubio application bundle</title>
         <link href="./index.css" rel="stylesheet">
         <script type="module">
-            import { createJob, runJob } from './index.js';
+            import { createJob, continueJob, cancelJob } from './index.js';
+            import { createEndUserSdk } from '/web_modules/@ubio/client-library.js';
 
-            window['kick-off'].onsubmit = async evt => {
-                evt.preventDefault();
+            function appendForm() {
+                const form = document.createElement('form');
+                form.innerHTML = `
+                    <button type="submit">start</button>
+                `;
+                form.onsubmit = async evt => {
+                    evt.preventDefault();
 
-                const form = new FormData(evt.target); // Not used yet.
-                const { token, jobId, serviceId, input, local } = await createJob();
+                    const formData = new FormData(form); // Use this if you add more inputs.
+                    const { token, jobId, serviceId, input, local } = await createJob(/* pass data to your server */);
 
-                // You may want to use this later to resume handling of existing
-                // jobs (or to cancel them).
-                localStorage.setItem(`job-session`, JSON.stringify({ token, jobId, serviceId, local }));
+                    // You may want to use this later to resume handling of existing
+                    // jobs (or to cancel them).
+                    localStorage.setItem('job-session', JSON.stringify({ token, jobId, serviceId, local }));
 
-                evt.target.remove();
+                    form.remove();
 
-                runJob({ token, jobId, serviceId, input, local });
-            };
+                    continueJob({ token, jobId, serviceId, input, local });
+                };
+                document.body.appendChild(form);
+            }
+
+            async function start() {
+                let token;
+                let jobId;
+                let serviceId;
+
+                try {
+                    ({ token, jobId, serviceId } = JSON.parse(localStorage.getItem('job-session')));
+                } catch (e) {}
+
+                if (location.hash === '') {
+                    if (token) {
+                        const note = document.createElement('p');
+                        note.textContent = 'Cleaning up old job.';
+                        document.body.appendChild(note);
+                        await cancelJob({ token, jobId, serviceId });
+                        note.remove();
+                    }
+
+                    return appendForm();
+                }
+
+                return continueJob({ token, jobId, serviceId });
+            }
+
+            start();
         </script>
     </head>
     <body>
-        <form id="kick-off">
-            <button type="submit">start</button>
-        </form>
         <div id="app"></div>
     </body>
 </html>
