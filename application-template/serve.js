@@ -17,7 +17,7 @@ const { CLIENT_TOKEN, PORT = 3000 } = process.env;
 const app = express();
 const sdk = createClientSdk({ token: CLIENT_TOKEN, fetch });
 
-app.use(express.static('src'));
+app.use(express.static('public'));
 app.use('/web_modules', express.static('web_modules'));
 app.use(cors());
 
