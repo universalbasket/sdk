@@ -17,6 +17,7 @@
     grid-gap: var(--gap);
     border-bottom: 1px solid var(--hr-color);
     padding: 15px 0;
+    grid-template-columns: 1fr auto;
 }
 
 .field-item:last-child {
@@ -28,7 +29,6 @@
 }
 
 .field-item--select-one {
-    grid-template-columns: 1fr auto;
     padding-left: var(--gap);
 }
 
@@ -77,8 +77,11 @@
     font-weight: 700;
     color: var(--color);
     padding-bottom: 5px;
-    width: var(--input-width);
     max-width: 100%;
+}
+
+.field-set .field__name {
+    width: var(--input-width);
 }
 
 .field--invalid .field__name {
@@ -88,10 +91,10 @@
 .field__name::after {
     content: attr(data-optional);
     display: inline-block;
-    float: right;
     font-style: italic;
     font-size: var(--font-size);
     font-weight: normal;
+    margin-left: 5px;
 }
 
 .field--invalid :invalid {
@@ -106,16 +109,16 @@
     margin: 7px 0 0;
 }
 
-.field__inputs > input[type="radio"] {
+.field__inputs > input {
     display: none;
 }
 
-.field__inputs > input[type="radio"]:checked + label {
+.field__inputs > input:checked + label {
     color: #fff;
     background: var(--color--accent);
 }
 
-.field__inputs > input[type="radio"]:disabled + label {
+.field__inputs > input:disabled + label {
     opacity: .5;
     cursor: not-allowed;
 }
