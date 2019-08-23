@@ -1,41 +1,39 @@
 import getData from './get-data-with-priority.js';
 import * as Storage from './storage.js';
 
-export default async function getDataForSection(waitFor = []) {
+export default async function getDataForSection(waitFor) {
     if (!waitFor || waitFor.length === 0) {
         return {};
     }
 
-    const results = waitFor.map(_ => {
-        const [type, sourceKey] = _.split('.');
+    const collection = {};
+    const notReady = [];
+
+    for (const typeAndKey of waitFor) {
+        const [type, sourceKey] = typeAndKey.split('.');
+
         if (type === 'input') {
-            const data = Storage.get('input', sourceKey);
-            return { data, wait: false, sourceKey };
+            collection[sourceKey] = Storage.get('input', sourceKey);
+            continue;
         }
 
         const data = getData(type, sourceKey);
+
         if (data === null || data) { // data is explicitly null
-            return { data, wait: false, sourceKey };
+            collection[sourceKey] = data;
+            continue;
         }
 
-        return { data, wait: true, sourceKey };
-    });
-
-    const keysToWaitFor = results.filter(r => r.wait === true).map(r => r.sourceKey);
-
-    if (keysToWaitFor.length === 0) {
-        const dataWaitFor = {};
-        results.forEach(result => { dataWaitFor[result.sourceKey] = result.data; });
-
-        return dataWaitFor;
+        notReady.push(sourceKey);
     }
 
-    const dataWaitFor = {};
-    results.forEach(result => { dataWaitFor[result.sourceKey] = result.data; });
+    if (notReady.length === 0) {
+        return collection;
+    }
 
-    const data = await waitForOutputs(keysToWaitFor);
+    await waitForOutputs(notReady);
 
-    return { ...dataWaitFor, ...data };
+    return getDataForSection(waitFor);
 }
 
 function waitForOutputs(keysToWaitFor) {
@@ -47,11 +45,8 @@ function waitForOutputs(keysToWaitFor) {
             const allAvailable = keysToWaitFor.every(k => outputs[k] !== undefined);
 
             if (allAvailable) {
-                const data = {};
-                keysToWaitFor.forEach(k => data[k] = outputs[k]);
-
                 window.removeEventListener('newOutput', trackOutput);
-                resolve(data);
+                resolve();
             }
         }
     });
