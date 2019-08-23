@@ -3,7 +3,7 @@ import render from '../render.js';
 
 let installationAddresses = [];
 
-export default function selectedAddresses(name, { availableAddresses, availableInstallationAddresses }) {
+export default function selectedAddresses({ name, data: { availableAddresses, availableInstallationAddresses } }) {
     installationAddresses = availableInstallationAddresses;
     return render(html`
         <div class="field field-set">

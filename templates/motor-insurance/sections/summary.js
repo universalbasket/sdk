@@ -1,7 +1,7 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
 import render from '../render.js';
 
-export default function summary(name, { coverSummary }) {
+export default function summary({ name, data: { coverSummary } }) {
     return render(html`
         <h2>${ coverSummary.name }</h2>
 

@@ -3,7 +3,7 @@ import render from '../render.js';
 import { templates } from '/src/main.js';
 //import { } from '../inputs/index.js';
 
-export default function feesSummary(name, { feesSummary }) {
+export default function feesSummary({ name, data: { feesSummary } }) {
     return render(html`
         <hr>
         <h2>Fees summary</h2>

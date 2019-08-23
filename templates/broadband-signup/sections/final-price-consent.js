@@ -4,7 +4,7 @@ import { createInputs, templates } from '/src/main.js';
 import finalPriceConsentGeneric from '../inputs/final-price-consent.js';
 import render from '../render.js';
 
-export default function finalPriceConsent(name, { oneOffCosts = {}, finalPrice = {} }, skip, sdk) {
+export default function finalPriceConsent({ name, data: { oneOffCosts = {}, finalPrice = {} }, skip, sdk }) {
     const finalValue = finalPrice.price.value;
     const estimatedPrice = oneOffCosts.contents && oneOffCosts.contents.find(_ => _.name === 'Pay now');
     let estimatedValue = 0;

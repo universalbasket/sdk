@@ -2,14 +2,14 @@ import { html } from '/web_modules/lit-html/lit-html.js';
 import render from '../render.js';
 import { SelectedPaymentTerm, SelectedNoClaimsDiscountProtection } from '../inputs/index.js';
 
-export default function quote(name, options) {
+export default function quote({ name, data }) {
     const {
         availablePaymentTerms,
         availableNoClaimsDiscountProtection,
         quoteReference,
         vehicleDetails,
         statutoryStatusDisclosure
-    } = options;
+    } = data;
 
     return render(html`
         <p>

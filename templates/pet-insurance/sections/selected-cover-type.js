@@ -2,7 +2,7 @@ import { html } from '/web_modules/lit-html/lit-html.js';
 import render from '../render.js';
 import { selectedCoverType as input } from '../inputs/index.js';
 
-export default function selectedCoverType(name, { availableCoverTypes }) {
+export default function selectedCoverType({ name, data: { availableCoverTypes } }) {
     return render(html`
         ${input(availableCoverTypes)}
 

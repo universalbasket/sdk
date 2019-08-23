@@ -2,7 +2,7 @@ import { html } from '/web_modules/lit-html/lit-html.js';
 import render from '../render.js';
 import { selectedPaymentTerm } from '../inputs/index.js';
 
-export default function paymentTerms(name, { availablePaymentTerms }) {
+export default function paymentTerms({ name, data: { availablePaymentTerms } }) {
     return render(html`
         ${selectedPaymentTerm(availablePaymentTerms)}
 

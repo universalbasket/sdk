@@ -2,14 +2,10 @@ import { html } from '/web_modules/lit-html/lit-html.js';
 import render from '../render.js';
 import { CardPayment, DirectDebitPayment } from '../inputs/index.js';
 
-const Templates = {
-    directdebit: DirectDebitPayment,
-    card: CardPayment
-};
-
-export default function checkout(name, { otp, monthlyPaymentMethod }) {
+export default function checkout({ name, data: { otp, monthlyPaymentMethod } }) {
     return render(html`
-        ${ Templates[monthlyPaymentMethod](otp)}
+        ${ monthlyPaymentMethod === 'card' ? CardPayment(otp) : '' }
+        ${ monthlyPaymentMethod === 'directdebit' ? DirectDebitPayment() : '' }
 
         <div class="section__actions">
             <button

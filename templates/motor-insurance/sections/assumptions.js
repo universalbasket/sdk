@@ -3,7 +3,7 @@ import render from '../render.js';
 import { templates } from '/src/main.js';
 //import { } from '../inputs/index.js';
 
-export default function assumptions(name, { assumptions }) {
+export default function assumptions({ name, data: { assumptions } }) {
     return render(html`
         <h2>Assumptions</h2>
 
