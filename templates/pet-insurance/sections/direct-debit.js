@@ -4,8 +4,7 @@ import { directDebit as input } from '../inputs/index.js';
 
 export default function directDebit(name, { selectedPaymentTerm }, skip) {
     if (selectedPaymentTerm !== 'monthly-card') {
-        skip();
-        return;
+        return skip();
     }
 
     return render(html`

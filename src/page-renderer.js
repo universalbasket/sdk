@@ -200,6 +200,8 @@ class PageRenderer {
         }
 
         this.next();
+
+        return document.createTextNode('');
     }
 
     disableSection(elementName) {
