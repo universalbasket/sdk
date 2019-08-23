@@ -187,6 +187,8 @@ class PageRenderer {
     }
 
     skipSection(elementName) {
+        console.log(`Section ${elementName} skipped.`);
+
         this.disableSection(elementName);
 
         const vaultForm = document.querySelector(VAULT_FORM_SELECTOR);
@@ -200,8 +202,6 @@ class PageRenderer {
         }
 
         this.next();
-
-        return document.createTextNode('');
     }
 
     disableSection(elementName) {
@@ -227,17 +227,27 @@ class PageRenderer {
 
         this.scrollIntoView(sectionForm);
 
-        const skip = () => {
-            this.skipSection();
-        };
-
         getDataForSection(waitFor)
             .then(res => {
                 while (sectionForm.firstChild) {
                     sectionForm.removeChild(sectionForm.firstChild);
                 }
 
+                let skipped = false;
+
+                const skip = () => {
+                    if (!skipped) {
+                        skipped = true;
+                        this.skipSection(elementName);
+                    }
+                };
+
                 const rendered = template(elementName, res, skip, this.sdk, this.inputKeys, this.inputFields, this.outputKeys);
+
+                // Synchronous skipping means we can avoid rendering this section.
+                if (skipped) {
+                    return;
+                }
 
                 if (!(rendered instanceof Node)) {
                     throw new TypeError(`Invalid template result for ${elementName}. Should return a Node, returned: ${rendered} (${typeof rendered})`);
