@@ -2,13 +2,13 @@ import { html } from '/web_modules/lit-html/lit-html.js';
 import render from '../render.js';
 import { templates } from '/src/main.js';
 
-export default function declarations(name, options, _skip, sdk) {
+export default function declarations({ name, data, sdk }) {
     const {
         policyWording,
         productInformation,
         privacyPolicy,
         statementOfFact
-    } = options;
+    } = data;
     const statementOfFactFile = statementOfFact.contents.find(item => item.type === 'File');
 
     return render(html`

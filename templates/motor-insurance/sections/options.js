@@ -2,7 +2,7 @@ import { html } from '/web_modules/lit-html/lit-html.js';
 import render from '../render.js';
 import { SelectedPolicyOption, SelectedNoClaimsDiscountProtection, SelectedVoluntaryExcess } from '../inputs/index.js';
 
-export default function options(name, options) {
+export default function options({ name, data }) {
     const {
         availableNoClaimsDiscountProtection,
         availableVoluntaryExcesses,
@@ -15,7 +15,7 @@ export default function options(name, options) {
         availableKeyReplacementCovers,
         availableMisfuelCovers,
         serviceName
-    } = options;
+    } = data;
 
     return render(html`
         <p>Please select the options you are interested in adding to your ${serviceName} motor insurance policy:</p>

@@ -2,7 +2,7 @@ import { html } from '/web_modules/lit-html/lit-html.js';
 import render from '../render.js';
 import { owner, account } from '../inputs/index.js';
 
-export default function aboutYou(name, _data) {
+export default function aboutYou({ name }) {
     return render(html`
         ${account()}
         ${owner()}

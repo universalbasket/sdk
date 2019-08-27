@@ -3,7 +3,7 @@ import render from '../render.js';
 import { templates } from '/src/main.js';
 //import { } from '../inputs/index.js';
 
-export default function statements(name, { statements }) {
+export default function statements({ name, data: { statements } }) {
     return render(html`
         <hr>
         <h2>Statements</h2>

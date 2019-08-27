@@ -2,7 +2,9 @@ import { html } from '/web_modules/lit-html/lit-html.js';
 import render from '../render.js';
 import { templates } from '/src/main.js';
 
-export default function summary(name, { selectedBroadbandPackage, selectedTvPackages, selectedPhonePackage, oneOffCosts, monthlyCosts }) {
+export default function summary({ name, data }) {
+    const { selectedBroadbandPackage, selectedTvPackages, selectedPhonePackage, oneOffCosts, monthlyCosts } = data;
+
     return render(html`
         <h2>Summary</h2>
 

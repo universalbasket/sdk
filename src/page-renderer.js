@@ -2,8 +2,8 @@ import kebabcase from '/web_modules/lodash.kebabcase.js';
 import { serializeForm , getFormInputKeys } from './serialize-form.js';
 import defaultLoadingTemplate from './builtin-templates/loading.js';
 import flashError from './builtin-templates/flash-error.js';
-import * as Storage from './storage.js';
-import getDataForSection from './get-data-for-section.js';
+import { get as storageGet, getAll as storageGetAll, set as storageSet, del as storageDel } from './storage.js';
+import waitForDataForSection from './get-data-for-section.js';
 import { createInputs } from './main.js';
 import setupForm from './setup-form.js';
 
@@ -32,7 +32,7 @@ class PageRenderer {
         this.sectionsToRender = [];
 
         for (const section of sections) {
-            const sectionToRender = { elementName: kebabcase(section.name), ...section };
+            const sectionToRender = { name: kebabcase(section.name), ...section };
             this.sectionsToRender.push(sectionToRender);
         }
 
@@ -59,7 +59,7 @@ class PageRenderer {
 
         for (const section of this.sectionsToRender) {
             const form = document.createElement('form');
-            form.id = `section-form-${section.elementName}`;
+            form.id = `section-form-${section.name}`;
             target.appendChild(form);
         }
 
@@ -89,15 +89,15 @@ class PageRenderer {
         this.renderSection(section);
     }
 
-    addListeners(elementName) {
-        const submitBtn = document.querySelector(`#submit-btn-${elementName}`);
+    addListeners(name) {
+        const submitBtn = document.querySelector(`#submit-btn-${name}`);
 
         if (!submitBtn) {
-            console.warn(`submit button for ${elementName} section not found.`);
+            console.warn(`submit button for ${name} section not found.`);
             return;
         }
 
-        const sectionForm = document.querySelector(`#section-form-${elementName}`);
+        const sectionForm = document.querySelector(`#section-form-${name}`);
 
         this.scrollIntoView(sectionForm);
 
@@ -119,11 +119,11 @@ class PageRenderer {
 
             this.submitVaultFormIfPresents()
                 .then(() => {
-                    const inputs = serializeForm(`#section-form-${elementName}`);
+                    const inputs = serializeForm(`#section-form-${name}`);
                     return this.createInputs(inputs);
                 })
                 .then(() => {
-                    this.disableSection(elementName);
+                    this.disableSection(name);
                     this.next();
                 })
                 .catch(err => {
@@ -143,9 +143,9 @@ class PageRenderer {
         if (vaultIframe) {
             return submitVaultForm(this.sdk, vaultIframe)
                 .then(({ cardToken, panToken }) => {
-                    Storage.del('_', 'otp');
-                    Storage.set('_', 'cardToken', cardToken);
-                    Storage.set('_', 'panToken', panToken);
+                    storageDel('_', 'otp');
+                    storageSet('_', 'cardToken', cardToken);
+                    storageSet('_', 'panToken', panToken);
                     vaultIframe.classList.add('submitted');
                 });
         }
@@ -156,8 +156,8 @@ class PageRenderer {
         let panTokenSent = false;
 
         if (inputs.payment) {
-            const cardToken = Storage.get('_', 'cardToken');
-            const panToken = Storage.get('_', 'panToken');
+            const cardToken = storageGet('_', 'cardToken');
+            const panToken = storageGet('_', 'panToken');
 
             if (cardToken) {
                 inputs.payment.card = { '$token': cardToken };
@@ -177,26 +177,26 @@ class PageRenderer {
         return createInputs(this.sdk, inputs)
             .then(() => {
                 if (cardTokenSent) {
-                    Storage.del('_', 'cardToken');
+                    storageDel('_', 'cardToken');
                 }
 
                 if (panTokenSent) {
-                    Storage.del('_', 'panToken');
+                    storageDel('_', 'panToken');
                 }
             });
     }
 
-    skipSection(elementName) {
-        console.log(`Section ${elementName} skipped.`);
+    skipSection(name) {
+        console.log(`Section ${name} skipped.`);
 
-        this.disableSection(elementName);
+        this.disableSection(name);
 
         const vaultForm = document.querySelector(VAULT_FORM_SELECTOR);
         if (vaultForm) {
             vaultForm.classList.add('submitted');
         }
 
-        const submitButton = document.querySelector(`#submit-btn-${elementName}`);
+        const submitButton = document.querySelector(`#submit-btn-${name}`);
         if (submitButton) {
             submitButton.setAttribute('disabled', 'disabled');
         }
@@ -204,8 +204,8 @@ class PageRenderer {
         this.next();
     }
 
-    disableSection(elementName) {
-        const sectionForm = document.querySelector(`#section-form-${elementName}`);
+    disableSection(name) {
+        const sectionForm = document.querySelector(`#section-form-${name}`);
         if (sectionForm) {
             sectionForm.classList.add('form--disabled');
             const fields = [
@@ -216,8 +216,8 @@ class PageRenderer {
         }
     }
 
-    renderSection({ elementName, waitFor, template, loadingTemplate }) {
-        const sectionForm = document.querySelector(`#section-form-${elementName}`);
+    renderSection({ name, waitFor, template, loadingTemplate }) {
+        const sectionForm = document.querySelector(`#section-form-${name}`);
 
         if (loadingTemplate) {
             loadingTemplate(sectionForm);
@@ -227,22 +227,39 @@ class PageRenderer {
 
         this.scrollIntoView(sectionForm);
 
-        getDataForSection(waitFor)
-            .then(res => {
+        waitForDataForSection(waitFor)
+            .then(awaitedData => {
+                const renderer = this;
+
                 while (sectionForm.firstChild) {
                     sectionForm.removeChild(sectionForm.firstChild);
                 }
 
                 let skipped = false;
+                let warned = false;
 
-                const skip = () => {
-                    if (!skipped) {
-                        skipped = true;
-                        this.skipSection(elementName);
+                const rendered = template({
+                    name,
+                    get data() {
+                        if (!warned) {
+                            warned = true;
+                            console.warn('The template options "data" field is deprecated. Use "storage" instead.');
+                        }
+
+                        return awaitedData;
+                    },
+                    skip() {
+                        if (!skipped) {
+                            skipped = true;
+                            renderer.skipSection(name);
+                        }
+                    },
+                    sdk: this.sdk,
+                    inputFields: this.inputFields,
+                    storage: {
+                        get: storageGet
                     }
-                };
-
-                const rendered = template(elementName, res, skip, this.sdk, this.inputKeys, this.inputFields, this.outputKeys);
+                });
 
                 // Synchronous skipping means we can avoid rendering this section.
                 if (skipped) {
@@ -250,21 +267,21 @@ class PageRenderer {
                 }
 
                 if (!(rendered instanceof Node)) {
-                    throw new TypeError(`Invalid template result for ${elementName}. Should return a Node, returned: ${rendered} (${typeof rendered})`);
+                    throw new TypeError(`Invalid template result for ${name}. Should return a Node, returned: ${rendered} (${typeof rendered})`);
                 }
 
                 sectionForm.appendChild(rendered);
 
                 setupForm(sectionForm);
-                this.addListeners(elementName);
-                this.skipIfSubmitted(elementName);
+                this.addListeners(name);
+                this.skipIfSubmitted(name);
             });
     }
 
-    skipIfSubmitted(elementName) {
-        const { inputs } = Storage.getAll();
+    skipIfSubmitted(name) {
+        const { inputs } = storageGetAll();
         const submittedInputKeys = Object.keys(inputs);
-        const inputKeysInSection = getFormInputKeys(`#section-form-${elementName}`);
+        const inputKeysInSection = getFormInputKeys(`#section-form-${name}`);
 
         if (inputKeysInSection.length === 0) {
             return;
@@ -278,7 +295,7 @@ class PageRenderer {
         const submittedKeysInSection = inputKeysInSection.map(k => submittedInputKeys.includes(k) ? k : null).filter(k => k);
         //all submitted
         if (submittedKeysInSection.length === inputKeysInSection.length) {
-            return this.skipSection(elementName);
+            return this.skipSection(name);
         }
 
         if (submittedKeysInSection.length > 0) {

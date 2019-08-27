@@ -1,7 +1,7 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
 import render from '../render.js';
 
-export default function confirmation(_name, { confirmation }) {
+export default function confirmation({ data: { confirmation } }) {
     return render(html`
         <div>
             <p class="large">

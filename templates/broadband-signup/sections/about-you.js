@@ -3,7 +3,7 @@ import render from '../render.js';
 
 import { ContactPerson, Account, SelectedMarketingContactOptions } from '../inputs/index.js';
 
-export default function aboutYou(name, _data = {}) {
+export default function aboutYou({ name }) {
     return render(html`
         ${ContactPerson()}
         ${Account()}

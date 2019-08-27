@@ -2,7 +2,7 @@ import { html } from '/web_modules/lit-html/lit-html.js';
 import render from '../render.js';
 import { templates } from '/src/main.js';
 
-export default function summary(name, options) {
+export default function summary({ name, data }) {
     const {
         policyOptions,
         selectedCoverOptions,
@@ -12,7 +12,7 @@ export default function summary(name, options) {
         selectedAddress,
         selectedBreedType,
         estimatedPrice
-    } = options;
+    } = data;
 
     return render(html`
         <h2>Summary</h2>

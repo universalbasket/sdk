@@ -97,12 +97,19 @@ Sections are composed of the fields:
  - `template`: A function which returns a DOM element or a `DocumentFragment` instance.
  - `waitFor`: List of data (inputs, outputs, etc.) required in order to render the section.
 
-A template here is a function with parameters in the order: `name`, `options`, `skip`, `sdk`.
+A template here is a function with an options parameter with the following fields:
 
  - `name`: The name of the template.
- - `options`: Various data fields used to render the template.
- - `skip`: A skip function. renderer will render next section without waiting for end-user's input submission.
+ - `data`: **DEPRECATED** Various data fields used to render the template. Use storage instead.
+ - `storage`: An object with a `get(type, key)` method. Use this to get input and output data.
+   - `type`: The storage type, for example `"input"` or `"output"`.
+   - `key`: The key of the datum to retrieve.
+ - `skip`: A skip function. renderer will render next section without waiting
+   for end-user's input submission.
  - `sdk`: The sdk instance.
+ - `inputFields`: A list of fields from input that this job will use. Each
+   "field" is a path in the same format as form input name (see
+   [below](#building-forms)).
 
 As mentioned, the template must return an element or a document fragment. This
 means that if async work needs to happen, then a placeholder element or fragment

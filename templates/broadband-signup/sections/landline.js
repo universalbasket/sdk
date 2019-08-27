@@ -2,7 +2,7 @@ import { html } from '/web_modules/lit-html/lit-html.js';
 import render from '../render.js';
 import { LandlineCheck, LandlineOptions } from '../inputs/index.js';
 
-export default function landline(name, data = {}) {
+export default function landline({ name, data = {} }) {
     return render(html`
         ${LandlineCheck()}
         ${data.landlineOptions ? hidden(data.landlineOptions) : LandlineOptions() }

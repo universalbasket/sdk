@@ -1,7 +1,7 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
 import render from '../render.js';
 
-export default function monthlyPaymentMethod(name) {
+export default function monthlyPaymentMethod({ name }) {
     return render(html`
         <div class="field">
             <span class="field__name">How do you want to pay monthly payment?</span>

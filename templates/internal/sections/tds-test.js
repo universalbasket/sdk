@@ -1,7 +1,7 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
 import render from '../render.js';
 
-export default function tdsTest(name, _data) {
+export default function tdsTest({ name }) {
     return render(html`
         <div class="field">
             <label class="field__name" for="[amount]">Amount</label>

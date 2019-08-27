@@ -2,7 +2,7 @@ import { html } from '/web_modules/lit-html/lit-html.js';
 import render from '../render.js';
 import { policyOptions as policyOptionsInput, selectedCover, selectedPaymentTerm } from '../inputs/index.js';
 
-export default function policyOptions(name, { availableCovers, availablePaymentTerms }) {
+export default function policyOptions({ name, data: { availableCovers, availablePaymentTerms } }) {
     return render(html`
         ${policyOptionsInput()}
         ${selectedCover(availableCovers)}

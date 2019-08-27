@@ -3,7 +3,7 @@ import render from '../render.js';
 import finalPriceConsentGeneric from '../inputs/final-price-consent.js';
 import { createInputs, templates } from '/src/main.js';
 
-export default function finalPriceConsent(name, { estimatedPrice = {}, finalPrice = {} }, skip, sdk) {
+export default function finalPriceConsent({ name, data: { estimatedPrice = {}, finalPrice = {} }, skip, sdk }) {
     const finalValue = finalPrice.price && finalPrice.price.value;
     const estimatedValue = estimatedPrice.price && estimatedPrice.price.value;
 
