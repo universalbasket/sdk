@@ -9,12 +9,8 @@ import setupForm from './setup-form.js';
 
 const VAULT_FORM_SELECTOR = '.vault-form';
 
-/**
- * @param {String} name
- * @param {Array} sections
- * @param {String} selector
- * @param {Function} onFinish
- */
+let warnedOfDataFieldDeprecation = false;
+
 class PageRenderer {
     constructor({ sdk, sections = [], selector, onFinish, inputKeys, inputFields, outputKeys }) {
         if (sections.length === 0) {
@@ -236,13 +232,12 @@ class PageRenderer {
                 }
 
                 let skipped = false;
-                let warned = false;
 
                 const rendered = template({
                     name,
                     get data() {
-                        if (!warned) {
-                            warned = true;
+                        if (!warnedOfDataFieldDeprecation) {
+                            warnedOfDataFieldDeprecation = true;
                             console.warn('The template options "data" field is deprecated. Use "storage" instead.');
                         }
 
