@@ -1,7 +1,9 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
 import render from '../render.js';
 
-export default function confirmation({ data: { bookingConfirmation } }) {
+export default function confirmation({ storage }) {
+    const bookingConfirmation = storage.get('output', 'bookingConfirmation');
+
     return render(html`
         <div>
             <p class="large">

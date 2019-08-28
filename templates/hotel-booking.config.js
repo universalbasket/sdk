@@ -56,12 +56,12 @@ export default {
                 {
                     name: 'final-price-consent',
                     template: finalPriceConsent,
-                    waitFor: ['input.selectedRooms', 'outputs.finalPrice']
+                    waitFor: ['input.selectedRooms', 'output.finalPrice']
                 },
                 {
                     name: 'confirmation',
                     template: confirmation,
-                    waitFor: ['outputs.bookingConfirmation']
+                    waitFor: ['output.bookingConfirmation']
                 }
             ],
             excludeStep: true

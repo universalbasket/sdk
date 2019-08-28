@@ -11,7 +11,9 @@ function valueLi(code) {
     }
 }
 
-export default function rooms({ name, data: { availableRooms } }) {
+export default function rooms({ name, storage }) {
+    const availableRooms = storage.get('output', 'availableRooms');
+
     return render(html`
         <div class="field field--list" data-error="Please select a room">
             <span class="field__name">Select a room</span>
