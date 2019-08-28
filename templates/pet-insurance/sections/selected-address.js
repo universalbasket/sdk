@@ -2,7 +2,9 @@ import { html } from '/web_modules/lit-html/lit-html.js';
 import render from '../render.js';
 import { selectedAddress as input } from '../inputs/index.js';
 
-export default function selectedAddress({ name, data: { availableAddresses }, skip }) {
+export default function selectedAddress({ name, storage, skip }) {
+    const availableAddresses = storage.get('output', 'availableAddresses');
+
     if (availableAddresses == null) {
         return skip();
     }

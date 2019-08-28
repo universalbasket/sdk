@@ -2,7 +2,9 @@ import { html } from '/web_modules/lit-html/lit-html.js';
 import render from '../render.js';
 import { petsSelectedBreedType } from '../inputs/index.js';
 
-export default function pets({ name, data: { availableBreedTypes } }) {
+export default function pets({ name, storage }) {
+    const availableBreedTypes = storage.get('local', 'availableBreedTypes');
+
     return render(html`
         <h2>Your pet</h2>
 
