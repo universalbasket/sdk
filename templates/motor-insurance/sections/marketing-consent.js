@@ -2,7 +2,8 @@ import { html } from '/web_modules/lit-html/lit-html.js';
 import render from '../render.js';
 //import { } from '../inputs/index.js';
 
-export default function marketingConsent({ name, data: { availableMarketingContactOptions } }) {
+export default function marketingConsent({ name, storage }) {
+    const availableMarketingContactOptions = storage.get('output', 'availableMarketingContactOptions');
     const key = 'selected-marketing-contact-options';
 
     return render(html`

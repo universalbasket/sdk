@@ -38,7 +38,6 @@ export default {
                     name: 'quote',
                     template: options,
                     waitFor: [
-                        'input.selectedPaymentTerm',
                         'output.availableNoClaimsDiscountProtection',
                         'output.availableVoluntaryExcesses',
                         'output.availableLegalCovers',
@@ -131,7 +130,7 @@ export default {
                 {
                     name: 'final-price-consent',
                     template: finalPriceConsent,
-                    waitFor: ['output.estimatedPrice', 'outputs.finalPrice']
+                    waitFor: ['output.estimatedPrice', 'output.finalPrice']
                 },
                 {
                     name: 'confirmation',
