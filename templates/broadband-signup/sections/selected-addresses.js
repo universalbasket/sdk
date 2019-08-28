@@ -3,7 +3,10 @@ import render from '../render.js';
 
 let installationAddresses = [];
 
-export default function selectedAddresses({ name, data: { availableAddresses, availableInstallationAddresses } }) {
+export default function selectedAddresses({ name, storage }) {
+    const availableAddresses = storage.get('output', 'availableAddresses');
+    const availableInstallationAddresses = storage.get('output', 'availableInstallationAddresses');
+
     installationAddresses = availableInstallationAddresses;
     return render(html`
         <div class="field field-set">

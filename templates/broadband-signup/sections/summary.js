@@ -2,8 +2,12 @@ import { html } from '/web_modules/lit-html/lit-html.js';
 import render from '../render.js';
 import { templates } from '/src/main.js';
 
-export default function summary({ name, data }) {
-    const { selectedBroadbandPackage, selectedTvPackages, selectedPhonePackage, oneOffCosts, monthlyCosts } = data;
+export default function summary({ name, storage }) {
+    const selectedBroadbandPackage = storage.get('input', 'selectedBroadbandPackage');
+    const selectedTvPackages = storage.get('input', 'selectedTvPackages');
+    const selectedPhonePackage = storage.get('input', 'selectedPhonePackage');
+    const oneOffCosts = storage.get('output', 'oneOffCosts');
+    const monthlyCosts = storage.get('output', 'monthlyCosts');
 
     return render(html`
         <h2>Summary</h2>

@@ -3,7 +3,9 @@ import { createInputs, templates } from '/src/main.js';
 import { html } from '/web_modules/lit-html/lit-html.js';
 import render from '../render.js';
 
-export default function finalPriceConsent({ name, data: { selectedRooms, finalPrice }, skip, sdk }) {
+export default function finalPriceConsent({ name, storage, skip, sdk }) {
+    const selectedRooms = storage.get('input', 'selectedRooms');
+    const finalPrice = storage.get('output', 'finalPrice');
     const finalValue = finalPrice.price.value;
     const estimatedPrice = selectedRooms[0] && selectedRooms[0].price || {};
     const estimatedValue = estimatedPrice.value || 0;

@@ -2,17 +2,15 @@ import { html } from '/web_modules/lit-html/lit-html.js';
 import render from '../render.js';
 import { templates } from '/src/main.js';
 
-export default function summary({ name, data }) {
-    const {
-        policyOptions,
-        selectedCoverOptions,
-        selectedCoverType,
-        selectedPaymentTerm,
-        selectedCover,
-        selectedAddress,
-        selectedBreedType,
-        estimatedPrice
-    } = data;
+export default function summary({ name, storage }) {
+    const policyOptions = storage.get('input', 'policyOptions');
+    const selectedCoverOptions = storage.get('input', 'selectedCoverOptions');
+    const selectedCoverType = storage.get('input', 'selectedCoverType');
+    const selectedPaymentTerm = storage.get('input', 'selectedPaymentTerm');
+    const selectedCover = storage.get('input', 'selectedCover');
+    const selectedAddress = storage.get('input', 'selectedAddress');
+    const selectedBreedType = storage.get('input', 'selectedBreedType');
+    const estimatedPrice = storage.get('output', 'estimatedPrice');
 
     return render(html`
         <h2>Summary</h2>

@@ -12,7 +12,8 @@
       "--disable-gpu",
       "--remote-debugging-port=9222",
       "--privileged",
-      "--no-sandbox"
+      "--no-sandbox",
+      "--window-size=1440,900"
     ]
   }
 }
