@@ -100,7 +100,6 @@ Sections are composed of the fields:
 A template here is a function with an options parameter with the following fields:
 
  - `name`: The name of the template.
- - `data`: **DEPRECATED** Various data fields used to render the template. Use storage instead.
  - `storage`: An object with a `get(type, key)` method. Use this to get input and output data.
    - `type`: The storage type, for example `"input"` or `"output"`.
    - `key`: The key of the datum to retrieve.

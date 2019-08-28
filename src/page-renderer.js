@@ -3,13 +3,11 @@ import { serializeForm , getFormInputKeys } from './serialize-form.js';
 import defaultLoadingTemplate from './builtin-templates/loading.js';
 import flashError from './builtin-templates/flash-error.js';
 import { get as storageGet, getAll as storageGetAll, set as storageSet, del as storageDel } from './storage.js';
-import waitForDataForSection from './get-data-for-section.js';
+import waitForDataForSection from './wait-for-data-for-section.js';
 import { createInputs } from './main.js';
 import setupForm from './setup-form.js';
 
 const VAULT_FORM_SELECTOR = '.vault-form';
-
-let warnedOfDataFieldDeprecation = false;
 
 class PageRenderer {
     constructor({ sdk, sections = [], selector, onFinish, inputKeys = [], inputFields, outputKeys = [] }) {
@@ -224,7 +222,7 @@ class PageRenderer {
         this.scrollIntoView(sectionForm);
 
         waitForDataForSection(waitFor)
-            .then(awaitedData => {
+            .then(() => {
                 const renderer = this;
 
                 while (sectionForm.firstChild) {
@@ -235,14 +233,6 @@ class PageRenderer {
 
                 const rendered = template({
                     name,
-                    get data() {
-                        if (!warnedOfDataFieldDeprecation) {
-                            warnedOfDataFieldDeprecation = true;
-                            console.warn('The template options "data" field is deprecated. Use "storage" instead.');
-                        }
-
-                        return awaitedData;
-                    },
                     skip() {
                         if (!skipped) {
                             skipped = true;
