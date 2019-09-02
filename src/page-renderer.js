@@ -12,7 +12,7 @@ const VAULT_FORM_SELECTOR = '.vault-form';
 let warnedOfDataFieldDeprecation = false;
 
 class PageRenderer {
-    constructor({ sdk, sections = [], selector, onFinish, inputKeys, inputFields, outputKeys }) {
+    constructor({ sdk, sections = [], selector, onFinish, inputKeys = [], inputFields, outputKeys = [] }) {
         if (sections.length === 0) {
             throw new Error('PageRenderer constructor: sections is empty');
         }
@@ -250,6 +250,8 @@ class PageRenderer {
                         }
                     },
                     sdk: this.sdk,
+                    inputKeys: this.inputKeys.slice(),
+                    outputKeys: this.outputKeys.slice(),
                     inputFields: this.inputFields,
                     storage: {
                         get: storageGet
