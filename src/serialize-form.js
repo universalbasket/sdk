@@ -25,7 +25,7 @@ function fillEmptyInputs(form, data) {
     const checkboxes = form.querySelectorAll('input[type=checkbox]');
 
     checkboxes.forEach(c => {
-        const name = c.name.replace(/-\$\w+/, '');
+        const name = c.name.replace(/-\$\w+(\[\])?/, '');
         if (name && !data[name]) {
             data[name] = [];
         }
