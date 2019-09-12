@@ -95,7 +95,7 @@ export async function createApp({ mountPoint, sdk, layout, pages, input = {}, er
             onFinish = callback || (() => console.log('App complete.'));
         } else {
             const nextRoute = routingOrder[stepIndex + 1];
-            onFinish = () => window.location.hash = nextRoute;
+            onFinish = () => window.location.replace('#' + nextRoute);
         }
 
         const renderer = PageRenderer({
@@ -140,7 +140,7 @@ export async function createApp({ mountPoint, sdk, layout, pages, input = {}, er
     let shouldNavigate = true;
 
     if (router.isCurrentRoot()) {
-        window.location.hash = entryPoint;
+        window.location.replace('#' + entryPoint);
         shouldNavigate = false;
     }
 
