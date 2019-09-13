@@ -1,4 +1,4 @@
-import kebabcase from '/web_modules/lodash.kebabcase.js';
+import kebabcase from '/web_modules/lodash.kebabcase/index.js';
 
 export default class InputFields {
     constructor(useFields, fields = []) {
