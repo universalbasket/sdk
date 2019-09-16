@@ -5,12 +5,7 @@ class Router {
     constructor(routes, notFoundTemplate) {
         this.routes = routes;
         this.notFoundTemplate = notFoundTemplate;
-
-        const steps = Object.values(routes)
-            .filter(route => route.step != null && typeof route.step === 'number')
-            .sort((a, b) => a.step - b.step);
-
-        this.progressBar = renderProgressBar('.sdk-app-bundle-layout-progress-bar', steps.map(s => s.title));
+        this.progressBar = renderProgressBar('.sdk-app-bundle-layout-progress-bar', routes);
     }
 
     navigate() {
