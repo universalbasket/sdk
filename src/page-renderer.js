@@ -1,4 +1,4 @@
-import kebabcase from '/web_modules/lodash.kebabcase.js';
+import kebabcase from '/web_modules/lodash.kebabcase/index.js';
 import { serializeForm , getFormInputKeys } from './serialize-form.js';
 import defaultLoadingTemplate from './builtin-templates/loading.js';
 import flashError from './builtin-templates/flash-error.js';
