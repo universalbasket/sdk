@@ -69,7 +69,9 @@ async function run() {
             '@pika/web': pkg.devDependencies['@pika/web'],
             '@ubio/sdk': `^${pkg.version}`,
             '@ubio/client-library': pkg.devDependencies['@ubio/client-library'],
-            'lit-html': pkg.devDependencies['lit-html']
+            'lit-html': pkg.devDependencies['lit-html'],
+            'currency-symbol-map': pkg.devDependencies['currency-symbol-map']
+
         },
         devDependencies: {
             'body-parser': pkg.devDependencies['body-parser'],
@@ -90,7 +92,8 @@ async function run() {
                 '@ubio/sdk',
                 '@ubio/sdk/index.css',
                 'lit-html/lit-html.js',
-                'lit-html/directives/*.js'
+                'lit-html/directives/*.js',
+                'currency-symbol-map/currency-symbol-map.js'
             ]
         }
     }, null, 2));

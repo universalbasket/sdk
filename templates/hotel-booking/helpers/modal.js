@@ -26,10 +26,10 @@ export default function create(body, { title = '', isLocked = false } = {}) {
 }
 
 function close() {
-    const $modal = document.querySelector(modalSelector);
+    const el = document.querySelector(modalSelector);
 
-    while ($modal.lastChild) {
-        $modal.removeChild($modal.lastChild);
+    while (el && el.lastChild) {
+        el.removeChild(el.lastChild);
     }
 }
 

@@ -1,6 +1,7 @@
 
 export default function create(error) {
-    const el = document.querySelector('.sdk-app-bundle-layout-flash-error');
+    const selector = '.sdk-app-bundle-layout-flash-error';
+    const el = document.querySelector(selector);
 
     if (error) {
         console.error(error);
@@ -8,6 +9,10 @@ export default function create(error) {
 
     return {
         show() {
+            if (el) {
+                throw new Error('Document does not have nodes matching ' + selector + ' selector');
+            }
+
             el.innerHTML = `
                 <div class="flash-error">
                     <p><b class="large">We’re sorry, something is missing or wrong.</b></p>
@@ -16,7 +21,7 @@ export default function create(error) {
             `;
         },
         hide() {
-            while (el.lastChild) {
+            while (el && el.lastChild) {
                 el.removeChild(el.lastChild);
             }
         }
