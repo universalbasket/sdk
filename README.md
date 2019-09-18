@@ -3,7 +3,7 @@
 Application bundle using @ubio/client-library.
 
 This repository contains an example application which uses the ubio API with the
-JavaScript SDK. It is split into two broad parts:
+JavaScript client-library. It is split into two broad parts:
  - The code in the `/src` directory consumes configuration and functions which
    produce DOM Nodes to render a sequence of _sections_ containing forms.
  - The /templates directory contains functions which render _sections_ from
@@ -68,7 +68,7 @@ browser to create the `sdk` object, and subsequently call `createApp`.
 
 #### `sdk`
 
-For documentation regarding the `sdk` object, see [the documentation][sdk]. This
+For documentation regarding the `sdk` object, see [the documentation][client-library]. This
 library requires the _end-user_ form of the `sdk`.
 
 #### `input`
@@ -294,7 +294,7 @@ CSS file which you must host. See
 [the styling and configuration documentation][styling-configuring-payment-form]
 for more information.
 
-[sdk]: https://npmjs.com/package/@ubio/sdk
+[client-library]: https://npmjs.com/package/@ubio/client-library
 [protocol]: https://protocol.automationcloud.net/
 [vaulting-payment-card]: https://docs.automationcloud.net/docs/vaulting-payment-card
 [hosted-payment-form]: https://docs.automationcloud.net/docs/vaulting-payment-card#section-using-the-hosted-payment-card-form

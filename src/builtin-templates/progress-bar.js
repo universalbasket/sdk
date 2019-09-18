@@ -1,19 +1,16 @@
-function StepIcon(i, activeIndex) {
+const icon = (i, stepKey, activeStepIndex) => {
+    const stepIndex = Number(stepKey);
     const div = document.createElement('div');
-
     div.className = 'progress-bar__step';
-
-    if (activeIndex != null && i === activeIndex) {
+    if (stepIndex === activeStepIndex) {
         div.classList.add('progress-bar__step--active');
     }
-
-    div.append(`${ i + 1 }`);
-
+    div.append(`${i + 1}`);
     return div;
-}
+};
 
-function StepLabel(activeLabel, activeIndex, totalSteps) {
-    if (activeLabel == null || activeIndex == null) {
+const label = (activeLabel, activeIndex, totalSteps) => {
+    if (!activeLabel) {
         return document.createTextNode('');
     }
 
@@ -53,14 +50,22 @@ function StepLabel(activeLabel, activeIndex, totalSteps) {
     span.style.textAlign = textAlign;
 
     return span;
-}
+};
 
-export default function progressBar(titles, activeLabel, activeStep) {
+export default function progressBar(steps, activeStepIndex) {
     const element = document.createElement('div');
+    const totalSteps = Object.keys(steps).length;
+
+    if (totalSteps === 0) {
+        return document.createTextNode('');
+    }
+
+    const icons = Object.keys(steps).map((stepKey, i) => icon(i, stepKey, activeStepIndex));
+    const currentStepLabel = label(steps[activeStepIndex], activeStepIndex, totalSteps);
 
     element.className = 'progress-bar';
-    element.style.gridTemplateColumns = `repeat(${titles.length}, var(--progress-step-icon-size))`;
-    element.append(...titles.map((_, i) => StepIcon(i, activeStep)), StepLabel(activeLabel, activeStep, titles.length));
+    element.style.gridTemplateColumns = `repeat(${totalSteps}, var(--progress-step-icon-size))`;
+    element.append(...icons, currentStepLabel);
 
     return element;
 }

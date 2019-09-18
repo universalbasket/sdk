@@ -1,13 +1,13 @@
 {
   "name": "@ubio/sdk",
-  "version": "0.14.1",
+  "version": "0.14.2",
   "description": "ubio sdk application bundle (prototype)",
   "module": "bundle.js",
   "main": "bundle.umd.js",
   "repository": "github:universalbasket/sdk",
   "scripts": {
     "prepublishOnly": "npm run build",
-    "prepare": "rimraf web_modules && vendor-copy && node esmify.js",
+    "prepare": "pika-web --clean",
     "start": "npm run serve",
     "build": "npm run build:rollup && npm run build:umd && npm run build:css",
     "build:rollup": "rollup --config",
@@ -43,6 +43,7 @@
     "replace-in-files": "^1.1.4"
   },
   "devDependencies": {
+    "@pika/web": "^0.6.1",
     "@ubio/client-library": "^0.10.0",
     "autoprefixer": "^9.6.0",
     "babel-jest": "^24.9.0",
@@ -76,24 +77,18 @@
     "rollup-plugin-node-resolve": "^5.0.2",
     "stylelint": "^10.1.0",
     "stylelint-config-standard": "^18.3.0",
-    "testem": "^2.16.0",
-    "vendor-copy": "^2.0.0"
+    "testem": "^2.16.0"
   },
-  "esmify": [
-    "form-serialize",
-    "camelcase-keys",
-    "lodash.kebabcase",
-    "pwa-helpers/media-query",
-    "currency-symbol-map"
-  ],
-  "vendorCopy": [
-    {
-      "from": "node_modules/lit-html",
-      "to": "web_modules/lit-html"
-    },
-    {
-      "from": "node_modules/@ubio/client-library/index.js",
-      "to": "web_modules/@ubio/client-library.js"
-    }
-  ]
+  "@pika/web": {
+    "webDependencies": [
+      "@ubio/client-library",
+      "form-serialize",
+      "camelcase-keys",
+      "lodash.kebabcase/index.js",
+      "pwa-helpers/media-query.js",
+      "currency-symbol-map",
+      "lit-html/lit-html.js",
+      "lit-html/directives/*.js"
+    ]
+  }
 }
