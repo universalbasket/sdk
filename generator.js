@@ -83,6 +83,7 @@ async function run() {
             'postcss-cli': pkg.devDependencies['postcss-cli'],
             'postcss-import': pkg.devDependencies['postcss-import'],
             rollup: pkg.devDependencies.rollup
+
         },
         vendorCopy: [
             {

@@ -215,6 +215,10 @@ class PageRenderer {
     renderSection({ name, waitFor, template, loadingTemplate }) {
         const sectionForm = document.querySelector(`#section-form-${name}`);
 
+        if (!sectionForm) {
+            throw new Error('No section form ' + name);
+        }
+
         if (loadingTemplate) {
             loadingTemplate(sectionForm);
         } else {

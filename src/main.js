@@ -19,8 +19,8 @@ import markup from './builtin-templates/get-markup.js';
 import hostedPaymentCardForm from './builtin-templates/hosted-payment-card-form.js';
 
 export const templates = {
-    modal,
-    priceDisplay,
+    modal, // this is a tooltip, probably, 99%
+    priceDisplay, // "free" text
     progressBar,
     file,
     markup,
@@ -175,53 +175,14 @@ function afterSdkInitiated(sdk, summary, cacheConfig, local) {
 }
 
 function addTracker(sdk) {
-    let tdsTimeout;
-
-    async function handle3dsEvent(event) {
-        if (event === 'tdsStart') {
-            clearTimeout(tdsTimeout);
-            let res;
-
-            try {
-                res = await sdk.getActiveTds();
-            } catch (err) {
-                console.warn(err);
-                return;
-            }
-
-            const iframe = document.createElement('iframe');
-            iframe.src = res.url;
-            const iframeContent = modal(iframe, { isLocked: true });
-            iframeContent.show({ hidden: true });
-            tdsTimeout = setTimeout(() => iframeContent.show(), 5000);
-        }
-
-        if (event === 'tdsFinish') {
-            clearTimeout(tdsTimeout);
-            modal().close();
-        }
-    }
 
     const stop = sdk.trackJob(async (eventName, jobEvent) => {
         console.log(`event ${eventName}`);
 
         switch (eventName) {
-            case 'tdsStart':
-                return handle3dsEvent('tdsStart');
-
-            case 'tdsFinish':
-                return handle3dsEvent('tdsFinish');
-
-            case 'close':
-                return modal().close();
 
             case 'error':
                 return console.error(jobEvent);
-
-            case 'fail':
-                stop();
-                flashError().hide();
-                return void (window.location.hash = '/error');
 
             case 'createOutput':
                 if (jobEvent.stage) {

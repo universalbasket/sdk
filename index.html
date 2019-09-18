@@ -7,6 +7,48 @@
         <script type="module">
             import { createEndUserSdk } from '/web_modules/@ubio/client-library.js';
             import { createApp } from '/src/main.js';
+            import modal from './builtin-templates/modal.js';
+
+            // TODO: move somewhere (cut-n-paste from main.js)
+            // this code being moved from sdk core because it depends on modal()
+            // which should be part of generated codebase, due "tooltip" part
+            // of requirements of sdk-97
+            // (https://ubio-automation.atlassian.net/jira/software/projects/SDK/boards/16?selectedIssue=SDK-97)
+
+            let tdsTimeout;
+
+            async function handle3dsEvent(event) {
+                if (event === 'tdsStart') {
+                    clearTimeout(tdsTimeout);
+                    let res;
+
+                    try {
+                        res = await sdk.getActiveTds();
+                    } catch (err) {
+                        console.warn(err);
+                        return;
+                    }
+
+                    const iframe = document.createElement('iframe');
+                    iframe.src = res.url;
+                    const iframeContent = modal(iframe, { isLocked: true });
+                    iframeContent.show({ hidden: true });
+                    tdsTimeout = setTimeout(() => iframeContent.show(), 5000);
+                }
+
+                if (event === 'tdsFinish') {
+                    clearTimeout(tdsTimeout);
+                    modal().close();
+                }
+            }
+            // ENDTODO: move somewhere
+
+            // TODO: also this file is a copy of ./application-template/public/index.html
+            // which tends to divert from it
+            // it might be a good idea to make development process similar to production
+            // i.e. start it by running npx command and then somehow wire with live codebase of sdk core (npm link or smth)
+            // rather than copying a duplicate of a file dangling in the root, but not serving any purpose other than
+            // development
 
             async function getExisting() {
                 const existingJob = localStorage.getItem(`job-session`);
@@ -19,6 +61,16 @@
                     const { token, jobId, serviceId, local, domain } = JSON.parse(existingJob);
                     const sdk = createEndUserSdk({ token, jobId, serviceId });
                     const job = await sdk.getJob();
+
+                    sdk.trackJob(async (eventName, jobEvent) => {
+                        switch (eventName) {
+                            case 'tdsStart':
+                            case 'tdsFinish':
+                                return handle3dsEvent(eventName);
+                            case 'close':
+                                return modal().close();
+                        }
+                    });
 
                     if (job.status === 'success' || job.status === 'fail') {
                         console.log(`Stored session job status was: ${job.status}`);
@@ -99,7 +151,8 @@
                 const { pages, cache, layout, notFound, error } = (await import(`/templates/${domain}.config.js`)).default;
                 const { sdk, local, input } = existing || await createJob(domain);
 
-                const app = createApp({ mountPoint: window.app, pages, cache, layout, sdk, notFound, error, local, input });
+                const mountPoint = document.querySelector('#app');
+                const app = createApp({ mountPoint, pages, cache, layout, sdk, notFound, error, local, input });
             }
 
             init();

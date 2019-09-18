@@ -1,4 +1,4 @@
-import { templates } from '/src/main.js';
+import { hostedPaymentCardForm } from '/src/main.js';
 
 // https://protocol.automationcloud.net/Generic#PaymentCard
 export default function hostedForm(otp) {
@@ -16,5 +16,5 @@ export default function hostedForm(otp) {
         scrolling: 'no'
     };
 
-    return templates.hostedPaymentCardForm(otp, formConfiguration, iframeStyles);
+    return hostedPaymentCardForm(otp, formConfiguration, iframeStyles);
 }
