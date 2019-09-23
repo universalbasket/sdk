@@ -1,4 +1,3 @@
-
 import modal from './modal.js';
 import priceDisplay from './price-display.js';
 import progressBar from './progress-bar.js';
@@ -17,11 +16,3 @@ export {
     hostedPaymentCardForm
 };
 
-// NOTE TO SELF:
-// modal // this is a tooltip, probably, 99%
-// priceDisplay, // "free" text
-// progressBar,
-// file,
-// markup,
-// hostedPaymentCardForm
-// };
