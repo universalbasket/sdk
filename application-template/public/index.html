@@ -9,40 +9,6 @@
             import { createEndUserSdk } from '/web_modules/@ubio/client-library.js';
             import modal from './templates/helpers/modal.js';
 
-            // TODO: move somewhere (cut-n-paste from main.js)
-            // this code being moved from sdk core because it depends on modal()
-            // which should be part of generated codebase, due "tooltip" part
-            // of requirements of sdk-97
-            // (https://ubio-automation.atlassian.net/jira/software/projects/SDK/boards/16?selectedIssue=SDK-97)
-
-            let tdsTimeout;
-
-            async function handle3dsEvent(event) {
-                if (event === 'tdsStart') {
-                    clearTimeout(tdsTimeout);
-                    let res;
-
-                    try {
-                        res = await sdk.getActiveTds();
-                    } catch (err) {
-                        console.warn(err);
-                        return;
-                    }
-
-                    const iframe = document.createElement('iframe');
-                    iframe.src = res.url;
-                    const iframeContent = modal(iframe, { isLocked: true });
-                    iframeContent.show({ hidden: true });
-                    tdsTimeout = setTimeout(() => iframeContent.show(), 5000);
-                }
-
-                if (event === 'tdsFinish') {
-                    clearTimeout(tdsTimeout);
-                    modal().close();
-                }
-            }
-            // ENDTODO: move somewhere
-
             function appendForm() {
                 const form = document.createElement('form');
                 form.innerHTML = `
