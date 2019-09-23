@@ -30,7 +30,7 @@ function SummaryDetails({ outputs, inputs }) {
                 ${price ? html`
                     <li class="summary__price">
                         <b class="large">
-                            ${priceDisplay(price)}
+                            ${ priceDisplay(price) }
                         </b>
                     </li>` : ''}
             </ul>
@@ -61,7 +61,7 @@ function SummaryPreview({ inputs }) {
     return html`
         ${price ? html`
             <b class="large summary__preview-price">
-                ${priceDisplay(price)}
+                ${ priceDisplay(price) }
             </b>` : ''}
         ${inputs.selectedRooms && inputs.selectedRooms[0] ? html`
             <span class="faint summary__preview-info">
