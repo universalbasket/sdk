@@ -220,7 +220,7 @@ for your convenience. This template provides a nicer API than indicated in the
 documentation.
 
 ```javascript
-import { templates } from '/src/main.js';
+import templates from '../helpers/index.js';
 
 // See: https://docs.automationcloud.net/docs/vaulting-payment-card
 function hostedForm(otp) {

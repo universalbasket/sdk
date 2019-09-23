@@ -1,5 +1,5 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
-import { templates } from '/src/main.js';
+import templates from '../helpers/index.js';
 const key = 'selected-cover-options';
 
 export default function selectedCoverOptions(output) {
