@@ -101,7 +101,9 @@ A template here is a function with an options parameter with the following field
 
  - `name`: The name of the template.
  - `storage`: An object with a `get(type, key)` method. Use this to get input and output data.
-   - `type`: The storage type, for example `"input"` or `"output"`.
+   - `type`: The storage type, for example `"input"` or `"output"`. An array may be used, in which
+     case each type is checked until a result (if any) for the given key is found. A common use case
+     for this is `['output', 'cache']`.
    - `key`: The key of the datum to retrieve.
  - `skip`: A skip function. renderer will render next section without waiting
    for end-user's input submission.

@@ -32,25 +32,29 @@ export function objectToArray(inputs) {
     return arr;
 }
 
-export function get(type, key) {
-    if (!TYPES.includes(type)) {
-        throw new Error(`storage.get(): type must be one of ${TYPES.join(', ')}`);
+export function get(types, key) {
+    for (const type of [].concat(types)) {
+        if (!TYPES.includes(type)) {
+            throw new Error(`storage.get(): type must be one of ${TYPES.join(', ')}.`);
+        }
+
+        const inputOrOutput = localStorage.getItem(`${type}.${key}`);
+
+        if (!inputOrOutput) {
+            continue;
+        }
+
+        const data = JSON.parse(inputOrOutput);
+
+        return TYPES_WITH_META.includes(type) ? data.data : data;
     }
 
-    const inputOrOutput = localStorage.getItem(`${type}.${key}`);
-
-    if (!inputOrOutput) {
-        return undefined;
-    }
-
-    const data = JSON.parse(inputOrOutput);
-
-    return TYPES_WITH_META.includes(type) ? data.data : data;
+    return;
 }
 
 export function getWithMeta(type, key) {
     if (!TYPES_WITH_META.includes(type)) {
-        throw new Error(`storage.getWithMeta(): type must be one of ${TYPES_WITH_META.join(', ')}`);
+        throw new Error(`storage.getWithMeta(): type must be one of ${TYPES_WITH_META.join(', ')}.`);
     }
 
     const json = localStorage.getItem(`${type}.${key}`);
@@ -62,7 +66,7 @@ export function getWithMeta(type, key) {
 
 export function set(type, key, data) {
     if (!TYPES.includes(type)) {
-        throw new Error(`InputOutput.set(): type must be one of ${TYPES.join(', ')}`);
+        throw new Error(`storage.set(): type must be one of ${TYPES.join(', ')}.`);
     }
 
     localStorage.setItem(`${type}.${key}`, JSON.stringify(data));
@@ -70,7 +74,7 @@ export function set(type, key, data) {
 
 export function del(type, key) {
     if (!TYPES.includes(type)) {
-        throw new Error(`InputOutput.set(): type must be one of ${TYPES.join(', ')}`);
+        throw new Error(`storage.del(): type must be one of ${TYPES.join(', ')}.`);
     }
 
     localStorage.removeItem(`${type}.${key}`);
