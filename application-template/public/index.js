@@ -56,8 +56,7 @@ async function handle3dsEvent(sdk, event) {
         iframe.src = res.url;
         const iframeContent = modal(iframe, { isLocked: true });
         iframeContent.show({ hidden: true });
-        clearTimeout(tdsTimeout);
-        tdsTimeout = setTimeout(() => iframeContent.show(), 5000);
+        tdsTimeout = setTimeout(() => iframeContent.show(), 5000); // eslint-disable-line require-atomic-updates
     }
 
     if (event === 'tdsFinish') {

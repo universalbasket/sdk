@@ -49,17 +49,3 @@ function addEventListeners(field) {
     });
 }
 
-// TODO: remove
-function addDataOptionalAttribute(field) {
-    const optionalInputs = field.querySelectorAll(':optional');
-
-    if (optionalInputs.length === 0) {
-        return;
-    }
-
-    const label = field.querySelector('.field__name');
-
-    if (label) {
-        label.setAttribute('data-optional', 'optional');
-    }
-}

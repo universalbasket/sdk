@@ -2,7 +2,7 @@ import finalPriceConsentGeneric from '../inputs/final-price-consent.js';
 import { createInputs } from '/src/main.js';
 import { html } from '/web_modules/lit-html/lit-html.js';
 import render from '../render.js';
-import { priceDisplay } from '../helpers/index.js';
+import { priceDisplay, modal } from '../helpers/index.js';
 
 export default function finalPriceConsent({ name, storage, skip, sdk }) {
     const selectedRooms = storage.get('input', 'selectedRooms');
@@ -28,13 +28,13 @@ export default function finalPriceConsent({ name, storage, skip, sdk }) {
             </div>
         `);
 
-        const modal = templates.modal(template, { title: 'Price check', isLocked: true });
-        modal.show();
+        const m = modal(template, { title: 'Price check', isLocked: true });
+        m.show();
 
-        document.querySelector(`#submit-btn-${name}`).addEventListener('click', modal.close);
+        document.querySelector(`#submit-btn-${name}`).addEventListener('click', m.close);
         document.querySelector('#cancel-btn').addEventListener('click', () => {
             sdk.cancelJob().then(() => {
-                modal.close();
+                m.close();
             });
         });
 

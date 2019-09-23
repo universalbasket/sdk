@@ -31,11 +31,7 @@ function SummaryDetails({ outputs, inputs, cache, sdk }) {
                     <li>
                         <span
                             class="summary__popup-icon"
-                            @click=${ () => templates.modal(
-                                templates.markup(outputs.serviceTermsAndConditions, sdk),
-                                { title: outputs.serviceTermsAndConditions.name }
-                            ).show()
-                            }>
+                            @click=${ () => templates.modal(templates.markup(outputs.serviceTermsAndConditions, sdk), { title: outputs.serviceTermsAndConditions.name }).show() }>
                             <span class="clickable">${outputs.serviceTermsAndConditions.name}</span>
                         </span>
                     </li>` : ''}
