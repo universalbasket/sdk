@@ -1,8 +1,7 @@
-import * as Storage from './storage.js';
+import { getAll as storageGetAll } from './storage.js';
 
 const desktopSelector = '.sdk-app-bundle-layout-summary-desktop';
 const mobileSelector = '.sdk-app-bundle-layout-summary-mobile';
-
 
 export default class Summary {
     constructor(sdk) {
@@ -26,7 +25,7 @@ export default class Summary {
 
     update() {
         if (this.bodyTemplate) {
-            const { inputs, outputs, cache, _ } = Storage.getAll();
+            const { input: inputs, output: outputs, cache, _ } = storageGetAll();
 
             while (this.currentTarget.lastChild) {
                 this.currentTarget.removeChild(this.currentTarget.lastChild);

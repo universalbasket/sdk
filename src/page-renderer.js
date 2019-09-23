@@ -10,14 +10,14 @@ import setupForm from './setup-form.js';
 const VAULT_FORM_SELECTOR = '.vault-form';
 
 class PageRenderer {
-    constructor({ sdk, sections = [], selector, onFinish, inputKeys = [], inputFields, outputKeys = [] }) {
+    constructor({ sdk, sections = [], cache, selector, onFinish, inputKeys = [], inputFields, outputKeys = [] }) {
         if (sections.length === 0) {
             throw new Error('PageRenderer constructor: sections is empty');
         }
 
         this.sdk = sdk;
         this.selector = selector;
-        this.sections = [...sections];
+        this.sections = sections.slice();
         this.onFinish = onFinish;
         this.inputKeys = inputKeys;
         this.inputFields = inputFields;
@@ -26,7 +26,7 @@ class PageRenderer {
         this.sectionsToRender = [];
 
         for (const section of sections) {
-            const sectionToRender = { name: kebabcase(section.name), ...section };
+            const sectionToRender = { name: kebabcase(section.name), ...section, cache: cache.slice() };
             this.sectionsToRender.push(sectionToRender);
         }
 
@@ -210,7 +210,7 @@ class PageRenderer {
         }
     }
 
-    renderSection({ name, waitFor, template, loadingTemplate }) {
+    renderSection({ name, waitFor, cache, template, loadingTemplate }) {
         const sectionForm = document.querySelector(`#section-form-${name}`);
 
         if (loadingTemplate) {
@@ -221,7 +221,7 @@ class PageRenderer {
 
         this.scrollIntoView(sectionForm);
 
-        waitForDataForSection(waitFor)
+        waitForDataForSection(waitFor, cache)
             .then(() => {
                 const renderer = this;
 
@@ -266,8 +266,8 @@ class PageRenderer {
     }
 
     skipIfSubmitted(name) {
-        const { inputs } = storageGetAll();
-        const submittedInputKeys = Object.keys(inputs);
+        const { input } = storageGetAll();
+        const submittedInputKeys = Object.keys(input);
         const inputKeysInSection = getFormInputKeys(`#section-form-${name}`);
 
         if (inputKeysInSection.length === 0) {
@@ -332,8 +332,8 @@ function submitVaultForm(sdk, vaultIframe) {
     });
 }
 
-function getPageRenderer({ sdk, name, sections, selector, onFinish, inputKeys, inputFields, outputKeys }) {
-    return new PageRenderer({ sdk, name, sections, selector, onFinish, inputKeys, inputFields, outputKeys });
+function getPageRenderer({ sdk, name, sections, cache, selector, onFinish, inputKeys, inputFields, outputKeys }) {
+    return new PageRenderer({ sdk, name, sections, cache, selector, onFinish, inputKeys, inputFields, outputKeys });
 }
 
 export default getPageRenderer;
