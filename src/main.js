@@ -1,7 +1,8 @@
 import Router from './router.js';
 
-import { set as storageSet, TYPES as storageTypes } from './storage.js';
+import { set as storageSet } from './storage.js';
 import * as Cache from './cache.js';
+import * as validation from './validation.js';
 
 import PageRenderer from './page-renderer.js';
 import Summary from './render-summary.js';
@@ -27,48 +28,9 @@ export const templates = {
     hostedPaymentCardForm
 };
 
-function validatePages(pages) {
-    if (!pages || !pages.length) {
-        throw new Error('No pages configured.');
-    }
-
-    for (const { name, title, sections, route } of pages) {
-        if (typeof name !== 'string') {
-            throw new Error('The name of a page was not found.');
-        }
-
-        if (typeof title !== 'string') {
-            throw new Error(`The title of page ${name} was not found.`);
-        }
-
-        if (typeof route !== 'string') {
-            throw new Error(`The route of page ${name} was not found.`);
-        }
-
-        if (!Array.isArray(sections) || sections.length === 0) {
-            throw new Error(`The sections of page ${name} were not found or empty.`);
-        }
-
-        for (const { name: sectionName, template, waitFor = [] } of sections) {
-            if (!template) {
-                throw new Error(`Template for page ${name} section ${sectionName} not found.`);
-            }
-
-            const waitForValid = Array.isArray(waitFor) && waitFor.every(element => {
-                const [type, key] = element.split('.');
-
-                return typeof type === 'string' && typeof key === 'string' && storageTypes.includes(type);
-            });
-
-            if (!waitForValid) {
-                throw new Error(`waitFor config for page ${name} section ${sectionName} must be an array of strings beginning with a known type.`);
-            }
-        }
-    }
-}
-
 export async function createApp({ mountPoint, sdk, layout, pages, input = {}, error, notFound, cache = [], local }, callback) {
-    validatePages(pages);
+    validation.pages(pages);
+    validation.cache(cache);
 
     try {
         const [job, otp] = await Promise.all([sdk.getJob(), sdk.createOtp()]);
