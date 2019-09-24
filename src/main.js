@@ -1,6 +1,6 @@
 import Router from './router.js';
 
-import { set as storageSet } from './storage.js';
+import { set as storageSet, TYPES as storageTypes } from './storage.js';
 import * as Cache from './cache.js';
 
 import PageRenderer from './page-renderer.js';
@@ -49,9 +49,19 @@ function validatePages(pages) {
             throw new Error(`The sections of page ${name} were not found or empty.`);
         }
 
-        for (const { name: sectionName, template } of sections) {
+        for (const { name: sectionName, template, waitFor = [] } of sections) {
             if (!template) {
                 throw new Error(`Template for page ${name} section ${sectionName} not found.`);
+            }
+
+            const waitForValid = Array.isArray(waitFor) && waitFor.every(element => {
+                const [type, key] = element.split('.');
+
+                return typeof type === 'string' && typeof key === 'string' && storageTypes.includes(type);
+            });
+
+            if (!waitForValid) {
+                throw new Error(`waitFor config for page ${name} section ${sectionName} must be an array of strings beginning with a known type.`);
             }
         }
     }

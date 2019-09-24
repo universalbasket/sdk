@@ -2,6 +2,8 @@ const TYPES_WITHOUT_META = ['input', 'output', 'local', '_'];
 const TYPES_WITH_META = ['cache'];
 const TYPES = TYPES_WITH_META.concat(TYPES_WITHOUT_META);
 
+export { TYPES };
+
 export function getAll() {
     const all = {};
 
