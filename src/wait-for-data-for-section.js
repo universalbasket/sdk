@@ -17,7 +17,7 @@ export default async function waitForDataForSection(waitFor, cache) {
         const matchingCacheSpec = cache.find(c => c.key === key);
 
         if (matchingCacheSpec) {
-            const variability = has(matchingCacheSpec, 'variability') ? matchingCacheSpec.variability : 1;
+            const variability = has(matchingCacheSpec, 'variabilityThreshold') ? matchingCacheSpec.variabilityThreshold : 1;
 
             if (cacheAvailable(key, variability)) {
                 continue;
