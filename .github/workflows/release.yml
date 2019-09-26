@@ -2,6 +2,7 @@ name: release
 on: [push]
 jobs:
   release:
+    if: github.event.ref_type == 'tag'
     runs-on: ubuntu-latest
     steps:
     - name: checkout
@@ -13,7 +14,6 @@ jobs:
     - run: npm ci
     - run: npm run build
     - name: create release
-      if: github.event.ref_type == 'tag' # should be at the job level, but that's currently broken
       uses: ./.github/actions/create-release
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
