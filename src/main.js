@@ -29,6 +29,10 @@ export const templates = {
 };
 
 export async function createApp({ mountPoint, sdk, layout, pages, input = {}, error, notFound, cache = [], local }, callback) {
+    if (callback) {
+        console.warn('The callback parameter is deprecated. Use the promise that createApp returns.');
+    }
+
     validation.pages(pages);
     validation.cache(cache);
 
@@ -39,8 +43,8 @@ export async function createApp({ mountPoint, sdk, layout, pages, input = {}, er
         storageSet('_', 'serviceName', job.serviceName);
         storageSet('_', 'otp', otp);
     } catch (err) {
-        console.error(err);
         window.location.hash = '/error';
+        throw err;
     }
 
     for (const [key, data] of Object.entries(input)) {
@@ -52,39 +56,31 @@ export async function createApp({ mountPoint, sdk, layout, pages, input = {}, er
     const mainSelector = '.sdk-app-bundle-layout-main';
 
     //setup router
-    const routingOrder = pages.map(page => page.route);
-
     const routes = {
         '/error': { renderer: error(mainSelector, sdk), title: null, step: null }
     };
 
-    pages.forEach(({ title, sections, route, excludeStep }, stepIndex) => {
-        const step = excludeStep ? null : stepIndex;
+    const renderEssentials = { sdk, cache, selector: mainSelector, inputKeys, outputKeys };
 
-        let onFinish;
+    const pagesDonePromise = new Promise(resolve => {
+        pages.forEach(({ title, sections, route, excludeStep }, stepIndex) => {
+            const isLastPage = pages.length === stepIndex + 1;
+            const onFinish = isLastPage ? resolve : () => location.replace('#' + pages[stepIndex + 1].route);
 
-        if (pages.length === stepIndex + 1) {
-            onFinish = callback || (() => console.log('App complete.'));
-        } else {
-            const nextRoute = routingOrder[stepIndex + 1];
-            onFinish = () => window.location.replace('#' + nextRoute);
-        }
-
-        const renderer = PageRenderer({
-            sdk,
-            sections,
-            cache,
-            selector: mainSelector,
-            onFinish,
-            inputKeys,
-            inputFields: new InputFields(!!inputFields, inputFields),
-            outputKeys
+            routes[route] = {
+                title,
+                renderer: PageRenderer({
+                    ...renderEssentials,
+                    sections,
+                    onFinish,
+                    inputFields: new InputFields(!!inputFields, inputFields)
+                }),
+                step: excludeStep ? null : stepIndex
+            };
         });
-
-        routes[route] = { renderer, title, step };
     });
 
-    const entryPoint = routingOrder[0];
+    const entryPoint = pages[0].route;
     const router = Router(routes, notFound(mainSelector));
 
     mountPoint.appendChild(createLayout(layout));
@@ -133,6 +129,14 @@ export async function createApp({ mountPoint, sdk, layout, pages, input = {}, er
     }
 
     afterSdkInitiated(sdk, summary, cache, local);
+
+    if (callback) {
+        pagesDonePromise
+            .then(callback)
+            .catch(callback);
+    }
+
+    return pagesDonePromise;
 }
 
 function afterSdkInitiated(sdk, summary, cacheConfig, local) {
