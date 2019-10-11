@@ -1,4 +1,4 @@
-import createModal from '/src/builtin-templates/modal.js';
+import createModal from '/templates/hotel-booking/helpers/modal.js';
 
 describe('modal', () => {
     let $modal;

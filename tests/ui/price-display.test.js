@@ -1,4 +1,4 @@
-import PriceDisplay from '/src/builtin-templates/price-display.js';
+import PriceDisplay from '/templates/hotel-booking/helpers/price-display.js';
 
 function wrap(price) {
     const wrapper = document.createElement('div');

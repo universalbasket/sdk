@@ -23,7 +23,7 @@ export async function createJob(/* will probably take arguments later */) {
 let tdsTimeout;
 
 function trackJobEvents(sdk) {
-    sdk.trackJob(async eventName/*, jobEvent */ => {
+    sdk.trackJob(eventName/*, jobEvent */ => {
         switch (eventName) {
             case 'tdsStart':
             case 'tdsFinish':

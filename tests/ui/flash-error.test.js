@@ -1,4 +1,4 @@
-import flashError from '/src/builtin-templates/flash-error.js';
+import flashError from '/templates/hotel-booking/helpers/flash-error.js';
 
 describe('flash-error', () => {
     let flashErrorEl;

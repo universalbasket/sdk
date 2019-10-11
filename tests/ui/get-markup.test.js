@@ -1,5 +1,6 @@
-import getMarkup from '/src/builtin-templates/get-markup.js';
-import priceDisplay from '/src/builtin-templates/price-display.js';
+import getMarkup from '/templates/hotel-booking/helpers/get-markup.js';
+import priceDisplay from '/templates/hotel-booking/helpers/price-display.js';
+
 import Deferred from '/node_modules/es2015-deferred/index.js';
 
 describe('get-markup', () => {

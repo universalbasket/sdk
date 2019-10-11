@@ -299,3 +299,8 @@ for more information.
 [vaulting-payment-card]: https://docs.automationcloud.net/docs/vaulting-payment-card
 [hosted-payment-form]: https://docs.automationcloud.net/docs/vaulting-payment-card#section-using-the-hosted-payment-card-form
 [styling-configuring-payment-form]: https://docs.automationcloud.net/docs/vaulting-payment-card#section-styling-and-configuring-the-form
+
+
+### Troubleshooting tests
+
+In case if tests are stuck run `npx testem`, follow the link it suggests and check network tab of developer tools.

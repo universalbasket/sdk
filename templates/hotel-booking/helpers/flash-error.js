@@ -9,7 +9,7 @@ export default function create(error) {
 
     return {
         show() {
-            if (el) {
+            if (!el) {
                 throw new Error('Document does not have nodes matching ' + selector + ' selector');
             }
 
