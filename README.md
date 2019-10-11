@@ -66,6 +66,9 @@ that the job must already exist before this function is called. It is up to your
 server to perform job creation with initial inputs, and send data to the user
 browser to create the `sdk` object, and subsequently call `createApp`.
 
+`createApp` returns a promise which resolves when the final page in the sequence
+has finished.
+
 #### `sdk`
 
 For documentation regarding the `sdk` object, see [the documentation][client-library]. This
