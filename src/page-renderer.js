@@ -3,23 +3,21 @@ import { serializeForm , getFormInputKeys } from './serialize-form.js';
 import defaultLoadingTemplate from './builtin-templates/loading.js';
 import flashError from './builtin-templates/flash-error.js';
 import { get as storageGet, getAll as storageGetAll, set as storageSet, del as storageDel } from './storage.js';
-import waitForDataForSection from './get-data-for-section.js';
+import waitForDataForSection from './wait-for-data-for-section.js';
 import { createInputs } from './main.js';
 import setupForm from './setup-form.js';
 
 const VAULT_FORM_SELECTOR = '.vault-form';
 
-let warnedOfDataFieldDeprecation = false;
-
 class PageRenderer {
-    constructor({ sdk, sections = [], selector, onFinish, inputKeys = [], inputFields, outputKeys = [] }) {
+    constructor({ sdk, sections = [], cache, selector, onFinish, inputKeys = [], inputFields, outputKeys = [] }) {
         if (sections.length === 0) {
             throw new Error('PageRenderer constructor: sections is empty');
         }
 
         this.sdk = sdk;
         this.selector = selector;
-        this.sections = [...sections];
+        this.sections = sections.slice();
         this.onFinish = onFinish;
         this.inputKeys = inputKeys;
         this.inputFields = inputFields;
@@ -28,7 +26,7 @@ class PageRenderer {
         this.sectionsToRender = [];
 
         for (const section of sections) {
-            const sectionToRender = { name: kebabcase(section.name), ...section };
+            const sectionToRender = { name: kebabcase(section.name), ...section, cache: cache.slice() };
             this.sectionsToRender.push(sectionToRender);
         }
 
@@ -213,7 +211,7 @@ class PageRenderer {
         }
     }
 
-    renderSection({ name, waitFor, template, loadingTemplate }) {
+    renderSection({ name, waitFor, cache, template, loadingTemplate }) {
         const sectionForm = document.querySelector(`#section-form-${name}`);
 
         if (!sectionForm) {
@@ -228,8 +226,8 @@ class PageRenderer {
 
         this.scrollIntoView(sectionForm);
 
-        waitForDataForSection(waitFor)
-            .then(awaitedData => {
+        waitForDataForSection(waitFor, cache)
+            .then(() => {
                 const renderer = this;
 
                 while (sectionForm.firstChild) {
@@ -240,14 +238,6 @@ class PageRenderer {
 
                 const rendered = template({
                     name,
-                    get data() {
-                        if (!warnedOfDataFieldDeprecation) {
-                            warnedOfDataFieldDeprecation = true;
-                            console.warn('The template options "data" field is deprecated. Use "storage" instead.');
-                        }
-
-                        return awaitedData;
-                    },
                     skip() {
                         if (!skipped) {
                             skipped = true;
@@ -281,8 +271,8 @@ class PageRenderer {
     }
 
     skipIfSubmitted(name) {
-        const { inputs } = storageGetAll();
-        const submittedInputKeys = Object.keys(inputs);
+        const { input } = storageGetAll();
+        const submittedInputKeys = Object.keys(input);
         const inputKeysInSection = getFormInputKeys(`#section-form-${name}`);
 
         if (inputKeysInSection.length === 0) {
@@ -347,8 +337,8 @@ function submitVaultForm(sdk, vaultIframe) {
     });
 }
 
-function getPageRenderer({ sdk, name, sections, selector, onFinish, inputKeys, inputFields, outputKeys }) {
-    return new PageRenderer({ sdk, name, sections, selector, onFinish, inputKeys, inputFields, outputKeys });
+function getPageRenderer({ sdk, name, sections, cache, selector, onFinish, inputKeys, inputFields, outputKeys }) {
+    return new PageRenderer({ sdk, name, sections, cache, selector, onFinish, inputKeys, inputFields, outputKeys });
 }
 
 export default getPageRenderer;

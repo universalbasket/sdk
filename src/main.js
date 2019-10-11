@@ -1,7 +1,8 @@
 import Router from './router.js';
 
-import * as Storage from './storage.js';
+import { set as storageSet } from './storage.js';
 import * as Cache from './cache.js';
+import * as validation from './validation.js';
 
 import PageRenderer from './page-renderer.js';
 import Summary from './render-summary.js';
@@ -10,52 +11,23 @@ import { installMediaQueryWatcher } from '/web_modules/pwa-helpers/media-query.j
 import createLayout from './layout.js';
 import InputFields from './input-fields.js';
 
-function validatePages(pages) {
-    if (!pages || !pages.length) {
-        throw new Error('No pages configured.');
-    }
-
-    for (const { name, title, sections, route } of pages) {
-        if (typeof name !== 'string') {
-            throw new Error('The name of a page was not found.');
-        }
-
-        if (typeof title !== 'string') {
-            throw new Error(`The title of page ${name} was not found.`);
-        }
-
-        if (typeof route !== 'string') {
-            throw new Error(`The route of page ${name} was not found.`);
-        }
-
-        if (!Array.isArray(sections) || sections.length === 0) {
-            throw new Error(`The sections of page ${name} were not found or empty.`);
-        }
-
-        for (const { name: sectionName, template } of sections) {
-            if (!template) {
-                throw new Error(`Template for page ${name} section ${sectionName} not found.`);
-            }
-        }
-    }
-}
-
 export async function createApp({ mountPoint, sdk, layout, pages, input = {}, error, notFound, cache = [], local }, callback) {
-    validatePages(pages);
+    validation.pages(pages);
+    validation.cache(cache);
 
     try {
         const [job, otp] = await Promise.all([sdk.getJob(), sdk.createOtp()]);
 
-        Storage.set('_', 'jobId', job.id);
-        Storage.set('_', 'serviceName', job.serviceName);
-        Storage.set('_', 'otp', otp);
+        storageSet('_', 'jobId', job.id);
+        storageSet('_', 'serviceName', job.serviceName);
+        storageSet('_', 'otp', otp);
     } catch (err) {
         console.error(err);
         window.location.hash = '/error';
     }
 
     for (const [key, data] of Object.entries(input)) {
-        Storage.set('input', key, data);
+        storageSet('input', key, data);
     }
 
     const { attributes: { inputKeys = [], inputFields, outputKeys = [] } = {} } = await sdk.getService();
@@ -84,6 +56,7 @@ export async function createApp({ mountPoint, sdk, layout, pages, input = {}, er
         const renderer = PageRenderer({
             sdk,
             sections,
+            cache,
             selector: mainSelector,
             onFinish,
             inputKeys,
@@ -149,7 +122,7 @@ function afterSdkInitiated(sdk, summary, cacheConfig, local) {
     console.info('afterSdkInitiated');
     if (local) {
         for (const [key, val] of Object.entries(local)) {
-            Storage.set('local', key, val);
+            storageSet('local', key, val);
         }
     }
 
@@ -175,7 +148,7 @@ function addTracker(sdk) {
 
                 try {
                     const output = await sdk.getJobOutput(jobEvent.key);
-                    Storage.set('output', output.key, output.data);
+                    storageSet('output', output.key, output.data);
                     window.dispatchEvent(new CustomEvent('newOutput', { detail: { output } }));
                 } catch (error) {
                     console.error('Error getting job outputs.', error);
@@ -198,7 +171,7 @@ export async function createInputs(sdk, inputs) {
 
         await sdk.createJobInput(key, data);
 
-        Storage.set('input', key, data);
+        storageSet('input', key, data);
 
         submittedInputs.push({ key, data });
     }

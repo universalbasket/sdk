@@ -100,9 +100,10 @@ Sections are composed of the fields:
 A template here is a function with an options parameter with the following fields:
 
  - `name`: The name of the template.
- - `data`: **DEPRECATED** Various data fields used to render the template. Use storage instead.
  - `storage`: An object with a `get(type, key)` method. Use this to get input and output data.
-   - `type`: The storage type, for example `"input"` or `"output"`.
+   - `type`: The storage type, for example `"input"` or `"output"`. An array may be used, in which
+     case each type is checked until a result (if any) for the given key is found. A common use case
+     for this is `['output', 'cache']`.
    - `key`: The key of the datum to retrieve.
  - `skip`: A skip function. renderer will render next section without waiting
    for end-user's input submission.
@@ -123,11 +124,22 @@ used lit-html to demonstrate this principle.
 
 #### `cache`
 
-This is an array of objects containing `key` and `sourceInputKeys` fields. When
-the inputs of the names in `sourceInputKeys` are known, the app will make a
-requests for the output of previous jobs given by `key`. This can be used to
-anticipate output _before_ it exists for a job, and can be used to improve the
-user experience.
+This is an array of objects containing `key`, `sourceInputKeys`, and
+`variabilityThreshold` fields.
+
+ - `key`: the equivalent  output key.
+ - `sourceInputKeys`: An array of input keys. When data for every listed input
+   is known a request is made for cached data for `key`.
+ - `variabilityThreshold`: A value between 0 and 1, defaulting to 1, which
+   limits how variable a cached output can be. For example, 0 corresponds to a
+   high confidence that the cached output is the same as the equvalent output,
+   and 1 corresponds to a low confidence. When this is set lower than a cached
+   value which comes back, the cached value will not be used when waiting for
+   outputs before rendering a section, but its data will still be available
+   via `storage` from templates.
+
+Using the cache can enable you optimise your SDK use to provide a better user
+experience.
 
 #### `local`
 

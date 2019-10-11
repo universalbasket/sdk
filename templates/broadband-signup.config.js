@@ -140,7 +140,7 @@ export default {
                 {
                     name: 'confirmation',
                     template: confirmation,
-                    waitFor: ['outputs.confirmation']
+                    waitFor: ['output.confirmation']
                 }
             ],
             excludeStep: true
