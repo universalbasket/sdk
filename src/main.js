@@ -131,9 +131,9 @@ export async function createApp({ mountPoint, sdk, layout, pages, input = {}, er
     afterSdkInitiated(sdk, summary, cache, local);
 
     if (callback) {
-        pagesDonePromise
-            .then(callback)
-            .catch(callback);
+        pagesDonePromise.then(callback, callback);
+
+        return; // Retain existing behaviour when using a callback.
     }
 
     return pagesDonePromise;
