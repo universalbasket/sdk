@@ -84,7 +84,7 @@
       "camelcase-keys",
       "lodash.kebabcase/index.js",
       "pwa-helpers/media-query.js",
-      "currency-symbol-map",
+      "currency-symbol-map/currency-symbol-map.js",
       "lit-html/lit-html.js",
       "lit-html/directives/*.js"
     ]
