@@ -1,4 +1,4 @@
-import { modal, priceDisplay } from '../helpers/index.js';
+import { priceDisplay } from '../helpers/index.js';
 import { html } from '/web_modules/lit-html/lit-html.js';
 import { classMap } from '/web_modules/lit-html/directives/class-map.js';
 import render from '../render.js';
@@ -14,8 +14,6 @@ export default {
 
 function SummaryDetails({ outputs, inputs }) {
 
-    const div = document.createElement('div');
-    div.innerHTML = 'lalala';
     const price = inputs.selectedRooms && inputs.selectedRooms[0].price;
 
     return html`
@@ -35,8 +33,6 @@ function SummaryDetails({ outputs, inputs }) {
                     </li>` : ''}
             </ul>
         </article>
-
-        <a @click=${ () => modal(div, { title: 'Title of the modal' }).show() }>la-la-la</a>
 
         ${ outputs.priceBreakdown ? html`
             <article class="summary__block">
