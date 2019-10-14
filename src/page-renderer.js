@@ -207,6 +207,54 @@ class PageRenderer {
                 ...sectionForm.querySelectorAll('select')
             ];
             fields.forEach(_ => _.setAttribute('disabled', 'disabled'));
+
+            const enableListener = () => {
+                if (confirm('Are you sure you wish to go back?')) {
+                    this.enableSection(name);
+                    sectionForm.removeEventListener('click', enableListener);
+                }
+            };
+
+            sectionForm.addEventListener('click', enableListener);
+        }
+    }
+
+    async enableSection(name) {
+        const sectionForm = document.querySelector(`#section-form-${name}`);
+        if (sectionForm) {
+            sectionForm.classList.remove('form--disabled');
+            const fields = [
+                ...sectionForm.querySelectorAll('input'),
+                ...sectionForm.querySelectorAll('select'),
+                ...sectionForm.querySelectorAll('button')
+            ];
+            fields.forEach(_ => _.removeAttribute('disabled'));
+
+            // reset job to this input
+            const { input } = storageGetAll();
+            const submittedInputKeys = Object.keys(input);
+            const inputKeysInSection = getFormInputKeys(`#section-form-${name}`);
+
+            const submittedKeysInSection = inputKeysInSection.map(k => submittedInputKeys.includes(k) ? k : null).filter(k => k);
+
+            if (submittedKeysInSection.length > 0) {
+                const preserveInputs = submittedInputKeys.filter(k => !submittedKeysInSection.includes(k));
+                await this.sdk.resetJob(inputKeysInSection[0], preserveInputs);
+                this.sectionsToRender.unshift(this.currentSection);
+
+                // clear all of the job outputs
+                const { output } = storageGetAll();
+                Object.keys(output).forEach(key => {
+                    storageDel('output', key);
+                });
+            }
+        }
+
+        // remove the next forms
+        let nextForm = sectionForm.nextSibling;
+        while (nextForm) {
+            nextForm.innerHTML = '';
+            nextForm = nextForm.nextSibling;
         }
     }
 
