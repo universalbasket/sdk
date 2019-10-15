@@ -1,6 +1,6 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
 import render from '../render.js';
-import { templates } from '/src/main.js';
+import templates from '../helpers/index.js';
 
 export default function declarations({ name, storage, sdk }) {
     const policyWording = storage.get('output', 'policyWording');

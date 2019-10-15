@@ -1,6 +1,6 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
-import { templates } from '/src/main.js';
 import render from '../render.js';
+import { priceDisplay } from '../helpers/index.js';
 
 function valueLi(code) {
     switch (code) {
@@ -26,7 +26,7 @@ export default function rooms({ name, storage }) {
                             ${ room.valueAdditions.map(valueLi) }
                         </ul>
                         <div class="field-item__price">
-                            <b>${ templates.priceDisplay(room.price) }</b>
+                            <b>${ priceDisplay(room.price) }</b>
                         </div>
                     </div>
                     <div class="field__inputs">

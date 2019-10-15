@@ -17,7 +17,7 @@ export default {
             title: '3DS test',
             sections: [
                 {
-                    name: '3D Secure Test',
+                    name: 'tdstest',
                     template: tdsTest,
                     waitFor: ['_.otp']
                 }

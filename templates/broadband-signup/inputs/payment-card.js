@@ -1,4 +1,4 @@
-import { templates } from '/src/main.js';
+import templates from '../helpers/index.js';
 
 // https://protocol.automationcloud.net/Generic#PaymentCard
 export default function hostedForm(otp) {

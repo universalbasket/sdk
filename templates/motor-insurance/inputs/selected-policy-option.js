@@ -1,5 +1,5 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
-import { templates } from '/src/main.js';
+import templates from '../helpers/index.js';
 
 function showCoverOptions(key) {
     document.querySelector(`#${key}-options-list`).style.display = 'block';

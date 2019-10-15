@@ -157,8 +157,9 @@ class PageRenderer {
                 inputs.payment.card = { '$token': cardToken };
                 cardTokenSent = true;
             } else {
-                //TODO: include this part in doc:
-                //you need include payment form within same section or put the payment form in any previous sections so that cardToken can be included.
+                // eslint-disable-next-line no-warning-comments
+                // TODO: include this part in doc:
+                // you need include payment form within same section or put the payment form in any previous sections so that cardToken can be included.
                 console.warn('cardToken not found while submitting payment input.');
             }
 
@@ -212,6 +213,10 @@ class PageRenderer {
 
     renderSection({ name, waitFor, cache, template, loadingTemplate }) {
         const sectionForm = document.querySelector(`#section-form-${name}`);
+
+        if (!sectionForm) {
+            throw new Error('No section form ' + name);
+        }
 
         if (loadingTemplate) {
             loadingTemplate(sectionForm);

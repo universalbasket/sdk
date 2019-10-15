@@ -1,5 +1,5 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
-import { templates } from '/src/main.js';
+import { priceDisplay } from '../helpers/index.js';
 
 export default (finalPrice, hide = true) => {
     return html`
@@ -11,6 +11,6 @@ export default (finalPrice, hide = true) => {
         <label
             for="final-price-consent"
             style=${ hide ? 'visibility: hidden' : '' }>
-            ${ templates.priceDisplay(finalPrice.price) }
+            ${ priceDisplay(finalPrice.price) }
         </label>`;
 };

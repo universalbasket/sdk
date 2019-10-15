@@ -1,7 +1,7 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
 import { classMap } from '/web_modules/lit-html/directives/class-map.js';
 import render from '../render.js';
-import { templates } from '/src/main.js';
+import templates from '../helpers/index.js';
 import paymentTermLabel from '../inputs/selected-payment-term-label.js';
 
 export default {

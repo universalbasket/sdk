@@ -1,6 +1,6 @@
 import { html } from '/web_modules/lit-html/lit-html.js';
 import render from '../render.js';
-import { templates } from '/src/main.js';
+import templates from '../helpers/index.js';
 
 export default function summary({ name, storage }) {
     const selectedBroadbandPackage = storage.get('input', 'selectedBroadbandPackage');

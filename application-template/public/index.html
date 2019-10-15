@@ -25,7 +25,8 @@
 
                     form.remove();
 
-                    continueJob({ token, jobId, serviceId, input, local });
+                    const mountPoint = document.querySelector('#app');
+                    continueJob({ mountPoint, token, jobId, serviceId, input, local });
                 };
                 document.body.appendChild(form);
             }
@@ -51,7 +52,8 @@
                     return appendForm();
                 }
 
-                return continueJob({ token, jobId, serviceId });
+                const mountPoint = document.querySelector('#app');
+                return continueJob({ mountPoint, token, jobId, serviceId });
             }
 
             start();

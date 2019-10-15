@@ -235,7 +235,7 @@ for your convenience. This template provides a nicer API than indicated in the
 documentation.
 
 ```javascript
-import { templates } from '/src/main.js';
+import templates from '../helpers/index.js';
 
 // See: https://docs.automationcloud.net/docs/vaulting-payment-card
 function hostedForm(otp) {
@@ -314,3 +314,8 @@ for more information.
 [vaulting-payment-card]: https://docs.automationcloud.net/docs/vaulting-payment-card
 [hosted-payment-form]: https://docs.automationcloud.net/docs/vaulting-payment-card#section-using-the-hosted-payment-card-form
 [styling-configuring-payment-form]: https://docs.automationcloud.net/docs/vaulting-payment-card#section-styling-and-configuring-the-form
+
+
+### Troubleshooting tests
+
+In case if tests are stuck run `npx testem`, follow the link it suggests and check network tab of developer tools.

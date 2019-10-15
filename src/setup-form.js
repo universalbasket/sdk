@@ -6,7 +6,8 @@ export default function setupForm(form) {
     const fields = form.querySelectorAll('.field');
 
     fields.forEach(field => {
-        addDataOptionalAttribute(field);
+        // remove this? (to address "optional designator" part of issue 97)
+        // addDataOptionalAttribute(field);
         addEventListeners(field);
     });
 }
@@ -48,16 +49,3 @@ function addEventListeners(field) {
     });
 }
 
-function addDataOptionalAttribute(field) {
-    const optionalInputs = field.querySelectorAll(':optional');
-
-    if (optionalInputs.length === 0) {
-        return;
-    }
-
-    const label = field.querySelector('.field__name');
-
-    if (label) {
-        label.setAttribute('data-optional', 'optional');
-    }
-}

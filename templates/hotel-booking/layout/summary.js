@@ -1,4 +1,4 @@
-import { templates } from '/src/main.js';
+import { priceDisplay } from '../helpers/index.js';
 import { html } from '/web_modules/lit-html/lit-html.js';
 import { classMap } from '/web_modules/lit-html/directives/class-map.js';
 import render from '../render.js';
@@ -13,6 +13,7 @@ export default {
 };
 
 function SummaryDetails({ outputs, inputs }) {
+
     const price = inputs.selectedRooms && inputs.selectedRooms[0].price;
 
     return html`
@@ -27,7 +28,7 @@ function SummaryDetails({ outputs, inputs }) {
                 ${price ? html`
                     <li class="summary__price">
                         <b class="large">
-                            ${templates.priceDisplay(price)}
+                            ${ priceDisplay(price) }
                         </b>
                     </li>` : ''}
             </ul>
@@ -42,7 +43,7 @@ function SummaryDetails({ outputs, inputs }) {
                     ${ outputs.priceBreakdown.map(i => html`
                         <tr>
                             <th>${ i.description } ${ i.type ? '· ' + priceType(i.type) : '' }</th>
-                            <td>${ templates.priceDisplay(i.price) }</td>
+                            <td>${ priceDisplay(i.price) }</td>
                         </tr>`) }
                 </table>
             </article>` :
@@ -56,7 +57,7 @@ function SummaryPreview({ inputs }) {
     return html`
         ${price ? html`
             <b class="large summary__preview-price">
-                ${templates.priceDisplay(price)}
+                ${ priceDisplay(price) }
             </b>` : ''}
         ${inputs.selectedRooms && inputs.selectedRooms[0] ? html`
             <span class="faint summary__preview-info">

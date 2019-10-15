@@ -1,4 +1,4 @@
-import getSymbolFromCurrency from '/web_modules/currency-symbol-map.js';
+import getSymbolFromCurrency from '/web_modules/currency-symbol-map/currency-symbol-map.js';
 
 function template(price) {
     if (!price) {
