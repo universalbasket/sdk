@@ -1,104 +1,95 @@
 import Router from './router.js';
-
-import { set as storageSet } from './storage.js';
+import storage from './storage.js';
 import * as Cache from './cache.js';
-import * as validation from './validation.js';
+import SectionController from './section-controller.js';
 
-import PageRenderer from './page-renderer.js';
-import Summary from './render-summary.js';
-
-import { installMediaQueryWatcher } from '/web_modules/pwa-helpers/media-query.js';
-import createLayout from './layout.js';
-import InputFields from './input-fields.js';
-
-export async function createApp({ mountPoint, sdk, layout, pages, input = {}, error, notFound, cache = [], local }, callback) {
-    if (callback) {
-        console.warn('The callback parameter is deprecated. Use the promise that createApp returns.');
-    }
-
-    validation.pages(pages);
-    validation.cache(cache);
-
+export async function createApp({ mountPoint, sdk, pages, input = {}, error, notFound, cache = [], local = {} }) {
+    // get the automation job that we are using
     try {
-        const [job, otp] = await Promise.all([sdk.getJob(), sdk.createOtp()]);
+        const job = await sdk.getJob();
 
-        storageSet('_', 'jobId', job.id);
-        storageSet('_', 'serviceName', job.serviceName);
-        storageSet('_', 'otp', otp);
+        storage.set('_', 'jobId', job.id);
+        storage.set('_', 'serviceName', job.serviceName);
     } catch (err) {
         window.location.hash = '/error';
         throw err;
     }
 
+    // set storage passed through from backend
     for (const [key, data] of Object.entries(input)) {
-        storageSet('input', key, data);
+        storage.set('input', key, data);
     }
 
-    const { attributes: { inputKeys = [], inputFields, outputKeys = [] } = {} } = await sdk.getService();
+    // set local data pass through from local web app
+    for (const [key, val] of Object.entries(local)) {
+        storage.set('local', key, val);
+    }
 
-    const mainSelector = '.sdk-app-bundle-layout-main';
+    // populate the PJO cache
+    await Cache.populate(sdk, cache);
 
-    //setup router
-    const routes = {
-        '/error': { renderer: error(mainSelector, sdk), title: null, step: null }
-    };
+    // get the service details from API
+    const service = await sdk.getService();
 
-    const renderEssentials = { sdk, cache, selector: mainSelector, inputKeys, outputKeys };
+    //setup routes
+    const routes = [];
 
-    const pagesDonePromise = new Promise(resolve => {
-        pages.forEach(({ title, sections, route, excludeStep }, stepIndex) => {
-            const isLastPage = pages.length === stepIndex + 1;
-            const onFinish = isLastPage ? resolve : () => location.replace('#' + pages[stepIndex + 1].route);
+    const controllerOptions = { sdk, cache, mountPoint, service };
 
-            routes[route] = {
-                title,
-                renderer: PageRenderer({
-                    ...renderEssentials,
-                    sections,
-                    onFinish,
-                    inputFields: new InputFields(!!inputFields, inputFields)
-                }),
-                step: excludeStep ? null : stepIndex
-            };
+    // add all of the pages to the router
+    let index = 0;
+
+    pages.forEach((page, pageIndex) => {
+        page.sections.forEach((section, sectionIndex) => {
+            const hash = page.name + '/' + section.name;
+            routes.push({
+                hash,
+                index,
+                controller: new SectionController({
+                    ...controllerOptions,
+                    section,
+                    page,
+                    nextRoute: null
+                })
+            });
+
+            // maintain a reference to the next route
+            if (index > 0) {
+                routes[index-1].controller.nextRoute = hash;
+            }
+
+            index++;
         });
     });
 
-    const entryPoint = pages[0].route;
-    const router = Router(routes, notFound(mainSelector));
+    // add error route controllers
+    routes.push({ hash: 'error', controller: new SectionController({ ...controllerOptions, section: { template: error }}) });
+    routes.push({ hash: 'notFound', controller: new SectionController({ ...controllerOptions, section: { template: notFound }}) });
 
-    mountPoint.appendChild(createLayout(layout));
+    const router = Router(routes);
 
-    const summary = new Summary(sdk);
+    // populate the cache when the sdk starts
+    Cache.populate(sdk, cache);
 
-    installMediaQueryWatcher('(max-width: 650px)', match => {
-        summary.setTemplate(match ? layout.summary.MobileTemplate : layout.summary.DesktopTemplate, match);
-    });
-
-    Cache.populate(sdk, cache)
-        .then(() => summary.update());
-
+    // track API events
     const tracker = addTracker(sdk);
 
-    //custom event when input submitted
+    // send sdkRefresh message whenever a new input is detected
     window.addEventListener('newInputs', e => {
+        // populate any additional cache keys
         e.detail && e.detail.forEach(({ key }) => Cache.populate(sdk, cache, key));
-        summary.update();
+        window.dispatchEvent(new CustomEvent('sdkRefresh', { detail: e }));
     });
 
-    window.addEventListener('newOutput', () => {
-        summary.update();
+    // send sdkRefresh message whenever a new output is detected
+    window.addEventListener('newOutput', e => {
+        window.dispatchEvent(new CustomEvent('sdkRefresh', { detail: e }));
     });
 
-    let shouldNavigate = true;
-
-    if (router.isCurrentRoot()) {
-        window.location.replace('#' + entryPoint);
-        shouldNavigate = false;
-    }
-
+    // if the hash changes, navigate to the next route
     window.addEventListener('hashchange', async () => {
         router.navigate();
-        summary.update();
+        window.dispatchEvent(new CustomEvent('sdkRefresh'));
 
         if (router.isCurrentRoot()) {
             if (tracker) {
@@ -107,52 +98,32 @@ export async function createApp({ mountPoint, sdk, layout, pages, input = {}, er
         }
     });
 
-    if (shouldNavigate) {
-        router.navigate();
+    // if we're at "/", then navigate to the first page/section hash
+    if (router.isCurrentRoot()) {
+        return window.location.replace('#' + routes[0].hash);
     }
 
-    afterSdkInitiated(sdk, summary, cache, local);
-
-    if (callback) {
-        pagesDonePromise.then(callback, callback);
-
-        return; // Retain existing behaviour when using a callback.
-    }
-
-    return pagesDonePromise;
-}
-
-function afterSdkInitiated(sdk, summary, cacheConfig, local) {
-    console.info('afterSdkInitiated');
-    if (local) {
-        for (const [key, val] of Object.entries(local)) {
-            storageSet('local', key, val);
-        }
-    }
-
-    Cache.populate(sdk, cacheConfig);
-    summary.update();
+    // navigate to the current route
+    router.navigate();
 }
 
 function addTracker(sdk) {
-
     const stop = sdk.trackJob(async (eventName, jobEvent) => {
         console.log(`event ${eventName}`);
 
         switch (eventName) {
+            case 'fail':
+                window.location.hash = '#error';
+                return console.error(jobEvent);
 
             case 'error':
+                window.location.hash = '#error';
                 return console.error(jobEvent);
 
             case 'createOutput':
-                if (jobEvent.stage) {
-                    console.warn('An output was created with a stage. Ignoring.');
-                    return;
-                }
-
                 try {
                     const output = await sdk.getJobOutput(jobEvent.key);
-                    storageSet('output', output.key, output.data);
+                    storage.set('output', output.key, output.data);
                     window.dispatchEvent(new CustomEvent('newOutput', { detail: { output } }));
                 } catch (error) {
                     console.error('Error getting job outputs.', error);
@@ -169,14 +140,15 @@ export async function createInputs(sdk, inputs) {
     const submittedInputs = [];
 
     for (const [rawKey, rawData] of Object.entries(inputs)) {
+        // vault raw pan if passed in to sdk
         const { key, data } = rawKey === 'pan' ?
             { key: 'panToken', data: await sdk.vaultPan(rawData) } :
             { key: rawKey, data: rawData };
 
+        // send input to API
         await sdk.createJobInput(key, data);
 
-        storageSet('input', key, data);
-
+        storage.set('input', key, data);
         submittedInputs.push({ key, data });
     }
 

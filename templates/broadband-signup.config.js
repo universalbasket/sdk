@@ -55,12 +55,7 @@ export default {
                 {
                     name: 'landline',
                     template: landline,
-                    waitFor: ['local.landlineOptions']
-                },
-                {
-                    name: 'selected-address',
-                    template: selectedAddress,
-                    waitFor: ['output.availableAddresses', 'output.availableInstallationAddresses']
+                    waitFor: []
                 }
             ]
         },

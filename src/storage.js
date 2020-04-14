@@ -22,7 +22,31 @@ export function getAll() {
         const trimmedKey = key.slice(type.length + 1);
         const parsed = JSON.parse(localStorage.getItem(key));
 
-        all[type][trimmedKey] = TYPES_WITH_META.includes(type) ? (parsed || {}).data : parsed;
+        all[type][trimmedKey] = TYPES_WITH_META.includes(type) ? (parsed || {}).data : parsed.data;
+    }
+
+    return all;
+}
+
+function getAllRaw() {
+    const all = {};
+
+    for (const type of TYPES) {
+        all[type] = {};
+    }
+
+    for (let i = 0, length = localStorage.length; i < length; i += 1) {
+        const key = localStorage.key(i);
+        const type = TYPES.find(t => key.startsWith(`${t}.`));
+
+        if (type === undefined) {
+            continue;
+        }
+
+        const trimmedKey = key.slice(type.length + 1);
+        const parsed = JSON.parse(localStorage.getItem(key));
+
+        all[type][trimmedKey] = TYPES_WITH_META.includes(type) ? (parsed || {}) : parsed;
     }
 
     return all;
@@ -46,7 +70,7 @@ export function get(types, key) {
             continue;
         }
 
-        const data = JSON.parse(inputOrOutput);
+        const data = JSON.parse(inputOrOutput).data;
 
         return TYPES_WITH_META.includes(type) ? data.data : data;
     }
@@ -71,7 +95,8 @@ export function set(type, key, data) {
         throw new Error(`storage.set(): type must be one of ${TYPES.join(', ')}.`);
     }
 
-    localStorage.setItem(`${type}.${key}`, JSON.stringify(data));
+    const timestamp = new Date().getTime();
+    localStorage.setItem(`${type}.${key}`, JSON.stringify({ data: data, timestamp }));
 }
 
 export function del(type, key) {
@@ -81,3 +106,27 @@ export function del(type, key) {
 
     localStorage.removeItem(`${type}.${key}`);
 }
+
+export function delAllBefore(type, key) {
+    const json = localStorage.getItem(`${type}.${key}`);
+    const timestamp = JSON.parse(json).timestamp;
+
+    const all = getAllRaw();
+    Object.keys(all).forEach((type) => {
+        const typeData = all[type];
+        Object.keys(typeData).forEach((key) => {
+            const data = typeData[key];
+            if (data.timestamp >= timestamp) {
+                del(type, key);
+            }
+        });
+    });
+}
+
+export default {
+    set,
+    get,
+    getAll,
+    del,
+    delAllBefore
+};

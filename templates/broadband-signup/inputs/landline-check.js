@@ -4,24 +4,13 @@ export default function landlineCheck() {
     return html`
         <div name="landline-check" class="field-set">
             <div class="field">
-                <label class="field__name" for="landline-check[postcode]">Post Code</label>
-                <input type="text" name="landline-check[postcode]" placeholder="EC1R 0AT" required />
+                <label class="field__name" for="landline-check[postcode]">Zip Code</label>
+                <input type="text" name="landline-check[postcode]" placeholder="90210" required />
             </div>
 
             <div class="field">
-                <span class="field__name">Land line</span>
-                <input type="text" name="landline-check[landline]" placeholder="01413231231" pattern="^0[0-9]{8,10}"/>
-            </div>
-
-            <div class="field">
-                <span class="field__name">Are you a bill payer?</span>
-                <div class="field__inputs group group--merged">
-                    <input type="radio" value="true" name="landline-check[billpayer-$boolean]" id="landline-check[billpayer]-yes"/>
-                    <label for="landline-check[billpayer]-yes" class="button">Yes</label>
-
-                    <input type="radio" value="false" name="landline-check[billpayer-$boolean]" id="landline-check[billpayer]-no">
-                    <label for="landline-check[billpayer]-no" class="button">No</label>
-                </div>
+                <span class="field__name">First line</span>
+                <input type="text" name="landline-check[firstline]" placeholder="" />
             </div>
         </div>
     `;

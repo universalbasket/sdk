@@ -1,18 +1,18 @@
-import progressBarTemplate from './builtin-templates/progress-bar.js';
+import progressBarTemplate from '../templates/internal/helpers/progress-bar.js';
+import { get } from './storage.js';
 
 class ProgressBar {
-    constructor(selector, routes) {
+    constructor(selector, routes, template) {
         if (typeof selector !== 'string') {
             throw new Error('Progress bar requires a selector.');
         }
+        this.template = template || progressBarTemplate;
         this.selector = selector;
         this.steps = Object.keys(routes)
-            .reduce((res, key) => {
-                const route = routes[key];
-                if (route.step !== null && !route.excludeStep) {
-                    res[route.step] = route.title;
-                }
-                return res;
+            .filter((key) => {
+                return routes[key].title && routes[key].step;
+            }).map((key) => {
+                return routes[key].title;
             }, {});
     }
 
@@ -24,10 +24,10 @@ class ProgressBar {
         while (target.lastChild) {
             target.removeChild(target.lastChild);
         }
-        target.appendChild(progressBarTemplate(this.steps, stepIndex));
+        target.appendChild(this.template(this.steps, stepIndex, { get }));
     }
 }
 
-export default function renderProgressBar(selector, routes) {
-    return new ProgressBar(selector, routes);
+export default function renderProgressBar(selector, routes, template) {
+    return new ProgressBar(selector, routes, template);
 }

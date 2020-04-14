@@ -1,7 +1,7 @@
 import kebabcase from '/web_modules/lodash.kebabcase/index.js';
 import { serializeForm , getFormInputKeys } from './serialize-form.js';
-import defaultLoadingTemplate from './builtin-templates/loading.js';
-import flashError from './builtin-templates/flash-error.js';
+import defaultLoadingTemplate from '../templates/internal/helpers/loading.js';
+import flashError from '../templates/internal/helpers/flash-error.js';
 import { get as storageGet, getAll as storageGetAll, set as storageSet, del as storageDel } from './storage.js';
 import waitForDataForSection from './wait-for-data-for-section.js';
 import { createInputs } from './main.js';
@@ -10,80 +10,19 @@ import setupForm from './setup-form.js';
 const VAULT_FORM_SELECTOR = '.vault-form';
 
 class PageRenderer {
-    constructor({ sdk, sections = [], cache, selector, onFinish, inputKeys = [], inputFields, outputKeys = [] }) {
-        if (sections.length === 0) {
-            throw new Error('PageRenderer constructor: sections is empty');
-        }
-
+    constructor({ sdk, page, section, nextRoute, cache, mountPoint }) {
         this.sdk = sdk;
-        this.selector = selector;
-        this.sections = sections.slice();
-        this.onFinish = onFinish;
-        this.inputKeys = inputKeys;
-        this.inputFields = inputFields;
-        this.outputKeys = outputKeys;
-
-        this.sectionsToRender = [];
-
-        for (const section of sections) {
-            const sectionToRender = { name: kebabcase(section.name), ...section, cache: cache.slice() };
-            this.sectionsToRender.push(sectionToRender);
-        }
-
-        this.currentSection = null;
+        this.mountPoint = mountPoint;
+        this.section = sections;
+        this.page = page;
+        this.nextRoute = nextRoute;
     }
 
     init() {
-        this.renderWrapper();
+        this.renderSection();
     }
 
-    scrollIntoView(target, offset) {
-        if (typeof offset === 'undefined') {
-            offset = - target.parentElement.offsetTop - 40; // 40px is a bit of space to show where we've come from
-        }
-
-        setTimeout(() => {
-            window.scrollTo(0, target.offsetTop + offset);
-        }, 300);
-    }
-
-    renderWrapper() {
-        const target = document.createElement('div');
-        target.className = 'page__body';
-
-        for (const section of this.sectionsToRender) {
-            const form = document.createElement('form');
-            form.id = `section-form-${section.name}`;
-            target.appendChild(form);
-        }
-
-        const page = document.createElement('div');
-        page.className = 'page';
-
-        page.appendChild(target);
-        document.querySelector(this.selector).appendChild(page);
-
-        this.next();
-    }
-
-    next() {
-        const section = this.sectionsToRender.shift();
-        if (!section) {
-            console.info('PageRenderer next: no section to render.');
-            const container = document.querySelector(this.selector);
-
-            while (container.lastChild) {
-                container.removeChild(container.lastChild);
-            }
-
-            return this.onFinish();
-        }
-
-        this.currentSection = section;
-        this.renderSection(section);
-    }
-
-    addListeners(name) {
+    addListeners(name, hideOnComplete) {
         const submitBtn = document.querySelector(`#submit-btn-${name}`);
 
         if (!submitBtn) {
@@ -117,7 +56,11 @@ class PageRenderer {
                     return this.createInputs(inputs);
                 })
                 .then(() => {
-                    this.disableSection(name);
+                    if (hideOnComplete) {
+                        this.hideSection(name);   
+                    } else {
+                        this.disableSection(name);
+                    }
                     this.next();
                 })
                 .catch(err => {
@@ -211,43 +154,33 @@ class PageRenderer {
         }
     }
 
-    renderSection({ name, waitFor, cache, template, loadingTemplate }) {
+    hideSection(name) {
         const sectionForm = document.querySelector(`#section-form-${name}`);
-
-        if (!sectionForm) {
-            throw new Error('No section form ' + name);
+        if (sectionForm) {
+            sectionForm.style.display = 'none';
         }
+    }
 
+    renderSection() {
         if (loadingTemplate) {
             loadingTemplate(sectionForm);
         } else {
             defaultLoadingTemplate(sectionForm);
         }
 
-        this.scrollIntoView(sectionForm);
-
         waitForDataForSection(waitFor, cache)
             .then(() => {
                 const renderer = this;
-
-                while (sectionForm.firstChild) {
-                    sectionForm.removeChild(sectionForm.firstChild);
-                }
-
-                let skipped = false;
 
                 const rendered = template({
                     name,
                     skip() {
                         if (!skipped) {
                             skipped = true;
-                            renderer.skipSection(name);
+                            renderer.skipSection();
                         }
                     },
                     sdk: this.sdk,
-                    inputKeys: this.inputKeys.slice(),
-                    outputKeys: this.outputKeys.slice(),
-                    inputFields: this.inputFields,
                     storage: {
                         get: storageGet
                     }
@@ -262,10 +195,12 @@ class PageRenderer {
                     throw new TypeError(`Invalid template result for ${name}. Should return a Node, returned: ${rendered} (${typeof rendered})`);
                 }
 
-                sectionForm.appendChild(rendered);
+                this.mountPoint.innerHTML = '';
+                this.mountPoint.appendNode(rendered);
 
                 setupForm(sectionForm);
-                this.addListeners(name);
+                
+                this.addListeners(name, hideOnComplete);
                 this.skipIfSubmitted(name);
             });
     }
@@ -337,8 +272,8 @@ function submitVaultForm(sdk, vaultIframe) {
     });
 }
 
-function getPageRenderer({ sdk, name, sections, cache, selector, onFinish, inputKeys, inputFields, outputKeys }) {
-    return new PageRenderer({ sdk, name, sections, cache, selector, onFinish, inputKeys, inputFields, outputKeys });
+function getPageRenderer({ sdk, page, section, nextRoute, cache, mountPoint }) {
+    return new PageRenderer({ sdk, page, section, nextRoute, cache, mountPoint });
 }
 
 export default getPageRenderer;

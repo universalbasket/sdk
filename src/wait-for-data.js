@@ -4,20 +4,33 @@ import has from './has.js';
 /**
  * @param {string[]} waitFor
  */
-export default async function waitForDataForSection(waitFor, cache) {
+export async function waitForData(waitFor, cache) {
+    if (waitFor && waitFor.length > 0) {
+        await sleep(1000);
+    }
+
+    const keysToWaitFor = checkForExistingKeys(waitFor, cache);
+    await waitForRemainingOutputs(keysToWaitFor);
+}
+
+export function checkForExistingKeys(waitFor, cache) {
     const keysToWaitFor = [];
 
     for (const typeAndKey of waitFor || []) {
         const [type, key] = typeAndKey.split('.');
 
-        if (type !== 'output' || outputAvailable(key)) {
+        if (outputAvailable(key)) {
             continue;
         }
+
+        console.log('waiting for', type, key)
 
         const matchingCacheSpec = cache.find(c => c.key === key);
 
         if (matchingCacheSpec) {
             const variability = has(matchingCacheSpec, 'variabilityThreshold') ? matchingCacheSpec.variabilityThreshold : 1;
+
+            console.log(variability);
 
             if (cacheAvailable(key, variability)) {
                 continue;
@@ -27,7 +40,7 @@ export default async function waitForDataForSection(waitFor, cache) {
         keysToWaitFor.push(key);
     }
 
-    await waitForRemainingOutputs(keysToWaitFor);
+    return keysToWaitFor;
 }
 
 async function waitForRemainingOutputs(keys) {
@@ -47,12 +60,21 @@ async function waitForRemainingOutputs(keys) {
     });
 }
 
+async function sleep(ms) {
+    return new Promise((resolve, reject) => {
+        setTimeout(resolve, ms);
+    });
+}
+
 function outputAvailable(key) {
     return storageGet('output', key) !== undefined;
 }
 
 function cacheAvailable(key, variability) {
     const cache = getWithMeta('cache', key);
+
+
+    console.log('get cache', key, variability, cache)
 
     if (!cache) {
         return false;

@@ -1,14 +1,12 @@
-import formSerialize from '/web_modules/form-serialize.js';
-import camelCaseKeys from '/web_modules/camelcase-keys.js';
+import formSerialize from '../web_modules/form-serialize.js';
+import camelCaseKeys from '../web_modules/camelcase-keys.js';
 
 export {
     serializeForm,
     getFormInputKeys
 };
 
-function serializeForm(selector = 'form', options = {}) {
-    const form = document.querySelector(selector);
-
+function serializeForm(form, options = {}) {
     if (!form || !(form instanceof HTMLFormElement)) {
         throw new Error('specified form not found');
     }

@@ -1,25 +1,23 @@
-import renderProgressBar from './render-progress-bar.js';
-
 // The router code. Takes a URL, checks against the list of supported routes and then renders the corresponding content page.
 class Router {
-    constructor(routes, notFoundTemplate) {
+    constructor(routes) {
         this.routes = routes;
-        this.notFoundTemplate = notFoundTemplate;
-        this.progressBar = renderProgressBar('.sdk-app-bundle-layout-progress-bar', routes);
     }
 
     navigate() {
-        const url = location.hash.slice(1).toLowerCase() || '/';
-        const page = url.split('/')[1];
-        // Parse the URL and if it has an id part, change it with the string ":id"
-        const parsedURL = page ? '/' + page : '/';
-
+        const hash = location.hash.slice(1).toLowerCase() || '/';
+        
         // Get the page from our hash of supported routes.
         // If the parsed URL is not in our list of supported routes, select the 404 page instead
-        const route = this.routes[parsedURL] ? this.routes[parsedURL] : this.notFoundTemplate;
+        let route = this.routes.find((route) => { return route.hash.toLowerCase() === hash.toLowerCase() });
 
-        route.renderer.init();
-        this.progressBar.update(route.step);
+        // if there is no route, use the notFound route
+        if (!route) {
+            route = this.routes.find((route) => { return route.hash === 'notFound'});
+        }
+
+        // render the current route - this will replace the html of the sdk
+        route.controller.render();
     }
 
     isCurrentRoot() {
@@ -27,4 +25,4 @@ class Router {
     }
 }
 
-export default (routes, notFoundTemplate) => new Router(routes, notFoundTemplate);
+export default (routes) => new Router(routes);

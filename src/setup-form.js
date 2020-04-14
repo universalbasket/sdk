@@ -1,4 +1,4 @@
-import flashError from './builtin-templates/flash-error.js';
+import flashError from '../templates/internal/helpers/flash-error.js';
 
 export default function setupForm(form) {
     focusInvalid();
