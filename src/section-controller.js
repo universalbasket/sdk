@@ -1,7 +1,6 @@
 import storage from './storage.js';
 import { waitForData, checkForExistingKeys } from './wait-for-data.js';
 import { serializeForm } from './serialize-form.js';
-import { createInputs } from './main.js';
 
 export default class SectionController {
     constructor({ sdk, cache, mountPoint, service, section, page, nextRoute }) {
@@ -173,7 +172,7 @@ export default class SectionController {
                 button.disabled = true;
             });
 
-            await createInputs(this.sdk, inputs);
+            await this.createInputs(this.sdk, inputs);
         } catch (err) {
             // TODO: handle error
 
@@ -195,4 +194,25 @@ export default class SectionController {
             window.location.hash = '#' + this.nextRoute;
         }
     }
+
+    // send inputs to the API
+    async createInputs(sdk, inputs) {
+        const submittedInputs = [];
+    
+        for (const [rawKey, rawData] of Object.entries(inputs)) {
+            // vault raw pan if passed in to sdk
+            const { key, data } = rawKey === 'pan' ?
+                { key: 'panToken', data: await sdk.vaultPan(rawData) } :
+                { key: rawKey, data: rawData };
+    
+            // send input to API
+            await sdk.createJobInput(key, data);
+    
+            storage.set('input', key, data);
+            submittedInputs.push({ key, data });
+        }
+    
+        window.dispatchEvent(new CustomEvent('newInputs', { detail: submittedInputs }));
+    }
+    
 }

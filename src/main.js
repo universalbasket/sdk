@@ -107,6 +107,7 @@ export async function createApp({ mountPoint, sdk, pages, input = {}, error, not
     router.navigate();
 }
 
+// track events coming from the API (state change, new outputs etc)
 function addTracker(sdk) {
     const stop = sdk.trackJob(async (eventName, jobEvent) => {
         console.log(`event ${eventName}`);
@@ -134,23 +135,4 @@ function addTracker(sdk) {
     console.info('Job tracker added.');
 
     return { stop };
-}
-
-export async function createInputs(sdk, inputs) {
-    const submittedInputs = [];
-
-    for (const [rawKey, rawData] of Object.entries(inputs)) {
-        // vault raw pan if passed in to sdk
-        const { key, data } = rawKey === 'pan' ?
-            { key: 'panToken', data: await sdk.vaultPan(rawData) } :
-            { key: rawKey, data: rawData };
-
-        // send input to API
-        await sdk.createJobInput(key, data);
-
-        storage.set('input', key, data);
-        submittedInputs.push({ key, data });
-    }
-
-    window.dispatchEvent(new CustomEvent('newInputs', { detail: submittedInputs }));
 }

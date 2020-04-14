@@ -1,6 +1,6 @@
 {
   "name": "@ubio/sdk",
-  "version": "0.15.1",
+  "version": "0.15.2",
   "description": "ubio sdk application bundle (prototype)",
   "module": "bundle.js",
   "main": "bundle.umd.js",
@@ -9,7 +9,7 @@
     "prepublishOnly": "npm run build",
     "prepare": "pika-web --clean",
     "start": "npm run serve",
-    "build": "npm run build:rollup && npm run build:umd && npm run build:css",
+    "build": "npm run build:rollup && npm run build:umd",
     "build:rollup": "rollup --config",
     "build:umd": "rollup -n UBIO_BUNDLE -f umd bundle.js -o bundle.umd.js",
     "build:css": "postcss src/css/index.css -o index.css",
