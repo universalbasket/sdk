@@ -145,11 +145,6 @@ function addTracker(sdk) {
                 return console.error(jobEvent);
 
             case 'createOutput':
-                if (jobEvent.stage) {
-                    console.warn('An output was created with a stage. Ignoring.');
-                    return;
-                }
-
                 try {
                     const output = await sdk.getJobOutput(jobEvent.key);
                     storageSet('output', output.key, output.data);
