@@ -59,14 +59,14 @@ async function run() {
         main: 'public/index.js',
         private: true,
         scripts: {
-            prepare: 'pika-web --clean',
+            prepare: 'snowpack --clean',
             start: 'node -r dotenv/config serve.js',
             test: 'echo \'Error: no test specified\' && exit 1',
             lint: 'eslint .',
             build: 'rollup -c && postcss src/index.css -o dist/bundle.css'
         },
         dependencies: {
-            '@pika/web': pkg.devDependencies['@pika/web'],
+            'snowpack': pkg.devDependencies['snowpack'],
             '@ubio/sdk': `^${pkg.version}`,
             '@ubio/client-library': pkg.devDependencies['@ubio/client-library'],
             'lit-html': pkg.devDependencies['lit-html'],
@@ -86,7 +86,7 @@ async function run() {
             rollup: pkg.devDependencies.rollup
 
         },
-        '@pika/web': {
+        'snowpack': {
             'webDependencies': [
                 '@ubio/client-library',
                 '@ubio/sdk',

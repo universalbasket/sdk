@@ -43,17 +43,17 @@ required by the `createApp` function.
 
 Where:
 
-| fieldname | description |
-| --------- | ----------- |
-| `mountpoint` | A reference to a DOM element to append the app layout to. |
-| `sdk` | An end-user sdk, initialised with the job ID, service ID, and end-user token. |
-| `input` | An object of key value pairs representing input that the job was created with. |
-| `layout` | An object with values as layout templates for the header, the footer, and the summary. |
-| `error` | A template to render errors. |
-| `notFound` | A template to render whenever a page does not exist. |
-| `pages` | A list of configurations for pages to be rendered. |
-| `cache` | A list of specifications for outputs of previous jobs to cache. |
-| `local` | Supplimentary data. |
+| fieldname    | description                                                                            |
+|--------------|----------------------------------------------------------------------------------------|
+| `mountpoint` | A reference to a DOM element to append the app layout to.                              |
+| `sdk`        | An end-user sdk, initialised with the job ID, service ID, and end-user token.          |
+| `input`      | An object of key value pairs representing input that the job was created with.         |
+| `layout`     | An object with values as layout templates for the header, the footer, and the summary. |
+| `error`      | A template to render errors.                                                           |
+| `notFound`   | A template to render whenever a page does not exist.                                   |
+| `pages`      | A list of configurations for pages to be rendered.                                     |
+| `cache`      | A list of specifications for outputs of previous jobs to cache.                        |
+| `local`      | Supplementary data.                                                                    |
 
 The `createApp` method is the principal interface of the bundle. By passing it
 various templates, an SDK object, and a flow, this function appends elements to
@@ -92,7 +92,7 @@ Pages represent the steps of your automation. Each is composed of the fields:
  - `name`: Then name of the page.
  - `route`: The route of the page (appears after a `#` in the URL).
  - `title`: The title of the page, rendered in the layout.
- - `sections`: An array of section specfications.
+ - `sections`: An array of section specifications.
 
 Sections are composed of the fields:
 
@@ -216,6 +216,7 @@ an array, use numbers in the brackets such as `pets[0][name]`.
         checked>
 </div>
 ```
+
 If you need to convert the value to integer or boolean, suffix the name with
 `-$number`, `-$boolean` or `-$object` to let the form serializer know that it
 needs to parse the value. If parsing to a type fails, the string value will be
@@ -284,6 +285,7 @@ function hostedForm(otp) {
 You must provide valid OTP (one-time password) as a parameter when you embed the
 form. In the following example, `waitFor: ['_.otp']` insures that the `checkout`
 template receives the `otp`.
+
 ```
     pages: [
         ...,
@@ -314,7 +316,6 @@ for more information.
 [vaulting-payment-card]: https://docs.automationcloud.net/docs/vaulting-payment-card
 [hosted-payment-form]: https://docs.automationcloud.net/docs/vaulting-payment-card#section-using-the-hosted-payment-card-form
 [styling-configuring-payment-form]: https://docs.automationcloud.net/docs/vaulting-payment-card#section-styling-and-configuring-the-form
-
 
 ### Troubleshooting tests
 
