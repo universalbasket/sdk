@@ -8,6 +8,7 @@ export async function createApp({ mountPoint, sdk, pages, input = {}, error, not
     try {
         const job = await sdk.getJob();
 
+        storage.set('_', 'job', job);
         storage.set('_', 'jobId', job.id);
         storage.set('_', 'serviceName', job.serviceName);
     } catch (err) {
@@ -115,6 +116,11 @@ function addTracker(sdk) {
         switch (eventName) {
             case 'fail':
                 window.location.hash = '#error';
+                
+                // store the latest job with error message
+                const job = await sdk.getJob();
+                storage.set('_', 'job', job);
+
                 return console.error(jobEvent);
 
             case 'error':
@@ -123,8 +129,10 @@ function addTracker(sdk) {
 
             case 'createOutput':
                 try {
+                    // get the new output and store it
                     const output = await sdk.getJobOutput(jobEvent.key);
                     storage.set('output', output.key, output.data);
+                    
                     window.dispatchEvent(new CustomEvent('newOutput', { detail: { output } }));
                 } catch (error) {
                     console.error('Error getting job outputs.', error);
