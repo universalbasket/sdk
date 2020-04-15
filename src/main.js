@@ -115,12 +115,11 @@ function addTracker(sdk) {
 
         switch (eventName) {
             case 'fail':
-                window.location.hash = '#error';
-                
                 // store the latest job with error message
                 const job = await sdk.getJob();
                 storage.set('_', 'job', job);
 
+                window.location.hash = '#error';
                 return console.error(jobEvent);
 
             case 'error':
