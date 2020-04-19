@@ -114,6 +114,12 @@ export default class SectionController {
 
     // submits the form via AJAX
     async submitForm(form) {
+        // checkValidity just in case form validation has been overridden
+        if (!form.checkValidity()) {
+            console.warn('form validation did not pass');
+            return false;
+        }
+
         // 0. submit any vault forms if present
         const vaultFrames = form.querySelectorAll('iframe.vault-form');
 
@@ -175,7 +181,7 @@ export default class SectionController {
             await this.createInputs(this.sdk, inputs);
         } catch (err) {
             // TODO: handle error
-
+            console.warn('error submitting form', err);
             return;
         }
 
