@@ -79,9 +79,13 @@ export default class SectionController {
 
     // populates a single field with its previously submitted value
     populateField(fieldName, value) {
-        const field = document.querySelector(`*[name=${fieldName.replace(/\[/g, '\\[').replace(/\]/g, '\\]')}]`);
-        if (field) {
-            field.value = value;
+        try {
+            const field = document.querySelector(`*[name=${fieldName.replace(/\[/g, '\\[').replace(/\]/g, '\\]')}]`);
+            if (field) {
+                field.value = value;
+            }
+        } catch {
+            // don't throw if the selector is bad
         }
     }
 
@@ -204,12 +208,19 @@ export default class SectionController {
     // send inputs to the API
     async createInputs(sdk, inputs) {
         const submittedInputs = [];
+        const serviceInputKeys = this.service.attributes && this.service.attributes.inputKeys;
     
         for (const [rawKey, rawData] of Object.entries(inputs)) {
             // vault raw pan if passed in to sdk
             const { key, data } = rawKey === 'pan' ?
                 { key: 'panToken', data: await sdk.vaultPan(rawData) } :
                 { key: rawKey, data: rawData };
+
+            // if the service has metadata, only submit input keys that are required by the service
+            if (serviceInputKeys && serviceInputKeys.indexOf(key) === -1) {
+                console.warn('skipped input key', key);
+                continue;
+            }
     
             // send input to API
             await sdk.createJobInput(key, data);
