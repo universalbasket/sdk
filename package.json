@@ -1,6 +1,6 @@
 {
   "name": "@ubio/sdk",
-  "version": "0.15.7",
+  "version": "0.15.8",
   "description": "ubio sdk application bundle (prototype)",
   "module": "bundle.js",
   "main": "bundle.umd.js",
@@ -14,7 +14,6 @@
     "build:umd": "rollup -n UBIO_BUNDLE -f umd bundle.js -o bundle.umd.js",
     "build:css": "postcss src/css/index.css -o index.css",
     "lint:js": "eslint --ext=js .",
-    "lint:css": "stylelint src/css/**/*",
     "test": "testem ci",
     "serve": "browser-sync start --index 'index.html' --server --files 'templates' 'web_modules' 'src'"
   },

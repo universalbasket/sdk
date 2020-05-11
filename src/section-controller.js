@@ -43,7 +43,7 @@ export default class SectionController {
         this.addEventListeners();
         this.populateForm(storage.getAll().input);
     }
-    
+
     // displays the specified node in the mountPoint
     displayNode(node) {
         this.mountPoint.innerHTML = '';
@@ -54,7 +54,7 @@ export default class SectionController {
     addEventListeners() {
         const forms = this.mountPoint.querySelectorAll('form');
         for (const form of forms) {
-            form.addEventListener('submit', async (e) => {
+            form.addEventListener('submit', async e => {
                 e.preventDefault();
                 await this.submitForm(form);
             });
@@ -63,15 +63,14 @@ export default class SectionController {
 
     // populates any HTML forms with input data previously submitted
     populateForm(inputData, prefix) {
-        Object.keys(inputData).forEach((key1) => {
+        Object.keys(inputData).forEach(key1 => {
             const data1 = inputData[key1];
 
             if (typeof data1 === 'string') {
-                this.populateField(prefix ? `${prefix}[${key1}]`:key1, data1);
+                this.populateField(prefix ? `${prefix}[${key1}]` : key1, data1);
             } else {
-                Object.keys(data1).forEach((key2) => {
-                    const data = inputData[key1][key2];
-                    this.populateForm(data1, prefix ? `${prefix}[${key1}]`:key1, data1);
+                Object.keys(data1).forEach(_key2 => {
+                    this.populateForm(data1, prefix ? `${prefix}[${key1}]` : key1);
                 });
             }
         });
@@ -128,7 +127,7 @@ export default class SectionController {
         const vaultFrames = form.querySelectorAll('iframe.vault-form');
 
         if (vaultFrames.length > 0) {
-            for (let i=0; i<vaultFrames.length; i++) {
+            for (let i = 0; i < vaultFrames.length; i += 1) {
                 const vaultFrame = vaultFrames[i];
 
                 // only submit visible vault frames
@@ -136,10 +135,12 @@ export default class SectionController {
                     try {
                         const res = await this.submitVaultForm(vaultFrame);
                         const fields = JSON.parse(vaultFrame.getAttribute('fields'));
-                        
+
+                        /*eslint-disable */
                         // set the values of the hidden inputs for cardToken and panToken
                         document.querySelector(`input[name=${fields.cardToken.replace(/([\[\]\$])/g, '\\$1')}`).value = res.cardToken;
                         document.querySelector(`input[name=${fields.panToken.replace(/([\[\]\$])/g, '\\$1')}`).value = res.panToken;
+                        /*eslint-enable */
 
                         // don't allow vault form to be submitted twice
                         vaultFrame.disabled = true;
@@ -156,15 +157,15 @@ export default class SectionController {
         // 1. serialise form
         const inputs = serializeForm(form);
         const firstInputKey = Object.keys(inputs)[0];
-        
+
         // 2. check input keys to see if they've already been submitted
         if (storage.get('input', firstInputKey)) {
             // check similarity vs previous inputs
             const previousInputs = storage.getAll().input;
             let previousInputsSame = true;
 
-            Object.keys(inputs).forEach((key) => {
-                if (JSON.stringify(inputs[key]) != JSON.stringify(previousInputs[key])) {
+            Object.keys(inputs).forEach(key => {
+                if (JSON.stringify(inputs[key]) !== JSON.stringify(previousInputs[key])) {
                     previousInputsSame = false;
                 }
             });
@@ -186,13 +187,12 @@ export default class SectionController {
         try {
             // disable submit buttons so they can't be clicked twice
             const submitButtons = form.querySelectorAll('button[type=submit], input[type=submit]');
-            [...submitButtons].forEach((button) => {
+            [...submitButtons].forEach(button => {
                 button.disabled = true;
             });
 
             await this.createInputs(this.sdk, inputs);
         } catch (err) {
-            // TODO: handle error
             console.warn('error submitting form', err);
             return;
         }
@@ -217,7 +217,7 @@ export default class SectionController {
     async createInputs(sdk, inputs) {
         const submittedInputs = [];
         const serviceInputKeys = this.service.attributes && this.service.attributes.inputKeys;
-    
+
         for (const [rawKey, rawData] of Object.entries(inputs)) {
             // vault raw pan if passed in to sdk
             const { key, data } = rawKey === 'pan' ?
@@ -229,15 +229,14 @@ export default class SectionController {
                 console.warn('skipped input key', key);
                 continue;
             }
-    
+
             // send input to API
             await sdk.createJobInput(key, data);
-    
+
             storage.set('input', key, data);
             submittedInputs.push({ key, data });
         }
-    
+
         window.dispatchEvent(new CustomEvent('newInputs', { detail: submittedInputs }));
     }
-    
 }

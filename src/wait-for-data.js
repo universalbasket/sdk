@@ -23,7 +23,7 @@ export function checkForExistingKeys(waitFor, cache) {
             continue;
         }
 
-        console.log('waiting for', type, key)
+        console.log('waiting for', type, key);
 
         const matchingCacheSpec = cache.find(c => c.key === key);
 
@@ -61,7 +61,7 @@ async function waitForRemainingOutputs(keys) {
 }
 
 async function sleep(ms) {
-    return new Promise((resolve, reject) => {
+    return new Promise(resolve => {
         setTimeout(resolve, ms);
     });
 }
@@ -74,7 +74,7 @@ function cacheAvailable(key, variability) {
     const cache = getWithMeta('cache', key);
 
 
-    console.log('get cache', key, variability, cache)
+    console.log('get cache', key, variability, cache);
 
     if (!cache) {
         return false;

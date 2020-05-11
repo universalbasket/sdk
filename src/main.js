@@ -40,8 +40,8 @@ export async function createApp({ mountPoint, sdk, pages, input = {}, error, not
     // add all of the pages to the router
     let index = 0;
 
-    pages.forEach((page, pageIndex) => {
-        page.sections.forEach((section, sectionIndex) => {
+    pages.forEach(page => {
+        page.sections.forEach(section => {
             const hash = page.name + '/' + section.name;
             routes.push({
                 hash,
@@ -56,16 +56,16 @@ export async function createApp({ mountPoint, sdk, pages, input = {}, error, not
 
             // maintain a reference to the next route
             if (index > 0) {
-                routes[index-1].controller.nextRoute = hash;
+                routes[index - 1].controller.nextRoute = hash;
             }
 
-            index++;
+            index += 1;
         });
     });
 
     // add error route controllers
-    routes.push({ hash: 'error', controller: new SectionController({ ...controllerOptions, section: { template: error }}) });
-    routes.push({ hash: 'notFound', controller: new SectionController({ ...controllerOptions, section: { template: notFound }}) });
+    routes.push({ hash: 'error', controller: new SectionController({ ...controllerOptions, section: { template: error } }) });
+    routes.push({ hash: 'notFound', controller: new SectionController({ ...controllerOptions, section: { template: notFound } }) });
 
     const router = Router(routes);
 
@@ -131,7 +131,7 @@ function addTracker(sdk) {
                     // get the new output and store it
                     const output = await sdk.getJobOutput(jobEvent.key);
                     storage.set('output', output.key, output.data);
-                    
+
                     window.dispatchEvent(new CustomEvent('newOutput', { detail: { output } }));
                 } catch (error) {
                     console.error('Error getting job outputs.', error);

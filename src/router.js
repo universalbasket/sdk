@@ -6,14 +6,14 @@ class Router {
 
     navigate() {
         const hash = location.hash.slice(1).toLowerCase() || '/';
-        
+
         // Get the page from our hash of supported routes.
         // If the parsed URL is not in our list of supported routes, select the 404 page instead
-        let route = this.routes.find((route) => { return route.hash.toLowerCase() === hash.toLowerCase() });
+        let route = this.routes.find(route => { return route.hash.toLowerCase() === hash.toLowerCase(); });
 
         // if there is no route, use the notFound route
         if (!route) {
-            route = this.routes.find((route) => { return route.hash === 'notFound'});
+            route = this.routes.find(route => { return route.hash === 'notFound'; });
         }
 
         // render the current route - this will replace the html of the sdk
@@ -25,4 +25,4 @@ class Router {
     }
 }
 
-export default (routes) => new Router(routes);
+export default routes => new Router(routes);

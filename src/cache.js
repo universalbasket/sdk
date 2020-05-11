@@ -16,11 +16,8 @@ async function getAndCachePreviousOutput(sdk, sourceInputs, outputKey) {
         const result = await sdk.getPreviousJobOutputs(sourceInputs, outputKey);
         const cache = result.data && result.data[0];
 
-        console.log('got cache data')
-
         if (cache) {
             storageSet('cache', cache.key, cache);
-            console.log('set storage')
         }
     } catch (error) {
         console.error('Failed to fetch previous output:', error.stack || error.message);

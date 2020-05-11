@@ -96,7 +96,7 @@ export function set(type, key, data) {
     }
 
     const timestamp = new Date().getTime();
-    localStorage.setItem(`${type}.${key}`, JSON.stringify({ data: data, timestamp }));
+    localStorage.setItem(`${type}.${key}`, JSON.stringify({ data, timestamp }));
 }
 
 export function del(type, key) {
@@ -112,9 +112,9 @@ export function delAllBefore(type, key) {
     const timestamp = JSON.parse(json).timestamp;
 
     const all = getAllRaw();
-    Object.keys(all).forEach((type) => {
+    Object.keys(all).forEach(type => {
         const typeData = all[type];
-        Object.keys(typeData).forEach((key) => {
+        Object.keys(typeData).forEach(key => {
             const data = typeData[key];
             if (data.timestamp >= timestamp) {
                 del(type, key);
