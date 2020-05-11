@@ -1,6 +1,6 @@
 {
   "name": "@ubio/sdk",
-  "version": "0.15.8",
+  "version": "0.15.9",
   "description": "ubio sdk application bundle (prototype)",
   "module": "bundle.js",
   "main": "bundle.umd.js",
@@ -26,8 +26,7 @@
     "application-template"
   ],
   "pre-commit": [
-    "lint:js",
-    "test"
+    "lint:js"
   ],
   "keywords": [
     "ubio",
