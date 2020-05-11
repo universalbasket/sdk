@@ -129,18 +129,26 @@ export default class SectionController {
 
         if (vaultFrames.length > 0) {
             for (let i=0; i<vaultFrames.length; i++) {
-                try {
-                    const res = await this.submitVaultForm(vaultFrames[i]);
-                    const fields = JSON.parse(vaultFrames[i].getAttribute('fields'));
-                    
-                    // set the values of the hidden inputs for cardToken and panToken
-                    document.querySelector(`input[name=${fields.cardToken.replace(/([\[\]\$])/g, '\\$1')}`).value = res.cardToken;
-                    document.querySelector(`input[name=${fields.panToken.replace(/([\[\]\$])/g, '\\$1')}`).value = res.panToken;
-                } catch (err) {
-                    console.warn('err', err);
-                    window.scrollTo(0, vaultFrames[i].clientTop);
+                const vaultFrame = vaultFrames[i];
 
-                    return;
+                // only submit visible vault frames
+                if (vaultFrame.offsetParent !== null && !vaultFrame.disabled) {
+                    try {
+                        const res = await this.submitVaultForm(vaultFrame);
+                        const fields = JSON.parse(vaultFrame.getAttribute('fields'));
+                        
+                        // set the values of the hidden inputs for cardToken and panToken
+                        document.querySelector(`input[name=${fields.cardToken.replace(/([\[\]\$])/g, '\\$1')}`).value = res.cardToken;
+                        document.querySelector(`input[name=${fields.panToken.replace(/([\[\]\$])/g, '\\$1')}`).value = res.panToken;
+
+                        // don't allow vault form to be submitted twice
+                        vaultFrame.disabled = true;
+                    } catch (err) {
+                        console.warn('err', err);
+                        window.scrollTo(0, vaultFrame.clientTop);
+
+                        return;
+                    }
                 }
             }
         }
