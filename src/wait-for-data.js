@@ -30,8 +30,6 @@ export function checkForExistingKeys(waitFor, cache) {
         if (matchingCacheSpec) {
             const variability = has(matchingCacheSpec, 'variabilityThreshold') ? matchingCacheSpec.variabilityThreshold : 1;
 
-            console.log(variability);
-
             if (cacheAvailable(key, variability)) {
                 continue;
             }
@@ -73,12 +71,11 @@ function outputAvailable(key) {
 function cacheAvailable(key, variability) {
     const cache = getWithMeta('cache', key);
 
-
     console.log('get cache', key, variability, cache);
 
     if (!cache) {
         return false;
     }
 
-    return cache.variability <= variability;
+    return cache.data.variability <= variability;
 }
