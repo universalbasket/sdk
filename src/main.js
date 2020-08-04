@@ -111,7 +111,7 @@ export async function createApp({ mountPoint, sdk, pages, input = {}, error, not
 // track events coming from the API (state change, new outputs etc)
 function addTracker(sdk) {
     const stop = sdk.trackJob(async (eventName, jobEvent) => {
-        console.log(`event ${eventName}`);
+        console.log(`event ${eventName}`, jobEvent);
 
         switch (eventName) {
             case 'fail':
@@ -125,6 +125,9 @@ function addTracker(sdk) {
             case 'error':
                 window.location.hash = '#error';
                 return console.error(jobEvent);
+
+            case 'awaitingInput':
+                return window.dispatchEvent(new CustomEvent('awaitingInput', { detail: jobEvent }));
 
             case 'createOutput':
                 try {

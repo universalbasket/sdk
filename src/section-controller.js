@@ -1,5 +1,5 @@
 import storage from './storage.js';
-import { waitForData, checkForExistingKeys } from './wait-for-data.js';
+import { waitForData, waitForAwaitingInput, checkForExistingKeys } from './wait-for-data.js';
 import { serializeForm } from './serialize-form.js';
 
 export default class SectionController {
@@ -33,6 +33,14 @@ export default class SectionController {
 
                 // wait until all data is present
                 await waitForData(this.section.waitFor, this.cache);
+
+                // wait until awaitingInput condition is met
+                const awaitingInputResult = await waitForAwaitingInput(this.section.waitFor);
+
+                // skip this section if the awaitingInput result is false - i.e. it's now waiting for a different input
+                if (!awaitingInputResult) {
+                    return await this.skip();
+                }
             }
         }
 

@@ -6,7 +6,7 @@ import has from './has.js';
  */
 export async function waitForData(waitFor, cache) {
     if (waitFor && waitFor.length > 0) {
-        await sleep(1000);
+        await sleep(100);
     }
 
     const keysToWaitFor = checkForExistingKeys(waitFor, cache);
@@ -35,7 +35,9 @@ export function checkForExistingKeys(waitFor, cache) {
             }
         }
 
-        keysToWaitFor.push(key);
+        if (type === 'output' || type === 'cache') {
+            keysToWaitFor.push(key);
+        }
     }
 
     return keysToWaitFor;
@@ -54,6 +56,26 @@ async function waitForRemainingOutputs(keys) {
                 window.removeEventListener('newOutput', trackOutput);
                 resolve();
             }
+        }
+    });
+}
+
+export async function waitForAwaitingInput(waitFor) {
+    // find the waitingInput key
+    const key = waitFor.find(k => k.split('.')[0] === 'awaitingInput');
+
+    // if there is no key, return true to continue
+    if (!key) {
+        return true;
+    }
+
+    await new Promise(resolve => {
+        window.addEventListener('awaitingInput', trackAwaitingInput);
+
+        function trackAwaitingInput(event) {
+            window.removeEventListener('awaitingInput', trackAwaitingInput);
+            const result = key.split('.')[1] === event.detail.key;
+            resolve(result);
         }
     });
 }
