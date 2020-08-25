@@ -26,20 +26,26 @@ export default class SectionController {
 
         // only show loading screen if waitFor explicitly defined
         if (this.section.waitFor) {
-            // only show if we haven't already loaded the keys
-            if (checkForExistingKeys(this.section.waitFor, this.cache).length > 0) {
-                const loadingNode = this.section.loadingTemplate(options);
-                this.displayNode(loadingNode);
+            // show the loading template
+            const loadingNode = this.section.loadingTemplate(options);
+            this.displayNode(loadingNode);
 
-                // wait until all data is present
-                await waitForData(this.section.waitFor, this.cache);
+            // if waitFor is a function, run it
+            if (typeof this.section.waitFor === 'function') {
+                await this.section.waitFor({ storage, skip: () => { return this.skip(); }});
+            } else {
+                // only show if we haven't already loaded the keys
+                if (checkForExistingKeys(this.section.waitFor, this.cache).length > 0) {
+                    // wait until all data is present
+                    await waitForData(this.section.waitFor, this.cache);
 
-                // wait until awaitingInput condition is met
-                const awaitingInputResult = await waitForAwaitingInput(this.section.waitFor);
+                    // wait until awaitingInput condition is met
+                    const awaitingInputResult = await waitForAwaitingInput(this.section.waitFor);
 
-                // skip this section if the awaitingInput result is false - i.e. it's now waiting for a different input
-                if (!awaitingInputResult) {
-                    return await this.skip();
+                    // skip this section if the awaitingInput result is false - i.e. it's now waiting for a different input
+                    if (!awaitingInputResult) {
+                        return await this.skip();
+                    }
                 }
             }
         }
